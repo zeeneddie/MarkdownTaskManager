@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Test results
+test-results/
+playwright-report/
+
+# Playwright browsers
+.cache/
+
+# Screenshots (keep template ones, ignore test runs)
+screenshots/*
+!screenshots/.gitkeep
+
+# Videos
+videos/
+
+# Traces
+traces/
+
+# OS files
+.DS_Store
+Thumbs.db
