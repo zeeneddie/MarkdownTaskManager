@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprint Planning - Markdown Task Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: white;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: #667eea;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #4b5563;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .container {
+            padding: 2rem;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .planning-board {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+            height: calc(100vh - 120px);
+        }
+
+        .backlog {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+
+        .backlog h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: #4b5563;
+        }
+
+        .sprints-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            overflow-x: auto;
+        }
+
+        .sprint-column {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sprint-header {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .sprint-header h3 {
+            font-size: 1rem;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .sprint-meta {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .capacity-bar {
+            margin-top: 0.5rem;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .capacity-fill {
+            height: 100%;
+            background: #667eea;
+            transition: width 0.3s, background 0.3s;
+        }
+
+        .capacity-fill.warning {
+            background: #f59e0b;
+        }
+
+        .capacity-fill.danger {
+            background: #ef4444;
+        }
+
+        .capacity-text {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        .sprint-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem 0;
+        }
+
+        .task-card {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            cursor: move;
+            transition: all 0.2s;
+        }
+
+        .task-card:hover {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .task-card.dragging {
+            opacity: 0.5;
+        }
+
+        .task-card .task-id {
+            font-size: 0.7rem;
+            color: #9ca3af;
+            font-weight: 600;
+        }
+
+        .task-card .task-title {
+            font-size: 0.85rem;
+            margin: 0.25rem 0;
+            color: #1f2937;
+        }
+
+        .task-card .task-meta {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .badge-sp {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-status {
+            background: #e0e7ff;
+            color: #4c51bf;
+        }
+
+        .badge-priority {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .drop-zone {
+            min-height: 100px;
+            border: 2px dashed #d1d5db;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            font-size: 0.85rem;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #667eea;
+            background: #f3f4f6;
+        }
+
+        .status {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status.loading {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 Sprint Planning</h1>
+        <div class="nav-buttons">
+            <button class="btn btn-secondary" onclick="window.location.href='/'">← Project View</button>
+            <button class="btn btn-primary" onclick="createInitialSprints()">🚀 Create Sprints 1-4</button>
+            <button class="btn btn-primary" onclick="autoFillSprints()">⚡ Auto-Fill Sprints</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="status" class="status" style="display: none;"></div>
+
+        <div class="planning-board">
+            <!-- Backlog -->
+            <div class="backlog">
+                <h2>📋 Backlog</h2>
+                <div id="backlog" class="sprint-items">
+                    <div class="empty-state">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Sprints -->
+            <div class="sprints-container" id="sprints">
+                <!-- Sprint columns will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        let sprints = [];
+        let backlogItems = [];
+        let draggedItem = null;
+
+        // Initialize
+        async function init() {
+            await loadSprints();
+            await loadBacklog();
+            renderSprints();
+            renderBacklog();
+        }
+
+        // Load sprints from API
+        async function loadSprints() {
+            try {
+                const response = await fetch(`${API_BASE}/sprints/`);
+                const data = await response.json();
+                sprints = data.sort((a, b) => a.id - b.id);
+            } catch (error) {
+                showStatus('error', 'Failed to load sprints: ' + error.message);
+                sprints = [];
+            }
+        }
+
+        // Load backlog items
+        async function loadBacklog() {
+            try {
+                const response = await fetch(`${API_BASE}/sprints/backlog/items`);
+                backlogItems = await response.json();
+            } catch (error) {
+                showStatus('error', 'Failed to load backlog: ' + error.message);
+                backlogItems = [];
+            }
+        }
+
+        // Render sprint columns
+        function renderSprints() {
+            const container = document.getElementById('sprints');
+            container.innerHTML = '';
+
+            if (sprints.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <p>No sprints yet. Click "Create Sprints 1-4" to get started.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            sprints.forEach(sprint => {
+                const col = document.createElement('div');
+                col.className = 'sprint-column';
+                col.dataset.sprintId = sprint.id;
+
+                const capacityPercent = (sprint.total_sp / sprint.capacity) * 100;
+                let fillClass = '';
+                if (capacityPercent > 100) fillClass = 'danger';
+                else if (capacityPercent > 80) fillClass = 'warning';
+
+                col.innerHTML = `
+                    <div class="sprint-header">
+                        <h3>${sprint.name}</h3>
+                        <div class="sprint-meta">
+                            ${formatDate(sprint.start_date)} - ${formatDate(sprint.end_date)}
+                        </div>
+                        <div class="capacity-bar">
+                            <div class="capacity-fill ${fillClass}" style="width: ${Math.min(capacityPercent, 100)}%"></div>
+                        </div>
+                        <div class="capacity-text">
+                            ${sprint.total_sp} / ${sprint.capacity} SP
+                        </div>
+                    </div>
+                    <div class="sprint-items" id="sprint-${sprint.id}-items"
+                         ondrop="drop(event, ${sprint.id})"
+                         ondragover="allowDrop(event)"
+                         ondragleave="dragLeave(event)">
+                        <div class="drop-zone">Drop items here</div>
+                    </div>
+                `;
+
+                container.appendChild(col);
+
+                // Load sprint items
+                loadSprintItems(sprint.id);
+            });
+        }
+
+        // Load items for a specific sprint
+        async function loadSprintItems(sprintId) {
+            try {
+                const response = await fetch(`${API_BASE}/sprints/${sprintId}/items`);
+                const items = await response.json();
+                renderSprintItems(sprintId, items);
+            } catch (error) {
+                console.error(`Failed to load items for sprint ${sprintId}:`, error);
+            }
+        }
+
+        // Render items in sprint column
+        function renderSprintItems(sprintId, items) {
+            const container = document.getElementById(`sprint-${sprintId}-items`);
+
+            if (items.length === 0) {
+                container.innerHTML = '<div class="drop-zone">Drop items here</div>';
+                return;
+            }
+
+            container.innerHTML = items.map(item => createTaskCard(item)).join('');
+        }
+
+        // Render backlog
+        function renderBacklog() {
+            const container = document.getElementById('backlog');
+
+            if (backlogItems.length === 0) {
+                container.innerHTML = '<div class="empty-state">No items in backlog</div>';
+                return;
+            }
+
+            container.innerHTML = backlogItems.map(item => createTaskCard(item)).join('');
+        }
+
+        // Create task card HTML
+        function createTaskCard(item) {
+            return `
+                <div class="task-card" draggable="true"
+                     ondragstart="dragStart(event, '${item.id}')"
+                     ondragend="dragEnd(event)">
+                    <div class="task-id">${item.id}</div>
+                    <div class="task-title">${item.title}</div>
+                    <div class="task-meta">
+                        <span class="badge badge-sp">${item.sp || 0} SP</span>
+                        <span class="badge badge-status">${item.status || 'N/A'}</span>
+                        ${item.priority ? `<span class="badge badge-priority">${item.priority}</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Drag and drop functions
+        function dragStart(event, itemId) {
+            draggedItem = itemId;
+            event.target.classList.add('dragging');
+        }
+
+        function dragEnd(event) {
+            event.target.classList.remove('dragging');
+            draggedItem = null;
+        }
+
+        function allowDrop(event) {
+            event.preventDefault();
+            if (event.target.classList.contains('sprint-items')) {
+                event.target.classList.add('drag-over');
+            }
+        }
+
+        function dragLeave(event) {
+            if (event.target.classList.contains('sprint-items')) {
+                event.target.classList.remove('drag-over');
+            }
+        }
+
+        async function drop(event, sprintId) {
+            event.preventDefault();
+            event.target.classList.remove('drag-over');
+
+            if (!draggedItem) return;
+
+            showStatus('loading', 'Assigning item to sprint...');
+
+            try {
+                const response = await fetch(`${API_BASE}/sprints/${sprintId}/assign?item_id=${draggedItem}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to assign item');
+                }
+
+                showStatus('success', 'Item assigned successfully!');
+
+                // Reload data
+                await loadSprints();
+                await loadBacklog();
+                renderSprints();
+                renderBacklog();
+
+            } catch (error) {
+                showStatus('error', error.message);
+            }
+        }
+
+        // Create initial sprints
+        async function createInitialSprints() {
+            showStatus('loading', 'Creating sprints...');
+
+            const today = new Date();
+            const sprintDuration = 14; // days
+
+            try {
+                for (let i = 1; i <= 4; i++) {
+                    const startDate = new Date(today);
+                    startDate.setDate(today.getDate() + (i - 1) * sprintDuration);
+
+                    const endDate = new Date(startDate);
+                    endDate.setDate(startDate.getDate() + sprintDuration);
+
+                    const sprint = {
+                        name: `Sprint ${i}`,
+                        start_date: startDate.toISOString(),
+                        end_date: endDate.toISOString(),
+                        goal: `Sprint ${i} goal`,
+                        status: 'PLANNED',
+                        capacity: 50
+                    };
+
+                    await fetch(`${API_BASE}/sprints/`, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(sprint)
+                    });
+                }
+
+                showStatus('success', 'Sprints 1-4 created successfully!');
+                await init();
+
+            } catch (error) {
+                showStatus('error', 'Failed to create sprints: ' + error.message);
+            }
+        }
+
+        // Auto-fill sprints with tasks (balanced approach)
+        async function autoFillSprints() {
+            showStatus('loading', 'Auto-filling sprints with balanced distribution...');
+
+            try {
+                await loadBacklog();
+
+                if (backlogItems.length === 0) {
+                    showStatus('error', 'No items in backlog to assign');
+                    return;
+                }
+
+                if (sprints.length === 0) {
+                    showStatus('error', 'No sprints available. Create sprints first.');
+                    return;
+                }
+
+                // Group items by priority
+                const itemsByPriority = {
+                    CRITICAL: backlogItems.filter(i => i.priority === 'CRITICAL'),
+                    HIGH: backlogItems.filter(i => i.priority === 'HIGH'),
+                    MEDIUM: backlogItems.filter(i => i.priority === 'MEDIUM'),
+                    LOW: backlogItems.filter(i => i.priority === 'LOW' || !i.priority)
+                };
+
+                // Balanced distribution percentages per sprint
+                // Each sprint gets a mix: 30% high, 40% medium, 20% low, 10% critical
+                const distribution = {
+                    CRITICAL: 0.10,
+                    HIGH: 0.30,
+                    MEDIUM: 0.40,
+                    LOW: 0.20
+                };
+
+                for (let i = 0; i < sprints.length; i++) {
+                    const sprint = sprints[i];
+                    let sprintCapacityUsed = sprint.total_sp || 0;
+                    const targetCapacity = sprint.capacity;
+
+                    // Calculate target SP per priority for this sprint
+                    const targets = {
+                        CRITICAL: Math.floor(targetCapacity * distribution.CRITICAL),
+                        HIGH: Math.floor(targetCapacity * distribution.HIGH),
+                        MEDIUM: Math.floor(targetCapacity * distribution.MEDIUM),
+                        LOW: Math.floor(targetCapacity * distribution.LOW)
+                    };
+
+                    // Assign items per priority level to achieve balance
+                    for (const priority of ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']) {
+                        let prioritySpUsed = 0;
+                        const targetSp = targets[priority];
+                        const items = itemsByPriority[priority];
+
+                        for (let j = 0; j < items.length; j++) {
+                            const item = items[j];
+                            const itemSp = item.sp || 0;
+
+                            // Check if we can add this item without exceeding limits
+                            if (prioritySpUsed + itemSp <= targetSp &&
+                                sprintCapacityUsed + itemSp <= targetCapacity) {
+
+                                try {
+                                    const response = await fetch(`${API_BASE}/sprints/${sprint.id}/assign?item_id=${item.id}`, {
+                                        method: 'POST',
+                                        headers: {'Content-Type': 'application/json'}
+                                    });
+
+                                    if (response.ok) {
+                                        prioritySpUsed += itemSp;
+                                        sprintCapacityUsed += itemSp;
+                                        sprint.total_sp = sprintCapacityUsed;
+
+                                        // Remove from list
+                                        items.splice(j, 1);
+                                        j--;
+                                    }
+                                } catch (err) {
+                                    console.error('Failed to assign item:', err);
+                                }
+                            }
+                        }
+                    }
+
+                    // Fill remaining capacity with any leftover items (round-robin)
+                    const remainingCapacity = targetCapacity - sprintCapacityUsed;
+                    if (remainingCapacity > 0) {
+                        const allRemaining = [
+                            ...itemsByPriority.CRITICAL,
+                            ...itemsByPriority.HIGH,
+                            ...itemsByPriority.MEDIUM,
+                            ...itemsByPriority.LOW
+                        ];
+
+                        for (const item of allRemaining) {
+                            const itemSp = item.sp || 0;
+                            if (sprintCapacityUsed + itemSp <= targetCapacity) {
+                                try {
+                                    await fetch(`${API_BASE}/sprints/${sprint.id}/assign?item_id=${item.id}`, {
+                                        method: 'POST',
+                                        headers: {'Content-Type': 'application/json'}
+                                    });
+                                    sprintCapacityUsed += itemSp;
+
+                                    // Remove from priority list
+                                    Object.values(itemsByPriority).forEach(list => {
+                                        const idx = list.findIndex(i => i.id === item.id);
+                                        if (idx !== -1) list.splice(idx, 1);
+                                    });
+                                } catch (err) {
+                                    console.error('Failed to assign item:', err);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                showStatus('success', 'Sprints auto-filled with balanced distribution! Each sprint has a mix of priorities.');
+                await init();
+
+            } catch (error) {
+                showStatus('error', 'Failed to auto-fill sprints: ' + error.message);
+            }
+        }
+
+        // Helper functions
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('nl-NL', { month: 'short', day: 'numeric' });
+        }
+
+        function showStatus(type, message) {
+            const status = document.getElementById('status');
+            status.className = `status ${type}`;
+            status.textContent = message;
+            status.style.display = 'block';
+
+            if (type !== 'loading') {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

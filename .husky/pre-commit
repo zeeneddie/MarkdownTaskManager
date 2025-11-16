@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Week 12 Day 1-2: Pre-commit Quality Gate Check
+# Runs QualityGateService on staged files before commit
+
+echo "Running quality gate checks on staged files..."
+
+cd backend/agents || exit 1
+
+# Run the quality check script
+npx ts-node scripts/pre-commit-quality-check.ts
+
+# Exit with the status code from the quality check
+exit $?

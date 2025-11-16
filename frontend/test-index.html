@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Task Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .toolbar {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+        }
+
+        .status {
+            margin-left: auto;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .status.loading {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 1rem;
+            min-height: 600px;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            max-height: calc(100vh - 250px);
+        }
+
+        .sidebar-header {
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .back-button {
+            display: none;
+            padding: 0.5rem;
+            margin-bottom: 0.5rem;
+            background: #f3f4f6;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            width: 100%;
+            text-align: left;
+            transition: background 0.2s;
+        }
+
+        .back-button:hover {
+            background: #e5e7eb;
+        }
+
+        .back-button.visible {
+            display: block;
+        }
+
+        .current-item {
+            display: none;
+            font-size: 0.85rem;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .current-item.visible {
+            display: block;
+        }
+
+        .sidebar h3 {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: #666;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .tree-item {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            user-select: none;
+        }
+
+        .tree-item:hover {
+            background: #f3f4f6;
+        }
+
+        .tree-item.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tree-item .expand-icon {
+            width: 20px;
+            text-align: center;
+            font-weight: bold;
+            color: #9ca3af;
+        }
+
+        .tree-item.active .expand-icon {
+            color: white;
+        }
+
+        .tree-item.has-children .expand-icon {
+            color: #667eea;
+        }
+
+        .tree-item.active.has-children .expand-icon {
+            color: white;
+        }
+
+        .tree-item .icon {
+            font-size: 1.2rem;
+        }
+
+        .tree-item .title {
+            flex: 1;
+            font-size: 0.9rem;
+        }
+
+        .tree-item .badge {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            background: #e5e7eb;
+            color: #4b5563;
+        }
+
+        .tree-item.active .badge {
+            background: rgba(255,255,255,0.3);
+            color: white;
+        }
+
+        .tree-children {
+            margin-left: 1.5rem;
+            display: none;
+        }
+
+        .tree-children.expanded {
+            display: block;
+        }
+
+        .main {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            max-height: calc(100vh - 250px);
+        }
+
+        .main h2 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+        }
+
+        .main .meta {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .main .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #f9fafb;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .main .meta-item .label {
+            font-weight: 600;
+            color: #6b7280;
+        }
+
+        .main .meta-item .value {
+            color: #1f2937;
+        }
+
+        .main .section {
+            margin-bottom: 2rem;
+        }
+
+        .main .section h3 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: #374151;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+
+        .main .section p {
+            line-height: 1.6;
+            color: #4b5563;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #9ca3af;
+        }
+
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #6b7280;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .children-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .child-card {
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .child-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 6px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .child-card:active {
+            transform: translateY(0);
+        }
+
+        .child-card .card-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+        }
+
+        .child-card .card-meta {
+            display: flex;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 Markdown Task Manager</h1>
+        <p>Projecten/MarkdownTaskManager - Hiërarchische task management met markdown</p>
+    </div>
+
+    <div class="container">
+        <div class="toolbar">
+            <button class="btn btn-primary" onclick="loadProject()">
+                🔄 Project Laden
+            </button>
+            <button class="btn btn-success" onclick="syncToDatabase()">
+                💾 Sync naar Database
+            </button>
+            <div class="status" id="status"></div>
+        </div>
+
+        <div class="content">
+            <div class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <button class="back-button" id="backButton" onclick="navigateBack()">
+                        ← Terug
+                    </button>
+                    <div class="current-item" id="currentItem"></div>
+                    <h3 id="sidebarTitle">Epics</h3>
+                </div>
+                <div id="tree"></div>
+            </div>
+
+            <div class="main" id="main">
+                <div class="empty-state">
+                    <div class="icon">📁</div>
+                    <h3>Welkom bij Markdown Task Manager</h3>
+                    <p>Klik op "Project Laden" om te beginnen</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let projectData = null;
+        let selectedItem = null;
+        let navigationStack = []; // Track navigation history
+
+        const API_BASE = 'http://localhost:8000/api';
+
+        async function loadProject() {
+            setStatus('loading', 'Project laden...');
+
+            try {
+                // Call real API endpoint
+                const response = await fetch(`${API_BASE}/project/`);
+
+                if (!response.ok) {
+                    throw new Error('Backend niet beschikbaar');
+                }
+
+                const result = await response.json();
+                projectData = {
+                    epics: result.data.epics.map(epic => ({
+                        ...epic,
+                        features: epic.features || []
+                    }))
+                };
+
+                /* OLD MOCK DATA - Now using real API!
+                projectData = {
+                    epics: [
+                        {
+                            id: 'EPIC-001',
+                            title: 'Payment Integration',
+                            status: 'PLANNED',
+                            priority: 'HIGH',
+                            sp_total: 34,
+                            features: [
+                                {
+                                    id: 'FEATURE-001',
+                                    title: 'Stripe API Integration',
+                                    status: 'PLANNED',
+                                    sp_total: 13,
+                                    stories: [
+                                        {
+                                            id: 'STORY-001',
+                                            title: 'Setup Stripe SDK',
+                                            status: 'PLANNED',
+                                            sp: 5,
+                                            tasks: [
+                                                { id: 'TASK-001', title: 'Install stripe package', status: 'TODO' },
+                                                { id: 'TASK-002', title: 'Configure API keys', status: 'TODO' }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            id: 'EPIC-002',
+                            title: 'User Authentication System',
+                            status: 'PLANNED',
+                            priority: 'HIGH',
+                            sp_total: 21,
+                            features: []
+                        },
+                        {
+                            id: 'EPIC-003',
+                            title: 'User Authentication System',
+                            status: 'PLANNED',
+                            priority: 'HIGH',
+                            sp_total: 21,
+                            features: []
+                        }
+                    ]
+                };
+                */
+
+                renderTree(projectData);
+                setStatus('success', `${projectData.epics.length} epics geladen ✅`);
+            } catch (error) {
+                setStatus('error', `Fout: ${error.message}`);
+                console.error(error);
+            }
+        }
+
+        function renderTree(data) {
+            // Reset to root if no navigation stack
+            if (navigationStack.length === 0) {
+                renderEpics(data.epics);
+            } else {
+                // Render current level from navigation stack
+                const current = navigationStack[navigationStack.length - 1];
+                renderLevel(current.item, current.type);
+            }
+        }
+
+        function renderEpics(epics) {
+            const tree = document.getElementById('tree');
+            tree.innerHTML = '';
+
+            // Update header
+            document.getElementById('sidebarTitle').textContent = 'Epics';
+            document.getElementById('currentItem').classList.remove('visible');
+            document.getElementById('backButton').classList.remove('visible');
+
+            // Render epics
+            epics.forEach(epic => {
+                const item = createDrillDownItem(epic, 'epic', '📊');
+                tree.appendChild(item);
+            });
+        }
+
+        function renderLevel(parentItem, parentType) {
+            const tree = document.getElementById('tree');
+            tree.innerHTML = '';
+
+            let items = [];
+            let levelTitle = '';
+            let childType = '';
+            let icon = '';
+
+            if (parentType === 'epic') {
+                items = parentItem.features || [];
+                levelTitle = 'Features';
+                childType = 'feature';
+                icon = '🎯';
+            } else if (parentType === 'feature') {
+                items = parentItem.stories || [];
+                levelTitle = 'Stories';
+                childType = 'story';
+                icon = '📝';
+            } else if (parentType === 'story') {
+                items = parentItem.tasks || [];
+                levelTitle = 'Tasks';
+                childType = 'task';
+                icon = '✓';
+            }
+
+            // Update header
+            document.getElementById('sidebarTitle').textContent = levelTitle;
+            document.getElementById('currentItem').textContent = parentItem.id + ': ' + parentItem.title;
+            document.getElementById('currentItem').classList.add('visible');
+            document.getElementById('backButton').classList.add('visible');
+
+            // Render items
+            items.forEach(item => {
+                const el = createDrillDownItem(item, childType, icon);
+                tree.appendChild(el);
+            });
+
+            // Show message if no items
+            if (items.length === 0) {
+                tree.innerHTML = '<div style="padding: 1rem; color: #9ca3af; text-align: center;">Geen items</div>';
+            }
+        }
+
+        function createDrillDownItem(item, type, icon) {
+            const el = document.createElement('div');
+            el.className = 'tree-item';
+
+            el.onclick = () => {
+                // Show details in right panel
+                selectItem(item, type);
+
+                // If item has children, prepare to drill down
+                const hasChildren = (
+                    (type === 'epic' && item.features && item.features.length > 0) ||
+                    (type === 'feature' && item.stories && item.stories.length > 0) ||
+                    (type === 'story' && item.tasks && item.tasks.length > 0)
+                );
+
+                if (hasChildren) {
+                    // Add to navigation stack and render next level
+                    navigationStack.push({ item, type });
+                    renderLevel(item, type);
+                }
+            };
+
+            el.innerHTML = `
+                <span class="icon">${icon}</span>
+                <span class="title">${item.title}</span>
+                <span class="badge">${item.status || 'N/A'}</span>
+            `;
+
+            return el;
+        }
+
+        function navigateBack() {
+            if (navigationStack.length === 0) return;
+
+            // Remove current level
+            navigationStack.pop();
+
+            if (navigationStack.length === 0) {
+                // Back to epics
+                renderEpics(projectData.epics);
+            } else {
+                // Render previous level
+                const previous = navigationStack[navigationStack.length - 1];
+                renderLevel(previous.item, previous.type);
+            }
+        }
+
+        function createTreeItem(item, type, icon) {
+            const container = document.createElement('div');
+
+            const el = document.createElement('div');
+            const hasChildren = (
+                (type === 'epic' && item.features && item.features.length > 0) ||
+                (type === 'feature' && item.stories && item.stories.length > 0) ||
+                (type === 'story' && item.tasks && item.tasks.length > 0)
+            );
+
+            el.className = 'tree-item' + (hasChildren ? ' has-children' : '');
+
+            // Single click: show details
+            el.onclick = (e) => {
+                e.stopPropagation();
+                selectItem(item, type);
+            };
+
+            // Double click: expand/collapse
+            el.ondblclick = (e) => {
+                e.stopPropagation();
+                if (hasChildren) {
+                    toggleExpand(container, item, type);
+                }
+            };
+
+            const expandIcon = hasChildren ? '▶' : ' ';
+            el.innerHTML = `
+                <span class="expand-icon">${expandIcon}</span>
+                <span class="icon">${icon}</span>
+                <span class="title">${item.title}</span>
+                <span class="badge">${item.status || 'N/A'}</span>
+            `;
+
+            container.appendChild(el);
+            return container;
+        }
+
+        function toggleExpand(container, item, type) {
+            let childrenEl = container.querySelector('.tree-children');
+
+            if (!childrenEl) {
+                // First time expanding: build children
+                childrenEl = buildTreeChildren(item, type);
+                container.appendChild(childrenEl);
+            }
+
+            // Toggle expanded class
+            const isExpanded = childrenEl.classList.contains('expanded');
+            childrenEl.classList.toggle('expanded');
+
+            // Update expand icon
+            const expandIcon = container.querySelector('.expand-icon');
+            if (expandIcon) {
+                expandIcon.textContent = isExpanded ? '▶' : '▼';
+            }
+        }
+
+        function selectItem(item, type) {
+            // Remove active from all
+            document.querySelectorAll('.tree-item').forEach(el => {
+                el.classList.remove('active');
+            });
+
+            // Add active to clicked
+            event.target.closest('.tree-item').classList.add('active');
+
+            selectedItem = { item, type };
+            renderDetail(item, type);
+        }
+
+        function renderDetail(item, type) {
+            const main = document.getElementById('main');
+
+            const typeEmoji = {
+                epic: '📊',
+                feature: '🎯',
+                story: '📝',
+                task: '✓'
+            };
+
+            let childrenHtml = '';
+            if (type === 'epic' && item.features && item.features.length > 0) {
+                childrenHtml = `
+                    <div class="section">
+                        <h3>Features (klik om door te boren)</h3>
+                        <div class="children-list" id="features-list">
+                            ${item.features.map((f, idx) => `
+                                <div class="child-card" data-index="${idx}">
+                                    <div class="card-title">🎯 ${f.title}</div>
+                                    <div class="card-meta">
+                                        <span>${f.status}</span>
+                                        <span>•</span>
+                                        <span>${f.sp_total || 0} SP</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'feature' && item.stories && item.stories.length > 0) {
+                childrenHtml = `
+                    <div class="section">
+                        <h3>Stories (klik om door te boren)</h3>
+                        <div class="children-list" id="stories-list">
+                            ${item.stories.map((s, idx) => `
+                                <div class="child-card" data-index="${idx}">
+                                    <div class="card-title">📝 ${s.title}</div>
+                                    <div class="card-meta">
+                                        <span>${s.status}</span>
+                                        <span>•</span>
+                                        <span>${s.sp || 0} SP</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'story' && item.tasks && item.tasks.length > 0) {
+                childrenHtml = `
+                    <div class="section">
+                        <h3>Tasks (klik om details te zien)</h3>
+                        <div class="children-list" id="tasks-list">
+                            ${item.tasks.map((t, idx) => `
+                                <div class="child-card" data-index="${idx}">
+                                    <div class="card-title">✓ ${t.title}</div>
+                                    <div class="card-meta">
+                                        <span>${t.status}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            main.innerHTML = `
+                <h2>${typeEmoji[type]} ${item.title}</h2>
+                <div class="meta">
+                    <div class="meta-item">
+                        <span class="label">ID:</span>
+                        <span class="value">${item.id}</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="label">Status:</span>
+                        <span class="value">${item.status || 'N/A'}</span>
+                    </div>
+                    ${item.priority ? `
+                        <div class="meta-item">
+                            <span class="label">Priority:</span>
+                            <span class="value">${item.priority}</span>
+                        </div>
+                    ` : ''}
+                    ${item.sp_total ? `
+                        <div class="meta-item">
+                            <span class="label">Story Points:</span>
+                            <span class="value">${item.sp_total} FP</span>
+                        </div>
+                    ` : ''}
+                    ${item.sp ? `
+                        <div class="meta-item">
+                            <span class="label">Story Points:</span>
+                            <span class="value">${item.sp} SP</span>
+                        </div>
+                    ` : ''}
+                </div>
+
+                ${item.description ? `
+                    <div class="section">
+                        <h3>Beschrijving</h3>
+                        <p>${item.description}</p>
+                    </div>
+                ` : ''}
+
+                ${item.business_value ? `
+                    <div class="section">
+                        <h3>Business Value</h3>
+                        <p>${item.business_value}</p>
+                    </div>
+                ` : ''}
+
+                ${childrenHtml}
+
+                <div class="section">
+                    <h3>Acties</h3>
+                    <button class="btn btn-primary" onclick="editInMarkdown('${item.id}', '${type}')">
+                        ✏️ Bewerk in Markdown
+                    </button>
+                </div>
+            `;
+
+            // Add click handlers for child cards
+            setTimeout(() => {
+                if (type === 'epic' && item.features) {
+                    document.querySelectorAll('#features-list .child-card').forEach((card, idx) => {
+                        // Single click: show details and drill down if has children
+                        card.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const childItem = item.features[idx];
+
+                            // Show details in right panel
+                            selectItem(childItem, 'feature');
+
+                            // Trigger drill-down navigation if has children
+                            if (childItem.stories && childItem.stories.length > 0) {
+                                navigationStack.push({ item: childItem, type: 'feature' });
+                                renderLevel(childItem, 'feature');
+                            }
+                        });
+                    });
+                } else if (type === 'feature' && item.stories) {
+                    document.querySelectorAll('#stories-list .child-card').forEach((card, idx) => {
+                        // Single click: show details and drill down if has children
+                        card.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const childItem = item.stories[idx];
+
+                            // Show details in right panel
+                            selectItem(childItem, 'story');
+
+                            // Trigger drill-down navigation if has children
+                            if (childItem.tasks && childItem.tasks.length > 0) {
+                                navigationStack.push({ item: childItem, type: 'story' });
+                                renderLevel(childItem, 'story');
+                            }
+                        });
+                    });
+                } else if (type === 'story' && item.tasks) {
+                    document.querySelectorAll('#tasks-list .child-card').forEach((card, idx) => {
+                        // Single click: show details (tasks have no children)
+                        card.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const childItem = item.tasks[idx];
+                            selectItem(childItem, 'task');
+                        });
+                    });
+                }
+            }, 10);
+        }
+
+        function selectItemById(id, type) {
+            // Find item in projectData
+            // This is a simple search, in production you'd use a proper search function
+            console.log('Select item:', id, type);
+        }
+
+        function editInMarkdown(id, type) {
+            const paths = {
+                'EPIC-001': 'Projecten/MarkdownTaskManager/EPIC-001/epic.md',
+                'EPIC-002': 'Projecten/MarkdownTaskManager/EPIC-002/epic.md',
+                'EPIC-003': 'Projecten/MarkdownTaskManager/EPIC-003/epic.md',
+                'FEATURE-001': 'Projecten/MarkdownTaskManager/EPIC-001/FEATURE-001/feature.md',
+                'STORY-001': 'Projecten/MarkdownTaskManager/EPIC-001/FEATURE-001/STORY-001/story.md',
+                'TASK-001': 'Projecten/MarkdownTaskManager/EPIC-001/FEATURE-001/STORY-001/TASK-001.md',
+                'TASK-002': 'Projecten/MarkdownTaskManager/EPIC-001/FEATURE-001/STORY-001/TASK-002.md'
+            };
+
+            const path = paths[id];
+
+            if (path) {
+                alert(`Open dit bestand om te bewerken:\n\n${path}\n\nDe file watcher zal automatisch de wijzigingen detecteren!`);
+            } else {
+                alert('Bestand pad niet gevonden');
+            }
+        }
+
+        async function syncToDatabase() {
+            setStatus('loading', 'Syncing naar database...');
+
+            try {
+                // TODO: Call actual sync endpoint
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                setStatus('success', 'Sync voltooid!');
+            } catch (error) {
+                setStatus('error', `Sync fout: ${error.message}`);
+            }
+        }
+
+        function setStatus(type, message) {
+            const status = document.getElementById('status');
+            status.className = `status ${type}`;
+            status.textContent = message;
+
+            if (type !== 'loading') {
+                setTimeout(() => {
+                    status.className = 'status';
+                    status.textContent = '';
+                }, 5000);
+            }
+        }
+
+        // Auto-load on page load
+        window.addEventListener('load', () => {
+            loadProject();
+        });
+    </script>
+</body>
+</html>

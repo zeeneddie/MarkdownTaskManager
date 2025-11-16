@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quality Dashboard - Markdown Task Manager</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: #718096;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-value.excellent { color: #48bb78; }
+        .metric-value.good { color: #4299e1; }
+        .metric-value.warning { color: #ed8936; }
+        .metric-value.critical { color: #f56565; }
+
+        .metric-subtitle {
+            font-size: 0.875rem;
+            color: #a0aec0;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .chart-card h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .findings-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+
+        .findings-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .finding-item {
+            padding: 1rem;
+            border-left: 4px solid #e2e8f0;
+            margin-bottom: 1rem;
+            background: #f7fafc;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .finding-item.critical { border-left-color: #f56565; background: #fff5f5; }
+        .finding-item.high { border-left-color: #ed8936; background: #fffaf0; }
+        .finding-item.medium { border-left-color: #ecc94b; background: #fffff0; }
+        .finding-item.low { border-left-color: #4299e1; background: #ebf8ff; }
+
+        .finding-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .finding-icon {
+            font-size: 1.25rem;
+        }
+
+        .finding-title {
+            font-weight: 600;
+            color: #2d3748;
+            flex: 1;
+        }
+
+        .finding-severity {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .finding-severity.critical { background: #f56565; color: white; }
+        .finding-severity.high { background: #ed8936; color: white; }
+        .finding-severity.medium { background: #ecc94b; color: #744210; }
+        .finding-severity.low { background: #4299e1; color: white; }
+
+        .finding-location {
+            font-size: 0.875rem;
+            color: #718096;
+            margin-bottom: 0.5rem;
+            font-family: 'Monaco', 'Courier New', monospace;
+        }
+
+        .finding-description {
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+        }
+
+        .finding-recommendation {
+            color: #2d3748;
+            background: white;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+            font-size: 0.9rem;
+        }
+
+        .finding-recommendation::before {
+            content: "💡 ";
+        }
+
+        .toolbar {
+            background: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #edf2f7;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .status-badge {
+            margin-left: auto;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-badge.loading {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-badge.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.error {
+            background: #fee;
+            color: #991b1b;
+        }
+
+        .compliance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .compliance-item {
+            background: #f7fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .compliance-score {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .compliance-label {
+            font-size: 0.875rem;
+            color: #718096;
+            font-weight: 500;
+        }
+
+        .timestamp {
+            font-size: 0.875rem;
+            color: #a0aec0;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 Quality Dashboard</h1>
+        <p>Real-time code quality metrics and compliance tracking</p>
+    </div>
+
+    <div class="container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button class="btn btn-primary" onclick="refreshData()">
+                <span>🔄</span> Refresh Data
+            </button>
+            <button class="btn btn-secondary" onclick="exportReport()">
+                <span>📊</span> Export Report
+            </button>
+            <button class="btn btn-secondary" onclick="runQualityCheck()">
+                <span>▶️</span> Run Check
+            </button>
+            <span class="status-badge success" id="statusBadge">✅ Data Updated</span>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Overall Quality Score</div>
+                <div class="metric-value excellent" id="overallScore">85%</div>
+                <div class="metric-subtitle">+12% from last week</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Total Violations</div>
+                <div class="metric-value good" id="totalViolations">12</div>
+                <div class="metric-subtitle">-8 from last week</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Critical Issues</div>
+                <div class="metric-value critical" id="criticalIssues">0</div>
+                <div class="metric-subtitle">All clear! 🎉</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Files Checked</div>
+                <div class="metric-value" id="filesChecked">147</div>
+                <div class="metric-subtitle">Across all modules</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <!-- Category Compliance Chart -->
+            <div class="chart-card">
+                <h2>📊 Category Compliance Scores</h2>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Violation Severity Chart -->
+            <div class="chart-card">
+                <h2>⚠️ Violations by Severity</h2>
+                <div class="chart-container">
+                    <canvas id="severityChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Historical Trend Chart -->
+            <div class="chart-card">
+                <h2>📈 Quality Trend (Last 7 Days)</h2>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Best Practice Coverage -->
+            <div class="chart-card">
+                <h2>✨ Best Practice Coverage</h2>
+                <div class="chart-container">
+                    <canvas id="coverageChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compliance Scorecards -->
+        <div class="findings-section">
+            <h2>📋 Compliance Scorecards</h2>
+            <div class="compliance-grid" id="complianceGrid">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Recent Findings -->
+        <div class="findings-section">
+            <h2>🔍 Recent Findings</h2>
+            <div id="findingsList">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="timestamp" id="lastUpdated">
+            Last updated: Loading...
+        </div>
+    </div>
+
+    <script>
+        // Sample data (in production, this would come from QualityGateService API)
+        const sampleData = {
+            overallScore: 85,
+            totalViolations: 12,
+            criticalViolations: 0,
+            highViolations: 2,
+            mediumViolations: 6,
+            lowViolations: 4,
+            filesChecked: 147,
+            categories: {
+                'SIG-TOP-10': 92,
+                'SOLID': 88,
+                'GRASP': 85,
+                'TDD': 78,
+                'Testing Patterns': 82,
+                'Design Patterns': 90,
+                'Clean Code': 86,
+                'Law of Demeter': 95
+            },
+            historicalData: [
+                { date: '2025-11-08', score: 68 },
+                { date: '2025-11-09', score: 72 },
+                { date: '2025-11-10', score: 75 },
+                { date: '2025-11-11', score: 78 },
+                { date: '2025-11-12', score: 80 },
+                { date: '2025-11-13', score: 83 },
+                { date: '2025-11-15', score: 85 }
+            ],
+            findings: [
+                {
+                    severity: 'high',
+                    title: 'High Cyclomatic Complexity',
+                    location: 'src/services/OrderProcessor.ts:45-89',
+                    description: 'Function processOrder has complexity of 12 (threshold: 10)',
+                    recommendation: 'Break down into smaller functions using Extract Method pattern',
+                    category: 'SIG-TOP-10'
+                },
+                {
+                    severity: 'high',
+                    title: 'Single Responsibility Principle violation',
+                    location: 'src/services/UserService.ts:12-156',
+                    description: 'Class UserService handles multiple responsibilities: database, validation, email, logging',
+                    recommendation: 'Split into UserRepository, UserValidator, EmailService',
+                    category: 'SOLID'
+                },
+                {
+                    severity: 'medium',
+                    title: 'Missing AAA Pattern structure',
+                    location: 'tests/UserService.test.ts:45-78',
+                    description: 'Test lacks clear Arrange-Act-Assert separation',
+                    recommendation: 'Add comments to mark test phases: // Arrange, // Act, // Assert',
+                    category: 'Testing Patterns'
+                },
+                {
+                    severity: 'medium',
+                    title: 'Factory Pattern missing',
+                    location: 'src/notification/NotificationService.ts:25-45',
+                    description: 'Direct object instantiation creates tight coupling',
+                    recommendation: 'Implement NotifierFactory pattern',
+                    category: 'Design Patterns'
+                },
+                {
+                    severity: 'medium',
+                    title: 'Magic numbers detected',
+                    location: 'src/utils/pagination.ts:15-28',
+                    description: 'Hardcoded values 10, 20, 50 used without explanation',
+                    recommendation: 'Extract to named constants: DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE',
+                    category: 'Clean Code'
+                },
+                {
+                    severity: 'low',
+                    title: 'Method call chain too long',
+                    location: 'src/controllers/UserController.ts:67',
+                    description: 'Call chain: user.profile.settings.preferences.theme violates Law of Demeter',
+                    recommendation: 'Add getUserTheme() method to User class',
+                    category: 'Law of Demeter'
+                }
+            ]
+        };
+
+        // Initialize charts
+        let categoryChart, severityChart, trendChart, coverageChart;
+
+        function initCharts() {
+            // Category Compliance Chart (Radar)
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            categoryChart = new Chart(categoryCtx, {
+                type: 'radar',
+                data: {
+                    labels: Object.keys(sampleData.categories),
+                    datasets: [{
+                        label: 'Compliance Score',
+                        data: Object.values(sampleData.categories),
+                        backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(102, 126, 234, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(102, 126, 234, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 20
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            // Severity Chart (Doughnut)
+            const severityCtx = document.getElementById('severityChart').getContext('2d');
+            severityChart = new Chart(severityCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Critical', 'High', 'Medium', 'Low'],
+                    datasets: [{
+                        data: [
+                            sampleData.criticalViolations,
+                            sampleData.highViolations,
+                            sampleData.mediumViolations,
+                            sampleData.lowViolations
+                        ],
+                        backgroundColor: [
+                            'rgba(245, 101, 101, 0.8)',
+                            'rgba(237, 137, 54, 0.8)',
+                            'rgba(236, 201, 75, 0.8)',
+                            'rgba(66, 153, 225, 0.8)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Trend Chart (Line)
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: sampleData.historicalData.map(d => d.date),
+                    datasets: [{
+                        label: 'Quality Score',
+                        data: sampleData.historicalData.map(d => d.score),
+                        borderColor: 'rgba(72, 187, 120, 1)',
+                        backgroundColor: 'rgba(72, 187, 120, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            // Coverage Chart (Bar)
+            const coverageCtx = document.getElementById('coverageChart').getContext('2d');
+            const checksEnabled = 28;
+            const checksTotal = 28;
+            coverageChart = new Chart(coverageCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Best Practice Checks'],
+                    datasets: [
+                        {
+                            label: 'Enabled',
+                            data: [checksEnabled],
+                            backgroundColor: 'rgba(72, 187, 120, 0.8)'
+                        },
+                        {
+                            label: 'Total Available',
+                            data: [checksTotal],
+                            backgroundColor: 'rgba(226, 232, 240, 0.8)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 30
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderComplianceGrid() {
+            const grid = document.getElementById('complianceGrid');
+            grid.innerHTML = '';
+
+            Object.entries(sampleData.categories).forEach(([category, score]) => {
+                const item = document.createElement('div');
+                item.className = 'compliance-item';
+
+                let scoreClass = 'excellent';
+                if (score < 90) scoreClass = 'good';
+                if (score < 80) scoreClass = 'warning';
+                if (score < 70) scoreClass = 'critical';
+
+                item.innerHTML = `
+                    <div class="compliance-score ${scoreClass}">${score}%</div>
+                    <div class="compliance-label">${category}</div>
+                `;
+                grid.appendChild(item);
+            });
+        }
+
+        function renderFindings() {
+            const list = document.getElementById('findingsList');
+            list.innerHTML = '';
+
+            if (sampleData.findings.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #a0aec0; padding: 2rem;">No violations found! 🎉</p>';
+                return;
+            }
+
+            sampleData.findings.forEach(finding => {
+                const item = document.createElement('div');
+                item.className = `finding-item ${finding.severity}`;
+
+                const icon = finding.severity === 'critical' ? '🚨' :
+                            finding.severity === 'high' ? '❌' :
+                            finding.severity === 'medium' ? '⚠️' : 'ℹ️';
+
+                item.innerHTML = `
+                    <div class="finding-header">
+                        <span class="finding-icon">${icon}</span>
+                        <span class="finding-title">${finding.title}</span>
+                        <span class="finding-severity ${finding.severity}">${finding.severity}</span>
+                    </div>
+                    <div class="finding-location">${finding.location}</div>
+                    <div class="finding-description">${finding.description}</div>
+                    <div class="finding-recommendation">${finding.recommendation}</div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function updateMetrics() {
+            document.getElementById('overallScore').textContent = sampleData.overallScore + '%';
+            document.getElementById('totalViolations').textContent = sampleData.totalViolations;
+            document.getElementById('criticalIssues').textContent = sampleData.criticalViolations;
+            document.getElementById('filesChecked').textContent = sampleData.filesChecked;
+
+            // Update score color
+            const scoreElement = document.getElementById('overallScore');
+            scoreElement.className = 'metric-value';
+            if (sampleData.overallScore >= 90) scoreElement.classList.add('excellent');
+            else if (sampleData.overallScore >= 80) scoreElement.classList.add('good');
+            else if (sampleData.overallScore >= 70) scoreElement.classList.add('warning');
+            else scoreElement.classList.add('critical');
+
+            document.getElementById('lastUpdated').textContent =
+                `Last updated: ${new Date().toLocaleString()}`;
+        }
+
+        function refreshData() {
+            const badge = document.getElementById('statusBadge');
+            badge.className = 'status-badge loading';
+            badge.textContent = '⏳ Refreshing...';
+
+            // Simulate API call
+            setTimeout(() => {
+                updateMetrics();
+                renderComplianceGrid();
+                renderFindings();
+
+                badge.className = 'status-badge success';
+                badge.textContent = '✅ Data Updated';
+            }, 1000);
+        }
+
+        function exportReport() {
+            alert('📊 Exporting quality report as PDF...\n\nThis feature will generate a comprehensive PDF report with all metrics, charts, and findings.');
+        }
+
+        function runQualityCheck() {
+            const badge = document.getElementById('statusBadge');
+            badge.className = 'status-badge loading';
+            badge.textContent = '⏳ Running checks...';
+
+            alert('▶️ Running quality checks...\n\nThis will execute: npm run quality:check\n\nResults will be displayed when complete.');
+
+            setTimeout(() => {
+                badge.className = 'status-badge success';
+                badge.textContent = '✅ Check Complete';
+            }, 2000);
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            initCharts();
+            updateMetrics();
+            renderComplianceGrid();
+            renderFindings();
+        });
+    </script>
+</body>
+</html>
