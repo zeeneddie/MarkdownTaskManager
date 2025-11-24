@@ -62,8 +62,8 @@ class CategoryConfigSchema(BaseModel):
     category_id: str
     category_name: Optional[str] = None
     enabled: bool = True
-    target_score: int = 80
-    weight: float = 1.0
+    target_score: int = Field(default=80, ge=0, le=100, description="Target quality score 0-100")
+    weight: float = Field(default=1.0, ge=0.0, le=10.0, description="Category weight 0-10")
     checks: Optional[List[CheckConfigSchema]] = []
 
     class Config:
@@ -74,11 +74,11 @@ class WorkflowRulesSchema(BaseModel):
     """Workflow-specific rules"""
     workflow_type: str
     blocking_severities: List[str] = ["critical"]
-    required_coverage: int = 80
+    required_coverage: int = Field(default=80, ge=0, le=100, description="Required test coverage 0-100")
     e2e_required: bool = False
     regression_required: bool = False
     documentation_required: bool = False
-    max_iterations: int = 3
+    max_iterations: int = Field(default=3, ge=1, le=10, description="Max validation iterations 1-10")
     stop_on_first_failure: bool = True
 
     class Config:
@@ -101,8 +101,8 @@ class FullConfigSchema(BaseModel):
 class CategoryUpdateSchema(BaseModel):
     """Update schema for category"""
     enabled: Optional[bool] = None
-    target_score: Optional[int] = None
-    weight: Optional[float] = None
+    target_score: Optional[int] = Field(default=None, ge=0, le=100)
+    weight: Optional[float] = Field(default=None, ge=0.0, le=10.0)
 
 
 class CheckUpdateSchema(BaseModel):
@@ -115,11 +115,11 @@ class CheckUpdateSchema(BaseModel):
 class WorkflowUpdateSchema(BaseModel):
     """Update schema for workflow rules"""
     blocking_severities: Optional[List[str]] = None
-    required_coverage: Optional[int] = None
+    required_coverage: Optional[int] = Field(default=None, ge=0, le=100)
     e2e_required: Optional[bool] = None
     regression_required: Optional[bool] = None
     documentation_required: Optional[bool] = None
-    max_iterations: Optional[int] = None
+    max_iterations: Optional[int] = Field(default=None, ge=1, le=10)
     stop_on_first_failure: Optional[bool] = None
 
 
