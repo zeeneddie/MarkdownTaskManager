@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technical Debt Dashboard - Basil Integration</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .nav {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .nav a {
+            color: #e2e8f0;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: #334155;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .nav a:hover {
+            background: #475569;
+        }
+
+        .nav a.active {
+            background: #3b82f6;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Health Score Section */
+        .health-section {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .health-score-card {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            border: 1px solid #334155;
+        }
+
+        .health-score {
+            font-size: 5rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+        }
+
+        .health-score.healthy { color: #22c55e; }
+        .health-score.warning { color: #f59e0b; }
+        .health-score.degraded { color: #f97316; }
+        .health-score.critical { color: #ef4444; }
+
+        .health-label {
+            font-size: 1.25rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1.5rem;
+        }
+
+        .health-factors {
+            text-align: left;
+        }
+
+        .factor {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .factor:last-child {
+            border-bottom: none;
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        .metric-card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .metric-delta {
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .delta-positive { color: #22c55e; }
+        .delta-negative { color: #ef4444; }
+        .delta-neutral { color: #94a3b8; }
+
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+        }
+
+        .chart-card h3 {
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+            color: #f1f5f9;
+        }
+
+        .chart-container {
+            height: 250px;
+        }
+
+        /* Debt Items Table */
+        .table-section {
+            background: #1e293b;
+            border-radius: 16px;
+            border: 1px solid #334155;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .table-header h3 {
+            font-size: 1.25rem;
+        }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .filter-select {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 1rem 1.5rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            background: #0f172a;
+        }
+
+        td {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #334155;
+        }
+
+        .severity-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .severity-critical { background: #7f1d1d; color: #fca5a5; }
+        .severity-high { background: #7c2d12; color: #fdba74; }
+        .severity-medium { background: #78350f; color: #fcd34d; }
+        .severity-low { background: #14532d; color: #86efac; }
+
+        .type-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            background: #334155;
+        }
+
+        .file-path {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+
+        .roi-value {
+            font-weight: 600;
+        }
+
+        .roi-high { color: #22c55e; }
+        .roi-medium { color: #f59e0b; }
+        .roi-low { color: #94a3b8; }
+
+        /* Remediation Plans */
+        .plans-section {
+            margin-bottom: 2rem;
+        }
+
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .plan-card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+        }
+
+        .plan-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .plan-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .plan-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-draft { background: #334155; color: #94a3b8; }
+        .status-active { background: #14532d; color: #86efac; }
+        .status-completed { background: #1e3a5f; color: #93c5fd; }
+
+        .progress-bar {
+            height: 8px;
+            background: #334155;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #22c55e);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .plan-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .plan-stat-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .plan-stat-label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 4rem;
+            color: #94a3b8;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #334155;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Recommendations */
+        .recommendations {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+        }
+
+        .recommendation {
+            display: flex;
+            align-items: start;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .recommendation:last-child {
+            border-bottom: none;
+        }
+
+        .recommendation-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .toast.success { border-color: #22c55e; }
+        .toast.error { border-color: #ef4444; }
+        .toast.show { display: block; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Technical Debt Dashboard</h1>
+        <div class="nav">
+            <a href="../index.html">🏠 Hub</a>
+            <a href="agent-dashboard.html">🤖 Agents</a>
+            <a href="maintenance-scheduler.html">🔧 Maintenance</a>
+            <a href="technical-debt-dashboard.html" class="active">💳 Tech Debt</a>
+            <a href="quality-dashboard.html">✅ Quality</a>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="loadDashboardData()">
+                Refresh
+            </button>
+            <button class="btn btn-primary" onclick="runScan()">
+                Run Scan
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Health Score Section -->
+        <section class="health-section">
+            <div class="health-score-card">
+                <div id="health-score" class="health-score healthy">--</div>
+                <div class="health-label" id="health-status">Loading...</div>
+                <div class="health-factors" id="health-factors">
+                    <div class="factor">
+                        <span>Debt Ratio</span>
+                        <span id="factor-debt-ratio">--</span>
+                    </div>
+                    <div class="factor">
+                        <span>Critical Issues</span>
+                        <span id="factor-critical">--</span>
+                    </div>
+                    <div class="factor">
+                        <span>Security Issues</span>
+                        <span id="factor-security">--</span>
+                    </div>
+                </div>
+            </div>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Total Debt Items</div>
+                    <div class="metric-value" id="total-items">--</div>
+                    <div class="metric-delta" id="items-delta"></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Principal (hours)</div>
+                    <div class="metric-value" id="total-principal">--</div>
+                    <div class="metric-delta" id="principal-delta"></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Debt Ratio</div>
+                    <div class="metric-value" id="debt-ratio">--</div>
+                    <div class="metric-delta" id="ratio-delta"></div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Interest/Sprint</div>
+                    <div class="metric-value" id="total-interest">--</div>
+                    <div class="metric-delta delta-neutral">hours lost per sprint</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Section -->
+        <section class="charts-section">
+            <div class="chart-card">
+                <h3>Debt by Type</h3>
+                <div class="chart-container">
+                    <canvas id="debt-by-type-chart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>Debt Trend (30 days)</h3>
+                <div class="chart-container">
+                    <canvas id="debt-trend-chart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recommendations -->
+        <section class="recommendations" id="recommendations-section">
+            <h3 style="margin-bottom: 1rem;">Recommendations</h3>
+            <div id="recommendations-list">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading recommendations...
+                </div>
+            </div>
+        </section>
+
+        <!-- Remediation Plans -->
+        <section class="plans-section" style="margin-top: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3>Remediation Plans</h3>
+                <button class="btn btn-secondary" onclick="showCreatePlanModal()">
+                    Create Plan
+                </button>
+            </div>
+            <div class="plans-grid" id="plans-grid">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading plans...
+                </div>
+            </div>
+        </section>
+
+        <!-- Debt Items Table -->
+        <section class="table-section">
+            <div class="table-header">
+                <h3>Technical Debt Items</h3>
+                <div class="filters">
+                    <select class="filter-select" id="filter-severity" onchange="filterItems()">
+                        <option value="">All Severities</option>
+                        <option value="critical">Critical</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                    <select class="filter-select" id="filter-type" onchange="filterItems()">
+                        <option value="">All Types</option>
+                        <option value="code_smell">Code Smell</option>
+                        <option value="security">Security</option>
+                        <option value="performance">Performance</option>
+                        <option value="test_gap">Test Gap</option>
+                        <option value="documentation">Documentation</option>
+                    </select>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Severity</th>
+                        <th>Location</th>
+                        <th>Principal</th>
+                        <th>ROI</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="debt-items-table">
+                    <tr>
+                        <td colspan="7" class="loading">
+                            <div class="spinner"></div>
+                            Loading debt items...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_BASE = '/api/quality';
+        let debtByTypeChart = null;
+        let debtTrendChart = null;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboardData();
+        });
+
+        async function loadDashboardData() {
+            try {
+                await Promise.all([
+                    loadHealthData(),
+                    loadSummary(),
+                    loadTrends(),
+                    loadDebtByType(),
+                    loadPlans(),
+                    loadDebtItems()
+                ]);
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                showToast('Failed to load dashboard data', 'error');
+            }
+        }
+
+        async function loadHealthData() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+
+                const scoreEl = document.getElementById('health-score');
+                scoreEl.textContent = data.score;
+                scoreEl.className = `health-score ${data.status}`;
+
+                document.getElementById('health-status').textContent = data.status.toUpperCase();
+
+                document.getElementById('factor-debt-ratio').textContent =
+                    `${data.factors.debt_ratio.toFixed(1)}%`;
+                document.getElementById('factor-critical').textContent =
+                    data.factors.critical_issues;
+                document.getElementById('factor-security').textContent =
+                    data.factors.security_issues;
+
+                // Recommendations
+                const recList = document.getElementById('recommendations-list');
+                recList.innerHTML = data.recommendations.map(rec => `
+                    <div class="recommendation">
+                        <span>${rec}</span>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading health:', error);
+            }
+        }
+
+        async function loadSummary() {
+            try {
+                const response = await fetch(`${API_BASE}/summary`);
+                const data = await response.json();
+
+                document.getElementById('total-items').textContent = data.total_items;
+                document.getElementById('total-principal').textContent =
+                    data.total_principal.toFixed(1);
+                document.getElementById('debt-ratio').textContent =
+                    `${data.debt_ratio.toFixed(1)}%`;
+                document.getElementById('total-interest').textContent =
+                    data.total_interest.toFixed(1);
+
+                // Deltas
+                const itemsDelta = data.items_delta;
+                const itemsDeltaEl = document.getElementById('items-delta');
+                itemsDeltaEl.textContent = itemsDelta >= 0 ? `+${itemsDelta}` : itemsDelta;
+                itemsDeltaEl.className = `metric-delta ${itemsDelta <= 0 ? 'delta-positive' : 'delta-negative'}`;
+
+                const ratioDelta = data.ratio_delta || 0;
+                const ratioDeltaEl = document.getElementById('ratio-delta');
+                ratioDeltaEl.textContent = ratioDelta >= 0 ? `+${ratioDelta.toFixed(1)}%` : `${ratioDelta.toFixed(1)}%`;
+                ratioDeltaEl.className = `metric-delta ${ratioDelta <= 0 ? 'delta-positive' : 'delta-negative'}`;
+            } catch (error) {
+                console.error('Error loading summary:', error);
+            }
+        }
+
+        async function loadTrends() {
+            try {
+                const response = await fetch(`${API_BASE}/trends?days=30`);
+                const data = await response.json();
+
+                const ctx = document.getElementById('debt-trend-chart').getContext('2d');
+
+                if (debtTrendChart) {
+                    debtTrendChart.destroy();
+                }
+
+                debtTrendChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(d => new Date(d.timestamp).toLocaleDateString()),
+                        datasets: [{
+                            label: 'Debt Ratio (%)',
+                            data: data.map(d => d.debt_ratio),
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: '#334155' },
+                                ticks: { color: '#94a3b8' }
+                            },
+                            y: {
+                                grid: { color: '#334155' },
+                                ticks: { color: '#94a3b8' }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading trends:', error);
+            }
+        }
+
+        async function loadDebtByType() {
+            try {
+                const response = await fetch(`${API_BASE}/stats/by-type`);
+                const data = await response.json();
+
+                const ctx = document.getElementById('debt-by-type-chart').getContext('2d');
+
+                if (debtByTypeChart) {
+                    debtByTypeChart.destroy();
+                }
+
+                const labels = Object.keys(data);
+                const counts = labels.map(l => data[l].count);
+
+                debtByTypeChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels.map(l => l.replace('_', ' ').toUpperCase()),
+                        datasets: [{
+                            data: counts,
+                            backgroundColor: [
+                                '#ef4444', '#f59e0b', '#22c55e', '#3b82f6',
+                                '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: { color: '#e2e8f0' }
+                            }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading stats by type:', error);
+            }
+        }
+
+        async function loadPlans() {
+            try {
+                const response = await fetch(`${API_BASE}/plans`);
+                const plans = await response.json();
+
+                const plansGrid = document.getElementById('plans-grid');
+
+                if (plans.length === 0) {
+                    plansGrid.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; color: #94a3b8;">
+                            No remediation plans yet. Create one to get started.
+                        </div>
+                    `;
+                    return;
+                }
+
+                plansGrid.innerHTML = plans.map(plan => `
+                    <div class="plan-card">
+                        <div class="plan-header">
+                            <div class="plan-name">${plan.name}</div>
+                            <span class="plan-status status-${plan.status}">${plan.status}</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${plan.progress}%"></div>
+                        </div>
+                        <div class="plan-stats">
+                            <div>
+                                <div class="plan-stat-value">${plan.items_completed}/${plan.total_items}</div>
+                                <div class="plan-stat-label">Items</div>
+                            </div>
+                            <div>
+                                <div class="plan-stat-value">${plan.total_effort_hours.toFixed(0)}h</div>
+                                <div class="plan-stat-label">Effort</div>
+                            </div>
+                            <div>
+                                <div class="plan-stat-value">${plan.roi.toFixed(1)}x</div>
+                                <div class="plan-stat-label">ROI</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading plans:', error);
+            }
+        }
+
+        async function loadDebtItems() {
+            const severity = document.getElementById('filter-severity').value;
+            const type = document.getElementById('filter-type').value;
+
+            let url = `${API_BASE}/items?limit=20`;
+            if (severity) url += `&severity=${severity}`;
+            if (type) url += `&debt_type=${type}`;
+
+            try {
+                const response = await fetch(url);
+                const items = await response.json();
+
+                const tableBody = document.getElementById('debt-items-table');
+
+                if (items.length === 0) {
+                    tableBody.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: #94a3b8; padding: 2rem;">
+                                No debt items found
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tableBody.innerHTML = items.map(item => `
+                    <tr>
+                        <td>
+                            <div style="font-weight: 500;">${item.title}</div>
+                            <div style="font-size: 0.75rem; color: #94a3b8;">${item.detection_rule || ''}</div>
+                        </td>
+                        <td><span class="type-badge">${item.debt_type}</span></td>
+                        <td><span class="severity-badge severity-${item.severity}">${item.severity}</span></td>
+                        <td>
+                            <span class="file-path">${item.file_path || 'N/A'}</span>
+                            ${item.line_start ? `<span style="color: #64748b;">:${item.line_start}</span>` : ''}
+                        </td>
+                        <td>${item.principal.toFixed(1)}h</td>
+                        <td>
+                            <span class="roi-value ${getRoiClass(item.roi)}">${item.roi.toFixed(2)}x</span>
+                        </td>
+                        <td>
+                            <button class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.75rem;"
+                                    onclick="resolveItem(${item.id})">
+                                Resolve
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading items:', error);
+            }
+        }
+
+        function getRoiClass(roi) {
+            if (roi >= 1.5) return 'roi-high';
+            if (roi >= 0.5) return 'roi-medium';
+            return 'roi-low';
+        }
+
+        function filterItems() {
+            loadDebtItems();
+        }
+
+        async function runScan() {
+            showToast('Starting scan...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/scan`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        scanners: ['ruff', 'bandit'],
+                        background: false
+                    })
+                });
+
+                const result = await response.json();
+                showToast(`Scan complete: ${result.total_items} items found`, 'success');
+                loadDashboardData();
+            } catch (error) {
+                showToast('Scan failed: ' + error.message, 'error');
+            }
+        }
+
+        async function resolveItem(itemId) {
+            if (!confirm('Mark this item as resolved?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/items/${itemId}/resolve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        resolution_type: 'fix',
+                        resolved_by_human: 'dashboard_user',
+                        notes: 'Resolved via dashboard'
+                    })
+                });
+
+                if (response.ok) {
+                    showToast('Item resolved successfully', 'success');
+                    loadDebtItems();
+                    loadSummary();
+                }
+            } catch (error) {
+                showToast('Failed to resolve item', 'error');
+            }
+        }
+
+        function showCreatePlanModal() {
+            const name = prompt('Enter plan name:');
+            if (!name) return;
+
+            createPlan(name);
+        }
+
+        async function createPlan(name) {
+            try {
+                const response = await fetch(`${API_BASE}/plans`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        max_effort_hours: 40
+                    })
+                });
+
+                if (response.ok) {
+                    showToast('Plan created successfully', 'success');
+                    loadPlans();
+                }
+            } catch (error) {
+                showToast('Failed to create plan', 'error');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast show ${type}`;
+
+            setTimeout(() => {
+                toast.className = 'toast';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

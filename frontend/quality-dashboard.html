@@ -37,6 +37,30 @@
             font-size: 1.1rem;
         }
 
+        .nav {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .nav a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .nav a.active {
+            background: rgba(255,255,255,0.4);
+        }
+
         .container {
             max-width: 1600px;
             margin: 2rem auto;
@@ -314,6 +338,14 @@
     <div class="header">
         <h1>🎯 Quality Dashboard</h1>
         <p>Real-time code quality metrics and compliance tracking</p>
+        <div class="nav">
+            <a href="../index.html">🏠 Hub</a>
+            <a href="agent-dashboard.html">🤖 Agents</a>
+            <a href="estimation-dashboard.html">📊 Estimation</a>
+            <a href="quality-dashboard.html" class="active">✅ Quality</a>
+            <a href="spec-kit-wizard.html">📝 Spec-Kit</a>
+            <a href="sprint-planning.html">🎯 Sprint</a>
+        </div>
     </div>
 
     <div class="container">

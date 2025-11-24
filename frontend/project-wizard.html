@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Wizard - Markdown Task Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .header .nav {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .header .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.2s;
+        }
+
+        .header .nav a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Wizard Stepper */
+        .stepper {
+            display: flex;
+            justify-content: space-between;
+            padding: 30px 50px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .step {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 60%;
+            width: 80%;
+            height: 2px;
+            background: #dee2e6;
+            z-index: 0;
+        }
+
+        .step.active:not(:last-child)::after {
+            background: #11998e;
+        }
+
+        .step.completed:not(:last-child)::after {
+            background: #28a745;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #dee2e6;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step.active .step-number {
+            background: #11998e;
+            color: white;
+        }
+
+        .step.completed .step-number {
+            background: #28a745;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 14px;
+            color: #6c757d;
+            text-align: center;
+        }
+
+        .step.active .step-label {
+            color: #11998e;
+            font-weight: 600;
+        }
+
+        /* Content Area */
+        .content {
+            padding: 40px;
+            min-height: 500px;
+        }
+
+        .stage {
+            display: none;
+        }
+
+        .stage.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stage-title {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stage-description {
+            color: #6c757d;
+            margin-bottom: 30px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .form-group label .required {
+            color: #dc3545;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="url"],
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #11998e;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-group .hint {
+            font-size: 13px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        /* Template Cards */
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .template-card {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .template-card:hover {
+            border-color: #11998e;
+            transform: translateY(-2px);
+        }
+
+        .template-card.selected {
+            border-color: #11998e;
+            background: #e8f5f3;
+        }
+
+        .template-card .icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .template-card h4 {
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        .template-card p {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        /* Tech Stack Selection */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tech-option {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .tech-option:hover {
+            border-color: #11998e;
+        }
+
+        .tech-option.selected {
+            border-color: #11998e;
+            background: #e8f5f3;
+        }
+
+        .tech-option .icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .tech-option span {
+            font-size: 13px;
+            color: #2c3e50;
+        }
+
+        /* Team Members */
+        .team-list {
+            margin-bottom: 20px;
+        }
+
+        .team-member {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .team-member input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+        }
+
+        .team-member select {
+            padding: 8px 12px;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+        }
+
+        .team-member .remove-btn {
+            padding: 8px 12px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .add-member-btn {
+            padding: 10px 20px;
+            background: #11998e;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .add-member-btn:hover {
+            background: #0e8577;
+        }
+
+        /* Workflow Selection */
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .workflow-card {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .workflow-card:hover {
+            border-color: #11998e;
+        }
+
+        .workflow-card.selected {
+            border-color: #11998e;
+            background: #e8f5f3;
+        }
+
+        .workflow-card h4 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .workflow-card p {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+
+        .workflow-card .agents {
+            font-size: 12px;
+            color: #11998e;
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 40px;
+            border-top: 2px solid #e9ecef;
+            background: #f8f9fa;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-secondary {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .btn-secondary:hover {
+            background: #dee2e6;
+        }
+
+        .btn-primary {
+            background: #11998e;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0e8577;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Summary Stage */
+        .summary-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .summary-section h4 {
+            color: #11998e;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-item .label {
+            color: #6c757d;
+        }
+
+        .summary-item .value {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success {
+            background: #28a745;
+        }
+
+        .toast.error {
+            background: #dc3545;
+        }
+
+        .toast.info {
+            background: #17a2b8;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e9ecef;
+            border-top-color: #11998e;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .stepper {
+                padding: 20px;
+            }
+
+            .step-label {
+                display: none;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .template-grid,
+            .workflow-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Project Wizard</h1>
+            <p>Create a new project with AI-powered configuration in 4 simple steps</p>
+            <div class="nav">
+                <a href="../index.html">🏠 Hub</a>
+                <a href="agent-dashboard.html">🤖 Agents</a>
+                <a href="estimation-dashboard.html">📊 Estimation</a>
+                <a href="quality-dashboard.html">✅ Quality</a>
+                <a href="spec-kit-wizard.html">📝 Spec-Kit</a>
+                <a href="project-wizard.html" class="active">🧙 Wizard</a>
+            </div>
+        </div>
+
+        <!-- Stepper -->
+        <div class="stepper">
+            <div class="step active" data-step="1">
+                <div class="step-number">1</div>
+                <div class="step-label">Project Info</div>
+            </div>
+            <div class="step" data-step="2">
+                <div class="step-number">2</div>
+                <div class="step-label">Tech Stack</div>
+            </div>
+            <div class="step" data-step="3">
+                <div class="step-number">3</div>
+                <div class="step-label">Team</div>
+            </div>
+            <div class="step" data-step="4">
+                <div class="step-number">4</div>
+                <div class="step-label">Workflow</div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Stage 1: Project Info -->
+            <div class="stage active" id="stage1">
+                <h2 class="stage-title">Project Information</h2>
+                <p class="stage-description">Enter basic information about your project</p>
+
+                <div class="form-group">
+                    <label>Project Template</label>
+                    <div class="template-grid">
+                        <div class="template-card selected" data-template="web-app">
+                            <div class="icon">🌐</div>
+                            <h4>Web Application</h4>
+                            <p>Full-stack web application with frontend and backend</p>
+                        </div>
+                        <div class="template-card" data-template="api-service">
+                            <div class="icon">🔌</div>
+                            <h4>API Service</h4>
+                            <p>RESTful or GraphQL API backend service</p>
+                        </div>
+                        <div class="template-card" data-template="migration">
+                            <div class="icon">📦</div>
+                            <h4>Migration Project</h4>
+                            <p>Legacy system modernization project</p>
+                        </div>
+                        <div class="template-card" data-template="custom">
+                            <div class="icon">⚙️</div>
+                            <h4>Custom</h4>
+                            <p>Start from scratch with custom configuration</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Project Name <span class="required">*</span></label>
+                    <input type="text" id="projectName" placeholder="e.g., Customer Portal v2" required>
+                    <div class="hint">A unique name for your project</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Description <span class="required">*</span></label>
+                    <textarea id="projectDescription" placeholder="Describe the project goals, scope, and main features..."></textarea>
+                    <div class="hint">Brief description of what the project aims to achieve</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Repository URL</label>
+                    <input type="url" id="repoUrl" placeholder="https://github.com/org/repo">
+                    <div class="hint">Link to the source code repository (optional)</div>
+                </div>
+            </div>
+
+            <!-- Stage 2: Tech Stack -->
+            <div class="stage" id="stage2">
+                <h2 class="stage-title">Tech Stack Selection</h2>
+                <p class="stage-description">Select the technologies used in this project</p>
+
+                <div class="form-group">
+                    <label>Primary Language <span class="required">*</span></label>
+                    <div class="tech-grid" id="languageGrid">
+                        <div class="tech-option selected" data-value="typescript">
+                            <div class="icon">📘</div>
+                            <span>TypeScript</span>
+                        </div>
+                        <div class="tech-option" data-value="python">
+                            <div class="icon">🐍</div>
+                            <span>Python</span>
+                        </div>
+                        <div class="tech-option" data-value="csharp">
+                            <div class="icon">🔷</div>
+                            <span>C#</span>
+                        </div>
+                        <div class="tech-option" data-value="java">
+                            <div class="icon">☕</div>
+                            <span>Java</span>
+                        </div>
+                        <div class="tech-option" data-value="go">
+                            <div class="icon">🔹</div>
+                            <span>Go</span>
+                        </div>
+                        <div class="tech-option" data-value="rust">
+                            <div class="icon">🦀</div>
+                            <span>Rust</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Framework</label>
+                    <div class="tech-grid" id="frameworkGrid">
+                        <div class="tech-option" data-value="react">
+                            <div class="icon">⚛️</div>
+                            <span>React</span>
+                        </div>
+                        <div class="tech-option" data-value="nextjs">
+                            <div class="icon">▲</div>
+                            <span>Next.js</span>
+                        </div>
+                        <div class="tech-option" data-value="fastapi">
+                            <div class="icon">⚡</div>
+                            <span>FastAPI</span>
+                        </div>
+                        <div class="tech-option" data-value="dotnet">
+                            <div class="icon">🔵</div>
+                            <span>.NET Core</span>
+                        </div>
+                        <div class="tech-option" data-value="express">
+                            <div class="icon">🚂</div>
+                            <span>Express</span>
+                        </div>
+                        <div class="tech-option" data-value="django">
+                            <div class="icon">🎸</div>
+                            <span>Django</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Database</label>
+                    <div class="tech-grid" id="databaseGrid">
+                        <div class="tech-option" data-value="postgresql">
+                            <div class="icon">🐘</div>
+                            <span>PostgreSQL</span>
+                        </div>
+                        <div class="tech-option" data-value="mysql">
+                            <div class="icon">🐬</div>
+                            <span>MySQL</span>
+                        </div>
+                        <div class="tech-option" data-value="mongodb">
+                            <div class="icon">🍃</div>
+                            <span>MongoDB</span>
+                        </div>
+                        <div class="tech-option" data-value="sqlserver">
+                            <div class="icon">🗄️</div>
+                            <span>SQL Server</span>
+                        </div>
+                        <div class="tech-option" data-value="redis">
+                            <div class="icon">🔴</div>
+                            <span>Redis</span>
+                        </div>
+                        <div class="tech-option" data-value="none">
+                            <div class="icon">❌</div>
+                            <span>None</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stage 3: Team Configuration -->
+            <div class="stage" id="stage3">
+                <h2 class="stage-title">Team Configuration</h2>
+                <p class="stage-description">Add team members who will work on this project</p>
+
+                <div class="form-group">
+                    <label>Team Members</label>
+                    <div class="team-list" id="teamList">
+                        <div class="team-member">
+                            <input type="text" placeholder="Name" value="Project Lead">
+                            <input type="text" placeholder="Email" value="">
+                            <select>
+                                <option value="lead">Project Lead</option>
+                                <option value="developer">Developer</option>
+                                <option value="designer">Designer</option>
+                                <option value="qa">QA Engineer</option>
+                                <option value="devops">DevOps</option>
+                            </select>
+                            <button class="remove-btn" onclick="removeMember(this)">✕</button>
+                        </div>
+                    </div>
+                    <button class="add-member-btn" onclick="addMember()">+ Add Team Member</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Sprint Duration</label>
+                    <select id="sprintDuration">
+                        <option value="1">1 week</option>
+                        <option value="2" selected>2 weeks</option>
+                        <option value="3">3 weeks</option>
+                        <option value="4">4 weeks</option>
+                    </select>
+                    <div class="hint">Standard sprint cycle length for this project</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Working Hours per Day</label>
+                    <select id="workingHours">
+                        <option value="4">4 hours (part-time)</option>
+                        <option value="6">6 hours</option>
+                        <option value="8" selected>8 hours (full-time)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Stage 4: Workflow Selection -->
+            <div class="stage" id="stage4">
+                <h2 class="stage-title">Workflow Configuration</h2>
+                <p class="stage-description">Choose how you want to manage this project</p>
+
+                <div class="form-group">
+                    <label>Project Workflow</label>
+                    <div class="workflow-grid">
+                        <div class="workflow-card selected" data-workflow="spec-kit">
+                            <h4>📋 Spec-Kit Pipeline</h4>
+                            <p>Full project definition with Constitution, Specification, and Tasks generation.</p>
+                            <div class="agents">Agents: Peter, Felix, Diana</div>
+                        </div>
+                        <div class="workflow-card" data-workflow="bmad">
+                            <h4>📝 BMAD Green Paper</h4>
+                            <p>Strategic 6-question analysis for complex projects requiring deep business understanding.</p>
+                            <div class="agents">Agents: Peter, Felix, Paul</div>
+                        </div>
+                        <div class="workflow-card" data-workflow="maintenance">
+                            <h4>🔧 Maintenance Focus</h4>
+                            <p>Code health monitoring, dependency updates, and technical debt management.</p>
+                            <div class="agents">Agents: Marcus, Quinn, Tessa</div>
+                        </div>
+                        <div class="workflow-card" data-workflow="custom">
+                            <h4>⚙️ Custom Workflow</h4>
+                            <p>Manual configuration of agents and work types for specialized needs.</p>
+                            <div class="agents">Agents: Configurable</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Enable Quality Gates</label>
+                    <select id="qualityGates">
+                        <option value="full">Full (7 gates, 42 rules)</option>
+                        <option value="standard" selected>Standard (5 gates)</option>
+                        <option value="minimal">Minimal (3 gates)</option>
+                        <option value="none">None</option>
+                    </select>
+                    <div class="hint">Quality validation applied to agent outputs</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Auto-Assign Agents</label>
+                    <select id="autoAssign">
+                        <option value="yes" selected>Yes - Based on work type</option>
+                        <option value="no">No - Manual assignment</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Stage 5: Summary (hidden step) -->
+            <div class="stage" id="stage5">
+                <h2 class="stage-title">Project Summary</h2>
+                <p class="stage-description">Review your project configuration before creating</p>
+
+                <div class="summary-section">
+                    <h4>📋 Project Details</h4>
+                    <div class="summary-item">
+                        <span class="label">Project Name</span>
+                        <span class="value" id="summaryName">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Template</span>
+                        <span class="value" id="summaryTemplate">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Repository</span>
+                        <span class="value" id="summaryRepo">-</span>
+                    </div>
+                </div>
+
+                <div class="summary-section">
+                    <h4>💻 Tech Stack</h4>
+                    <div class="summary-item">
+                        <span class="label">Language</span>
+                        <span class="value" id="summaryLanguage">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Framework</span>
+                        <span class="value" id="summaryFramework">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Database</span>
+                        <span class="value" id="summaryDatabase">-</span>
+                    </div>
+                </div>
+
+                <div class="summary-section">
+                    <h4>👥 Team</h4>
+                    <div class="summary-item">
+                        <span class="label">Team Size</span>
+                        <span class="value" id="summaryTeamSize">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Sprint Duration</span>
+                        <span class="value" id="summarySprint">-</span>
+                    </div>
+                </div>
+
+                <div class="summary-section">
+                    <h4>🔧 Workflow</h4>
+                    <div class="summary-item">
+                        <span class="label">Workflow Type</span>
+                        <span class="value" id="summaryWorkflow">-</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Quality Gates</span>
+                        <span class="value" id="summaryQuality">-</span>
+                    </div>
+                </div>
+
+                <div id="loadingState" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <span>Creating project...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button class="btn btn-secondary" id="prevBtn" onclick="prevStep()" disabled>
+                ← Previous
+            </button>
+            <button class="btn btn-primary" id="nextBtn" onclick="nextStep()">
+                Next →
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================================
+        // STATE
+        // ============================================================================
+        const API_BASE = 'http://localhost:8000/api';
+        let currentStep = 1;
+        const totalSteps = 4;
+
+        const projectData = {
+            template: 'web-app',
+            name: '',
+            description: '',
+            repoUrl: '',
+            language: 'typescript',
+            framework: '',
+            database: '',
+            team: [],
+            sprintDuration: 2,
+            workingHours: 8,
+            workflow: 'spec-kit',
+            qualityGates: 'standard',
+            autoAssign: true
+        };
+
+        // ============================================================================
+        // NAVIGATION
+        // ============================================================================
+        function updateStepper() {
+            document.querySelectorAll('.step').forEach((step, index) => {
+                const stepNum = index + 1;
+                step.classList.remove('active', 'completed');
+
+                if (stepNum < currentStep) {
+                    step.classList.add('completed');
+                } else if (stepNum === currentStep) {
+                    step.classList.add('active');
+                }
+            });
+        }
+
+        function updateStages() {
+            document.querySelectorAll('.stage').forEach((stage, index) => {
+                stage.classList.remove('active');
+                if (index + 1 === currentStep || (currentStep > totalSteps && index + 1 === 5)) {
+                    stage.classList.add('active');
+                }
+            });
+        }
+
+        function updateButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+
+            prevBtn.disabled = currentStep === 1;
+
+            if (currentStep > totalSteps) {
+                nextBtn.textContent = 'Create Project';
+                nextBtn.classList.remove('btn-primary');
+                nextBtn.classList.add('btn-success');
+            } else if (currentStep === totalSteps) {
+                nextBtn.textContent = 'Review →';
+                nextBtn.classList.add('btn-primary');
+                nextBtn.classList.remove('btn-success');
+            } else {
+                nextBtn.textContent = 'Next →';
+                nextBtn.classList.add('btn-primary');
+                nextBtn.classList.remove('btn-success');
+            }
+        }
+
+        function collectData() {
+            // Stage 1
+            projectData.name = document.getElementById('projectName').value;
+            projectData.description = document.getElementById('projectDescription').value;
+            projectData.repoUrl = document.getElementById('repoUrl').value;
+
+            // Stage 2
+            const selectedLang = document.querySelector('#languageGrid .tech-option.selected');
+            projectData.language = selectedLang ? selectedLang.dataset.value : '';
+
+            const selectedFramework = document.querySelector('#frameworkGrid .tech-option.selected');
+            projectData.framework = selectedFramework ? selectedFramework.dataset.value : '';
+
+            const selectedDb = document.querySelector('#databaseGrid .tech-option.selected');
+            projectData.database = selectedDb ? selectedDb.dataset.value : '';
+
+            // Stage 3
+            projectData.team = [];
+            document.querySelectorAll('.team-member').forEach(member => {
+                const inputs = member.querySelectorAll('input');
+                const select = member.querySelector('select');
+                if (inputs[0].value) {
+                    projectData.team.push({
+                        name: inputs[0].value,
+                        email: inputs[1].value,
+                        role: select.value
+                    });
+                }
+            });
+            projectData.sprintDuration = parseInt(document.getElementById('sprintDuration').value);
+            projectData.workingHours = parseInt(document.getElementById('workingHours').value);
+
+            // Stage 4
+            const selectedWorkflow = document.querySelector('.workflow-card.selected');
+            projectData.workflow = selectedWorkflow ? selectedWorkflow.dataset.workflow : 'spec-kit';
+            projectData.qualityGates = document.getElementById('qualityGates').value;
+            projectData.autoAssign = document.getElementById('autoAssign').value === 'yes';
+        }
+
+        function validateStep() {
+            if (currentStep === 1) {
+                if (!document.getElementById('projectName').value.trim()) {
+                    showToast('Please enter a project name', 'error');
+                    return false;
+                }
+                if (!document.getElementById('projectDescription').value.trim()) {
+                    showToast('Please enter a project description', 'error');
+                    return false;
+                }
+            }
+            if (currentStep === 2) {
+                if (!document.querySelector('#languageGrid .tech-option.selected')) {
+                    showToast('Please select a primary language', 'error');
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function updateSummary() {
+            document.getElementById('summaryName').textContent = projectData.name || '-';
+            document.getElementById('summaryTemplate').textContent = projectData.template || '-';
+            document.getElementById('summaryRepo').textContent = projectData.repoUrl || 'Not specified';
+            document.getElementById('summaryLanguage').textContent = projectData.language || '-';
+            document.getElementById('summaryFramework').textContent = projectData.framework || 'None';
+            document.getElementById('summaryDatabase').textContent = projectData.database || 'None';
+            document.getElementById('summaryTeamSize').textContent = projectData.team.length + ' members';
+            document.getElementById('summarySprint').textContent = projectData.sprintDuration + ' weeks';
+            document.getElementById('summaryWorkflow').textContent = projectData.workflow || '-';
+            document.getElementById('summaryQuality').textContent = projectData.qualityGates || '-';
+        }
+
+        function nextStep() {
+            if (!validateStep()) return;
+
+            collectData();
+
+            if (currentStep > totalSteps) {
+                createProject();
+                return;
+            }
+
+            currentStep++;
+
+            if (currentStep > totalSteps) {
+                updateSummary();
+            }
+
+            updateStepper();
+            updateStages();
+            updateButtons();
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStepper();
+                updateStages();
+                updateButtons();
+            }
+        }
+
+        // ============================================================================
+        // TEAM MANAGEMENT
+        // ============================================================================
+        function addMember() {
+            const teamList = document.getElementById('teamList');
+            const memberDiv = document.createElement('div');
+            memberDiv.className = 'team-member';
+            memberDiv.innerHTML = `
+                <input type="text" placeholder="Name">
+                <input type="text" placeholder="Email">
+                <select>
+                    <option value="lead">Project Lead</option>
+                    <option value="developer" selected>Developer</option>
+                    <option value="designer">Designer</option>
+                    <option value="qa">QA Engineer</option>
+                    <option value="devops">DevOps</option>
+                </select>
+                <button class="remove-btn" onclick="removeMember(this)">✕</button>
+            `;
+            teamList.appendChild(memberDiv);
+        }
+
+        function removeMember(btn) {
+            const members = document.querySelectorAll('.team-member');
+            if (members.length > 1) {
+                btn.parentElement.remove();
+            } else {
+                showToast('At least one team member is required', 'error');
+            }
+        }
+
+        // ============================================================================
+        // SELECTION HANDLERS
+        // ============================================================================
+        document.querySelectorAll('.template-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                projectData.template = card.dataset.template;
+            });
+        });
+
+        document.querySelectorAll('.workflow-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.workflow-card').forEach(c => c.classList.remove('selected'));
+                card.classList.add('selected');
+                projectData.workflow = card.dataset.workflow;
+            });
+        });
+
+        // Tech grid single select
+        ['languageGrid', 'frameworkGrid', 'databaseGrid'].forEach(gridId => {
+            const grid = document.getElementById(gridId);
+            if (grid) {
+                grid.querySelectorAll('.tech-option').forEach(option => {
+                    option.addEventListener('click', () => {
+                        grid.querySelectorAll('.tech-option').forEach(o => o.classList.remove('selected'));
+                        option.classList.add('selected');
+                    });
+                });
+            }
+        });
+
+        // ============================================================================
+        // API CALLS
+        // ============================================================================
+        async function createProject() {
+            const loadingState = document.getElementById('loadingState');
+            const nextBtn = document.getElementById('nextBtn');
+
+            loadingState.style.display = 'flex';
+            nextBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/wizard/complete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(projectData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                showToast('Project created successfully!', 'success');
+
+                // Redirect to project view after 2 seconds
+                setTimeout(() => {
+                    window.location.href = `index.html?project=${result.project_id}`;
+                }, 2000);
+
+            } catch (error) {
+                console.error('Error creating project:', error);
+                showToast(`Error: ${error.message}`, 'error');
+                loadingState.style.display = 'none';
+                nextBtn.disabled = false;
+            }
+        }
+
+        // ============================================================================
+        // UTILITIES
+        // ============================================================================
+        function showToast(message, type = 'info') {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        // ============================================================================
+        // INITIALIZATION
+        // ============================================================================
+        function init() {
+            updateStepper();
+            updateStages();
+            updateButtons();
+        }
+
+        init();
+    </script>
+</body>
+</html>

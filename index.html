@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Task Manager - Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #f5f7fa;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #6b7280;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --border: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-purple) 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 0.75rem 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--text-secondary);
+        }
+
+        .status-dot.online { background: var(--accent-green); }
+        .status-dot.offline { background: #ef4444; }
+        .status-dot.checking { background: var(--accent-orange); animation: pulse 1s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        /* Card */
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .card-header.standalone {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .card-header.backend {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            color: white;
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+        }
+
+        .card-title {
+            flex: 1;
+        }
+
+        .card-title h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .card-title p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .card-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .card-content {
+            padding: 1.5rem;
+        }
+
+        /* Links */
+        .link-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .link-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .link-group-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.05em;
+        }
+
+        .link-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .link-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .link-item:hover {
+            background: #e5e7eb;
+            transform: translateX(4px);
+        }
+
+        .link-item.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .link-icon {
+            font-size: 1.25rem;
+        }
+
+        .link-text {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .link-arrow {
+            color: var(--text-secondary);
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .quick-actions h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            color: var(--text-primary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .footer a {
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 1rem;
+        }
+
+        .modal-content pre {
+            background: #1a1a2e;
+            color: #10b981;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.9rem;
+        }
+
+        .modal-close {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Markdown Task Manager</h1>
+        <p>AI-Powered Agentic Task Management Platform</p>
+    </header>
+
+    <div class="status-bar">
+        <div class="status-item">
+            <div class="status-dot checking" id="backendDot"></div>
+            <span>Backend: <strong id="backendStatus">Checking...</strong></span>
+        </div>
+        <div class="status-item">
+            <div class="status-dot checking" id="ollamaDot"></div>
+            <span>Ollama: <strong id="ollamaStatus">Checking...</strong></span>
+        </div>
+        <div class="status-item">
+            <span>Agents: <strong id="agentCount">-</strong></span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="cards-grid">
+            <!-- Standalone Card -->
+            <div class="card">
+                <div class="card-header standalone">
+                    <span class="card-icon">📋</span>
+                    <div class="card-title">
+                        <h2>Task Management</h2>
+                        <p>Works offline - no backend required</p>
+                    </div>
+                    <span class="card-badge">Offline OK</span>
+                </div>
+                <div class="card-content">
+                    <div class="link-group">
+                        <div class="link-list">
+                            <a href="task-manager.html" class="link-item">
+                                <span class="link-icon">📊</span>
+                                <span class="link-text">Kanban Board</span>
+                                <span class="link-arrow">→</span>
+                            </a>
+                            <a href="project-manager.html" class="link-item">
+                                <span class="link-icon">📁</span>
+                                <span class="link-text">Project Manager</span>
+                                <span class="link-arrow">→</span>
+                            </a>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem;">
+                        Uses File System Access API. Your data stays local in Markdown files.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Backend Card -->
+            <div class="card">
+                <div class="card-header backend">
+                    <span class="card-icon">🤖</span>
+                    <div class="card-title">
+                        <h2>Agentic System</h2>
+                        <p>AI-powered workflows (requires backend)</p>
+                    </div>
+                    <span class="card-badge" id="agentBadge">10 Agents</span>
+                </div>
+                <div class="card-content">
+                    <div class="link-group">
+                        <div class="link-group-title">Agents & Evolution</div>
+                        <div class="link-list">
+                            <a href="frontend/agent-dashboard.html" class="link-item" id="link-agents">
+                                <span class="link-icon">🤖</span>
+                                <span class="link-text">Agent Dashboard</span>
+                                <span class="link-arrow">→</span>
+                            </a>
+                            <a href="frontend/evolution-dashboard.html" class="link-item" id="link-evolution">
+                                <span class="link-icon">🧬</span>
+                                <span class="link-text">Evolution Dashboard</span>
+                                <span class="link-arrow">→</span>
+                            </a>
+                            <a href="frontend/self-improvement-dashboard.html" class="link-item" id="link-self">
+                                <span class="link-icon">🎯</span>
+                                <span class="link-text">Self-Improvement</span>
+                                <span class="link-arrow">→</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="link-group">
+                        <div class="link-group-title">Estimation & Quality</div>
+                        <div class="link-list">
+                            <a href="frontend/estimation-dashboard.html" class="link-item" id="link-estimation">
+                                <span class="link-icon">📊</span>
+                                <span class="link-text">Estimation Dashboard</span>
+                                <span class="link-arrow">→</span>
+                            </a>
+                            <a href="frontend/attribution-dashboard.html" class="link-item" id="link-attribution">
+                                <span class="link-icon">🏷️</span>
+                                <span class="link-text">Attribution Dashboard</span>
+                                <span class="link-arrow">→</span>
+                            </a>
+                            <a href="frontend/quality-dashboard.html" class="link-item" id="link-quality">
+                                <span class="link-icon">✅</span>
+                                <span class="link-text">Quality Dashboard</span>
+                                <span class="link-arrow">→</span>
+                            </a>
+                            <a href="frontend/technical-debt-dashboard.html" class="link-item" id="link-debt">
+                                <span class="link-icon">⚠️</span>
+                                <span class="link-text">Technical Debt</span>
+                                <span class="link-arrow">→</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="link-group">
+                        <div class="link-group-title">Planning & Wizards</div>
+                        <div class="link-list">
+                            <a href="frontend/sprint-planning.html" class="link-item" id="link-sprint">
+                                <span class="link-icon">🎯</span>
+                                <span class="link-text">Sprint Planning</span>
+                                <span class="link-arrow">→</span>
+                            </a>
+                            <a href="frontend/project-wizard.html" class="link-item" id="link-wizard">
+                                <span class="link-icon">🧙</span>
+                                <span class="link-text">Project Wizard</span>
+                                <span class="link-arrow">→</span>
+                            </a>
+                            <a href="frontend/spec-kit-wizard.html" class="link-item" id="link-speckit">
+                                <span class="link-icon">📝</span>
+                                <span class="link-text">Spec-Kit Wizard</span>
+                                <span class="link-arrow">→</span>
+                            </a>
+                            <a href="frontend/maintenance-scheduler.html" class="link-item" id="link-maintenance">
+                                <span class="link-icon">🔧</span>
+                                <span class="link-text">Maintenance Scheduler</span>
+                                <span class="link-arrow">→</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <h3>Quick Actions</h3>
+            <div class="actions-grid">
+                <button class="action-btn" onclick="showStartBackend()">
+                    🚀 Start Backend
+                </button>
+                <button class="action-btn" onclick="checkOllama()">
+                    🔍 Check Ollama
+                </button>
+                <a href="README.md" class="action-btn" style="text-decoration: none;">
+                    📚 Documentation
+                </a>
+                <a href="ROADMAP.md" class="action-btn" style="text-decoration: none;">
+                    🗺️ Roadmap
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>
+            Markdown Task Manager v1.0 |
+            <a href="https://github.com/user/MarkdownTaskManager">GitHub</a> |
+            <a href="docs/FEATURES.md">Features</a> |
+            <a href="AGENTS.md">Agents</a>
+        </p>
+    </footer>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Start Backend</h3>
+            <div id="modalBody"></div>
+            <button class="modal-close" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let backendOnline = false;
+
+        // Check backend status
+        async function checkBackend() {
+            const dot = document.getElementById('backendDot');
+            const status = document.getElementById('backendStatus');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/health`, {
+                    method: 'GET',
+                    timeout: 3000
+                });
+
+                if (response.ok) {
+                    dot.className = 'status-dot online';
+                    status.textContent = 'Online';
+                    backendOnline = true;
+                    enableBackendLinks();
+                    checkAgents();
+                } else {
+                    throw new Error('Not OK');
+                }
+            } catch (e) {
+                // Try alternative endpoint
+                try {
+                    const response = await fetch(`${API_BASE}/docs`, { method: 'HEAD' });
+                    if (response.ok) {
+                        dot.className = 'status-dot online';
+                        status.textContent = 'Online';
+                        backendOnline = true;
+                        enableBackendLinks();
+                        checkAgents();
+                        return;
+                    }
+                } catch (e2) {}
+
+                dot.className = 'status-dot offline';
+                status.textContent = 'Offline';
+                backendOnline = false;
+                disableBackendLinks();
+            }
+        }
+
+        // Check Ollama status
+        async function checkOllama() {
+            const dot = document.getElementById('ollamaDot');
+            const status = document.getElementById('ollamaStatus');
+
+            try {
+                const response = await fetch('http://localhost:11434/api/tags');
+                const data = await response.json();
+                const modelCount = data.models ? data.models.length : 0;
+
+                dot.className = 'status-dot online';
+                status.textContent = `${modelCount} models`;
+            } catch (e) {
+                dot.className = 'status-dot offline';
+                status.textContent = 'Offline';
+            }
+        }
+
+        // Check agents
+        async function checkAgents() {
+            try {
+                const response = await fetch(`${API_BASE}/api/workflows/agents`);
+                const data = await response.json();
+                const agentCount = Array.isArray(data) ? data.length :
+                                   (data.agents ? data.agents.length : 10);
+                document.getElementById('agentCount').textContent = agentCount;
+                document.getElementById('agentBadge').textContent = `${agentCount} Agents`;
+            } catch (e) {
+                document.getElementById('agentCount').textContent = '10';
+            }
+        }
+
+        // Enable/disable backend links
+        function enableBackendLinks() {
+            document.querySelectorAll('.card-content .link-item').forEach(link => {
+                if (link.href.includes('frontend/')) {
+                    link.classList.remove('disabled');
+                }
+            });
+        }
+
+        function disableBackendLinks() {
+            document.querySelectorAll('.card-content .link-item').forEach(link => {
+                if (link.href.includes('frontend/')) {
+                    link.classList.add('disabled');
+                }
+            });
+        }
+
+        // Modal functions
+        function showModal(title, body) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').innerHTML = body;
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        function showStartBackend() {
+            showModal('Start Backend', `
+                <p style="margin-bottom: 1rem;">Run these commands in the backend directory:</p>
+                <pre>cd backend
+docker-compose up -d
+source .venv/bin/activate
+uvicorn app.main:app --reload</pre>
+                <p style="margin-top: 1rem; font-size: 0.9rem; color: #6b7280;">
+                    Or use: <code>docker-compose up</code> for full stack
+                </p>
+            `);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            checkBackend();
+            checkOllama();
+
+            // Refresh status every 30 seconds
+            setInterval(() => {
+                checkBackend();
+                checkOllama();
+            }, 30000);
+        });
+
+        // Close modal on outside click
+        document.getElementById('modal').addEventListener('click', (e) => {
+            if (e.target.id === 'modal') closeModal();
+        });
+    </script>
+</body>
+</html>

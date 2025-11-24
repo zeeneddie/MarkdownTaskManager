@@ -33,7 +33,9 @@ import {
   RequirementType,
   Constraint,
   ConstraintType,
-  Priority
+  Priority,
+  DevelopmentStack,
+  OperationalStack
 } from '../types/SpecKit';
 import {
   SlashCommandType,
@@ -228,7 +230,7 @@ async function designArchitecture(
   input: SpecificationInput,
   agent: Agent
 ): Promise<ArchitectureSpec> {
-  const { constitution, technicalContext } = input;
+  const { constitution, technicalContext, developmentStack, operationalStack } = input;
 
   // Determine architecture pattern based on requirements
   const pattern = selectArchitecturePattern(constitution, technicalContext);
@@ -241,8 +243,8 @@ async function designArchitecture(
   // Identify main components from requirements
   const components = identifyMainComponents(constitution);
 
-  // Select technology stack
-  const technologies = selectTechnologyStack(constitution, technicalContext);
+  // Select technology stack (use developmentStack from Green Paper if provided)
+  const technologies = selectTechnologyStack(constitution, technicalContext, developmentStack);
 
   // Define integration patterns
   const integrationPatterns = defineIntegrationPatterns(constitution);
@@ -256,7 +258,10 @@ async function designArchitecture(
     components,
     technologies,
     integrationPatterns,
-    diagram
+    diagram,
+    // Include detailed stacks from Green Paper session
+    developmentStack,
+    operationalStack
   };
 }
 
@@ -342,8 +347,25 @@ function identifyMainComponents(constitution: ConstitutionResult): string[] {
 
 function selectTechnologyStack(
   constitution: ConstitutionResult,
-  technicalContext: SpecificationInput['technicalContext']
+  technicalContext: SpecificationInput['technicalContext'],
+  developmentStack?: DevelopmentStack
 ): ArchitectureSpec['technologies'] {
+  // If developmentStack is provided from Green Paper, use it as the primary source
+  if (developmentStack) {
+    return {
+      frontend: developmentStack.frameworks.frontend || ['React', 'TypeScript'],
+      backend: developmentStack.frameworks.backend || developmentStack.languages,
+      database: [developmentStack.databases.primary, developmentStack.databases.cache, developmentStack.databases.search].filter(Boolean) as string[],
+      cache: developmentStack.databases.cache ? [developmentStack.databases.cache] : [],
+      queue: [],
+      other: [
+        ...(developmentStack.testing.unit || []),
+        ...(developmentStack.devTools.linting || []),
+        ...(developmentStack.buildTools || [])
+      ]
+    };
+  }
+
   // Use preferred technologies if specified
   const preferred = technicalContext.technologies || [];
 
@@ -949,6 +971,75 @@ export function formatSpecificationMarkdown(spec: SpecificationResult): string {
   md += '\n**Architecture Diagram**:\n```\n';
   md += spec.architecture.diagram;
   md += '\n```\n\n';
+
+  // Development Stack (from Green Paper)
+  if (spec.architecture.developmentStack) {
+    const devStack = spec.architecture.developmentStack;
+    md += '## 💻 Development Stack\n\n';
+    md += '### Languages\n';
+    devStack.languages.forEach(l => md += `- ${l}\n`);
+    md += '\n### Frameworks\n';
+    if (devStack.frameworks.frontend?.length) {
+      md += `**Frontend**: ${devStack.frameworks.frontend.join(', ')}\n`;
+    }
+    if (devStack.frameworks.backend?.length) {
+      md += `**Backend**: ${devStack.frameworks.backend.join(', ')}\n`;
+    }
+    if (devStack.frameworks.testing?.length) {
+      md += `**Testing**: ${devStack.frameworks.testing.join(', ')}\n`;
+    }
+    md += '\n### Databases\n';
+    md += `- **Primary**: ${devStack.databases.primary}\n`;
+    if (devStack.databases.cache) md += `- **Cache**: ${devStack.databases.cache}\n`;
+    if (devStack.databases.search) md += `- **Search**: ${devStack.databases.search}\n`;
+    md += '\n### Testing\n';
+    if (devStack.testing.unit?.length) md += `- **Unit**: ${devStack.testing.unit.join(', ')}\n`;
+    if (devStack.testing.integration?.length) md += `- **Integration**: ${devStack.testing.integration.join(', ')}\n`;
+    if (devStack.testing.e2e?.length) md += `- **E2E**: ${devStack.testing.e2e.join(', ')}\n`;
+    md += '\n### Version Control\n';
+    md += `- **System**: ${devStack.versionControl.system}\n`;
+    md += `- **Platform**: ${devStack.versionControl.platform}\n`;
+    if (devStack.versionControl.branchStrategy) md += `- **Branch Strategy**: ${devStack.versionControl.branchStrategy}\n`;
+    md += '\n---\n\n';
+  }
+
+  // Operational Stack (from Green Paper)
+  if (spec.architecture.operationalStack) {
+    const opsStack = spec.architecture.operationalStack;
+    md += '## 🚀 Operational Stack\n\n';
+    md += '### Hosting\n';
+    md += `- **Provider**: ${opsStack.hosting.provider}\n`;
+    md += `- **Type**: ${opsStack.hosting.type}\n`;
+    if (opsStack.hosting.region?.length) md += `- **Regions**: ${opsStack.hosting.region.join(', ')}\n`;
+    if (opsStack.containerization) {
+      md += '\n### Containerization\n';
+      md += `- **Runtime**: ${opsStack.containerization.runtime}\n`;
+      if (opsStack.containerization.registry) md += `- **Registry**: ${opsStack.containerization.registry}\n`;
+    }
+    if (opsStack.orchestration) {
+      md += '\n### Orchestration\n';
+      if (opsStack.orchestration.platform) md += `- **Platform**: ${opsStack.orchestration.platform}\n`;
+      if (opsStack.orchestration.managedService) md += `- **Managed Service**: ${opsStack.orchestration.managedService}\n`;
+    }
+    md += '\n### CI/CD\n';
+    md += `- **Platform**: ${opsStack.cicd.platform}\n`;
+    md += `- **Stages**: ${opsStack.cicd.stages.join(' → ')}\n`;
+    md += `- **Environments**: ${opsStack.cicd.environments.join(', ')}\n`;
+    if (opsStack.monitoring) {
+      md += '\n### Monitoring\n';
+      if (opsStack.monitoring.metrics?.length) md += `- **Metrics**: ${opsStack.monitoring.metrics.join(', ')}\n`;
+      if (opsStack.monitoring.logging?.length) md += `- **Logging**: ${opsStack.monitoring.logging.join(', ')}\n`;
+      if (opsStack.monitoring.tracing?.length) md += `- **Tracing**: ${opsStack.monitoring.tracing.join(', ')}\n`;
+      if (opsStack.monitoring.alerting?.length) md += `- **Alerting**: ${opsStack.monitoring.alerting.join(', ')}\n`;
+    }
+    if (opsStack.security) {
+      md += '\n### Security\n';
+      if (opsStack.security.secretsManagement) md += `- **Secrets**: ${opsStack.security.secretsManagement}\n`;
+      if (opsStack.security.waf) md += `- **WAF**: ${opsStack.security.waf}\n`;
+      if (opsStack.security.scanning?.length) md += `- **Scanning**: ${opsStack.security.scanning.join(', ')}\n`;
+    }
+    md += '\n---\n\n';
+  }
 
   // Components
   md += '## 🧩 Components\n\n';

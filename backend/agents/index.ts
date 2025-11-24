@@ -9,6 +9,10 @@
 import { agents, allAgents } from './configs/agents';
 import { analyzeFeature, createFeatureAnalysisWorkflow } from './workflows/featureAnalysis';
 
+// Import Attribution System (Week 21-22)
+import { AttributionProcessor } from './lib/attributionProcessor';
+import * as AttributionTypes from './types/Attribution';
+
 // Import workflow board and routers (Week 5 Day 3)
 import { workflowBoard, WorkflowOptions } from './boards/workflowBoard';
 import { WorkType, WorkRequest, classifyWorkType, routeWorkRequest } from './routers/workTypeRouter';
@@ -90,7 +94,11 @@ export {
   // Types
   NewFeatureRequest,
   MaintenanceRequest,
-  BugReport
+  BugReport,
+
+  // Attribution System (Week 21-22)
+  AttributionProcessor,
+  AttributionTypes
 };
 
 /**

@@ -3,27 +3,30 @@
  *
  * Classifies incoming requests into work types and routes them
  * to the appropriate agent team with the correct workflow.
+ *
+ * Features:
+ * - LLM-based intelligent classification (with confidence scoring)
+ * - Keyword fallback for reliability
+ * - User confirmation for low confidence (<0.8)
  */
 
 import { agents } from '../configs/agents';
 import { Agent } from 'kaibanjs';
+import { WorkType, type ClassificationResult } from '../types/WorkTypes';
+import {
+  classifyWorkType as classifyWithLLM,
+  classifyWorkTypeKeywords,
+  formatClassificationForUser
+} from '../lib/workTypeClassifier';
 
-export enum WorkType {
-  PROJECT_DEFINITION = 'PROJECT_DEFINITION',
-  NEW_FEATURE = 'NEW_FEATURE',
-  MAINTENANCE = 'MAINTENANCE',
-  QUALITY_AUDIT = 'QUALITY_AUDIT',
-  BUG = 'BUG',
-  ENHANCEMENT = 'ENHANCEMENT',
-  MIGRATION = 'MIGRATION',
-  QUALITY_IMPROVEMENT = 'QUALITY_IMPROVEMENT',
-  TESTING = 'TESTING'
-}
+// Re-export for convenience
+export { WorkType, formatClassificationForUser, type ClassificationResult };
 
 export interface WorkRequest {
   description: string;
   workType?: WorkType;
   context?: Record<string, any>;
+  useLLM?: boolean;  // Whether to use LLM classification (default: true)
 }
 
 export interface TeamConfiguration {
@@ -183,7 +186,8 @@ const CLASSIFICATION_KEYWORDS: Record<WorkType, string[]> = {
 
 /**
  * Classify work type based on description
- * Uses keyword matching with scoring
+ * Uses keyword matching with scoring (DEPRECATED - use classifyWorkTypeEnhanced)
+ * @deprecated Use classifyWorkTypeEnhanced for LLM-based classification
  */
 export function classifyWorkType(description: string): WorkType {
   const lowerDesc = description.toLowerCase();
@@ -211,6 +215,17 @@ export function classifyWorkType(description: string): WorkType {
 }
 
 /**
+ * Enhanced classification with LLM + confidence scoring
+ */
+export async function classifyWorkTypeEnhanced(
+  description: string,
+  context?: Record<string, any>,
+  useLLM: boolean = true
+): Promise<ClassificationResult> {
+  return await classifyWithLLM(description, context, useLLM);
+}
+
+/**
  * Get team configuration for a work type
  */
 export function getTeamConfiguration(workType: WorkType): TeamConfiguration {
@@ -218,19 +233,59 @@ export function getTeamConfiguration(workType: WorkType): TeamConfiguration {
 }
 
 /**
- * Route work request to appropriate team
+ * Route work request to appropriate team (sync version - uses keyword fallback)
  */
 export function routeWorkRequest(request: WorkRequest): {
   workType: WorkType;
   teamConfig: TeamConfiguration;
 } {
-  // Use provided work type or classify automatically
+  // Use provided work type or classify automatically (keyword-based for sync)
   const workType = request.workType || classifyWorkType(request.description);
   const teamConfig = getTeamConfiguration(workType);
 
   return {
     workType,
     teamConfig
+  };
+}
+
+/**
+ * Route work request to appropriate team (async version with LLM)
+ */
+export async function routeWorkRequestEnhanced(request: WorkRequest): Promise<{
+  workType: WorkType;
+  teamConfig: TeamConfiguration;
+  classification: ClassificationResult;
+}> {
+  // If work type is provided, use it directly
+  if (request.workType) {
+    const keywordResult = classifyWorkTypeKeywords(request.description);
+    return {
+      workType: request.workType,
+      teamConfig: getTeamConfiguration(request.workType),
+      classification: {
+        ...keywordResult,
+        workType: request.workType,
+        confidence: 1.0,
+        reasoning: 'User-specified work type',
+        needsUserConfirmation: false
+      }
+    };
+  }
+
+  // Classify using LLM or keywords
+  const classification = await classifyWorkTypeEnhanced(
+    request.description,
+    request.context,
+    request.useLLM !== false  // Default to true
+  );
+
+  const teamConfig = getTeamConfiguration(classification.workType);
+
+  return {
+    workType: classification.workType,
+    teamConfig,
+    classification
   };
 }
 

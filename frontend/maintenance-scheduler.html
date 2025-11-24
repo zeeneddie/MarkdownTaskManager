@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance Scheduler - Markdown Task Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .header .nav {
+            margin-top: 1rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .header .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.2s;
+        }
+
+        .header .nav a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .header .nav a.active {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .grid-2col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+
+        /* Status Cards */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 700px) {
+            .status-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .status-card {
+            background: white;
+            padding: 1.25rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .status-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .status-card .label {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        .status-card.success .value { color: #10b981; }
+        .status-card.warning .value { color: #f59e0b; }
+        .status-card.error .value { color: #ef4444; }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+        .form-group .hint {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Interval Input Group */
+        .interval-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .interval-group input[type="number"] {
+            width: 120px;
+        }
+
+        .interval-group select {
+            flex: 1;
+        }
+
+        /* Checkbox Grid */
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+        }
+
+        .checkbox-item label {
+            font-weight: normal;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        /* Action Buttons (Week 15) */
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .action-buttons .btn {
+            min-width: 120px;
+        }
+
+        /* WebSocket Status Indicator */
+        .ws-connected, .ws-disconnected {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        .ws-connected {
+            background: #10b981;
+            box-shadow: 0 0 6px #10b981;
+        }
+
+        .ws-disconnected {
+            background: #6b7280;
+        }
+
+        /* Scan Progress */
+        .scan-progress-container {
+            margin-top: 1rem;
+        }
+
+        .scan-progress-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            margin: 0.5rem 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #10b981);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        tr:hover {
+            background: #f9fafb;
+        }
+
+        /* Status Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-error { background: #fee2e2; color: #991b1b; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success { background: #10b981; }
+        .toast.error { background: #ef4444; }
+        .toast.info { background: #667eea; }
+
+        /* Loading State */
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Urgency Colors */
+        .urgency-low { color: #10b981; }
+        .urgency-medium { color: #f59e0b; }
+        .urgency-high { color: #f97316; }
+        .urgency-critical { color: #ef4444; font-weight: bold; }
+
+        /* Time display */
+        .next-run {
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        /* Full Width Section */
+        .full-width {
+            margin-bottom: 1.5rem;
+        }
+
+        /* Tab Navigation for History Filters */
+        .filter-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-row select {
+            width: auto;
+            min-width: 150px;
+        }
+
+        .filter-row .btn {
+            padding: 0.5rem 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Maintenance Scheduler</h1>
+        <p>Automatische code maintenance scans plannen en beheren</p>
+        <nav class="nav">
+            <a href="../index.html">🏠 Hub</a>
+            <a href="agent-dashboard.html">🤖 Agents</a>
+            <a href="estimation-dashboard.html">📊 Estimation</a>
+            <a href="quality-dashboard.html">✅ Quality</a>
+            <a href="spec-kit-wizard.html">📝 Spec-Kit</a>
+            <a href="maintenance-scheduler.html" class="active">🔧 Maintenance</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <!-- Status Cards -->
+        <div class="status-grid">
+            <div class="status-card">
+                <div class="value" id="scheduledJobs">-</div>
+                <div class="label">Geplande Jobs</div>
+            </div>
+            <div class="status-card success">
+                <div class="value" id="completedScans">-</div>
+                <div class="label">Voltooid</div>
+            </div>
+            <div class="status-card warning">
+                <div class="value" id="timeoutScans">-</div>
+                <div class="label">Timeout</div>
+            </div>
+            <div class="status-card error">
+                <div class="value" id="failedScans">-</div>
+                <div class="label">Gefaald</div>
+            </div>
+        </div>
+
+        <div class="grid-2col">
+            <!-- Schedule Form -->
+            <div class="section">
+                <h2>Nieuwe Scan Plannen</h2>
+
+                <form id="scheduleForm">
+                    <!-- Interval -->
+                    <div class="form-group">
+                        <label>Interval</label>
+                        <div class="interval-group">
+                            <input type="number" id="intervalValue" value="24" min="1" max="999">
+                            <select id="intervalType">
+                                <option value="hours">Uren</option>
+                                <option value="weeks">Weken</option>
+                                <option value="months">Maanden</option>
+                            </select>
+                        </div>
+                        <div class="hint">Kies hoe vaak de scan moet draaien</div>
+                    </div>
+
+                    <!-- Scope -->
+                    <div class="form-group">
+                        <label>Scope</label>
+                        <select id="scope">
+                            <option value="full_codebase">Volledige Codebase</option>
+                            <option value="backend">Backend Only</option>
+                            <option value="frontend">Frontend Only</option>
+                            <option value="agents">Agents Only</option>
+                        </select>
+                        <div class="hint">Welk deel van de code moet gescand worden</div>
+                    </div>
+
+                    <!-- Focus Areas -->
+                    <div class="form-group">
+                        <label>Focus Gebieden</label>
+                        <div class="checkbox-grid">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="focus_dependencies" value="dependencies" checked>
+                                <label for="focus_dependencies">Dependencies</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="focus_security" value="security" checked>
+                                <label for="focus_security">Security</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="focus_code_quality" value="code_quality">
+                                <label for="focus_code_quality">Code Quality</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="focus_performance" value="performance">
+                                <label for="focus_performance">Performance</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="focus_documentation" value="documentation">
+                                <label for="focus_documentation">Documentation</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="focus_tests" value="tests">
+                                <label for="focus_tests">Test Coverage</label>
+                            </div>
+                        </div>
+                        <div class="hint">Selecteer minimaal 1 focus gebied</div>
+                    </div>
+
+                    <!-- Urgency -->
+                    <div class="form-group">
+                        <label>Urgentie</label>
+                        <select id="urgency">
+                            <option value="low">Laag - Alleen rapportage</option>
+                            <option value="medium" selected>Medium - Standaard prioriteit</option>
+                            <option value="high">Hoog - Snelle actie vereist</option>
+                            <option value="critical">Kritiek - Directe aandacht</option>
+                        </select>
+                        <div class="hint">Bepaalt prioriteit van gevonden issues</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        Scan Plannen
+                    </button>
+                </form>
+            </div>
+
+            <!-- Active Jobs -->
+            <div class="section">
+                <h2>Actieve Jobs</h2>
+                <div class="table-container">
+                    <table id="jobsTable">
+                        <thead>
+                            <tr>
+                                <th>Job</th>
+                                <th>Trigger</th>
+                                <th>Volgende Run</th>
+                                <th>Actie</th>
+                            </tr>
+                        </thead>
+                        <tbody id="jobsBody">
+                            <tr>
+                                <td colspan="4" class="empty-state">
+                                    <div class="icon">Loading...</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section full-width" style="margin-bottom: 1.5rem;">
+            <h2>
+                Snelle Acties
+                <span id="wsStatus" class="ws-disconnected" title="WebSocket status"></span>
+            </h2>
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="runNow()">
+                    Nu Scannen
+                </button>
+                <button class="btn btn-secondary" onclick="exportHistory('json')">
+                    Export JSON
+                </button>
+                <button class="btn btn-secondary" onclick="exportHistory('csv')">
+                    Export CSV
+                </button>
+            </div>
+            <!-- Real-time scan progress -->
+            <div id="scanProgress" class="scan-progress-container"></div>
+        </div>
+
+        <!-- Execution History -->
+        <div class="section full-width">
+            <h2>Uitvoeringsgeschiedenis</h2>
+
+            <div class="filter-row">
+                <select id="statusFilter">
+                    <option value="">Alle Statussen</option>
+                    <option value="completed">Voltooid</option>
+                    <option value="failed">Gefaald</option>
+                    <option value="timeout">Timeout</option>
+                </select>
+                <button class="btn btn-secondary" onclick="loadHistory()">Vernieuwen</button>
+            </div>
+
+            <div class="table-container">
+                <table id="historyTable">
+                    <thead>
+                        <tr>
+                            <th>Start Tijd</th>
+                            <th>Duur</th>
+                            <th>Scope</th>
+                            <th>Focus</th>
+                            <th>Urgentie</th>
+                            <th>Status</th>
+                            <th>Findings</th>
+                            <th>Tasks</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody">
+                        <tr>
+                            <td colspan="8" class="empty-state">
+                                <div class="icon">Loading...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/scheduler';
+
+        // ============================================================================
+        // TOAST NOTIFICATIONS
+        // ============================================================================
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // ============================================================================
+        // API CALLS
+        // ============================================================================
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || `HTTP ${response.status}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                throw error;
+            }
+        }
+
+        // ============================================================================
+        // LOAD STATUS
+        // ============================================================================
+        async function loadStatus() {
+            try {
+                const status = await apiCall('/status');
+
+                document.getElementById('scheduledJobs').textContent = status.scheduledJobs;
+                document.getElementById('completedScans').textContent = status.completedScans;
+                document.getElementById('timeoutScans').textContent = status.timeoutScans;
+                document.getElementById('failedScans').textContent = status.failedScans;
+            } catch (error) {
+                console.error('Failed to load status:', error);
+            }
+        }
+
+        // ============================================================================
+        // LOAD JOBS
+        // ============================================================================
+        async function loadJobs() {
+            const tbody = document.getElementById('jobsBody');
+
+            try {
+                const jobs = await apiCall('/jobs');
+
+                if (jobs.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="empty-state">
+                                <div class="icon">Geen geplande jobs</div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = jobs.map(job => `
+                    <tr>
+                        <td><strong>${escapeHtml(job.name)}</strong></td>
+                        <td><span class="badge badge-info">${escapeHtml(job.trigger)}</span></td>
+                        <td class="next-run">${formatDate(job.nextRunTime)}</td>
+                        <td>
+                            <button class="btn btn-danger" onclick="deleteJob('${escapeHtml(job.id)}')">
+                                Verwijderen
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="empty-state">
+                            <div class="icon">Fout bij laden: ${escapeHtml(error.message)}</div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // ============================================================================
+        // LOAD HISTORY
+        // ============================================================================
+        async function loadHistory() {
+            const tbody = document.getElementById('historyBody');
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            try {
+                let endpoint = '/history?limit=50';
+                if (statusFilter) {
+                    endpoint += `&status=${statusFilter}`;
+                }
+
+                const history = await apiCall(endpoint);
+
+                if (history.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" class="empty-state">
+                                <div class="icon">Geen uitvoeringsgeschiedenis</div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = history.map(record => `
+                    <tr>
+                        <td class="next-run">${formatDate(record.startTime)}</td>
+                        <td>${record.durationSeconds.toFixed(1)}s</td>
+                        <td>${escapeHtml(record.scope)}</td>
+                        <td>${formatFocusAreas(record.focusAreas)}</td>
+                        <td class="urgency-${record.urgency}">${record.urgency}</td>
+                        <td>${getStatusBadge(record.status)}</td>
+                        <td>${record.findingsCount ?? '-'}</td>
+                        <td>${record.tasksCount ?? '-'}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="empty-state">
+                            <div class="icon">Fout bij laden: ${escapeHtml(error.message)}</div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // ============================================================================
+        // SCHEDULE SCAN
+        // ============================================================================
+        async function scheduleScan(formData) {
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading"></span>Plannen...';
+
+            try {
+                const result = await apiCall('/interval', {
+                    method: 'POST',
+                    body: JSON.stringify(formData)
+                });
+
+                showToast(result.message, 'success');
+
+                // Reload jobs and status
+                await Promise.all([loadJobs(), loadStatus()]);
+
+            } catch (error) {
+                showToast(`Fout: ${error.message}`, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Scan Plannen';
+            }
+        }
+
+        // ============================================================================
+        // DELETE JOB
+        // ============================================================================
+        async function deleteJob(jobId) {
+            if (!confirm('Weet je zeker dat je deze job wilt verwijderen?')) {
+                return;
+            }
+
+            try {
+                await apiCall(`/jobs/${jobId}`, { method: 'DELETE' });
+                showToast('Job verwijderd', 'success');
+
+                // Reload
+                await Promise.all([loadJobs(), loadStatus()]);
+
+            } catch (error) {
+                showToast(`Fout: ${error.message}`, 'error');
+            }
+        }
+
+        // ============================================================================
+        // EXPORT FUNCTIONS (Week 15)
+        // ============================================================================
+        async function exportHistory(format) {
+            try {
+                const status = document.getElementById('statusFilter').value;
+                let url = `${API_BASE}/export/history?format=${format}&limit=500`;
+                if (status) {
+                    url += `&status=${status}`;
+                }
+
+                if (format === 'csv') {
+                    // Download CSV file
+                    window.location.href = url;
+                    showToast('CSV export gestart', 'success');
+                } else {
+                    // Fetch JSON and download
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const downloadUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = 'maintenance_history.json';
+                    a.click();
+                    URL.revokeObjectURL(downloadUrl);
+
+                    showToast(`Export voltooid: ${data.total_records} records`, 'success');
+                }
+            } catch (error) {
+                showToast(`Export fout: ${error.message}`, 'error');
+            }
+        }
+
+        async function runNow() {
+            if (!confirm('Wil je nu een maintenance scan starten?')) {
+                return;
+            }
+
+            try {
+                // Get current form values
+                const focusAreas = [];
+                document.querySelectorAll('.checkbox-grid input[type="checkbox"]:checked').forEach(cb => {
+                    focusAreas.push(cb.value);
+                });
+
+                const scope = document.getElementById('scope').value;
+                const urgency = document.getElementById('urgency').value;
+
+                const response = await fetch(
+                    `${API_BASE}/run-now?scope=${scope}&focus_areas=${focusAreas.join(',')}&urgency=${urgency}`,
+                    { method: 'POST' }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+                showToast('Scan gestart!', 'success');
+
+                // Refresh status after a delay
+                setTimeout(() => {
+                    loadStatus();
+                    loadHistory();
+                }, 2000);
+
+            } catch (error) {
+                showToast(`Fout bij starten scan: ${error.message}`, 'error');
+            }
+        }
+
+        async function pauseJob(jobId) {
+            try {
+                await apiCall(`/jobs/${jobId}/pause`, { method: 'POST' });
+                showToast('Job gepauzeerd', 'success');
+                await loadJobs();
+            } catch (error) {
+                showToast(`Fout: ${error.message}`, 'error');
+            }
+        }
+
+        async function resumeJob(jobId) {
+            try {
+                await apiCall(`/jobs/${jobId}/resume`, { method: 'POST' });
+                showToast('Job hervat', 'success');
+                await loadJobs();
+            } catch (error) {
+                showToast(`Fout: ${error.message}`, 'error');
+            }
+        }
+
+        // ============================================================================
+        // FORM HANDLING
+        // ============================================================================
+        document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Get focus areas
+            const focusAreas = [];
+            document.querySelectorAll('.checkbox-grid input[type="checkbox"]:checked').forEach(cb => {
+                focusAreas.push(cb.value);
+            });
+
+            if (focusAreas.length === 0) {
+                showToast('Selecteer minimaal 1 focus gebied', 'error');
+                return;
+            }
+
+            const formData = {
+                intervalType: document.getElementById('intervalType').value,
+                intervalValue: parseInt(document.getElementById('intervalValue').value),
+                scope: document.getElementById('scope').value,
+                focusAreas: focusAreas,
+                urgency: document.getElementById('urgency').value
+            };
+
+            await scheduleScan(formData);
+        });
+
+        // Status filter change
+        document.getElementById('statusFilter').addEventListener('change', loadHistory);
+
+        // ============================================================================
+        // UTILITIES
+        // ============================================================================
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const date = new Date(dateStr);
+            return date.toLocaleString('nl-NL', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatFocusAreas(areas) {
+            if (!areas || areas.length === 0) return '-';
+            return areas.map(a => `<span class="badge badge-info">${escapeHtml(a)}</span>`).join(' ');
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'completed': '<span class="badge badge-success">Voltooid</span>',
+                'failed': '<span class="badge badge-error">Gefaald</span>',
+                'timeout': '<span class="badge badge-warning">Timeout</span>',
+                'running': '<span class="badge badge-info">Bezig</span>'
+            };
+            return badges[status] || `<span class="badge">${escapeHtml(status)}</span>`;
+        }
+
+        // ============================================================================
+        // WEBSOCKET REAL-TIME UPDATES
+        // ============================================================================
+        let ws = null;
+        let wsReconnectAttempts = 0;
+        const MAX_RECONNECT_ATTEMPTS = 5;
+
+        function connectWebSocket() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                return;
+            }
+
+            const wsUrl = `ws://${window.location.hostname}:8000/ws/maintenance`;
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                wsReconnectAttempts = 0;
+                updateConnectionStatus(true);
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleWebSocketMessage(data);
+                } catch (e) {
+                    console.error('WebSocket message parse error:', e);
+                }
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected');
+                updateConnectionStatus(false);
+
+                // Attempt reconnect
+                if (wsReconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                    wsReconnectAttempts++;
+                    setTimeout(connectWebSocket, 3000 * wsReconnectAttempts);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                updateConnectionStatus(false);
+            };
+        }
+
+        function handleWebSocketMessage(data) {
+            switch (data.type) {
+                case 'connected':
+                    showToast('Real-time updates actief', 'success');
+                    break;
+
+                case 'scan_started':
+                    showToast(`Scan gestart: ${data.data.scope}`, 'info');
+                    addScanProgress(data.data);
+                    break;
+
+                case 'scan_progress':
+                    updateScanProgress(data.data);
+                    break;
+
+                case 'scan_completed':
+                    showToast(`Scan voltooid: ${data.data.findings_count} bevindingen`, 'success');
+                    removeScanProgress(data.data.scan_id);
+                    loadHistory();
+                    break;
+
+                case 'scan_failed':
+                    showToast(`Scan mislukt: ${data.data.error}`, 'error');
+                    removeScanProgress(data.data.scan_id);
+                    break;
+
+                case 'job_scheduled':
+                case 'job_started':
+                case 'job_completed':
+                case 'job_paused':
+                case 'job_resumed':
+                    loadJobs();
+                    loadStatus();
+                    break;
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const indicator = document.getElementById('wsStatus');
+            if (indicator) {
+                indicator.className = connected ? 'ws-connected' : 'ws-disconnected';
+                indicator.title = connected ? 'Real-time verbonden' : 'Niet verbonden';
+            }
+        }
+
+        function addScanProgress(data) {
+            const container = document.getElementById('scanProgress');
+            if (!container) return;
+
+            const progressHtml = `
+                <div id="progress-${data.scan_id}" class="scan-progress-item">
+                    <strong>Scan: ${data.scope}</strong>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <span class="progress-text">Starting...</span>
+                </div>
+            `;
+            container.innerHTML = progressHtml + container.innerHTML;
+        }
+
+        function updateScanProgress(data) {
+            const progressEl = document.getElementById(`progress-${data.scan_id}`);
+            if (!progressEl) return;
+
+            const fill = progressEl.querySelector('.progress-fill');
+            const text = progressEl.querySelector('.progress-text');
+
+            if (fill) fill.style.width = `${data.progress}%`;
+            if (text) text.textContent = `${data.progress}% - ${data.current_step}`;
+        }
+
+        function removeScanProgress(scanId) {
+            const progressEl = document.getElementById(`progress-${scanId}`);
+            if (progressEl) {
+                progressEl.remove();
+            }
+        }
+
+        // ============================================================================
+        // INITIALIZATION
+        // ============================================================================
+        async function init() {
+            await Promise.all([
+                loadStatus(),
+                loadJobs(),
+                loadHistory()
+            ]);
+
+            // Connect WebSocket for real-time updates
+            connectWebSocket();
+
+            // Auto-refresh every 30 seconds (fallback if WebSocket not available)
+            setInterval(() => {
+                loadStatus();
+                loadJobs();
+            }, 30000);
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+</html>

@@ -11,7 +11,10 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+# Install CPU-only torch first (smaller, no CUDA dependencies)
+RUN pip install --timeout=2000 --retries=5 --no-cache-dir --user torch --index-url https://download.pytorch.org/whl/cpu
+# Install remaining dependencies
+RUN pip install --timeout=2000 --retries=5 --no-cache-dir --user -r requirements.txt
 
 # Production stage
 FROM python:3.11-slim

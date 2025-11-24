@@ -2,7 +2,7 @@
 
 **Doel**: Complete agent system documentation op één plek
 **Doelgroep**: Developers working with agents
-**Last Updated**: 2025-11-16
+**Last Updated**: 2025-11-21 (AgentEvolver Integration Added)
 
 ---
 
@@ -13,6 +13,7 @@
 **4 Scrum Ceremonies** - Automated
 **16 SuperClaude Commands** - Domain expertise
 **Quality Gates** - Integrated validation
+**🧬 Self-Evolution** - Week 17-26: Agents die zichzelf verbeteren!
 
 ---
 
@@ -81,6 +82,385 @@
 - **LLM**: qwen2.5:7b (local)
 - **Specialties**: Resource allocation, sprint planning, risk management
 - **Workflows**: PROJECT_DEFINITION
+
+### Nieuwe rollen (in evaluatie)
+
+#### UX Designer (Nieuw)
+- **Role**: UX research & interaction design
+- **LLM**: local (tbd)
+- **Specialties**: user flows, wireframes, usability checks
+- **Status**: gedefinieerd, nog te evalueren
+
+#### Frontend Developer (Nieuw)
+- **Role**: UI implementatie & performance
+- **LLM**: local (tbd)
+- **Specialties**: Blazor, HTML/CSS, JS/TS, componenten, styling, build/optimalisatie
+- **Status**: gedefinieerd, nog te evalueren
+
+#### Backend Developer (Nieuw)
+- **Role**: API/DB/services implementatie
+- **LLM**: local (tbd)
+- **Specialties**: .NET Core/C#, CQRS, API design, data access, reliability
+- **Status**: gedefinieerd, nog te evalueren
+
+**Aanbevolen stack voor Frontend/Backend (richtlijnen):**
+- Frontend: Blazor, HTML/CSS, JS/TS; component libs naar keuze; bundling/build volgens project.
+- Backend: ASP.NET Core (minimal APIs), CQRS (bv. MediatR), EF Core, SQL Server, Serilog/Seq, Swagger/OpenAPI, xUnit/FluentAssertions, FluentValidation, Docker/Compose.
+- Git workflow: feature branches, korte-lived branches, PR-review, consistente branch/commit conventies.
+
+#### Integratie Specialist (Nieuw)
+- **Role**: System integraties & interfacing
+- **LLM**: local (tbd)
+- **Specialties**: externe APIs, message flows, contract testing
+- **Status**: gedefinieerd, nog te evalueren
+
+---
+
+## 🧬 Self-Evolution Capabilities (Week 17-26)
+
+**Bron:** github.com/zeeneddie/AgentEvolver
+**Status:** Goedgekeurd 2025-11-21
+
+### Alle Agents Worden Zelf-Evoluerend!
+
+Vanaf Week 17 krijgen alle 10 agents de volgende capabilities:
+
+```
+┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
+│ SELF-QUESTIONING │     │ SELF-NAVIGATING  │     │ SELF-ATTRIBUTING │
+│                  │     │                  │     │                  │
+│ "Wat moet ik nog │     │ "Hoe deed ik dit │     │ "Welke stappen   │
+│  leren?"         │     │  eerder goed?"   │     │  waren cruciaal?"|
+└──────────────────┘     └──────────────────┘     └──────────────────┘
+```
+
+### Evolution Capabilities per Agent
+
+| Agent | Self-Questioning | Self-Navigating | Self-Attributing |
+|-------|------------------|-----------------|------------------|
+| **Felix** | Genereert edge-case specs | "Microservices werkte bij project X" | "Design Y leidde tot succes" |
+| **Marcus** | Identificeert tech debt scenarios | "Refactoring pattern A werkt goed" | "Maintenance actie Z had impact" |
+| **Quinn** | Creëert security test cases | "SQL injection check ving 80% bugs" | "Gate B ving 90% echte issues" |
+| **Betty** | Simuleert nieuwe bug types | "Debugging strategie X werkte" | "Root cause was altijd laag Y" |
+| **Eliza** | Test schattingen op hist. data | "Bij features A was schatting te laag" | "Factor Z werd onderschat" |
+| **Tessa** | Genereert test edge cases | "Test strategie B was effectief" | "Test C ving bug D" |
+| **Miguel** | Simuleert migratierisico's | "Migratie strategie E werkte" | "Stap F was kritiek" |
+| **Diana** | Genereert doc templates | "Format G was populair" | "Section H miste vaak" |
+| **Peter** | Genereert requirement variations | "User story format I werkte" | "Requirement J was incompleet" |
+| **Paul** | Simuleert planning scenarios | "Sprint planning K werkte" | "Risico L werd gemist" |
+
+### Evolving Agent Interface
+
+```typescript
+interface EvolvingAgent extends Agent {
+  // Bestaande capabilities
+  name: string;
+  role: string;
+  llm: OllamaModel;
+  specialties: string[];
+
+  // NIEUW: Evolution capabilities (Week 17+)
+  evolution: {
+    // Raadpleeg ervaring voor beslissingen
+    consultExperience(context: TaskContext): Promise<Guidance>;
+
+    // Log outcome na taak completion
+    logOutcome(result: TaskResult): Promise<void>;
+
+    // Ontvang feedback voor verbetering
+    receiveFeedback(attribution: Attribution): Promise<void>;
+
+    // Performance metrics
+    getPerformanceMetrics(): PerformanceMetrics;
+  };
+
+  // NIEUW: Evolution parameters
+  evolutionConfig: {
+    learningRate: number;           // Hoe snel past agent zich aan?
+    experienceWeight: number;       // Hoeveel weegt ervaring mee?
+    explorationRate: number;        // Hoeveel experimenteert agent?
+    attributionDepth: number;       // Hoe diep analyseert agent outcomes?
+  };
+}
+```
+
+### Experience Store (5 Nieuwe ChromaDB Collections)
+
+```
+ChromaDB Collections (Week 17+):
+├── agent_experiences         # Cross-task learnings per agent
+├── successful_patterns       # Wat werkte goed? (herbruikbaar)
+├── failure_analysis          # Wat ging fout en waarom?
+├── estimation_accuracy       # Schatting vs werkelijk per agent
+└── quality_metrics           # Code quality over tijd
+```
+
+### Success Metrics (Targets Week 26)
+
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| Agent Success Rate | +15% | Before/after comparison |
+| Estimation Accuracy | +20% | Predicted vs actual |
+| Code Quality | +10% | Quality gate scores |
+| Experience Relevance | >80% | Semantic similarity |
+| Self-generated Tasks | >100/week | Task generation count |
+
+### Safety Guardrails (Balanced Mode)
+
+| Automatisch Toegestaan | Human Approval Vereist |
+|------------------------|------------------------|
+| Experience logging | Policy changes |
+| Pattern matching | Nieuwe patterns toevoegen |
+| Outcome tracking | Cross-workflow regels |
+| Minor weight updates | Grote gedragswijzigingen |
+
+**Rollback Triggers:**
+- Success rate drop >10%
+- Quality score drop >15%
+- Estimation error increase >20%
+
+---
+
+## ✅ Validation Capabilities (Week 17-26)
+
+**Bron:** github.com/zeeneddie/context-engineering-intro
+**Status:** Goedgekeurd 2025-11-21
+
+### Alle Agents Krijgen Validatie Loops!
+
+Vanaf Week 17 itereert elke agent automatisch tot code validatie slaagt:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                 VALIDATION ITERATION LOOP               │
+│                                                         │
+│  Generate Code → Validate → Failed?                     │
+│       ↑                         │                       │
+│       │                         ↓                       │
+│       └────── Fix Issues ←── Yes                        │
+│                                 │                       │
+│                                 ↓ No                    │
+│                           ✅ Complete                   │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 5-Fase Validatie Pipeline
+
+| Fase | Tool (Python) | Tool (TypeScript) | Wat valideert het? |
+|------|---------------|-------------------|-------------------|
+| **1. LINTING** | ruff | eslint | Syntax errors, code smells |
+| **2. TYPE CHECK** | mypy | tsc | Type correctness |
+| **3. STYLE** | black | prettier | Code formatting |
+| **4. UNIT TESTS** | pytest | jest | Functionele correctheid |
+| **5. E2E** | pytest+httpx | jest+supertest | Integration werkt |
+
+### Validatie per Agent
+
+| Agent | Validatie Fasen | Max Iterations | Speciale Regels |
+|-------|-----------------|----------------|-----------------|
+| **Felix** | 1-5 (alle) | 3 | 80% coverage vereist |
+| **Marcus** | 1-2, 4 | 2 | 70% coverage |
+| **Quinn** | 1-3 | 1 | Report only (audit) |
+| **Betty** | 1, 4-5 | 3 | Regression test vereist |
+| **Eliza** | - | - | Valideert schattingen tegen historisch |
+| **Tessa** | 4 | 1 | Meta-validatie (tests testen) |
+| **Miguel** | 5 only | 2 | E2E kritiek voor migraties |
+| **Diana** | 1 | 1 | Template validatie |
+| **Peter** | 1 | 1 | Requirement format check |
+| **Paul** | - | - | Planning validation |
+
+### Validating Agent Interface
+
+```typescript
+interface ValidatingAgent extends EvolvingAgent {
+  // Inherited from EvolvingAgent
+  evolution: EvolutionCapabilities;
+
+  // NIEUW: Validation capabilities (Week 17+)
+  validation: {
+    // Run validation pipeline
+    runValidation(code: string): Promise<ValidationResult>;
+
+    // Iterate until valid
+    iterateUntilValid(
+      code: string,
+      maxIterations: number
+    ): Promise<ValidatedCode>;
+
+    // Request fix for validation errors
+    requestFix(
+      code: string,
+      errors: ValidationError[]
+    ): Promise<string>;
+
+    // Get validation config for workflow
+    getValidationConfig(): ValidationConfig;
+  };
+
+  // Validation configuration
+  validationConfig: {
+    phases: ValidationPhase[];
+    maxIterations: number;
+    stopOnFirstFailure: boolean;
+    requiredCoverage?: number;
+    regressionTestRequired?: boolean;
+  };
+}
+```
+
+### Synergie: Evolution + Validation
+
+**Perfecte Combinatie!** Validation integreert met Self-Evolution:
+
+| Self-Evolution | Validation Integration |
+|----------------|----------------------|
+| **Self-Questioning** | Genereer validatie test cases automatisch |
+| **Self-Navigating** | Leer van eerdere validatie successen |
+| **Self-Attributing** | Track welke validaties vaak falen |
+
+```typescript
+interface ValidationExperience {
+  agent_id: string;
+  workflow_type: WorkType;
+  validation_attempts: number;
+  failed_phases: ValidationPhase[];
+  fix_strategies_used: FixStrategy[];
+  final_result: 'SUCCESS' | 'MAX_ITERATIONS' | 'MANUAL';
+  lessons_learned: string[];
+}
+```
+
+### Validation Success Metrics
+
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| **First-Time Success** | >80% | Code passes validation first try |
+| **Iteration Success** | >95% | Code passes within 3 iterations |
+| **Coverage** | >80% | Unit test coverage |
+| **Validation Time** | <5 min | Full pipeline execution |
+
+### Impact
+
+> **"Als /validate slaagt, moet de gebruiker 100% vertrouwen hebben dat de applicatie correct werkt in productie."**
+
+| Zonder Validation | Met Validation |
+|-------------------|----------------|
+| "Hopelijk werkt het" | Iteratie tot succes |
+| 60% zekerheid | 100% zekerheid |
+| Handmatige fixes | Automatische fix loop |
+| Reactief | 5-fase pipeline |
+
+---
+
+## 🧠 Self-Questioning Implementation (Week 23-24)
+
+**Status:** ✅ COMPLETE
+**Doel:** Agents genereren zelf training tasks op basis van prestatie-analyse
+
+### 5-Stage Training Pipeline
+
+```
+┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
+│ DATA COLLECTION  │ --> │ SELF-QUESTIONING │ --> │ TASK GENERATION  │
+│ Gather metrics   │     │ Generate Qs      │     │ Create tasks     │
+└──────────────────┘     └──────────────────┘     └──────────────────┘
+        │                                                   │
+        └──────────────────────────────────────────────────┘
+                                   │
+                    ┌──────────────────────────┐
+                    │                          │
+        ┌──────────────────┐     ┌──────────────────┐
+        │ TRAINING EXEC    │ --> │ EVALUATION       │
+        │ Execute tasks    │     │ Generate insights│
+        └──────────────────┘     └──────────────────┘
+```
+
+### Question Categories
+
+| Category | Description | Example |
+|----------|-------------|---------|
+| `performance_gap` | Where am I underperforming? | "Why do I miss edge cases in auth?" |
+| `edge_case` | What edge cases am I missing? | "What unusual inputs could break this?" |
+| `knowledge_gap` | What don't I know? | "How do microservices handle X?" |
+| `skill_improvement` | How can I do this better? | "What patterns improve reliability?" |
+| `pattern_discovery` | What patterns should I learn? | "What worked in similar projects?" |
+
+### Self-Questioning Engine Interface
+
+```typescript
+interface SelfQuestioningEngine {
+  // Generate questions from performance data
+  generateQuestions(input: {
+    agentId: AgentName;
+    performanceData: PerformanceData;
+    recentTasks: Task[];
+    maxQuestions: number;
+  }): Promise<SelfQuestion[]>;
+
+  // Create synthetic training tasks
+  generateTrainingTasks(input: {
+    agentId: AgentName;
+    questions: SelfQuestion[];
+    maxTasks: number;
+  }): Promise<SyntheticTask[]>;
+
+  // Discover edge cases from patterns
+  discoverEdgeCases(input: {
+    agentId: AgentName;
+    recentTasks: Task[];
+    failureAnalysis: FailureAnalysis;
+  }): Promise<EdgeCase[]>;
+
+  // Run complete session
+  runSession(input: SessionInput): Promise<QuestioningSession>;
+}
+```
+
+### Training Modes
+
+| Mode | Questions | Tasks | Focus |
+|------|-----------|-------|-------|
+| **Balanced** | 5-10 | 3-5 | Steady improvement |
+| **Intensive** | 10-20 | 8-15 | Rapid skill building |
+| **Focused** | 2-5 | 1-3 | Targeted gap closure |
+
+### Agent-Specific Question Templates
+
+| Agent | Primary Categories | Example Questions |
+|-------|-------------------|-------------------|
+| **Felix** | Architecture, Design Patterns | "How handle circular dependencies?" |
+| **Marcus** | Tech Debt, Refactoring | "What's the impact of skipping tests?" |
+| **Quinn** | Security, Vulnerabilities | "What SQL injection variations exist?" |
+| **Betty** | Debugging, Root Cause | "How do race conditions manifest?" |
+| **Eliza** | Estimation, Complexity | "Why was this estimate too low?" |
+| **Tessa** | Testing, Coverage | "What edge cases did I miss?" |
+| **Miguel** | Migration, Compatibility | "What breaking changes occur?" |
+| **Diana** | Documentation, Clarity | "Why was this doc confusing?" |
+| **Peter** | Requirements, Scope | "What requirements were ambiguous?" |
+| **Paul** | Planning, Risk | "What risks were underestimated?" |
+
+### Implementation Files
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `agents/lib/selfQuestioningEngine.ts` | Core engine | ~800 |
+| `agents/workflows/selfTrainingWorkflow.ts` | Training pipeline | ~500 |
+| `app/api/self_questioning.py` | Python API | ~500 |
+| `frontend/self-improvement-dashboard.html` | Dashboard UI | ~750 |
+
+### API Endpoints
+
+```
+GET  /api/self-questioning/sessions          # List sessions
+POST /api/self-questioning/sessions          # Start session
+GET  /api/self-questioning/sessions/{id}     # Session details
+POST /api/self-questioning/sessions/{id}/pause   # Pause
+POST /api/self-questioning/sessions/{id}/resume  # Resume
+GET  /api/self-questioning/metrics           # All agent metrics
+GET  /api/self-questioning/metrics/{agent}   # Agent metrics
+GET  /api/self-questioning/questions/{agent} # Agent questions
+POST /api/self-questioning/schedules         # Create schedule
+```
 
 ---
 

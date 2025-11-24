@@ -477,6 +477,10 @@ class AgentService:
                 for f in result.get("files", [])
             ]
 
+            # Write files to disk if project_path was provided
+            if request.project_path and files:
+                await self._write_files_to_disk(files, request.project_path)
+
             return SpecKitWorkflowResult(
                 success=result.get("success", True),
                 constitution=result.get("constitution", {}),
@@ -688,6 +692,272 @@ class AgentService:
         logger.debug(f"Spec-Kit output: {output[:500]}...")
 
         return json.loads(output)
+
+    async def _write_files_to_disk(
+        self,
+        files: List[GeneratedFile],
+        base_path: str
+    ) -> None:
+        """
+        Write generated files to disk
+
+        Args:
+            files: List of generated files with content
+            base_path: Base directory path for file creation
+
+        This method:
+        1. Creates the base directory if it doesn't exist
+        2. Creates subdirectories as needed
+        3. Writes each file to disk
+        4. Logs the creation of each file
+        """
+        try:
+            # Resolve base path (relative to project root or absolute)
+            if not base_path.startswith('/'):
+                # Relative path - make it relative to project root
+                project_root = Path(__file__).parent.parent.parent.parent
+                full_base_path = project_root / base_path
+            else:
+                full_base_path = Path(base_path)
+
+            # Create base directory
+            full_base_path.mkdir(parents=True, exist_ok=True)
+            logger.info(f"✓ Ensured directory exists: {full_base_path}")
+
+            # Write each file
+            for file in files:
+                # Get the file path (remove base path if it's already in the file.path)
+                file_path_str = file.path
+                if file_path_str.startswith(base_path):
+                    # File path already includes base path
+                    full_file_path = Path(file_path_str)
+                else:
+                    # Append to base path
+                    full_file_path = full_base_path / Path(file_path_str).name
+
+                # Create parent directory if needed
+                full_file_path.parent.mkdir(parents=True, exist_ok=True)
+
+                # Write the file
+                full_file_path.write_text(file.content, encoding='utf-8')
+                logger.info(f"✓ Wrote file: {full_file_path} ({len(file.content)} bytes)")
+
+            logger.info(f"✓ Successfully wrote {len(files)} files to {full_base_path}")
+
+        except Exception as e:
+            logger.error(f"Error writing files to disk: {str(e)}", exc_info=True)
+            # Don't raise - file writing is optional, workflow can still succeed
+
+    # ========== Week 11: Task Generation Methods ==========
+
+    async def generate_epics_from_specification(
+        self,
+        specification: Dict[str, Any],
+        project_id: str,
+        options: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Call Felix agent to break down specification into epics.
+
+        Args:
+            specification: The HLD specification data
+            project_id: Project identifier
+            options: Generation options (max_epics, focus_areas, etc.)
+
+        Returns:
+            Dict with generated epics structure
+        """
+        try:
+            payload = {
+                "command": "generate-epics",
+                "specification": specification,
+                "projectId": project_id,
+                "options": options or {}
+            }
+
+            result = await self._call_typescript_felix(payload, 300)
+            return result
+
+        except Exception as e:
+            logger.error(f"Epic generation error: {str(e)}", exc_info=True)
+            raise RuntimeError(f"Epic generation failed: {str(e)}")
+
+    async def generate_features_from_epic(
+        self,
+        epic: Dict[str, Any],
+        specification_context: Optional[Dict[str, Any]] = None,
+        options: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Call Felix agent to break down epic into features.
+
+        Args:
+            epic: The epic data
+            specification_context: Optional specification context
+            options: Generation options
+
+        Returns:
+            Dict with generated features structure
+        """
+        try:
+            payload = {
+                "command": "generate-features",
+                "epic": epic,
+                "specificationContext": specification_context or {},
+                "options": options or {}
+            }
+
+            result = await self._call_typescript_felix(payload, 300)
+            return result
+
+        except Exception as e:
+            logger.error(f"Feature generation error: {str(e)}", exc_info=True)
+            raise RuntimeError(f"Feature generation failed: {str(e)}")
+
+    async def generate_stories_from_feature(
+        self,
+        feature: Dict[str, Any],
+        epic_context: Optional[Dict[str, Any]] = None,
+        options: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Call Felix agent to create user stories from feature.
+
+        Args:
+            feature: The feature data
+            epic_context: Optional epic context
+            options: Generation options
+
+        Returns:
+            Dict with generated stories structure
+        """
+        try:
+            payload = {
+                "command": "generate-stories",
+                "feature": feature,
+                "epicContext": epic_context or {},
+                "options": options or {}
+            }
+
+            result = await self._call_typescript_felix(payload, 300)
+            return result
+
+        except Exception as e:
+            logger.error(f"Story generation error: {str(e)}", exc_info=True)
+            raise RuntimeError(f"Story generation failed: {str(e)}")
+
+    async def generate_tasks_from_story(
+        self,
+        story: Dict[str, Any],
+        feature_context: Optional[Dict[str, Any]] = None,
+        options: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Call Felix agent to break down story into technical tasks.
+
+        Args:
+            story: The story data
+            feature_context: Optional feature context
+            options: Generation options
+
+        Returns:
+            Dict with generated tasks structure
+        """
+        try:
+            payload = {
+                "command": "generate-tasks",
+                "story": story,
+                "featureContext": feature_context or {},
+                "options": options or {}
+            }
+
+            result = await self._call_typescript_felix(payload, 300)
+            return result
+
+        except Exception as e:
+            logger.error(f"Task generation error: {str(e)}", exc_info=True)
+            raise RuntimeError(f"Task generation failed: {str(e)}")
+
+    async def _call_typescript_felix(
+        self,
+        payload: Dict[str, Any],
+        timeout: int
+    ) -> Dict[str, Any]:
+        """
+        Call the TypeScript Felix task generation executor via subprocess.
+
+        Args:
+            payload: Request payload to send to TypeScript
+            timeout: Execution timeout in seconds
+
+        Returns:
+            Parsed JSON result from TypeScript
+
+        Raises:
+            RuntimeError: If TypeScript execution fails
+        """
+        input_json = json.dumps(payload)
+
+        # Execute the TypeScript Felix executor using npx
+        cmd = [
+            "npx",
+            "ts-node",
+            str(self.agents_dir / "execute-felix-task-generation.ts")
+        ]
+
+        logger.info(f"Executing Felix command: {payload.get('command')}")
+        logger.debug(f"Payload: {input_json[:200]}...")
+
+        start_exec = datetime.now()
+
+        # Run subprocess asynchronously
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=str(self.agents_dir)
+        )
+
+        # Communicate with the subprocess
+        comm_task = asyncio.create_task(process.communicate(input=input_json.encode()))
+
+        # Monitor progress
+        warning_intervals = [60, 120, 240]
+        last_warning_time = 0
+
+        while not comm_task.done():
+            elapsed = (datetime.now() - start_exec).total_seconds()
+
+            for interval in warning_intervals:
+                if elapsed >= interval and last_warning_time < interval:
+                    logger.warning(
+                        f"⏰ Felix task generation still running after {int(elapsed)} seconds. "
+                        f"Command: {payload.get('command')}"
+                    )
+                    last_warning_time = interval
+                    break
+
+            try:
+                await asyncio.wait_for(asyncio.shield(comm_task), timeout=10)
+                break
+            except asyncio.TimeoutError:
+                continue
+
+        # Get the results
+        stdout, stderr = await comm_task
+
+        if process.returncode != 0:
+            error_msg = stderr.decode() if stderr else "Unknown error"
+            logger.error(f"Felix execution failed: {error_msg}")
+            raise RuntimeError(f"Felix execution failed: {error_msg}")
+
+        # Parse the JSON output
+        output = stdout.decode()
+        logger.debug(f"Felix output: {output[:500]}...")
+
+        return json.loads(output)
+            # Files are still available in the response
 
     async def get_statistics(self) -> Dict[str, Any]:
         """

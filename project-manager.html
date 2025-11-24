@@ -478,6 +478,52 @@
             white-space: pre-wrap;
             word-wrap: break-word;
         }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .form-row label {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+
+        .form-row input,
+        .form-row textarea {
+            padding: 0.65rem 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .choice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+        }
+
+        .pill-row {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .hint {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
     </style>
 </head>
 <body>
@@ -485,6 +531,7 @@
         <div class="header-content">
             <h1 id="headerTitle">📋 Task Manager</h1>
             <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <a href="index.html" class="btn btn-secondary" style="padding: 0.6rem 1rem; text-decoration: none; display: flex; align-items: center; gap: 0.3rem;" title="Back to Hub">🏠 Hub</a>
                 <select id="languageSelector" onchange="setLanguage(this.value)" style="padding: 0.6rem 1rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; background: white; cursor: pointer;">
                     <option value="en">English</option>
                     <option value="fr">Français</option>
@@ -555,7 +602,77 @@
     </div>
 
     <div class="container">
-        <div id="welcomeScreen" class="welcome">
+        <div id="landingScreen" class="card" style="margin-bottom: 1rem;">
+            <h2 style="margin-bottom: 0.75rem;">Start</h2>
+            <p class="hint" style="margin-bottom: 0.75rem;">Kies een bestaand project of maak een nieuw project (greenfield/brownfield).</p>
+            <div class="choice-grid">
+                <button id="landingExistingBtn" class="btn btn-primary" style="justify-content: center;">📂 Bestaand project</button>
+                <button id="landingNewBtn" class="btn btn-secondary" style="justify-content: center;">🆕 Nieuw project</button>
+            </div>
+        </div>
+
+        <div id="existingFlow" class="card" style="display: none; margin-bottom: 1rem;">
+            <h3 style="margin-bottom: 0.5rem;">📂 Kies een bestaand project (Projecten)</h3>
+            <p class="hint" style="margin-bottom: 0.5rem;">Selecteer de map <code>Projecten</code>; daarna kun je een projectmap kiezen.</p>
+            <div class="pill-row" style="margin-bottom: 0.75rem;">
+                <button id="pickBaseFolderBtn" class="btn btn-secondary">📁 Kies Projecten map</button>
+                <span id="baseFolderLabel" class="hint"></span>
+            </div>
+            <div class="form-row">
+                <label for="existingProjectSelect">Projectmap</label>
+                <select id="existingProjectSelect">
+                    <option value="">-- kies een project --</option>
+                </select>
+            </div>
+            <button id="openExistingBtn" class="btn btn-primary">Openen</button>
+            <div id="existingResult" class="hint" style="margin-top: 0.75rem;"></div>
+        </div>
+
+        <div id="newFlow" class="card" style="display: none; margin-bottom: 1rem;">
+            <h3 style="margin-bottom: 0.5rem;">🆕 Nieuw project (greenfield/brownfield)</h3>
+            <div class="pill-row" style="margin-bottom: 0.75rem;">
+                <label><input type="radio" name="projectType" value="green" checked> Greenfield</label>
+                <label><input type="radio" name="projectType" value="brown"> Brownfield</label>
+            </div>
+            <div class="form-row">
+                <label for="apiBaseInput">API base URL</label>
+                <input id="apiBaseInput" type="text" value="http://localhost:8000" />
+                <div class="hint">Standaard: http://localhost:8000</div>
+            </div>
+            <div class="form-row">
+                <label for="projectNameInput">Projectnaam</label>
+                <input id="projectNameInput" type="text" placeholder="Bijv. Customer Portal" />
+            </div>
+            <div class="form-row">
+                <label for="projectDescInput">Omschrijving</label>
+                <textarea id="projectDescInput" rows="2" placeholder="Korte beschrijving"></textarea>
+            </div>
+            <div class="form-row">
+                <label for="folderPathInput">Folderpad (optioneel)</label>
+                <input id="folderPathInput" type="text" placeholder="/abs/path/naar/project" />
+                <div class="hint">Laat leeg om default backend pad te gebruiken (backend/projects/&lt;slug&gt;)</div>
+            </div>
+            <div class="form-row">
+                <label>Projecten map (bestemming voor source)</label>
+                <div class="pill-row">
+                    <button id="pickDestFolderBtn" class="btn btn-secondary">📁 Kies Projecten map</button>
+                    <span id="destFolderLabel" class="hint"></span>
+                </div>
+                <div class="hint">Hier wordt bij brownfield de source gekopieerd naar een submap.</div>
+            </div>
+            <div id="brownFieldSourceRow" class="form-row" style="display: none;">
+                <label>Source code locatie (brownfield)</label>
+                <div class="pill-row">
+                    <button id="pickSourceBtn" class="btn btn-secondary">📁 Kies source folder</button>
+                    <span id="sourcePathLabel" class="hint"></span>
+                </div>
+                <div class="hint">Wordt lokaal opgeslagen (mapping project → sourcepad).</div>
+            </div>
+            <button id="createProjectBtn" class="btn btn-primary">🛠️ Maak nieuw project</button>
+            <div id="createProjectResult" class="hint" style="margin-top: 0.75rem;"></div>
+        </div>
+
+        <div id="welcomeScreen" class="welcome" style="display: none;">
             <h2>Bienvenue ! 👋</h2>
             <p>Sélectionnez le dossier contenant vos fichiers Markdown (project.md et project-archive.md)</p>
             <button onclick="document.getElementById('selectFolderBtn').click()" class="btn btn-primary" style="font-size: 1.1rem; padding: 0.8rem 2rem;">
@@ -1768,6 +1885,210 @@
             }
         }
 
+        let baseProjectHandle = null;
+        let baseProjectEntries = [];
+        let brownfieldSourceHandle = null;
+        let projectDestHandle = null;
+
+        function showLanding() {
+            document.getElementById('landingScreen').style.display = 'block';
+            document.getElementById('existingFlow').style.display = 'none';
+            document.getElementById('newFlow').style.display = 'none';
+            document.getElementById('welcomeScreen').style.display = 'none';
+        }
+
+        async function populateExistingProjects(baseHandle) {
+            const select = document.getElementById('existingProjectSelect');
+            select.innerHTML = '<option value=\"\">-- kies een project --</option>';
+            const entries = [];
+            for await (const entry of baseHandle.values()) {
+                if (entry.kind === 'directory' && !entry.name.startsWith('.')) {
+                    entries.push(entry);
+                }
+            }
+            entries.sort((a, b) => a.name.localeCompare(b.name));
+            entries.forEach((entry, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx.toString();
+                opt.textContent = entry.name;
+                select.appendChild(opt);
+            });
+            baseProjectEntries = entries;
+        }
+
+        async function pickBaseProjectsFolder() {
+            try {
+                baseProjectHandle = await window.showDirectoryPicker();
+                document.getElementById('baseFolderLabel').textContent = baseProjectHandle.name;
+                await populateExistingProjects(baseProjectHandle);
+                document.getElementById('existingResult').textContent = '';
+            } catch (err) {
+                console.error('Pick base folder failed', err);
+            }
+        }
+
+        async function openExistingProject() {
+            const select = document.getElementById('existingProjectSelect');
+            const idx = parseInt(select.value, 10);
+            const resultEl = document.getElementById('existingResult');
+            resultEl.style.color = 'inherit';
+            resultEl.textContent = '';
+            if (isNaN(idx) || !baseProjectEntries[idx]) {
+                resultEl.style.color = '#EF4444';
+                resultEl.textContent = 'Kies een projectmap.';
+                return;
+            }
+            try {
+                const projectHandle = baseProjectEntries[idx];
+                directoryHandle = projectHandle;
+                await saveDirectoryHandle(directoryHandle);
+                await loadKanbanFile();
+
+                document.getElementById('landingScreen').style.display = 'none';
+                document.getElementById('existingFlow').style.display = 'none';
+                document.getElementById('newFlow').style.display = 'none';
+                document.getElementById('kanbanView').style.display = 'block';
+                document.getElementById('filterBar').style.display = 'block';
+                document.getElementById('newTaskBtn').style.display = 'inline-flex';
+                document.getElementById('archiveBtn').style.display = 'inline-flex';
+                document.getElementById('manageColsBtn').style.display = 'inline-flex';
+
+                showNotification('Project geladen', 'success');
+            } catch (err) {
+                console.error('Open existing failed', err);
+                resultEl.style.color = '#EF4444';
+                resultEl.textContent = `Mislukt: ${err.message}`;
+            }
+        }
+
+        async function pickSourceFolder() {
+            try {
+                const handle = await window.showDirectoryPicker();
+                brownfieldSourceHandle = handle;
+                document.getElementById('sourcePathLabel').textContent = handle.name;
+            } catch (err) {
+                console.error('Pick source failed', err);
+            }
+        }
+
+        async function pickDestFolder() {
+            try {
+                const handle = await window.showDirectoryPicker();
+                projectDestHandle = handle;
+                document.getElementById('destFolderLabel').textContent = handle.name;
+            } catch (err) {
+                console.error('Pick dest failed', err);
+            }
+        }
+
+        function slugifyName(name) {
+            return (name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'project';
+        }
+
+        async function copyFileToDir(fileHandle, destDirHandle) {
+            const file = await fileHandle.getFile();
+            const destFileHandle = await destDirHandle.getFileHandle(file.name, { create: true });
+            const writable = await destFileHandle.createWritable();
+            await writable.write(await file.arrayBuffer());
+            await writable.close();
+        }
+
+        async function copyDirectoryRecursive(srcHandle, destHandle) {
+            for await (const entry of srcHandle.values()) {
+                if (entry.kind === 'file') {
+                    await copyFileToDir(entry, destHandle);
+                } else if (entry.kind === 'directory') {
+                    const childDest = await destHandle.getDirectoryHandle(entry.name, { create: true });
+                    await copyDirectoryRecursive(entry, childDest);
+                }
+            }
+        }
+
+        async function copySourceToProject(projectName, resultEl) {
+            if (!brownfieldSourceHandle) {
+                resultEl.textContent += ' | Geen source-folder gekozen.';
+                return;
+            }
+            if (!projectDestHandle) {
+                resultEl.textContent += ' | Kies eerst een Projecten map voor bestemming.';
+                return;
+            }
+            const slug = slugifyName(projectName);
+            try {
+                // Check if destination exists
+                let destDir;
+                try {
+                    destDir = await projectDestHandle.getDirectoryHandle(slug, { create: false });
+                    // Already exists, skip copy
+                    resultEl.textContent += ` | Source NIET gekopieerd: map bestaat al (${slug}).`;
+                    return;
+                } catch (e) {
+                    // create new
+                    destDir = await projectDestHandle.getDirectoryHandle(slug, { create: true });
+                }
+
+                await copyDirectoryRecursive(brownfieldSourceHandle, destDir);
+                resultEl.textContent += ` | Source gekopieerd naar ${projectDestHandle.name}/${slug}`;
+            } catch (err) {
+                console.error('Copy source failed', err);
+                resultEl.textContent += ` | Kopiëren mislukt: ${err.message}`;
+            }
+        }
+
+        async function createBackendProject() {
+            const apiBase = document.getElementById('apiBaseInput').value.trim() || 'http://localhost:8000';
+            const projectName = document.getElementById('projectNameInput').value.trim();
+            const description = document.getElementById('projectDescInput').value.trim();
+            const folderPath = document.getElementById('folderPathInput').value.trim();
+            const resultEl = document.getElementById('createProjectResult');
+            const projectType = (document.querySelector('input[name=\"projectType\"]:checked') || {}).value || 'green';
+
+            resultEl.style.color = 'inherit';
+            resultEl.textContent = '';
+
+            if (!projectName) {
+                resultEl.style.color = '#EF4444';
+                resultEl.textContent = 'Projectnaam is verplicht.';
+                return;
+            }
+
+            try {
+                resultEl.textContent = 'Bezig met aanmaken...';
+                const payload = {
+                    project_name: projectName,
+                    description: description || '',
+                    business_goals: [],
+                    target_audience: '',
+                    constraints: [],
+                    folder_path: folderPath || null,
+                    project_type: projectType,
+                    source_path: projectType === 'brown' ? (brownfieldSourceHandle ? brownfieldSourceHandle.name : '') : ''
+                };
+
+                const resp = await fetch(`${apiBase.replace(/\/$/, '')}/api/projects/define`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const json = await resp.json();
+                if (!resp.ok) {
+                    throw new Error(json.detail || `Status ${resp.status}`);
+                }
+
+                resultEl.style.color = '#22C55E';
+                const createdPath = json?.folder_structure?.path || '(onbekend pad)';
+                resultEl.textContent = `Project aangemaakt: ${projectName} → ${createdPath}`;
+                if (projectType === 'brown') {
+                    await copySourceToProject(projectName, resultEl);
+                }
+            } catch (err) {
+                console.error('Create project failed', err);
+                resultEl.style.color = '#EF4444';
+                resultEl.textContent = `Mislukt: ${err.message}`;
+            }
+        }
+
         // Try to restore previous directory on page load
         async function tryRestorePreviousDirectory() {
             const savedHandle = await loadDirectoryHandle();
@@ -1816,6 +2137,45 @@
                     await switchProject(projectIndex);
                 }
             });
+
+            // Backend project creation
+            const createBtn = document.getElementById('createProjectBtn');
+            if (createBtn) {
+                createBtn.addEventListener('click', createBackendProject);
+            }
+
+            // Landing buttons
+            const landingExistingBtn = document.getElementById('landingExistingBtn');
+            const landingNewBtn = document.getElementById('landingNewBtn');
+            if (landingExistingBtn) landingExistingBtn.addEventListener('click', () => {
+                document.getElementById('landingScreen').style.display = 'none';
+                document.getElementById('existingFlow').style.display = 'block';
+                document.getElementById('newFlow').style.display = 'none';
+            });
+            if (landingNewBtn) landingNewBtn.addEventListener('click', () => {
+                document.getElementById('landingScreen').style.display = 'none';
+                document.getElementById('existingFlow').style.display = 'none';
+                document.getElementById('newFlow').style.display = 'block';
+            });
+
+            // Base folder picker (Projecten)
+            const pickBaseBtn = document.getElementById('pickBaseFolderBtn');
+            if (pickBaseBtn) pickBaseBtn.addEventListener('click', pickBaseProjectsFolder);
+            const openExistingBtn = document.getElementById('openExistingBtn');
+            if (openExistingBtn) openExistingBtn.addEventListener('click', openExistingProject);
+
+            // Brownfield toggle
+            const radios = document.querySelectorAll('input[name=\"projectType\"]');
+            radios.forEach(r => r.addEventListener('change', () => {
+                const isBrown = (document.querySelector('input[name=\"projectType\"]:checked') || {}).value === 'brown';
+                document.getElementById('brownFieldSourceRow').style.display = isBrown ? 'block' : 'none';
+            }));
+
+            const pickSourceBtn = document.getElementById('pickSourceBtn');
+            if (pickSourceBtn) pickSourceBtn.addEventListener('click', pickSourceFolder);
+
+            const pickDestBtn = document.getElementById('pickDestFolderBtn');
+            if (pickDestBtn) pickDestBtn.addEventListener('click', pickDestFolder);
         });
 
         // Select folder or file

@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spec-Kit Wizard - Project Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .nav {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .nav a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .nav a.active {
+            background: rgba(255,255,255,0.4);
+        }
+
+        /* Wizard Stepper */
+        .stepper {
+            display: flex;
+            justify-content: space-between;
+            padding: 30px 50px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .step {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 60%;
+            width: 80%;
+            height: 2px;
+            background: #dee2e6;
+            z-index: 0;
+        }
+
+        .step.active:not(:last-child)::after {
+            background: #667eea;
+        }
+
+        .step.completed:not(:last-child)::after {
+            background: #28a745;
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #dee2e6;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step.active .step-number {
+            background: #667eea;
+            color: white;
+        }
+
+        .step.completed .step-number {
+            background: #28a745;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 14px;
+            color: #6c757d;
+            text-align: center;
+        }
+
+        .step.active .step-label {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        /* Content Area */
+        .content {
+            padding: 40px;
+        }
+
+        .stage {
+            display: none;
+        }
+
+        .stage.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stage-title {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stage-description {
+            color: #6c757d;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-label .optional {
+            color: #6c757d;
+            font-weight: 400;
+            font-style: italic;
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .char-count {
+            text-align: right;
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+
+        /* Chips Input */
+        .chips-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 8px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            min-height: 45px;
+            align-items: center;
+        }
+
+        .chip {
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chip-remove {
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .chips-input {
+            border: none;
+            outline: none;
+            flex: 1;
+            min-width: 150px;
+            padding: 6px;
+            font-size: 14px;
+        }
+
+        /* List Items */
+        .list-items {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .list-item {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .list-item input {
+            flex: 1;
+        }
+
+        .btn-remove {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .btn-remove:hover {
+            background: #c82333;
+        }
+
+        .btn-add {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+
+        .btn-add:hover {
+            background: #218838;
+        }
+
+        /* Buttons */
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+
+        /* Collapsible Section */
+        .collapsible {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .collapsible-header {
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #e9ecef;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .collapsible-header:hover {
+            background: #dee2e6;
+        }
+
+        .collapsible-icon {
+            transition: transform 0.3s;
+        }
+
+        .collapsible.open .collapsible-icon {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .collapsible.open .collapsible-content {
+            max-height: 2000px;
+        }
+
+        .collapsible-body {
+            padding: 20px;
+        }
+
+        /* Results Display */
+        .results-box {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .results-section {
+            margin-bottom: 20px;
+        }
+
+        .results-section h3 {
+            color: #667eea;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .results-section p,
+        .results-section ul {
+            color: #495057;
+            line-height: 1.6;
+        }
+
+        .results-section ul {
+            padding-left: 20px;
+        }
+
+        /* Progress Indicator */
+        .progress-indicator {
+            margin: 30px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .progress-stages {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        .progress-stage.active {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        /* Download Section */
+        .download-section {
+            background: #e7f3ff;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .download-files {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .download-file {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .download-file:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .download-file-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .download-file-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .stepper {
+                padding: 20px;
+            }
+
+            .step-label {
+                font-size: 12px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🧙 Spec-Kit Wizard</h1>
+            <p>Generate complete project specifications with AI-powered agents</p>
+            <div class="nav">
+                <a href="../index.html">🏠 Hub</a>
+                <a href="agent-dashboard.html">🤖 Agents</a>
+                <a href="estimation-dashboard.html">📊 Estimation</a>
+                <a href="quality-dashboard.html">✅ Quality</a>
+                <a href="spec-kit-wizard.html" class="active">📝 Spec-Kit</a>
+                <a href="sprint-planning.html">🎯 Sprint</a>
+            </div>
+        </div>
+
+        <!-- Wizard Stepper -->
+        <div class="stepper">
+            <div class="step active" data-step="1">
+                <div class="step-number">1</div>
+                <div class="step-label">Constitution</div>
+            </div>
+            <div class="step" data-step="2">
+                <div class="step-number">2</div>
+                <div class="step-label">Specification</div>
+            </div>
+            <div class="step" data-step="3">
+                <div class="step-number">3</div>
+                <div class="step-label">Tasks</div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Alert Messages -->
+            <div id="alertSuccess" class="alert alert-success"></div>
+            <div id="alertError" class="alert alert-error"></div>
+            <div id="alertInfo" class="alert alert-info"></div>
+
+            <!-- Stage 1: Constitution -->
+            <div id="stage1" class="stage active">
+                <div class="stage-title">
+                    📜 Stage 1: Constitution
+                </div>
+                <p class="stage-description">
+                    Define your project's business case, stakeholders, and constraints. This forms the foundation of your project specification.
+                </p>
+
+                <form id="constitutionForm">
+                    <!-- Business Case -->
+                    <div class="form-group">
+                        <label class="form-label">Business Case *</label>
+                        <textarea
+                            id="businessCase"
+                            class="form-textarea"
+                            maxlength="2000"
+                            placeholder="Describe the business problem, opportunity, and value proposition..."
+                            required
+                        ></textarea>
+                        <div class="char-count">
+                            <span id="businessCaseCount">0</span> / 2000
+                        </div>
+                    </div>
+
+                    <!-- Stakeholders -->
+                    <div class="form-group">
+                        <label class="form-label">Stakeholders *</label>
+                        <div id="stakeholdersChips" class="chips-container">
+                            <input
+                                type="text"
+                                id="stakeholdersInput"
+                                class="chips-input"
+                                placeholder="Type name and press Enter..."
+                            >
+                        </div>
+                    </div>
+
+                    <!-- Constraints -->
+                    <div class="form-group">
+                        <label class="form-label">Constraints *</label>
+                        <div id="constraintsList" class="list-items">
+                            <div class="list-item">
+                                <input type="text" class="form-input" placeholder="E.g., Budget: €50,000" required>
+                                <button type="button" class="btn-remove" onclick="removeListItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-add" onclick="addConstraint()">+ Add Constraint</button>
+                    </div>
+
+                    <!-- Success Criteria -->
+                    <div class="form-group">
+                        <label class="form-label">Success Criteria *</label>
+                        <div id="successCriteriaList" class="list-items">
+                            <div class="list-item">
+                                <input type="text" class="form-input" placeholder="E.g., 10,000 active users in first year" required>
+                                <button type="button" class="btn-remove" onclick="removeListItem(this)">✕</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-add" onclick="addSuccessCriteria()">+ Add Criterion</button>
+                    </div>
+
+                    <!-- Technical Context (Optional) -->
+                    <div class="form-group">
+                        <label class="form-label">Technical Context <span class="optional">(optional)</span></label>
+                        <input type="text" id="existingSystems" class="form-input" placeholder="Existing systems (e.g., CRM: Salesforce, Database: PostgreSQL)">
+                    </div>
+
+                    <div class="form-group">
+                        <input type="text" id="techStack" class="form-input" placeholder="Preferred tech stack (e.g., React, Node.js, AWS)">
+                    </div>
+
+                    <div class="form-group">
+                        <input type="number" id="teamSize" class="form-input" placeholder="Team size (e.g., 5)" min="1">
+                    </div>
+
+                    <div class="form-group">
+                        <input type="text" id="timeline" class="form-input" placeholder="Timeline (e.g., 6 months)">
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary">
+                            Generate Constitution →
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Constitution Results -->
+                <div id="constitutionResults" style="display: none;">
+                    <div class="results-box">
+                        <h3>📜 Constitution Generated</h3>
+                        <div id="constitutionContent"></div>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-success" onclick="goToStage(2)">
+                            Continue to Specification →
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stage 2: Specification -->
+            <div id="stage2" class="stage">
+                <div class="stage-title">
+                    🏗️ Stage 2: Specification
+                </div>
+                <p class="stage-description">
+                    Generate detailed technical specification based on your constitution. This defines architecture, components, and data models.
+                </p>
+
+                <!-- Constitution Summary (Collapsible) -->
+                <div class="collapsible" id="constitutionSummary">
+                    <div class="collapsible-header" onclick="toggleCollapsible('constitutionSummary')">
+                        <span>📜 Constitution Summary</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="collapsible-body" id="constitutionSummaryContent">
+                            <!-- Will be populated from Stage 1 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generate Specification Button -->
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="goToStage(1)">
+                        ← Back to Constitution
+                    </button>
+                    <button class="btn btn-primary" onclick="generateSpecification()">
+                        Generate Specification →
+                    </button>
+                </div>
+
+                <!-- Specification Results -->
+                <div id="specificationResults" style="display: none;">
+                    <div class="results-box">
+                        <h3>🏗️ Specification Generated</h3>
+                        <div id="specificationContent"></div>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="goToStage(1)">
+                            ← Back to Constitution
+                        </button>
+                        <button class="btn btn-success" onclick="goToStage(3)">
+                            Continue to Tasks →
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stage 3: Tasks -->
+            <div id="stage3" class="stage">
+                <div class="stage-title">
+                    ✅ Stage 3: Tasks
+                </div>
+                <p class="stage-description">
+                    Generate actionable epics, features, stories, and tasks. Ready for your project management tool!
+                </p>
+
+                <!-- Specification Summary (Collapsible) -->
+                <div class="collapsible" id="specificationSummary">
+                    <div class="collapsible-header" onclick="toggleCollapsible('specificationSummary')">
+                        <span>🏗️ Specification Summary</span>
+                        <span class="collapsible-icon">▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="collapsible-body" id="specificationSummaryContent">
+                            <!-- Will be populated from Stage 2 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generate Tasks Button -->
+                <div class="button-group">
+                    <button class="btn btn-secondary" onclick="goToStage(2)">
+                        ← Back to Specification
+                    </button>
+                    <button class="btn btn-primary" onclick="generateTasks()">
+                        Generate Tasks →
+                    </button>
+                </div>
+
+                <!-- Tasks Results -->
+                <div id="tasksResults" style="display: none;">
+                    <div class="results-box">
+                        <h3>✅ Tasks Generated</h3>
+                        <div id="tasksContent"></div>
+                    </div>
+
+                    <!-- Planning Poker Guide -->
+                    <div class="collapsible">
+                        <div class="collapsible-header" onclick="toggleCollapsible(this.parentElement)">
+                            <span>🎯 Planning Poker Guide</span>
+                            <span class="collapsible-icon">▼</span>
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="collapsible-body">
+                                <h4>How to Estimate Story Points</h4>
+                                <ul>
+                                    <li><strong>1 point:</strong> Trivial task (< 1 hour)</li>
+                                    <li><strong>2 points:</strong> Simple task (1-2 hours)</li>
+                                    <li><strong>3 points:</strong> Small story (2-4 hours)</li>
+                                    <li><strong>5 points:</strong> Medium story (1 day)</li>
+                                    <li><strong>8 points:</strong> Large story (2-3 days)</li>
+                                    <li><strong>13 points:</strong> Very large story (1 week) - consider splitting</li>
+                                    <li><strong>21 points:</strong> Epic-sized - MUST be split into smaller stories</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Download Section -->
+                    <div class="download-section">
+                        <h3>📥 Download Project Files</h3>
+                        <div class="download-files">
+                            <div class="download-file" onclick="downloadFile('constitution')">
+                                <div class="download-file-icon">📜</div>
+                                <div class="download-file-name">constitution.md</div>
+                            </div>
+                            <div class="download-file" onclick="downloadFile('specification')">
+                                <div class="download-file-icon">🏗️</div>
+                                <div class="download-file-name">specification.md</div>
+                            </div>
+                            <div class="download-file" onclick="downloadFile('tasks')">
+                                <div class="download-file-icon">✅</div>
+                                <div class="download-file-name">tasks.md</div>
+                            </div>
+                            <div class="download-file" onclick="downloadFile('readme')">
+                                <div class="download-file-icon">📖</div>
+                                <div class="download-file-name">README.md</div>
+                            </div>
+                            <div class="download-file" onclick="downloadFile('metadata')">
+                                <div class="download-file-icon">📊</div>
+                                <div class="download-file-name">metadata.json</div>
+                            </div>
+                        </div>
+                        <div class="button-group" style="margin-top: 20px;">
+                            <button class="btn btn-success" onclick="downloadAllFiles()">
+                                📦 Download All as ZIP
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="resetWizard()">
+                            🔄 Start New Project
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Complete Workflow Option -->
+            <div style="margin-top: 40px; padding-top: 40px; border-top: 2px dashed #dee2e6;">
+                <h2 style="text-align: center; color: #2c3e50; margin-bottom: 20px;">
+                    🚀 Or Run Complete Pipeline
+                </h2>
+                <p style="text-align: center; color: #6c757d; margin-bottom: 30px;">
+                    Generate Constitution → Specification → Tasks in one go (takes 5-10 minutes)
+                </p>
+                <div class="button-group" style="justify-content: center;">
+                    <button class="btn btn-success" onclick="runFullPipeline()">
+                        ⚡ Run Full Pipeline
+                    </button>
+                </div>
+
+                <!-- Progress Indicator (Hidden initially) -->
+                <div id="pipelineProgress" style="display: none;">
+                    <div class="progress-indicator">
+                        <div class="progress-bar">
+                            <div id="progressFill" class="progress-fill" style="width: 0%;">0%</div>
+                        </div>
+                        <div class="progress-stages">
+                            <span id="progressStage1" class="progress-stage">Constitution</span>
+                            <span id="progressStage2" class="progress-stage">Specification</span>
+                            <span id="progressStage3" class="progress-stage">Tasks</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE = 'http://localhost:8000/api';
+
+        // Global state
+        let constitutionData = null;
+        let specificationData = null;
+        let tasksData = null;
+        let stakeholders = [];
+
+        // Character counter for business case
+        document.getElementById('businessCase').addEventListener('input', (e) => {
+            document.getElementById('businessCaseCount').textContent = e.target.value.length;
+        });
+
+        // Stakeholders chips input
+        document.getElementById('stakeholdersInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.target.value.trim()) {
+                e.preventDefault();
+                addStakeholder(e.target.value.trim());
+                e.target.value = '';
+            }
+        });
+
+        function addStakeholder(name) {
+            if (!stakeholders.includes(name)) {
+                stakeholders.push(name);
+                renderStakeholders();
+            }
+        }
+
+        function removeStakeholder(name) {
+            stakeholders = stakeholders.filter(s => s !== name);
+            renderStakeholders();
+        }
+
+        function renderStakeholders() {
+            const container = document.getElementById('stakeholdersChips');
+            const input = document.getElementById('stakeholdersInput');
+            container.innerHTML = '';
+
+            stakeholders.forEach(name => {
+                const chip = document.createElement('div');
+                chip.className = 'chip';
+                chip.innerHTML = `
+                    ${name}
+                    <span class="chip-remove" onclick="removeStakeholder('${name}')">✕</span>
+                `;
+                container.appendChild(chip);
+            });
+
+            container.appendChild(input);
+        }
+
+        // List management
+        function addConstraint() {
+            const list = document.getElementById('constraintsList');
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            item.innerHTML = `
+                <input type="text" class="form-input" placeholder="E.g., Timeline: 6 months" required>
+                <button type="button" class="btn-remove" onclick="removeListItem(this)">✕</button>
+            `;
+            list.appendChild(item);
+        }
+
+        function addSuccessCriteria() {
+            const list = document.getElementById('successCriteriaList');
+            const item = document.createElement('div');
+            item.className = 'list-item';
+            item.innerHTML = `
+                <input type="text" class="form-input" placeholder="E.g., 95% uptime" required>
+                <button type="button" class="btn-remove" onclick="removeListItem(this)">✕</button>
+            `;
+            list.appendChild(item);
+        }
+
+        function removeListItem(button) {
+            button.parentElement.remove();
+        }
+
+        // Stage navigation
+        function goToStage(stageNumber) {
+            // Hide all stages
+            document.querySelectorAll('.stage').forEach(stage => {
+                stage.classList.remove('active');
+            });
+
+            // Show target stage
+            document.getElementById(`stage${stageNumber}`).classList.add('active');
+
+            // Update stepper
+            document.querySelectorAll('.step').forEach((step, index) => {
+                const stepNum = index + 1;
+                step.classList.remove('active', 'completed');
+
+                if (stepNum < stageNumber) {
+                    step.classList.add('completed');
+                } else if (stepNum === stageNumber) {
+                    step.classList.add('active');
+                }
+            });
+
+            // Populate summaries
+            if (stageNumber === 2 && constitutionData) {
+                document.getElementById('constitutionSummaryContent').innerHTML = formatConstitutionSummary(constitutionData);
+            }
+            if (stageNumber === 3 && specificationData) {
+                document.getElementById('specificationSummaryContent').innerHTML = formatSpecificationSummary(specificationData);
+            }
+        }
+
+        // Collapsible sections
+        function toggleCollapsible(element) {
+            if (typeof element === 'string') {
+                element = document.getElementById(element);
+            }
+            element.classList.toggle('open');
+        }
+
+        // Show/hide alerts
+        function showAlert(type, message) {
+            const alertId = `alert${type.charAt(0).toUpperCase() + type.slice(1)}`;
+            const alert = document.getElementById(alertId);
+            alert.textContent = message;
+            alert.classList.add('show');
+
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 5000);
+        }
+
+        // Constitution form submission
+        document.getElementById('constitutionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (stakeholders.length === 0) {
+                showAlert('error', 'Please add at least one stakeholder');
+                return;
+            }
+
+            const constraints = Array.from(document.querySelectorAll('#constraintsList input'))
+                .map(input => input.value.trim())
+                .filter(v => v);
+
+            const successCriteria = Array.from(document.querySelectorAll('#successCriteriaList input'))
+                .map(input => input.value.trim())
+                .filter(v => v);
+
+            const data = {
+                business_case: document.getElementById('businessCase').value.trim(),
+                stakeholders: stakeholders,
+                constraints: constraints,
+                success_criteria: successCriteria,
+                technical_context: {
+                    existing_systems: document.getElementById('existingSystems').value.trim() || null,
+                    tech_stack: document.getElementById('techStack').value.trim() || null,
+                    team_size: parseInt(document.getElementById('teamSize').value) || null,
+                    timeline: document.getElementById('timeline').value.trim() || null
+                }
+            };
+
+            try {
+                const button = e.target.querySelector('button[type="submit"]');
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner"></span> Generating...';
+
+                const response = await fetch(`${API_BASE}/workflows/spec-kit/constitution`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error('Failed to generate constitution');
+
+                constitutionData = await response.json();
+
+                // Display results
+                document.getElementById('constitutionContent').innerHTML = formatConstitution(constitutionData);
+                document.getElementById('constitutionResults').style.display = 'block';
+                document.getElementById('constitutionForm').style.display = 'none';
+
+                showAlert('success', 'Constitution generated successfully!');
+
+                button.disabled = false;
+                button.innerHTML = 'Generate Constitution →';
+            } catch (error) {
+                showAlert('error', error.message);
+                const button = e.target.querySelector('button[type="submit"]');
+                button.disabled = false;
+                button.innerHTML = 'Generate Constitution →';
+            }
+        });
+
+        // Generate Specification
+        async function generateSpecification() {
+            if (!constitutionData) {
+                showAlert('error', 'Please generate constitution first');
+                return;
+            }
+
+            try {
+                const button = event.target;
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner"></span> Generating...';
+
+                const response = await fetch(`${API_BASE}/workflows/spec-kit/specification`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ constitution: constitutionData })
+                });
+
+                if (!response.ok) throw new Error('Failed to generate specification');
+
+                specificationData = await response.json();
+
+                // Display results
+                document.getElementById('specificationContent').innerHTML = formatSpecification(specificationData);
+                document.getElementById('specificationResults').style.display = 'block';
+
+                showAlert('success', 'Specification generated successfully!');
+
+                button.disabled = false;
+                button.innerHTML = 'Generate Specification →';
+            } catch (error) {
+                showAlert('error', error.message);
+                event.target.disabled = false;
+                event.target.innerHTML = 'Generate Specification →';
+            }
+        }
+
+        // Generate Tasks
+        async function generateTasks() {
+            if (!specificationData) {
+                showAlert('error', 'Please generate specification first');
+                return;
+            }
+
+            try {
+                const button = event.target;
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner"></span> Generating...';
+
+                const response = await fetch(`${API_BASE}/workflows/spec-kit/tasks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ specification: specificationData })
+                });
+
+                if (!response.ok) throw new Error('Failed to generate tasks');
+
+                tasksData = await response.json();
+
+                // Display results
+                document.getElementById('tasksContent').innerHTML = formatTasks(tasksData);
+                document.getElementById('tasksResults').style.display = 'block';
+
+                showAlert('success', 'Tasks generated successfully!');
+
+                button.disabled = false;
+                button.innerHTML = 'Generate Tasks →';
+            } catch (error) {
+                showAlert('error', error.message);
+                event.target.disabled = false;
+                event.target.innerHTML = 'Generate Tasks →';
+            }
+        }
+
+        // Run Full Pipeline
+        async function runFullPipeline() {
+            const form = document.getElementById('constitutionForm');
+            if (!form.checkValidity()) {
+                showAlert('error', 'Please fill in all required fields in Stage 1 first');
+                goToStage(1);
+                return;
+            }
+
+            if (stakeholders.length === 0) {
+                showAlert('error', 'Please add at least one stakeholder');
+                goToStage(1);
+                return;
+            }
+
+            // Collect data
+            const constraints = Array.from(document.querySelectorAll('#constraintsList input'))
+                .map(input => input.value.trim())
+                .filter(v => v);
+
+            const successCriteria = Array.from(document.querySelectorAll('#successCriteriaList input'))
+                .map(input => input.value.trim())
+                .filter(v => v);
+
+            const data = {
+                business_case: document.getElementById('businessCase').value.trim(),
+                stakeholders: stakeholders,
+                constraints: constraints,
+                success_criteria: successCriteria,
+                technical_context: {
+                    existing_systems: document.getElementById('existingSystems').value.trim() || null,
+                    tech_stack: document.getElementById('techStack').value.trim() || null,
+                    team_size: parseInt(document.getElementById('teamSize').value) || null,
+                    timeline: document.getElementById('timeline').value.trim() || null
+                }
+            };
+
+            try {
+                // Show progress indicator
+                document.getElementById('pipelineProgress').style.display = 'block';
+                updateProgress(0, 1);
+
+                const response = await fetch(`${API_BASE}/workflows/spec-kit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error('Failed to run full pipeline');
+
+                // Simulate progress updates (in real implementation, use WebSocket or polling)
+                updateProgress(33, 1);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                updateProgress(66, 2);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                updateProgress(100, 3);
+
+                const result = await response.json();
+
+                constitutionData = result.constitution;
+                specificationData = result.specification;
+                tasksData = result.tasks;
+
+                // Go to stage 3 and show all results
+                goToStage(3);
+                document.getElementById('tasksContent').innerHTML = formatTasks(tasksData);
+                document.getElementById('tasksResults').style.display = 'block';
+
+                showAlert('success', 'Full pipeline completed successfully!');
+
+                document.getElementById('pipelineProgress').style.display = 'none';
+            } catch (error) {
+                showAlert('error', error.message);
+                document.getElementById('pipelineProgress').style.display = 'none';
+            }
+        }
+
+        function updateProgress(percentage, stage) {
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressFill').textContent = percentage + '%';
+
+            for (let i = 1; i <= 3; i++) {
+                const elem = document.getElementById(`progressStage${i}`);
+                elem.classList.toggle('active', i === stage);
+            }
+        }
+
+        // Formatting functions
+        function formatConstitution(data) {
+            return `
+                <div class="results-section">
+                    <h3>Principles</h3>
+                    <p>${data.principles || 'N/A'}</p>
+                </div>
+                <div class="results-section">
+                    <h3>Requirements</h3>
+                    <ul>${(data.requirements || []).map(r => `<li>${r}</li>`).join('')}</ul>
+                </div>
+                <div class="results-section">
+                    <h3>Constraints</h3>
+                    <ul>${(data.constraints || []).map(c => `<li>${c}</li>`).join('')}</ul>
+                </div>
+                <div class="results-section">
+                    <h3>Risks</h3>
+                    <ul>${(data.risks || []).map(r => `<li>${r}</li>`).join('')}</ul>
+                </div>
+            `;
+        }
+
+        function formatConstitutionSummary(data) {
+            return `<p><strong>Principles:</strong> ${data.principles?.substring(0, 200) || 'N/A'}...</p>`;
+        }
+
+        function formatSpecification(data) {
+            return `
+                <div class="results-section">
+                    <h3>Architecture Pattern</h3>
+                    <p>${data.architecture_pattern || 'N/A'}</p>
+                </div>
+                <div class="results-section">
+                    <h3>Components</h3>
+                    <ul>${(data.components || []).map(c => `<li>${c}</li>`).join('')}</ul>
+                </div>
+                <div class="results-section">
+                    <h3>Data Model</h3>
+                    <p>${data.data_model || 'N/A'}</p>
+                </div>
+            `;
+        }
+
+        function formatSpecificationSummary(data) {
+            return `<p><strong>Architecture:</strong> ${data.architecture_pattern || 'N/A'}</p>`;
+        }
+
+        function formatTasks(data) {
+            return `
+                <div class="results-section">
+                    <h3>Epics (${data.epics?.length || 0})</h3>
+                    <ul>${(data.epics || []).map(e => `<li>${e.name} - ${e.story_points || 'TBD'} points</li>`).join('')}</ul>
+                </div>
+                <div class="results-section">
+                    <h3>Features (${data.features?.length || 0})</h3>
+                    <ul>${(data.features || []).map(f => `<li>${f.name}</li>`).join('')}</ul>
+                </div>
+                <div class="results-section">
+                    <h3>Stories (${data.stories?.length || 0})</h3>
+                    <p>Ready for planning poker estimation!</p>
+                </div>
+            `;
+        }
+
+        // Download functions
+        function downloadFile(type) {
+            const dataMap = {
+                'constitution': constitutionData,
+                'specification': specificationData,
+                'tasks': tasksData
+            };
+
+            const data = dataMap[type];
+            if (!data) {
+                showAlert('error', `Please generate ${type} first`);
+                return;
+            }
+
+            const content = JSON.stringify(data, null, 2);
+            const blob = new Blob([content], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${type}.md`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showAlert('success', `Downloaded ${type}.md`);
+        }
+
+        function downloadAllFiles() {
+            if (!constitutionData || !specificationData || !tasksData) {
+                showAlert('error', 'Please complete all stages first');
+                return;
+            }
+
+            // In a real implementation, this would create a ZIP file
+            // For now, download individually
+            downloadFile('constitution');
+            downloadFile('specification');
+            downloadFile('tasks');
+
+            showAlert('success', 'Downloaded all files!');
+        }
+
+        // Reset wizard
+        function resetWizard() {
+            if (confirm('Are you sure you want to start a new project? All current data will be lost.')) {
+                location.reload();
+            }
+        }
+
+        // Initialize
+        console.log('Spec-Kit Wizard initialized');
+    </script>
+</body>
+</html>

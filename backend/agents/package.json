@@ -30,10 +30,13 @@
     "kaibanjs": "latest"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.0.0",
-    "typescript": "^5.0.0",
-    "ts-node-dev": "^2.0.0",
+    "husky": "^8.0.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.5",
     "ts-node": "^10.9.0",
-    "husky": "^8.0.0"
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.0.0"
   }
 }

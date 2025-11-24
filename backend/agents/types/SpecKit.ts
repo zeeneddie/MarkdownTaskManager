@@ -350,6 +350,129 @@ export interface SpecificationInput {
       budget?: string;
     };
   };
+
+  /**
+   * Development stack from Green Paper session
+   * Detailed technology choices for development
+   */
+  developmentStack?: DevelopmentStack;
+
+  /**
+   * Operational stack from Green Paper session
+   * Infrastructure and deployment configuration
+   */
+  operationalStack?: OperationalStack;
+}
+
+/**
+ * Development stack - tools and technologies for building the software
+ */
+export interface DevelopmentStack {
+  /** Programming languages used */
+  languages: string[];
+
+  /** Frameworks and libraries */
+  frameworks: {
+    frontend?: string[];
+    backend?: string[];
+    testing?: string[];
+  };
+
+  /** Database technologies */
+  databases: {
+    primary: string;
+    cache?: string;
+    search?: string;
+  };
+
+  /** Testing tools and frameworks */
+  testing: {
+    unit: string[];
+    integration: string[];
+    e2e?: string[];
+    performance?: string[];
+  };
+
+  /** Development tools */
+  devTools: {
+    ide?: string[];
+    linting: string[];
+    formatting: string[];
+    debugging?: string[];
+  };
+
+  /** Version control */
+  versionControl: {
+    system: string;  // git, svn
+    platform: string;  // GitHub, GitLab, Bitbucket
+    branchStrategy?: string;  // gitflow, trunk-based
+  };
+
+  /** Package managers */
+  packageManagers: string[];
+
+  /** Build tools */
+  buildTools?: string[];
+}
+
+/**
+ * Operational stack - infrastructure and deployment technologies
+ */
+export interface OperationalStack {
+  /** Hosting platform */
+  hosting: {
+    provider: string;  // AWS, GCP, Azure, on-prem, hybrid
+    type: 'cloud' | 'on-premise' | 'hybrid';
+    region?: string[];
+  };
+
+  /** Containerization */
+  containerization?: {
+    runtime: string;  // Docker, Podman
+    registry?: string;  // Docker Hub, ECR, GCR
+  };
+
+  /** Orchestration */
+  orchestration?: {
+    platform?: string;  // Kubernetes, ECS, Swarm, Nomad
+    managedService?: string;  // EKS, GKE, AKS
+  };
+
+  /** CI/CD Pipeline */
+  cicd: {
+    platform: string;  // GitHub Actions, GitLab CI, Jenkins
+    stages: string[];  // build, test, deploy, etc.
+    environments: string[];  // dev, staging, prod
+  };
+
+  /** Monitoring and observability */
+  monitoring: {
+    metrics?: string[];  // Prometheus, Datadog, CloudWatch
+    logging?: string[];  // ELK, Loki, CloudWatch Logs
+    tracing?: string[];  // Jaeger, Zipkin, X-Ray
+    alerting?: string[];  // PagerDuty, OpsGenie
+  };
+
+  /** Security */
+  security: {
+    secretsManagement?: string;  // Vault, AWS Secrets Manager
+    waf?: string;  // AWS WAF, Cloudflare
+    scanning?: string[];  // Snyk, SonarQube, Trivy
+    sso?: string;  // Okta, Auth0
+  };
+
+  /** CDN and edge */
+  cdn?: {
+    provider?: string;  // CloudFront, Cloudflare, Fastly
+    edgeCompute?: string;  // Lambda@Edge, Workers
+  };
+
+  /** Backup and disaster recovery */
+  backupDr?: {
+    strategy: string;
+    rpo?: string;  // Recovery Point Objective
+    rto?: string;  // Recovery Time Objective
+  };
 }
 
 /**
@@ -365,7 +488,7 @@ export interface ArchitectureSpec {
   /** Main components */
   components: string[];
 
-  /** Technology stack */
+  /** Technology stack (legacy - use developmentStack/operationalStack) */
   technologies: {
     frontend?: string[];
     backend?: string[];
@@ -375,11 +498,33 @@ export interface ArchitectureSpec {
     other?: string[];
   };
 
+  /** Development stack - detailed dev technologies */
+  developmentStack?: DevelopmentStack;
+
+  /** Operational stack - deployment & infrastructure */
+  operationalStack?: OperationalStack;
+
   /** Integration patterns */
   integrationPatterns: string[];
 
   /** Architecture diagram (as text/ASCII) */
   diagram?: string;
+
+  /** Architecture Decision Records (ADRs) */
+  adrs?: ArchitectureDecisionRecord[];
+}
+
+/**
+ * Architecture Decision Record
+ */
+export interface ArchitectureDecisionRecord {
+  id: string;
+  title: string;
+  status: 'proposed' | 'accepted' | 'deprecated' | 'superseded';
+  context: string;
+  decision: string;
+  consequences: string[];
+  date: string;
 }
 
 /**
@@ -842,6 +987,9 @@ export interface SpecKitWorkflowResult {
   /** Specification result */
   specification: SpecificationResult;
 
+  /** Architecture review result (BMAD-inspired evaluation) */
+  architectureReview?: ArchitectureReviewResult;
+
   /** Task generation result */
   tasks: TaskGenerationResult;
 
@@ -879,6 +1027,9 @@ export interface WorkflowSummary {
   /** Specification generation time (ms) */
   specificationTime: number;
 
+  /** Architecture review time (ms) */
+  reviewTime?: number;
+
   /** Task generation time (ms) */
   taskGenerationTime: number;
 
@@ -896,6 +1047,18 @@ export interface WorkflowSummary {
 
   /** Estimated project duration (weeks) */
   estimatedWeeks: number;
+
+  /** Architecture review verdict */
+  reviewVerdict?: ReviewVerdict;
+
+  /** Architecture alignment score (0-100) */
+  alignmentScore?: number;
+
+  /** True if workflow paused awaiting human approval */
+  humanApprovalRequired?: boolean;
+
+  /** Human approval request ID (for resuming workflow) */
+  humanApprovalRequestId?: string;
 }
 
 // ============================================================================
@@ -975,5 +1138,268 @@ export function validateTaskGeneration(tasks: TaskGenerationResult): boolean {
     tasks.features.length > 0 &&
     tasks.stories.length > 0 &&
     tasks.tasks.length > 0
+  );
+}
+
+// ============================================================================
+// ARCHITECT REVIEW TYPES (BMAD-inspired evaluation phase)
+// ============================================================================
+
+/**
+ * Architecture review verdict
+ */
+export enum ReviewVerdict {
+  APPROVED = 'APPROVED',
+  APPROVED_WITH_CONDITIONS = 'APPROVED_WITH_CONDITIONS',
+  NEEDS_HUMAN_APPROVAL = 'NEEDS_HUMAN_APPROVAL',  // < 95% alignment
+  NEEDS_REVISION = 'NEEDS_REVISION',
+  REJECTED = 'REJECTED'
+}
+
+/**
+ * Human approval request for architecture review
+ */
+export interface HumanApprovalRequest {
+  /** Unique request ID */
+  requestId: string;
+  /** Review that triggered the request */
+  reviewResult: ArchitectureReviewResult;
+  /** Why human approval is needed */
+  reason: string;
+  /** Specific items requiring decision */
+  decisionsRequired: {
+    id: string;
+    category: 'alignment_gap' | 'risk' | 'trade_off' | 'cost';
+    title: string;
+    description: string;
+    options: string[];
+    recommendation: string;
+  }[];
+  /** Deadline for approval */
+  deadline?: Date;
+  /** Status */
+  status: 'pending' | 'approved' | 'rejected' | 'modified';
+  /** Human response */
+  response?: {
+    approvedBy: string;
+    approvedAt: Date;
+    decisions: Record<string, string>;
+    comments?: string;
+    proceedWithGeneration: boolean;
+  };
+}
+
+/**
+ * Architecture review configuration
+ */
+export interface ArchitectureReviewConfig {
+  /** Minimum alignment score to auto-approve (default: 95) */
+  minAlignmentScore: number;
+  /** Maximum critical risks allowed (default: 0) */
+  maxCriticalRisks: number;
+  /** Maximum high risks allowed (default: 2) */
+  maxHighRisks: number;
+  /** Require human approval for all reviews */
+  alwaysRequireHumanApproval: boolean;
+  /** Auto-reject below this score */
+  autoRejectBelowScore: number;
+}
+
+/**
+ * Trade-off category for architecture decisions
+ */
+export enum TradeOffCategory {
+  PERFORMANCE_VS_COST = 'PERFORMANCE_VS_COST',
+  SECURITY_VS_USABILITY = 'SECURITY_VS_USABILITY',
+  SCALABILITY_VS_SIMPLICITY = 'SCALABILITY_VS_SIMPLICITY',
+  FLEXIBILITY_VS_SPEED = 'FLEXIBILITY_VS_SPEED',
+  CONSISTENCY_VS_AVAILABILITY = 'CONSISTENCY_VS_AVAILABILITY',
+  BUILD_VS_BUY = 'BUILD_VS_BUY'
+}
+
+/**
+ * Alignment check result
+ */
+export interface AlignmentCheck {
+  /** What was checked */
+  aspect: string;
+  /** Source requirement/constraint */
+  source: string;
+  /** Architecture element being validated */
+  architectureElement: string;
+  /** Is it aligned? */
+  aligned: boolean;
+  /** Gap description if not aligned */
+  gap?: string;
+  /** Importance level of the gap (low, medium, high) */
+  gapImportance?: 'low' | 'medium' | 'high';
+  /** Suggested remediation */
+  remediation?: string;
+}
+
+/**
+ * Trade-off analysis
+ */
+export interface TradeOffAnalysis {
+  /** Trade-off category */
+  category: TradeOffCategory;
+  /** Description of the trade-off */
+  description: string;
+  /** Option A */
+  optionA: {
+    name: string;
+    pros: string[];
+    cons: string[];
+  };
+  /** Option B */
+  optionB: {
+    name: string;
+    pros: string[];
+    cons: string[];
+  };
+  /** Chosen option */
+  chosenOption: 'A' | 'B';
+  /** Rationale for choice */
+  rationale: string;
+}
+
+/**
+ * Risk identified during architecture review
+ */
+export interface ArchitectureRisk {
+  /** Risk ID */
+  id: string;
+  /** Risk title */
+  title: string;
+  /** Detailed description */
+  description: string;
+  /** Category */
+  category: 'technical' | 'operational' | 'security' | 'cost' | 'team';
+  /** Impact level */
+  impact: RiskLevel;
+  /** Likelihood */
+  likelihood: RiskLevel;
+  /** Mitigation strategy */
+  mitigation: string;
+  /** Related architecture element */
+  relatedElement?: string;
+}
+
+/**
+ * Cost estimate for architecture
+ */
+export interface CostEstimate {
+  /** Category */
+  category: 'infrastructure' | 'licensing' | 'development' | 'maintenance' | 'operations';
+  /** Item */
+  item: string;
+  /** Monthly cost estimate */
+  monthlyCost: string;
+  /** Annual cost estimate */
+  annualCost: string;
+  /** Assumptions */
+  assumptions: string[];
+  /** Scaling notes */
+  scalingNotes?: string;
+}
+
+/**
+ * Input for architecture review
+ */
+export interface ArchitectureReviewInput {
+  /** Constitution from step 1 */
+  constitution: ConstitutionResult;
+  /** Specification from step 2 */
+  specification: SpecificationResult;
+  /** Original Green Paper constraints */
+  greenPaperConstraints?: {
+    budget?: string;
+    timeline?: string;
+    technology?: string[];
+    resources?: string;
+    regulatory?: string[];
+  };
+  /** Team context */
+  teamContext?: {
+    size: number;
+    skills: string[];
+    experience: 'junior' | 'mid' | 'senior' | 'mixed';
+  };
+  /** Review configuration (thresholds, etc.) */
+  reviewConfig?: ArchitectureReviewConfig;
+}
+
+/**
+ * Result of architecture review
+ */
+export interface ArchitectureReviewResult {
+  /** Overall verdict */
+  verdict: ReviewVerdict;
+  /** Confidence score (0-1) */
+  confidence: number;
+
+  /** Alignment checks against constitution */
+  alignmentChecks: {
+    principles: AlignmentCheck[];
+    requirements: AlignmentCheck[];
+    constraints: AlignmentCheck[];
+  };
+
+  /** Overall alignment score (0-100) */
+  alignmentScore: number;
+
+  /** Trade-off analyses */
+  tradeOffs: TradeOffAnalysis[];
+
+  /** Generated ADRs */
+  adrs: ArchitectureDecisionRecord[];
+
+  /** Identified risks */
+  risks: ArchitectureRisk[];
+
+  /** Cost estimates */
+  costEstimates: CostEstimate[];
+
+  /** Total estimated monthly cost */
+  totalMonthlyCost?: string;
+
+  /** Recommendations */
+  recommendations: {
+    priority: Priority;
+    category: string;
+    title: string;
+    description: string;
+    impact: string;
+  }[];
+
+  /** Conditions for approval (if verdict is APPROVED_WITH_CONDITIONS) */
+  conditions?: string[];
+
+  /** Required revisions (if verdict is NEEDS_REVISION) */
+  requiredRevisions?: string[];
+
+  /** Human approval request (if verdict is NEEDS_HUMAN_APPROVAL) */
+  humanApprovalRequest?: HumanApprovalRequest;
+
+  /** Summary for stakeholders */
+  executiveSummary: string;
+
+  /** Metadata */
+  metadata: {
+    reviewedAt: Date;
+    reviewedBy: string;
+    version: string;
+    specificationVersion: string;
+  };
+}
+
+/**
+ * Validate architecture review result
+ */
+export function validateArchitectureReview(review: ArchitectureReviewResult): boolean {
+  return (
+    review.alignmentChecks.principles.length > 0 &&
+    review.adrs.length > 0 &&
+    review.executiveSummary.length > 0
   );
 }

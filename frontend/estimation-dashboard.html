@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estimation Dashboard - Markdown Task Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .header .nav {
+            margin-top: 1rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .header .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.2s;
+        }
+
+        .header .nav a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .header .nav a.active {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            background: white;
+            padding: 0.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #6b7280;
+        }
+
+        .tab:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 1000px) {
+            .grid-2col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+
+        .section h3 {
+            font-size: 1.1rem;
+            margin: 1.5rem 0 0.75rem 0;
+            color: #374151;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+
+        .form-group .hint {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.2rem;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.6rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Component List */
+        .component-list {
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .component-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+        }
+
+        .component-items {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .component-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid #f3f4f6;
+            gap: 0.5rem;
+        }
+
+        .component-item:last-child {
+            border-bottom: none;
+        }
+
+        .component-item input {
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .component-item input[type="number"] {
+            width: 60px;
+            flex: none;
+        }
+
+        .component-item .remove-btn {
+            background: #fee2e2;
+            color: #991b1b;
+            border: none;
+            padding: 0.3rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .component-item .remove-btn:hover {
+            background: #fecaca;
+        }
+
+        .add-row {
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: #f9fafb;
+        }
+
+        .add-row input {
+            flex: 1;
+        }
+
+        .add-row input[type="number"] {
+            width: 60px;
+            flex: none;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        /* Sliders */
+        .slider-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .slider-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .slider-value {
+            font-weight: 700;
+            color: #667eea;
+            min-width: 30px;
+            text-align: right;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: linear-gradient(to right, #d1d5db, #667eea);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        /* Results */
+        .result-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .result-card .big-number {
+            font-size: 3.5rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .result-card .label {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+        }
+
+        .result-card .sub-label {
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .result-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .breakdown-item {
+            background: #f9fafb;
+            padding: 0.75rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .breakdown-item .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .breakdown-item .label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+
+        /* Confidence Intervals */
+        .confidence-bar {
+            height: 30px;
+            background: #e5e7eb;
+            border-radius: 6px;
+            position: relative;
+            margin: 1rem 0;
+        }
+
+        .confidence-range {
+            position: absolute;
+            height: 100%;
+            background: linear-gradient(90deg, #a5b4fc, #667eea, #a5b4fc);
+            border-radius: 6px;
+        }
+
+        .confidence-marker {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 12px;
+            height: 12px;
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 50%;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 0.6rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.8rem;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-error { background: #fee2e2; color: #991b1b; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
+        .badge-purple { background: #ede9fe; color: #5b21b6; }
+
+        /* Recommendations */
+        .recommendations {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            border-radius: 0 6px 6px 0;
+            margin-top: 1rem;
+        }
+
+        .recommendations h4 {
+            color: #1e40af;
+            margin-bottom: 0.5rem;
+        }
+
+        .recommendations ul {
+            margin: 0;
+            padding-left: 1.25rem;
+        }
+
+        .recommendations li {
+            margin-bottom: 0.25rem;
+            color: #1e40af;
+        }
+
+        /* Risk Factors */
+        .risk-factors {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            border-radius: 0 6px 6px 0;
+            margin-top: 1rem;
+        }
+
+        .risk-factors h4 {
+            color: #92400e;
+            margin-bottom: 0.5rem;
+        }
+
+        .risk-factors ul {
+            margin: 0;
+            padding-left: 1.25rem;
+        }
+
+        .risk-factors li {
+            margin-bottom: 0.25rem;
+            color: #92400e;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success { background: #10b981; }
+        .toast.error { background: #ef4444; }
+        .toast.info { background: #667eea; }
+
+        /* Loading */
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* PERT Section */
+        .pert-section {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .pert-section h4 {
+            color: #166534;
+            margin-bottom: 0.75rem;
+        }
+
+        .pert-inputs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
+
+        /* Hide result sections initially */
+        .fp-results, .sp-results {
+            display: none;
+        }
+
+        .fp-results.show, .sp-results.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Estimation Dashboard</h1>
+        <p>Function Points (IFPUG) & Story Points Calculator</p>
+        <nav class="nav">
+            <a href="../index.html">🏠 Hub</a>
+            <a href="agent-dashboard.html">🤖 Agents</a>
+            <a href="estimation-dashboard.html" class="active">📊 Estimation</a>
+            <a href="quality-dashboard.html">✅ Quality</a>
+            <a href="spec-kit-wizard.html">📝 Spec-Kit</a>
+            <a href="sprint-planning.html">🎯 Sprint</a>
+        </nav>
+    </header>
+
+    <div class="container">
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="function-points">Function Points (IFPUG)</button>
+            <button class="tab" data-tab="story-points">Story Points</button>
+        </div>
+
+        <!-- Function Points Tab -->
+        <div class="tab-content active" id="function-points">
+            <div class="grid-2col">
+                <!-- Input Form -->
+                <div class="section">
+                    <h2>Function Point Calculator</h2>
+
+                    <div class="form-group">
+                        <label>Project Naam</label>
+                        <input type="text" id="fp-project-name" placeholder="bijv. E-Commerce Platform">
+                    </div>
+
+                    <!-- ILF - Internal Logical Files -->
+                    <h3>ILF - Internal Logical Files</h3>
+                    <p class="hint" style="margin-bottom: 0.5rem;">Data opgeslagen binnen de applicatie (bijv. Users tabel, Orders tabel)</p>
+                    <div class="component-list">
+                        <div class="component-header">
+                            <span>Naam</span>
+                            <span>RETs | DETs</span>
+                        </div>
+                        <div class="component-items" id="ilf-items"></div>
+                        <div class="add-row">
+                            <input type="text" id="ilf-name" placeholder="Component naam">
+                            <input type="number" id="ilf-rets" placeholder="RETs" min="1" value="1">
+                            <input type="number" id="ilf-dets" placeholder="DETs" min="1" value="10">
+                            <button class="btn btn-sm btn-success" onclick="addComponent('ilf')">+</button>
+                        </div>
+                    </div>
+
+                    <!-- EIF - External Interface Files -->
+                    <h3>EIF - External Interface Files</h3>
+                    <p class="hint" style="margin-bottom: 0.5rem;">Reference data van externe systemen (bijv. Payment API, Auth Service)</p>
+                    <div class="component-list">
+                        <div class="component-header">
+                            <span>Naam</span>
+                            <span>RETs | DETs</span>
+                        </div>
+                        <div class="component-items" id="eif-items"></div>
+                        <div class="add-row">
+                            <input type="text" id="eif-name" placeholder="Component naam">
+                            <input type="number" id="eif-rets" placeholder="RETs" min="1" value="1">
+                            <input type="number" id="eif-dets" placeholder="DETs" min="1" value="10">
+                            <button class="btn btn-sm btn-success" onclick="addComponent('eif')">+</button>
+                        </div>
+                    </div>
+
+                    <!-- EI - External Inputs -->
+                    <h3>EI - External Inputs</h3>
+                    <p class="hint" style="margin-bottom: 0.5rem;">Data/control die het systeem binnenkomt (bijv. Login form, Create order)</p>
+                    <div class="component-list">
+                        <div class="component-header">
+                            <span>Naam</span>
+                            <span>FTRs | DETs</span>
+                        </div>
+                        <div class="component-items" id="ei-items"></div>
+                        <div class="add-row">
+                            <input type="text" id="ei-name" placeholder="Component naam">
+                            <input type="number" id="ei-ftrs" placeholder="FTRs" min="0" value="1">
+                            <input type="number" id="ei-dets" placeholder="DETs" min="1" value="5">
+                            <button class="btn btn-sm btn-success" onclick="addComponent('ei')">+</button>
+                        </div>
+                    </div>
+
+                    <!-- EO - External Outputs -->
+                    <h3>EO - External Outputs</h3>
+                    <p class="hint" style="margin-bottom: 0.5rem;">Berekende/afgeleide data die het systeem verlaat (bijv. Reports, Invoices)</p>
+                    <div class="component-list">
+                        <div class="component-header">
+                            <span>Naam</span>
+                            <span>FTRs | DETs</span>
+                        </div>
+                        <div class="component-items" id="eo-items"></div>
+                        <div class="add-row">
+                            <input type="text" id="eo-name" placeholder="Component naam">
+                            <input type="number" id="eo-ftrs" placeholder="FTRs" min="0" value="1">
+                            <input type="number" id="eo-dets" placeholder="DETs" min="1" value="10">
+                            <button class="btn btn-sm btn-success" onclick="addComponent('eo')">+</button>
+                        </div>
+                    </div>
+
+                    <!-- EQ - External Queries -->
+                    <h3>EQ - External Queries</h3>
+                    <p class="hint" style="margin-bottom: 0.5rem;">Simpele data opvragingen zonder berekeningen (bijv. Search, View details)</p>
+                    <div class="component-list">
+                        <div class="component-header">
+                            <span>Naam</span>
+                            <span>FTRs | DETs</span>
+                        </div>
+                        <div class="component-items" id="eq-items"></div>
+                        <div class="add-row">
+                            <input type="text" id="eq-name" placeholder="Component naam">
+                            <input type="number" id="eq-ftrs" placeholder="FTRs" min="0" value="1">
+                            <input type="number" id="eq-dets" placeholder="DETs" min="1" value="5">
+                            <button class="btn btn-sm btn-success" onclick="addComponent('eq')">+</button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" onclick="calculateFP()" id="fp-calc-btn">
+                            Bereken Function Points
+                        </button>
+                        <button class="btn btn-secondary" onclick="loadFPExample()">
+                            Laad Voorbeeld
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div class="section">
+                    <h2>Resultaat</h2>
+
+                    <div class="fp-results" id="fp-results">
+                        <div class="result-card">
+                            <div class="big-number" id="fp-total">0</div>
+                            <div class="label">Unadjusted Function Points</div>
+                            <div class="sub-label" id="fp-project-size">-</div>
+                        </div>
+
+                        <div class="result-breakdown">
+                            <div class="breakdown-item">
+                                <div class="value" id="fp-ilf">0</div>
+                                <div class="label">ILF</div>
+                            </div>
+                            <div class="breakdown-item">
+                                <div class="value" id="fp-eif">0</div>
+                                <div class="label">EIF</div>
+                            </div>
+                            <div class="breakdown-item">
+                                <div class="value" id="fp-ei">0</div>
+                                <div class="label">EI</div>
+                            </div>
+                            <div class="breakdown-item">
+                                <div class="value" id="fp-eo">0</div>
+                                <div class="label">EO</div>
+                            </div>
+                            <div class="breakdown-item">
+                                <div class="value" id="fp-eq">0</div>
+                                <div class="label">EQ</div>
+                            </div>
+                        </div>
+
+                        <h3>Effort Schatting</h3>
+                        <table>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Waarde</th>
+                            </tr>
+                            <tr>
+                                <td>Person-dagen (8h/FP)</td>
+                                <td id="fp-days">-</td>
+                            </tr>
+                            <tr>
+                                <td>Person-uren</td>
+                                <td id="fp-hours">-</td>
+                            </tr>
+                            <tr>
+                                <td>Geschatte doorlooptijd</td>
+                                <td id="fp-duration">-</td>
+                            </tr>
+                        </table>
+
+                        <div class="recommendations" id="fp-recommendations" style="display: none;">
+                            <h4>Aanbevelingen</h4>
+                            <ul id="fp-rec-list"></ul>
+                        </div>
+                    </div>
+
+                    <div id="fp-empty" style="text-align: center; padding: 3rem; color: #6b7280;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">IFPUG</div>
+                        <p>Voeg componenten toe en klik op "Bereken"</p>
+                        <p style="font-size: 0.85rem; margin-top: 0.5rem;">Of klik "Laad Voorbeeld" voor een demo</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Story Points Tab -->
+        <div class="tab-content" id="story-points">
+            <div class="grid-2col">
+                <!-- Input Form -->
+                <div class="section">
+                    <h2>Story Point Estimator</h2>
+
+                    <div class="form-group">
+                        <label>Story Naam</label>
+                        <input type="text" id="sp-story-name" placeholder="bijv. Implement OAuth authentication">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Beschrijving (optioneel)</label>
+                        <textarea id="sp-description" rows="2" placeholder="Korte beschrijving van de story..."></textarea>
+                    </div>
+
+                    <h3>Complexity Factors</h3>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-label">Technical Complexity</span>
+                            <span class="slider-value" id="val-technical">5</span>
+                        </div>
+                        <input type="range" id="technical" min="1" max="10" value="5" oninput="updateSlider('technical')">
+                        <div class="hint">1 = trivial, 10 = extremely complex</div>
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-label">Business Value</span>
+                            <span class="slider-value" id="val-business">5</span>
+                        </div>
+                        <input type="range" id="business" min="1" max="10" value="5" oninput="updateSlider('business')">
+                        <div class="hint">1 = nice-to-have, 10 = critical for business</div>
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-label">Risk Level</span>
+                            <span class="slider-value" id="val-risk">3</span>
+                        </div>
+                        <input type="range" id="risk" min="1" max="10" value="3" oninput="updateSlider('risk')">
+                        <div class="hint">1 = no risk, 10 = very risky</div>
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-label">Uncertainty</span>
+                            <span class="slider-value" id="val-uncertainty">3</span>
+                        </div>
+                        <input type="range" id="uncertainty" min="1" max="10" value="3" oninput="updateSlider('uncertainty')">
+                        <div class="hint">1 = crystal clear, 10 = very unclear requirements</div>
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span class="slider-label">Dependencies</span>
+                            <span class="slider-value" id="val-dependencies">2</span>
+                        </div>
+                        <input type="range" id="dependencies" min="0" max="10" value="2" oninput="updateSlider('dependencies')">
+                        <div class="hint">0 = none, 10 = many external dependencies</div>
+                    </div>
+
+                    <!-- PERT Section -->
+                    <div class="pert-section">
+                        <h4>Three-Point Estimation (PERT) - Optioneel</h4>
+                        <div class="pert-inputs">
+                            <div class="form-group">
+                                <label>Optimistisch (uren)</label>
+                                <input type="number" id="pert-opt" min="0" placeholder="O">
+                            </div>
+                            <div class="form-group">
+                                <label>Meest waarschijnlijk</label>
+                                <input type="number" id="pert-likely" min="0" placeholder="M">
+                            </div>
+                            <div class="form-group">
+                                <label>Pessimistisch</label>
+                                <input type="number" id="pert-pess" min="0" placeholder="P">
+                            </div>
+                        </div>
+                        <div class="hint">PERT formule: (O + 4M + P) / 6</div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                        <button class="btn btn-primary" onclick="calculateSP()" id="sp-calc-btn">
+                            Schat Story Points
+                        </button>
+                        <button class="btn btn-secondary" onclick="resetSP()">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div class="section">
+                    <h2>Resultaat</h2>
+
+                    <div class="sp-results" id="sp-results">
+                        <div class="result-card">
+                            <div class="big-number" id="sp-points">0</div>
+                            <div class="label">Story Points (Fibonacci)</div>
+                            <div class="sub-label" id="sp-effort">-</div>
+                        </div>
+
+                        <div class="result-breakdown">
+                            <div class="breakdown-item">
+                                <div class="value" id="sp-score">0</div>
+                                <div class="label">Complexity Score</div>
+                            </div>
+                            <div class="breakdown-item">
+                                <div class="value" id="sp-confidence">-</div>
+                                <div class="label">Confidence</div>
+                            </div>
+                        </div>
+
+                        <h3>Confidence Interval</h3>
+                        <div class="confidence-bar">
+                            <div class="confidence-range" id="sp-conf-range"></div>
+                            <div class="confidence-marker" id="sp-conf-marker"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #6b7280;">
+                            <span id="sp-conf-min">-</span>
+                            <span id="sp-conf-max">-</span>
+                        </div>
+
+                        <div id="sp-pert-result" style="display: none;">
+                            <h3>PERT Schatting</h3>
+                            <table>
+                                <tr>
+                                    <th>Metric</th>
+                                    <th>Waarde</th>
+                                </tr>
+                                <tr>
+                                    <td>PERT Schatting</td>
+                                    <td id="sp-pert-estimate">-</td>
+                                </tr>
+                                <tr>
+                                    <td>Range</td>
+                                    <td id="sp-pert-range">-</td>
+                                </tr>
+                                <tr>
+                                    <td>68% Confidence</td>
+                                    <td id="sp-pert-68">-</td>
+                                </tr>
+                                <tr>
+                                    <td>95% Confidence</td>
+                                    <td id="sp-pert-95">-</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div class="risk-factors" id="sp-risks" style="display: none;">
+                            <h4>Risk Factors</h4>
+                            <ul id="sp-risk-list"></ul>
+                        </div>
+
+                        <div class="recommendations" id="sp-recommendations" style="display: none;">
+                            <h4>Aanbevelingen</h4>
+                            <ul id="sp-rec-list"></ul>
+                        </div>
+                    </div>
+
+                    <div id="sp-empty" style="text-align: center; padding: 3rem; color: #6b7280;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">1 2 3 5 8 13 21</div>
+                        <p>Pas de sliders aan en klik op "Schat"</p>
+                        <p style="font-size: 0.85rem; margin-top: 0.5rem;">Fibonacci Story Points met PERT support</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/estimation';
+
+        // Component data storage
+        const components = {
+            ilf: [],
+            eif: [],
+            ei: [],
+            eo: [],
+            eq: []
+        };
+
+        // ============================================================================
+        // TABS
+        // ============================================================================
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // ============================================================================
+        // TOAST
+        // ============================================================================
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // ============================================================================
+        // FUNCTION POINTS
+        // ============================================================================
+        function addComponent(type) {
+            const nameInput = document.getElementById(`${type}-name`);
+            const name = nameInput.value.trim();
+            if (!name) {
+                showToast('Vul een naam in', 'error');
+                return;
+            }
+
+            let component;
+            if (type === 'ilf' || type === 'eif') {
+                const rets = parseInt(document.getElementById(`${type}-rets`).value) || 1;
+                const dets = parseInt(document.getElementById(`${type}-dets`).value) || 10;
+                component = { name, rets, dets };
+            } else {
+                const ftrs = parseInt(document.getElementById(`${type}-ftrs`).value) || 1;
+                const dets = parseInt(document.getElementById(`${type}-dets`).value) || 5;
+                component = { name, ftrs, dets };
+            }
+
+            components[type].push(component);
+            renderComponents(type);
+            nameInput.value = '';
+            nameInput.focus();
+        }
+
+        function removeComponent(type, index) {
+            components[type].splice(index, 1);
+            renderComponents(type);
+        }
+
+        function renderComponents(type) {
+            const container = document.getElementById(`${type}-items`);
+            if (components[type].length === 0) {
+                container.innerHTML = '<div style="padding: 0.5rem; color: #9ca3af; text-align: center; font-size: 0.85rem;">Geen componenten</div>';
+                return;
+            }
+
+            const isDataType = type === 'ilf' || type === 'eif';
+            container.innerHTML = components[type].map((c, i) => `
+                <div class="component-item">
+                    <span style="flex: 1; font-weight: 500;">${escapeHtml(c.name)}</span>
+                    <span style="color: #6b7280; font-size: 0.85rem;">
+                        ${isDataType ? `${c.rets} RETs, ${c.dets} DETs` : `${c.ftrs} FTRs, ${c.dets} DETs`}
+                    </span>
+                    <button class="remove-btn" onclick="removeComponent('${type}', ${i})">X</button>
+                </div>
+            `).join('');
+        }
+
+        async function calculateFP() {
+            const btn = document.getElementById('fp-calc-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span>Berekenen...';
+
+            try {
+                const request = {
+                    project_name: document.getElementById('fp-project-name').value || 'Unnamed Project',
+                    ilfs: components.ilf,
+                    eifs: components.eif,
+                    eis: components.ei,
+                    eos: components.eo,
+                    eqs: components.eq,
+                    use_vaf: false
+                };
+
+                const response = await fetch(`${API_BASE}/function-points`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(request)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Calculation failed');
+                }
+
+                const result = await response.json();
+                displayFPResults(result);
+                showToast('Function Points berekend!', 'success');
+
+            } catch (error) {
+                showToast(`Fout: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Bereken Function Points';
+            }
+        }
+
+        function displayFPResults(result) {
+            document.getElementById('fp-empty').style.display = 'none';
+            document.getElementById('fp-results').classList.add('show');
+
+            // API returns unadjusted_fp, not unadjusted_function_points
+            const ufp = result.unadjusted_fp || result.unadjusted_function_points || 0;
+            document.getElementById('fp-total').textContent = ufp;
+            document.getElementById('fp-project-size').textContent = result.summary?.estimation_guidance?.project_size || result.summary?.project_size || '-';
+
+            // Breakdown - API returns total_ilf_fp, total_eif_fp, etc.
+            document.getElementById('fp-ilf').textContent = result.total_ilf_fp || 0;
+            document.getElementById('fp-eif').textContent = result.total_eif_fp || 0;
+            document.getElementById('fp-ei').textContent = result.total_ei_fp || 0;
+            document.getElementById('fp-eo').textContent = result.total_eo_fp || 0;
+            document.getElementById('fp-eq').textContent = result.total_eq_fp || 0;
+
+            // Effort estimates (roughly 8 hours per FP for medium projects)
+            const hoursPerFP = 8;
+            const hours = ufp * hoursPerFP;
+            const days = hours / 8;
+            document.getElementById('fp-days').textContent = `${days.toFixed(1)} dagen`;
+            document.getElementById('fp-hours').textContent = `${hours} uur`;
+
+            // Duration estimate
+            let duration;
+            if (days <= 5) duration = '1 week';
+            else if (days <= 10) duration = '2 weken';
+            else if (days <= 20) duration = '1 maand';
+            else if (days <= 40) duration = '2 maanden';
+            else duration = `${Math.ceil(days / 20)} maanden`;
+            document.getElementById('fp-duration').textContent = duration;
+
+            // Recommendations
+            const recContainer = document.getElementById('fp-recommendations');
+            const recList = document.getElementById('fp-rec-list');
+            if (result.summary?.recommendations) {
+                recList.innerHTML = result.summary.recommendations.map(r => `<li>${escapeHtml(r)}</li>`).join('');
+                recContainer.style.display = 'block';
+            } else {
+                recContainer.style.display = 'none';
+            }
+        }
+
+        function loadFPExample() {
+            components.ilf = [
+                { name: 'Users', rets: 2, dets: 15 },
+                { name: 'Products', rets: 3, dets: 25 },
+                { name: 'Orders', rets: 4, dets: 30 }
+            ];
+            components.eif = [
+                { name: 'Payment Gateway', rets: 1, dets: 10 }
+            ];
+            components.ei = [
+                { name: 'Login', ftrs: 1, dets: 3 },
+                { name: 'Create Order', ftrs: 2, dets: 12 },
+                { name: 'Add Product', ftrs: 1, dets: 8 }
+            ];
+            components.eo = [
+                { name: 'Sales Report', ftrs: 3, dets: 15 },
+                { name: 'Invoice', ftrs: 2, dets: 12 }
+            ];
+            components.eq = [
+                { name: 'Search Products', ftrs: 1, dets: 6 },
+                { name: 'View Order', ftrs: 2, dets: 10 }
+            ];
+
+            ['ilf', 'eif', 'ei', 'eo', 'eq'].forEach(renderComponents);
+            document.getElementById('fp-project-name').value = 'E-Commerce Platform';
+            showToast('Voorbeeld geladen', 'info');
+        }
+
+        // ============================================================================
+        // STORY POINTS
+        // ============================================================================
+        function updateSlider(id) {
+            const value = document.getElementById(id).value;
+            document.getElementById(`val-${id}`).textContent = value;
+        }
+
+        async function calculateSP() {
+            const btn = document.getElementById('sp-calc-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span>Schatten...';
+
+            try {
+                const request = {
+                    story_name: document.getElementById('sp-story-name').value || 'Unnamed Story',
+                    description: document.getElementById('sp-description').value || null,
+                    complexity_factors: {
+                        technical_complexity: parseInt(document.getElementById('technical').value),
+                        business_value: parseInt(document.getElementById('business').value),
+                        risk_level: parseInt(document.getElementById('risk').value),
+                        uncertainty: parseInt(document.getElementById('uncertainty').value),
+                        dependencies: parseInt(document.getElementById('dependencies').value)
+                    }
+                };
+
+                // Add PERT if provided
+                const opt = parseInt(document.getElementById('pert-opt').value);
+                const likely = parseInt(document.getElementById('pert-likely').value);
+                const pess = parseInt(document.getElementById('pert-pess').value);
+                if (opt && likely && pess) {
+                    request.three_point = {
+                        optimistic_hours: opt,
+                        most_likely_hours: likely,
+                        pessimistic_hours: pess
+                    };
+                }
+
+                const response = await fetch(`${API_BASE}/story-points`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(request)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Estimation failed');
+                }
+
+                const result = await response.json();
+                displaySPResults(result);
+                showToast('Story Points geschat!', 'success');
+
+            } catch (error) {
+                showToast(`Fout: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Schat Story Points';
+            }
+        }
+
+        function displaySPResults(result) {
+            document.getElementById('sp-empty').style.display = 'none';
+            document.getElementById('sp-results').classList.add('show');
+
+            // Main result
+            document.getElementById('sp-points').textContent = result.fibonacci_points;
+            document.getElementById('sp-effort').textContent = getEffortLabel(result.fibonacci_points);
+            document.getElementById('sp-score').textContent = result.complexity_score?.toFixed(1) || '-';
+
+            // Confidence interval visualization
+            const narrow = result.confidence_narrow || { min: 0, max: 21 };
+            const estimate = result.fibonacci_points;
+            const minPct = (narrow.min / 21) * 100;
+            const maxPct = (narrow.max / 21) * 100;
+            const estPct = (estimate / 21) * 100;
+
+            document.getElementById('sp-conf-range').style.left = `${minPct}%`;
+            document.getElementById('sp-conf-range').style.width = `${maxPct - minPct}%`;
+            document.getElementById('sp-conf-marker').style.left = `${estPct}%`;
+            document.getElementById('sp-conf-min').textContent = `${narrow.min?.toFixed(1) || '-'} pts`;
+            document.getElementById('sp-conf-max').textContent = `${narrow.max?.toFixed(1) || '-'} pts`;
+            document.getElementById('sp-confidence').textContent = narrow.percentage || '±10%';
+
+            // PERT results
+            const pertContainer = document.getElementById('sp-pert-result');
+            if (result.hours_estimate) {
+                const h = result.hours_estimate;
+                document.getElementById('sp-pert-estimate').textContent = `${h.pert_estimate?.toFixed(1)} uur`;
+                document.getElementById('sp-pert-range').textContent = h.range || '-';
+                document.getElementById('sp-pert-68').textContent = h.confidence_68
+                    ? `${h.confidence_68.min?.toFixed(1)} - ${h.confidence_68.max?.toFixed(1)} uur` : '-';
+                document.getElementById('sp-pert-95').textContent = h.confidence_95
+                    ? `${h.confidence_95.min?.toFixed(1)} - ${h.confidence_95.max?.toFixed(1)} uur` : '-';
+                pertContainer.style.display = 'block';
+            } else {
+                pertContainer.style.display = 'none';
+            }
+
+            // Risk factors
+            const riskContainer = document.getElementById('sp-risks');
+            const riskList = document.getElementById('sp-risk-list');
+            if (result.risk_factors && result.risk_factors.length > 0) {
+                riskList.innerHTML = result.risk_factors.map(r => `<li>${escapeHtml(r)}</li>`).join('');
+                riskContainer.style.display = 'block';
+            } else {
+                riskContainer.style.display = 'none';
+            }
+
+            // Recommendations
+            const recContainer = document.getElementById('sp-recommendations');
+            const recList = document.getElementById('sp-rec-list');
+            if (result.recommendations && result.recommendations.length > 0) {
+                recList.innerHTML = result.recommendations.map(r => `<li>${escapeHtml(r)}</li>`).join('');
+                recContainer.style.display = 'block';
+            } else {
+                recContainer.style.display = 'none';
+            }
+        }
+
+        function getEffortLabel(points) {
+            const labels = {
+                1: 'Trivial (< 1 uur)',
+                2: 'Simple (1-2 uur)',
+                3: 'Small (2-4 uur)',
+                5: 'Medium (1 dag)',
+                8: 'Large (2-3 dagen)',
+                13: 'Very Large (1 week)',
+                21: 'Epic (> 1 week)'
+            };
+            return labels[points] || '-';
+        }
+
+        function resetSP() {
+            ['technical', 'business', 'risk', 'uncertainty', 'dependencies'].forEach(id => {
+                const defaultVal = id === 'dependencies' ? 2 : (id === 'risk' || id === 'uncertainty' ? 3 : 5);
+                document.getElementById(id).value = defaultVal;
+                document.getElementById(`val-${id}`).textContent = defaultVal;
+            });
+            document.getElementById('sp-story-name').value = '';
+            document.getElementById('sp-description').value = '';
+            document.getElementById('pert-opt').value = '';
+            document.getElementById('pert-likely').value = '';
+            document.getElementById('pert-pess').value = '';
+            document.getElementById('sp-results').classList.remove('show');
+            document.getElementById('sp-empty').style.display = 'block';
+        }
+
+        // ============================================================================
+        // UTILITIES
+        // ============================================================================
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // Initialize component lists
+        ['ilf', 'eif', 'ei', 'eo', 'eq'].forEach(renderComponents);
+    </script>
+</body>
+</html>

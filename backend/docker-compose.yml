@@ -18,6 +18,25 @@ services:
       timeout: 5s
       retries: 5
 
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: project_manager_chromadb
+    ports:
+      - "8001:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+      - ALLOW_RESET=TRUE
+    restart: unless-stopped
+    # Health check disabled - ChromaDB doesn't have curl installed and heartbeat endpoint is deprecated
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+
   api:
     build:
       context: .
@@ -25,6 +44,8 @@ services:
     container_name: project_manager_api
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-user}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-project_manager}
+      CHROMA_HOST: chromadb
+      CHROMA_PORT: 8000
       SECRET_KEY: ${SECRET_KEY}
       ENVIRONMENT: ${ENVIRONMENT:-development}
     ports:
@@ -32,10 +53,15 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      chromadb:
+        condition: service_started  # Changed from service_healthy since ChromaDB health check is disabled
     volumes:
       - ./app:/app/app
       - ./alembic:/app/alembic
+      - ./estimation:/app/estimation
+      - ../frontend:/frontend
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 volumes:
   postgres_data:
+  chromadb_data:

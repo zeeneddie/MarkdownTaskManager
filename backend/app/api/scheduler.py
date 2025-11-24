@@ -11,6 +11,7 @@ Manage periodic maintenance scans:
 from fastapi import APIRouter, HTTPException, Query
 from typing import Optional, List
 from pydantic import BaseModel, Field
+from datetime import datetime
 
 from app.services.scheduler_service import get_scheduler
 
@@ -41,11 +42,22 @@ class ScheduleWeeklyRequest(BaseModel):
 
 
 class ScheduleIntervalRequest(BaseModel):
-    """Request to schedule interval scan"""
-    hours: int = Field(24, ge=1, le=168, description="Interval in hours (1-168)")
+    """Request to schedule interval scan with flexible interval types"""
+    intervalType: str = Field("hours", description="Interval type: hours, weeks, months")
+    intervalValue: int = Field(24, ge=1, description="Interval value")
     scope: str = Field("full_codebase", description="Scope: full_codebase, module, specific_files")
     focusAreas: Optional[List[str]] = Field(None, description="Areas to focus on")
     urgency: str = Field("medium", description="Urgency: low, medium, high, critical")
+
+    def get_hours(self) -> int:
+        """Convert interval to hours for scheduler"""
+        if self.intervalType == "hours":
+            return self.intervalValue
+        elif self.intervalType == "weeks":
+            return self.intervalValue * 168  # 7 days * 24 hours
+        elif self.intervalType == "months":
+            return self.intervalValue * 720  # ~30 days * 24 hours
+        return self.intervalValue
 
 
 class ScheduleResponse(BaseModel):
@@ -167,17 +179,23 @@ async def schedule_weekly_scan(request: ScheduleWeeklyRequest):
 @router.post("/interval", response_model=ScheduleResponse)
 async def schedule_interval_scan(request: ScheduleIntervalRequest):
     """
-    Schedule maintenance scan at fixed interval
+    Schedule maintenance scan at flexible interval (hours, weeks, or months)
 
     **Example:**
     ```json
     {
-      "hours": 24,
+      "intervalType": "hours",
+      "intervalValue": 24,
       "scope": "full_codebase",
       "focusAreas": ["dependencies", "security"],
       "urgency": "medium"
     }
     ```
+
+    **Interval Types:**
+    - `hours`: 1-999 hours
+    - `weeks`: 1-52 weeks (converted to hours internally)
+    - `months`: 1-12 months (converted to hours internally, ~30 days)
 
     **Returns:**
     - Job ID for the scheduled scan
@@ -185,17 +203,23 @@ async def schedule_interval_scan(request: ScheduleIntervalRequest):
     try:
         scheduler = get_scheduler()
 
+        # Convert to hours for scheduler
+        hours = request.get_hours()
+
         job_id = scheduler.schedule_interval_scan(
-            hours=request.hours,
+            hours=hours,
             scope=request.scope,
             focus_areas=request.focusAreas,
             urgency=request.urgency
         )
 
+        # Create human-readable message
+        interval_desc = f"{request.intervalValue} {request.intervalType}"
+
         return ScheduleResponse(
             success=True,
             jobId=job_id,
-            message=f"Interval scan scheduled every {request.hours} hours"
+            message=f"Interval scan scheduled every {interval_desc}"
         )
 
     except Exception as e:
@@ -324,6 +348,234 @@ async def get_scheduler_status():
             "completedScans": len([h for h in history if h.get('status') == 'completed']),
             "failedScans": len([h for h in history if h.get('status') == 'failed']),
             "timeoutScans": len([h for h in history if h.get('status') == 'timeout'])
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# EXPORT ENDPOINTS (Week 15)
+# ============================================================================
+
+class ExportFormat(BaseModel):
+    """Export format options"""
+    format: str = Field("json", pattern="^(json|csv)$", description="Export format: json or csv")
+    include_details: bool = Field(True, description="Include detailed findings")
+
+
+@router.get("/export/history")
+async def export_history(
+    format: str = Query("json", regex="^(json|csv)$", description="Export format"),
+    status: Optional[str] = Query(None, description="Filter by status"),
+    limit: int = Query(500, ge=1, le=5000, description="Max records")
+):
+    """
+    Export execution history to JSON or CSV
+
+    **Query Parameters:**
+    - `format`: 'json' or 'csv' (default: json)
+    - `status`: Filter by status (optional)
+    - `limit`: Max records to export (default: 500)
+
+    **Returns:**
+    - JSON array or CSV file content
+    """
+    from fastapi.responses import Response
+    import csv
+    import io
+
+    try:
+        scheduler = get_scheduler()
+        history = scheduler.get_execution_history(limit=limit, status=status)
+
+        if format == "csv":
+            # Generate CSV
+            output = io.StringIO()
+            writer = csv.writer(output)
+
+            # Header
+            writer.writerow([
+                "Start Time", "End Time", "Duration (s)", "Scope",
+                "Focus Areas", "Urgency", "Status", "Findings", "Tasks", "Error"
+            ])
+
+            # Data rows
+            for record in history:
+                writer.writerow([
+                    record.get('start_time', ''),
+                    record.get('end_time', ''),
+                    record.get('duration_seconds', ''),
+                    record.get('scope', ''),
+                    ','.join(record.get('focus_areas', []) or []),
+                    record.get('urgency', ''),
+                    record.get('status', ''),
+                    record.get('findings_count', ''),
+                    record.get('tasks_count', ''),
+                    record.get('error', '')
+                ])
+
+            csv_content = output.getvalue()
+            return Response(
+                content=csv_content,
+                media_type="text/csv",
+                headers={
+                    "Content-Disposition": "attachment; filename=maintenance_history.csv"
+                }
+            )
+
+        else:
+            # Return JSON
+            return {
+                "export_date": datetime.now().isoformat(),
+                "total_records": len(history),
+                "filter_status": status,
+                "records": history
+            }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/jobs/{job_id}/details")
+async def get_job_details(job_id: str):
+    """
+    Get detailed information about a specific job
+
+    **Returns:**
+    - Job configuration
+    - Recent execution history
+    - Statistics
+    """
+    try:
+        scheduler = get_scheduler()
+
+        # Find the job
+        jobs = scheduler.get_jobs()
+        job = next((j for j in jobs if j['id'] == job_id), None)
+
+        if not job:
+            raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
+
+        # Get execution history for this job
+        history = scheduler.get_execution_history(limit=100)
+        job_history = [h for h in history if h.get('job_id') == job_id]
+
+        # Calculate statistics
+        total_runs = len(job_history)
+        successful_runs = len([h for h in job_history if h.get('status') == 'completed'])
+        failed_runs = len([h for h in job_history if h.get('status') == 'failed'])
+        avg_duration = sum(h.get('duration_seconds', 0) for h in job_history) / total_runs if total_runs > 0 else 0
+
+        return {
+            "job": job,
+            "statistics": {
+                "total_runs": total_runs,
+                "successful_runs": successful_runs,
+                "failed_runs": failed_runs,
+                "success_rate": (successful_runs / total_runs * 100) if total_runs > 0 else 0,
+                "average_duration_seconds": round(avg_duration, 2)
+            },
+            "recent_history": job_history[:10]  # Last 10 runs
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/jobs/{job_id}/pause")
+async def pause_job(job_id: str):
+    """
+    Pause a scheduled job
+
+    The job will remain in the schedule but won't execute until resumed.
+    """
+    try:
+        scheduler = get_scheduler()
+
+        # APScheduler supports pausing jobs
+        job = scheduler.scheduler.get_job(job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
+
+        scheduler.scheduler.pause_job(job_id)
+
+        return {
+            "success": True,
+            "jobId": job_id,
+            "message": f"Job {job_id} paused successfully"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/jobs/{job_id}/resume")
+async def resume_job(job_id: str):
+    """
+    Resume a paused job
+    """
+    try:
+        scheduler = get_scheduler()
+
+        job = scheduler.scheduler.get_job(job_id)
+        if not job:
+            raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
+
+        scheduler.scheduler.resume_job(job_id)
+
+        return {
+            "success": True,
+            "jobId": job_id,
+            "message": f"Job {job_id} resumed successfully"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/run-now")
+async def run_maintenance_now(
+    scope: str = Query("full_codebase", description="Scope to scan"),
+    focus_areas: str = Query("dependencies,security", description="Comma-separated focus areas"),
+    urgency: str = Query("medium", description="Urgency level")
+):
+    """
+    Run a maintenance scan immediately (not scheduled)
+
+    **Query Parameters:**
+    - `scope`: Scope to scan (default: full_codebase)
+    - `focus_areas`: Comma-separated focus areas
+    - `urgency`: Urgency level
+
+    **Returns:**
+    - Execution ID for tracking
+    """
+    try:
+        scheduler = get_scheduler()
+
+        # Parse focus areas
+        areas = [a.strip() for a in focus_areas.split(',')]
+
+        # Run the scan immediately
+        result = scheduler.run_immediate_scan(
+            scope=scope,
+            focus_areas=areas,
+            urgency=urgency
+        )
+
+        return {
+            "success": True,
+            "execution_id": result.get('execution_id'),
+            "message": "Maintenance scan started",
+            "scope": scope,
+            "focus_areas": areas
         }
 
     except Exception as e:

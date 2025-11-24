@@ -1,0 +1,138 @@
+{
+  "projects": [
+    {
+      "name": "User Authentication System",
+      "key": "PROJ-1763563276989",
+      "description": "Complete authentication system with JWT tokens, OAuth2 integration, and role-based access control (RBAC). Supports multiple authentication providers and secure session management.",
+      "issues": [
+        {
+          "issueType": "Epic",
+          "summary": "User Authentication System",
+          "description": "Complete authentication system with JWT tokens, OAuth2 integration, and role-based access control (RBAC). Supports multiple authentication providers and secure session management.\n\n*Business Value*\nEnables secure user access, protects sensitive data, and provides foundation for all user-facing features. Critical for launch.\n\n*Acceptance Criteria*\n1. Users can register with email/password\n2. Users can login with JWT tokens\n3. OAuth2 integration with Google and GitHub\n4. Role-based permissions working correctly\n5. Session management with refresh tokens\n",
+          "priority": "Highest",
+          "storyPoints": 45,
+          "labels": [
+            "felix-generated",
+            "week-12"
+          ]
+        },
+        {
+          "issueType": "Story",
+          "summary": "JWT Authentication",
+          "description": "Implement JWT-based authentication with access and refresh tokens\n\n*Technical Approach*\nUse jsonwebtoken library, Redis for token blacklist, HTTP-only cookies for security",
+          "priority": "Highest",
+          "storyPoints": 13,
+          "timeEstimate": "5d",
+          "epicLink": "EPIC-epic-auth-system",
+          "labels": [
+            "felix-generated",
+            "feature"
+          ]
+        },
+        {
+          "issueType": "Sub-task",
+          "summary": "As a user, I want to login with email and password so that I can access my account securely",
+          "description": "Implement login endpoint with credential validation and JWT token generation\n\n*Acceptance Criteria (Given/When/Then)*\n\n1. *Given:* I have valid credentials\n   *When:* I submit login form\n   *Then:* I receive JWT access and refresh tokens\n\n2. *Given:* I have invalid credentials\n   *When:* I submit login form\n   *Then:* I receive 401 error with descriptive message\n",
+          "priority": "Highest",
+          "storyPoints": 5,
+          "timeEstimate": "1.5d",
+          "parentKey": "STORY-feature-jwt",
+          "labels": [
+            "felix-generated",
+            "user-story"
+          ]
+        },
+        {
+          "issueType": "Sub-task",
+          "summary": "Create login endpoint",
+          "description": "POST /api/auth/login with email/password validation",
+          "priority": "Highest",
+          "timeEstimate": "3h",
+          "parentKey": "SUBTASK-story-login",
+          "labels": [
+            "felix-generated",
+            "task",
+            "backend"
+          ]
+        },
+        {
+          "issueType": "Sub-task",
+          "summary": "Implement JWT token generation",
+          "description": "Generate access token (15min) and refresh token (7 days)",
+          "priority": "Highest",
+          "timeEstimate": "2h",
+          "parentKey": "SUBTASK-story-login",
+          "labels": [
+            "felix-generated",
+            "task",
+            "backend"
+          ]
+        },
+        {
+          "issueType": "Sub-task",
+          "summary": "Write unit tests for login",
+          "description": "Test success, invalid credentials, missing fields, SQL injection",
+          "priority": "High",
+          "timeEstimate": "2h",
+          "parentKey": "SUBTASK-story-login",
+          "labels": [
+            "felix-generated",
+            "task",
+            "testing"
+          ]
+        },
+        {
+          "issueType": "Sub-task",
+          "summary": "As a user, I want my session to persist so that I do not need to login frequently",
+          "description": "Implement refresh token rotation for long-lived sessions\n\n*Acceptance Criteria (Given/When/Then)*\n\n1. *Given:* My access token expires\n   *When:* I use my refresh token\n   *Then:* I receive new access and refresh tokens\n",
+          "priority": "High",
+          "storyPoints": 8,
+          "timeEstimate": "2d",
+          "parentKey": "STORY-feature-jwt",
+          "labels": [
+            "felix-generated",
+            "user-story"
+          ]
+        },
+        {
+          "issueType": "Story",
+          "summary": "OAuth2 Integration",
+          "description": "Integrate OAuth2 providers for social login (Google, GitHub)\n\n*Technical Approach*\nUse Passport.js OAuth2 strategies, link social accounts to users\n\n*Dependencies*\nfeature-jwt",
+          "priority": "High",
+          "storyPoints": 13,
+          "timeEstimate": "4d",
+          "epicLink": "EPIC-epic-auth-system",
+          "labels": [
+            "felix-generated",
+            "feature"
+          ]
+        },
+        {
+          "issueType": "Story",
+          "summary": "Role-Based Access Control",
+          "description": "Implement RBAC with roles (admin, user, guest) and permissions\n\n*Technical Approach*\nMiddleware for route protection, role hierarchy in database\n\n*Dependencies*\nfeature-jwt",
+          "priority": "High",
+          "storyPoints": 13,
+          "timeEstimate": "5d",
+          "epicLink": "EPIC-epic-auth-system",
+          "labels": [
+            "felix-generated",
+            "feature"
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "exported_at": "2025-11-19T14:41:16.989Z",
+    "generator": "Felix (Feature Architect)",
+    "model": "qwen2.5-coder:7b",
+    "total_issues": 9,
+    "breakdown": {
+      "epics": 1,
+      "features": 3,
+      "stories": 2,
+      "tasks": 3
+    }
+  }
+}

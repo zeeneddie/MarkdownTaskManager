@@ -37,6 +37,31 @@
             gap: 1rem;
         }
 
+        .nav {
+            display: flex;
+            gap: 0.75rem;
+            padding: 0.75rem 2rem;
+            background: #667eea;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.4rem 0.8rem;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+
+        .nav a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .nav a.active {
+            background: rgba(255,255,255,0.4);
+        }
+
         .btn {
             padding: 0.5rem 1rem;
             border: none;
@@ -264,10 +289,18 @@
     </style>
 </head>
 <body>
+    <div class="nav">
+        <a href="../index.html">🏠 Hub</a>
+        <a href="agent-dashboard.html">🤖 Agents</a>
+        <a href="estimation-dashboard.html">📊 Estimation</a>
+        <a href="quality-dashboard.html">✅ Quality</a>
+        <a href="spec-kit-wizard.html">📝 Spec-Kit</a>
+        <a href="sprint-planning.html" class="active">🎯 Sprint</a>
+    </div>
     <div class="header">
         <h1>🎯 Sprint Planning</h1>
         <div class="nav-buttons">
-            <button class="btn btn-secondary" onclick="window.location.href='/'">← Project View</button>
+            <button class="btn btn-secondary" onclick="window.location.href='../index.html'">← Hub</button>
             <button class="btn btn-primary" onclick="createInitialSprints()">🚀 Create Sprints 1-4</button>
             <button class="btn btn-primary" onclick="autoFillSprints()">⚡ Auto-Fill Sprints</button>
         </div>

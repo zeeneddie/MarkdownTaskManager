@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Dashboard - Markdown Task Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .header .nav {
+            margin-top: 1rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .header .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.2s;
+        }
+
+        .header .nav a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+
+        /* Agent Cards Grid */
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .agent-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            transition: all 0.2s;
+        }
+
+        .agent-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+
+        .agent-card.ready {
+            border-left: 4px solid #48bb78;
+        }
+
+        .agent-card.not_configured {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .agent-card.error {
+            border-left: 4px solid #ef4444;
+        }
+
+        .agent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .agent-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #1f2937;
+        }
+
+        .agent-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .agent-status.ready {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .agent-status.not_configured {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .agent-status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .agent-role {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .agent-model {
+            color: #9ca3af;
+            font-size: 0.8rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .agent-stats {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+        }
+
+        .stat {
+            text-align: center;
+            position: relative;
+        }
+
+        .stat.clickable {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .stat.clickable:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat.clickable:hover .stat-value {
+            color: #5568d3;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #9ca3af;
+            font-size: 0.75rem;
+        }
+
+        .tools-dropdown {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 0.5rem;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 0.75rem;
+            min-width: 200px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            display: none;
+        }
+
+        .tools-dropdown.show {
+            display: block;
+            animation: slideUp 0.2s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .tools-dropdown-header {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+
+        .tools-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .tools-list li {
+            padding: 0.4rem 0;
+            color: #4b5563;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .tools-list li:before {
+            content: "⚙️";
+            margin-right: 0.5rem;
+        }
+
+        /* Workflow Execution Form */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-group select,
+        .form-group textarea,
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .form-group select:focus,
+        .form-group textarea:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+
+        /* Results Display */
+        .results-container {
+            margin-top: 1.5rem;
+            display: none;
+        }
+
+        .results-container.show {
+            display: block;
+        }
+
+        .result-card {
+            background: #f9fafb;
+            border-left: 4px solid #667eea;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+        }
+
+        .result-title {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .result-time {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .result-content {
+            color: #4b5563;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .agent-timeline {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .timeline-agent {
+            background: #667eea;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .timeline-arrow {
+            color: #9ca3af;
+        }
+
+        /* Statistics Dashboard */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .chart-container {
+            margin-top: 1.5rem;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .work-type-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .work-type-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f9fafb;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .work-type-name {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .work-type-count {
+            background: #667eea;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* Loading State */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2col {
+                grid-template-columns: 1fr;
+            }
+
+            .agents-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 Agent Dashboard</h1>
+        <p>Monitor and execute workflows with 10 specialized AI agents (100% local via Ollama)</p>
+        <div class="nav">
+            <a href="../index.html">🏠 Hub</a>
+            <a href="agent-dashboard.html" style="background: rgba(255,255,255,0.3);">🤖 Agents</a>
+            <a href="estimation-dashboard.html">📊 Estimation</a>
+            <a href="quality-dashboard.html">✅ Quality</a>
+            <a href="spec-kit-wizard.html">📝 Spec-Kit</a>
+            <a href="sprint-planning.html">🎯 Sprint</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
+
+        <!-- Polling Status Indicator -->
+        <div id="pollingStatus" style="position: fixed; bottom: 20px; right: 20px; background: #667eea; color: white; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; display: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+            ⏸️ Updates paused (dropdown open)
+        </div>
+
+        <!-- Agent Status Grid -->
+        <div class="section">
+            <h2>👥 Agent Status (Live)</h2>
+            <div class="agents-grid" id="agentsGrid">
+                <div class="loading"></div>
+            </div>
+        </div>
+
+        <!-- Two Column Layout -->
+        <div class="grid-2col">
+            <!-- Workflow Execution Form -->
+            <div class="section">
+                <h2>🚀 Execute Workflow</h2>
+                <form id="workflowForm">
+                    <div class="form-group">
+                        <label for="workType">Work Type</label>
+                        <select id="workType" required>
+                            <option value="">Select work type...</option>
+                            <option value="NEW_FEATURE">NEW_FEATURE - Constitution → Specification → Tasks</option>
+                            <option value="MAINTENANCE">MAINTENANCE - 6-stage automation</option>
+                            <option value="BUG">BUG - Bug investigation & fixing</option>
+                            <option value="QUALITY_AUDIT">QUALITY_AUDIT - SuperClaude integration</option>
+                            <option value="ENHANCEMENT">ENHANCEMENT - Feature improvements</option>
+                            <option value="MIGRATION">MIGRATION - Platform upgrades</option>
+                            <option value="QUALITY_IMPROVEMENT">QUALITY_IMPROVEMENT - Code quality</option>
+                            <option value="TESTING">TESTING - Test automation</option>
+                            <option value="PROJECT_DEFINITION">PROJECT_DEFINITION - Complete project setup</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" placeholder="Describe the work to be done..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="priority">Priority</label>
+                        <select id="priority">
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM" selected>Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="CRITICAL">Critical</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="context">Additional Context (Optional)</label>
+                        <textarea id="context" placeholder="Any additional context, constraints, or requirements..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="executeBtn">
+                        Execute Workflow
+                    </button>
+                </form>
+
+                <!-- Results Container -->
+                <div class="results-container" id="resultsContainer">
+                    <h3 style="margin-bottom: 1rem; color: #374151;">📊 Execution Results</h3>
+                    <div id="resultsContent"></div>
+                </div>
+            </div>
+
+            <!-- Statistics Dashboard -->
+            <div class="section">
+                <h2>📊 Workflow Statistics</h2>
+
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="totalWorkflows">0</div>
+                        <div class="stat-card-label">Total Workflows</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="successRate">0%</div>
+                        <div class="stat-card-label">Success Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value" id="avgExecutionTime">0s</div>
+                        <div class="stat-card-label">Avg Execution Time</div>
+                    </div>
+                </div>
+
+                <h3 style="margin: 1.5rem 0 1rem; color: #374151;">📈 Workflows by Type</h3>
+                <div class="work-type-list" id="workTypeList">
+                    <div class="loading"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE = 'http://localhost:8000/api';
+        const POLL_INTERVAL = 3000; // 3 seconds
+
+        // Global state
+        let pollInterval = null;
+        let currentExecution = null;
+        let openDropdownIndex = null; // Track which dropdown is open
+
+        // Initialize dashboard
+        async function init() {
+            await loadAgents();
+            await loadStatistics();
+            startPolling();
+            setupFormHandler();
+        }
+
+        // Load agent status
+        async function loadAgents() {
+            try {
+                const response = await fetch(`${API_BASE}/workflows/agents`);
+                if (!response.ok) throw new Error('Failed to load agents');
+
+                const agents = await response.json();
+                renderAgents(agents);
+            } catch (error) {
+                console.error('Error loading agents:', error);
+                showAlert('Failed to load agent status. Is the backend running?', 'error');
+            }
+        }
+
+        // Render agent cards
+        function renderAgents(agents) {
+            const grid = document.getElementById('agentsGrid');
+
+            if (!agents || agents.length === 0) {
+                grid.innerHTML = '<p style="color: #6b7280;">No agents available</p>';
+                return;
+            }
+
+            grid.innerHTML = agents.map((agent, index) => `
+                <div class="agent-card ${agent.status}">
+                    <div class="agent-header">
+                        <div class="agent-name">${agent.name}</div>
+                        <div class="agent-status ${agent.status}">${agent.status.replace('_', ' ')}</div>
+                    </div>
+                    <div class="agent-role">${agent.role}</div>
+                    <div class="agent-model" style="margin-top: 0.5rem; color: #6b7280; font-size: 0.85rem; line-height: 1.4;">${agent.description}</div>
+                    <div class="agent-stats">
+                        <div class="stat clickable" data-agent-index="${index}" onclick="toggleTools(event, ${index})">
+                            <div class="stat-value">${agent.tools ? agent.tools.length : 0}</div>
+                            <div class="stat-label">Tools</div>
+                            <div class="tools-dropdown ${openDropdownIndex === index ? 'show' : ''}" id="tools-dropdown-${index}">
+                                <div class="tools-dropdown-header">${agent.name}'s Tools</div>
+                                <ul class="tools-list">
+                                    ${agent.tools && agent.tools.length > 0
+                                        ? agent.tools.map(tool => `<li>${tool.replace(/_/g, ' ')}</li>`).join('')
+                                        : '<li style="color: #9ca3af;">No tools configured</li>'}
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" style="font-size: 0.9rem;">${agent.status === 'ready' ? '✓' : '✗'}</div>
+                            <div class="stat-label">Ready</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load statistics
+        async function loadStatistics() {
+            try {
+                const response = await fetch(`${API_BASE}/workflows/statistics`);
+                if (!response.ok) throw new Error('Failed to load statistics');
+
+                const stats = await response.json();
+                renderStatistics(stats);
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+                // Don't show alert for stats - it's less critical
+            }
+        }
+
+        // Render statistics
+        function renderStatistics(stats) {
+            // Update summary cards
+            document.getElementById('totalWorkflows').textContent = stats.total_workflows_executed || 0;
+            document.getElementById('successRate').textContent =
+                stats.success_rate ? `${Math.round(stats.success_rate * 100)}%` : '0%';
+            document.getElementById('avgExecutionTime').textContent =
+                stats.average_execution_time ? `${Math.round(stats.average_execution_time)}s` : '0s';
+
+            // Render work type breakdown
+            const workTypeList = document.getElementById('workTypeList');
+
+            if (!stats.workflows_by_type || Object.keys(stats.workflows_by_type).length === 0) {
+                workTypeList.innerHTML = '<p style="color: #6b7280;">No workflow data yet</p>';
+                return;
+            }
+
+            workTypeList.innerHTML = Object.entries(stats.workflows_by_type)
+                .sort((a, b) => b[1] - a[1])
+                .map(([type, count]) => `
+                    <div class="work-type-item">
+                        <span class="work-type-name">${type}</span>
+                        <span class="work-type-count">${count}</span>
+                    </div>
+                `).join('');
+        }
+
+        // Setup form submission handler
+        function setupFormHandler() {
+            const form = document.getElementById('workflowForm');
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await executeWorkflow();
+            });
+        }
+
+        // Execute workflow
+        async function executeWorkflow() {
+            const btn = document.getElementById('executeBtn');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const resultsContent = document.getElementById('resultsContent');
+
+            // Get form data
+            const workType = document.getElementById('workType').value;
+            const description = document.getElementById('description').value;
+            const priority = document.getElementById('priority').value;
+            const context = document.getElementById('context').value;
+
+            // Validation
+            if (!workType || !description) {
+                showAlert('Please fill in all required fields', 'error');
+                return;
+            }
+
+            // Disable button and show loading
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Executing...';
+            resultsContainer.classList.remove('show');
+
+            // Show progress message for long-running workflows
+            const longWorkflows = ['PROJECT_DEFINITION', 'MAINTENANCE', 'NEW_FEATURE'];
+            if (longWorkflows.includes(workType)) {
+                showAlert(`⏳ ${workType} workflow can take 30-60 seconds. AI agents are analyzing...`, 'info');
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/workflows/analyze`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        description: `[${workType}] ${description}`,
+                        priority: priority.toLowerCase(),
+                        context: context ? { additional_context: context } : undefined
+                    })
+                });
+
+                // Handle empty response (e.g., request was cancelled)
+                const responseText = await response.text();
+                if (!responseText || responseText.trim() === '') {
+                    throw new Error('Request was cancelled or returned empty response');
+                }
+
+                // Try to parse JSON
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch (jsonError) {
+                    console.error('JSON parse error:', jsonError, 'Response:', responseText);
+                    throw new Error('Invalid response from server. Please check backend logs.');
+                }
+
+                if (!response.ok) {
+                    throw new Error(result.detail || 'Workflow execution failed');
+                }
+
+                renderResults(result);
+                showAlert('✅ Workflow executed successfully!', 'success');
+
+                // Reload statistics
+                await loadStatistics();
+                await loadAgents();
+
+            } catch (error) {
+                console.error('Workflow execution error:', error);
+
+                // Better error messages
+                let errorMessage = error.message;
+                if (error.message.includes('cancelled')) {
+                    errorMessage = '⚠️ Request was cancelled. This can happen with long-running workflows. Try again and wait for completion.';
+                } else if (error.message.includes('Failed to fetch')) {
+                    errorMessage = '❌ Cannot connect to backend. Is the server running on port 8000?';
+                } else if (error.message.includes('timeout')) {
+                    errorMessage = '⏱️ Request timed out. Try a simpler workflow or check backend logs.';
+                }
+
+                showAlert(errorMessage, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Execute Workflow';
+            }
+        }
+
+        // Render execution results
+        function renderResults(result) {
+            const container = document.getElementById('resultsContainer');
+            const content = document.getElementById('resultsContent');
+
+            const agentTimeline = result.agents_executed && result.agents_executed.length > 0
+                ? result.agents_executed.map(agent =>
+                    `<span class="timeline-agent">${agent.agent_name || agent}</span>`
+                  ).join('<span class="timeline-arrow">→</span>')
+                : '<span style="color: #6b7280;">No agents executed</span>';
+
+            // Build detailed outputs from agents
+            let agentOutputsHtml = '';
+            if (result.agents_executed && result.agents_executed.length > 0) {
+                result.agents_executed.forEach(agent => {
+                    if (agent.output) {
+                        const output = agent.output;
+                        agentOutputsHtml += `
+                            <div class="result-card">
+                                <div class="result-header">
+                                    <span class="result-title">📋 ${agent.agent_name || 'Agent'} Output</span>
+                                </div>
+                                <div class="result-content">
+                                    ${formatAgentOutput(agent.agent_name, output)}
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            }
+
+            content.innerHTML = `
+                <div class="result-card">
+                    <div class="result-header">
+                        <span class="result-title">Work Type</span>
+                        <span class="result-time">${new Date().toLocaleTimeString()}</span>
+                    </div>
+                    <div class="result-content">
+                        <strong>${result.work_type || 'Unknown'}</strong>
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <div class="result-header">
+                        <span class="result-title">Agent Execution Timeline</span>
+                    </div>
+                    <div class="agent-timeline">
+                        ${agentTimeline}
+                    </div>
+                </div>
+
+                <div class="result-card">
+                    <div class="result-header">
+                        <span class="result-title">Execution Summary</span>
+                    </div>
+                    <div class="result-content">
+                        <p><strong>Total Execution Time:</strong> ${result.total_execution_time ? Math.round(result.total_execution_time) + 's' : 'N/A'}</p>
+                        <p><strong>Status:</strong> ${result.status || 'Completed'}</p>
+                        <p><strong>Agents Executed:</strong> ${result.agents_executed ? result.agents_executed.length : 0}</p>
+                    </div>
+                </div>
+
+                ${agentOutputsHtml}
+
+                ${result.error ? `
+                    <div class="result-card" style="border-left-color: #ef4444;">
+                        <div class="result-header">
+                            <span class="result-title">Error</span>
+                        </div>
+                        <div class="result-content" style="color: #991b1b;">
+                            ${result.error}
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+
+            container.classList.add('show');
+        }
+
+        // Format agent output based on agent type
+        function formatAgentOutput(agentName, output) {
+            // Handle string output
+            if (typeof output === 'string') {
+                return `<pre style="white-space: pre-wrap; word-wrap: break-word; max-height: 600px; overflow-y: auto;">${output}</pre>`;
+            }
+
+            // Handle object output - format specific fields based on agent
+            let html = '';
+
+            // Constitution (Peter)
+            if (output.principles || output.requirements || output.constraints) {
+                html += '<h4 style="margin-top: 0;">📜 Constitution</h4>';
+
+                if (output.principles && output.principles.length > 0) {
+                    html += '<h5>Core Principles:</h5><ul>';
+                    output.principles.forEach(p => {
+                        html += `<li>${p}</li>`;
+                    });
+                    html += '</ul>';
+                }
+
+                if (output.requirements && output.requirements.length > 0) {
+                    html += '<h5>Requirements:</h5><ul>';
+                    output.requirements.forEach(r => {
+                        html += `<li>${r}</li>`;
+                    });
+                    html += '</ul>';
+                }
+
+                if (output.constraints && output.constraints.length > 0) {
+                    html += '<h5>Constraints:</h5><ul>';
+                    output.constraints.forEach(c => {
+                        html += `<li>${c}</li>`;
+                    });
+                    html += '</ul>';
+                }
+
+                if (output.risks && output.risks.length > 0) {
+                    html += '<h5>Risks:</h5><ul>';
+                    output.risks.forEach(r => {
+                        html += `<li>${r}</li>`;
+                    });
+                    html += '</ul>';
+                }
+
+                if (output.scope) {
+                    html += `<h5>Scope:</h5><p>${output.scope}</p>`;
+                }
+            }
+
+            // Specification (Felix)
+            if (output.architecture || output.components || output.interfaces) {
+                html += '<h4 style="margin-top: 16px;">🏗️ Technical Specification</h4>';
+
+                if (output.architecture) {
+                    html += '<h5>Architecture:</h5>';
+                    html += `<p><strong>Pattern:</strong> ${output.architecture.pattern || 'N/A'}</p>`;
+                    if (output.architecture.layers && output.architecture.layers.length > 0) {
+                        html += '<p><strong>Layers:</strong></p><ul>';
+                        output.architecture.layers.forEach(layer => {
+                            html += `<li>${layer}</li>`;
+                        });
+                        html += '</ul>';
+                    }
+                }
+
+                if (output.components && output.components.length > 0) {
+                    html += '<h5>Components:</h5><ul>';
+                    output.components.forEach(comp => {
+                        html += `<li><strong>${comp.name || comp}</strong>`;
+                        if (comp.description) html += `: ${comp.description}`;
+                        html += '</li>';
+                    });
+                    html += '</ul>';
+                }
+
+                if (output.interfaces && output.interfaces.length > 0) {
+                    html += '<h5>Interfaces:</h5><ul>';
+                    output.interfaces.forEach(iface => {
+                        html += `<li>${iface.name || iface}`;
+                        if (iface.type) html += ` (${iface.type})`;
+                        html += '</li>';
+                    });
+                    html += '</ul>';
+                }
+
+                if (output.dataModel && output.dataModel.entities) {
+                    html += '<h5>Data Model:</h5><ul>';
+                    output.dataModel.entities.forEach(entity => {
+                        html += `<li>${entity}</li>`;
+                    });
+                    html += '</ul>';
+                }
+            }
+
+            // Tasks/Epics/Features (Felix)
+            if (output.epics || output.features || output.stories || output.tasks) {
+                html += '<h4 style="margin-top: 16px;">✅ Work Breakdown</h4>';
+
+                if (output.epics && output.epics.length > 0) {
+                    html += `<h5>Epics (${output.epics.length}):</h5><ul>`;
+                    output.epics.forEach(epic => {
+                        html += `<li><strong>${epic.title || epic.name || epic}</strong>`;
+                        if (epic.description) html += `: ${epic.description}`;
+                        if (epic.estimatedEffort !== undefined) html += ` <em>(Effort: ${epic.estimatedEffort || 'TBD'})</em>`;
+                        html += '</li>';
+                    });
+                    html += '</ul>';
+                }
+
+                if (output.features && output.features.length > 0) {
+                    html += `<h5>Features (${output.features.length}):</h5><ul>`;
+                    output.features.slice(0, 10).forEach(feature => {
+                        html += `<li>${feature.title || feature.name || feature}`;
+                        if (feature.epicId) html += ` <em>(Epic: ${feature.epicId})</em>`;
+                        html += '</li>';
+                    });
+                    if (output.features.length > 10) {
+                        html += `<li><em>... and ${output.features.length - 10} more features</em></li>`;
+                    }
+                    html += '</ul>';
+                }
+
+                if (output.stories && output.stories.length > 0) {
+                    html += `<h5>User Stories (${output.stories.length}):</h5><ul>`;
+                    output.stories.slice(0, 10).forEach(story => {
+                        html += `<li>${story.title || story.name || story}`;
+                        if (story.featureId) html += ` <em>(Feature: ${story.featureId})</em>`;
+                        html += '</li>';
+                    });
+                    if (output.stories.length > 10) {
+                        html += `<li><em>... and ${output.stories.length - 10} more stories</em></li>`;
+                    }
+                    html += '</ul>';
+                }
+
+                if (output.tasks && output.tasks.length > 0) {
+                    html += `<h5>Tasks (${output.tasks.length} total)</h5>`;
+                    html += `<p><em>Showing first 5 tasks:</em></p><ul>`;
+                    output.tasks.slice(0, 5).forEach(task => {
+                        html += `<li>${task.title || task.name || task}</li>`;
+                    });
+                    html += '</ul>';
+                }
+            }
+
+            // Test Plan (Tessa)
+            if (output.testStrategy || output.testCases) {
+                html += '<h4 style="margin-top: 16px;">🧪 Test Plan</h4>';
+                if (output.testStrategy) {
+                    html += `<p>${output.testStrategy}</p>`;
+                }
+                if (output.testCases && output.testCases.length > 0) {
+                    html += '<h5>Test Cases:</h5><ul>';
+                    output.testCases.slice(0, 5).forEach(tc => {
+                        html += `<li>${tc.name || tc}</li>`;
+                    });
+                    html += '</ul>';
+                }
+            }
+
+            // Documentation (Diana)
+            if (output.documentation) {
+                html += '<h4 style="margin-top: 16px;">📚 Documentation</h4>';
+                html += `<pre style="white-space: pre-wrap; word-wrap: break-word;">${output.documentation}</pre>`;
+            }
+
+            // Quality Analysis (Quinn)
+            if (output.qualityScore || output.issues) {
+                html += '<h4 style="margin-top: 16px;">🔍 Quality Analysis</h4>';
+                if (output.qualityScore !== undefined) {
+                    html += `<p><strong>Quality Score:</strong> ${output.qualityScore}/100</p>`;
+                }
+                if (output.issues && output.issues.length > 0) {
+                    html += '<h5>Issues Found:</h5><ul>';
+                    output.issues.slice(0, 10).forEach(issue => {
+                        html += `<li><strong>${issue.severity || 'Medium'}:</strong> ${issue.description || issue}</li>`;
+                    });
+                    html += '</ul>';
+                }
+            }
+
+            // Bug Analysis (Betty)
+            if (output.bugAnalysis || output.rootCause) {
+                html += '<h4 style="margin-top: 16px;">🐛 Bug Analysis</h4>';
+                if (output.rootCause) {
+                    html += `<p><strong>Root Cause:</strong> ${output.rootCause}</p>`;
+                }
+                if (output.solution) {
+                    html += `<p><strong>Solution:</strong> ${output.solution}</p>`;
+                }
+            }
+
+            // Maintenance Plan (Marcus)
+            if (output.maintenancePlan || output.refactorings) {
+                html += '<h4 style="margin-top: 16px;">🔧 Maintenance Plan</h4>';
+                if (output.maintenancePlan) {
+                    html += `<pre style="white-space: pre-wrap;">${output.maintenancePlan}</pre>`;
+                }
+            }
+
+            // If no specific format matched, show as JSON
+            if (html === '') {
+                html = `<pre style="white-space: pre-wrap; word-wrap: break-word; max-height: 600px; overflow-y: auto;">${JSON.stringify(output, null, 2)}</pre>`;
+            }
+
+            return html;
+        }
+
+        // Show alert message
+        function showAlert(message, type = 'info') {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+
+            container.appendChild(alert);
+
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // Toggle tools dropdown
+        function toggleTools(event, agentIndex) {
+            event.stopPropagation();
+
+            const dropdown = document.getElementById(`tools-dropdown-${agentIndex}`);
+            const allDropdowns = document.querySelectorAll('.tools-dropdown');
+            const pollingStatus = document.getElementById('pollingStatus');
+
+            // If clicking the same dropdown, close it
+            if (openDropdownIndex === agentIndex) {
+                openDropdownIndex = null;
+                dropdown.classList.remove('show');
+                pollingStatus.style.display = 'none';
+            } else {
+                // Close all other dropdowns
+                allDropdowns.forEach(d => {
+                    d.classList.remove('show');
+                });
+
+                // Open the clicked dropdown
+                openDropdownIndex = agentIndex;
+                dropdown.classList.add('show');
+                pollingStatus.style.display = 'block';
+            }
+        }
+
+        // Close all dropdowns when clicking outside
+        document.addEventListener('click', (event) => {
+            // Check if click is outside both the stat button AND the dropdown
+            if (!event.target.closest('.stat.clickable') && !event.target.closest('.tools-dropdown')) {
+                openDropdownIndex = null;
+                const allDropdowns = document.querySelectorAll('.tools-dropdown');
+                const pollingStatus = document.getElementById('pollingStatus');
+                allDropdowns.forEach(d => d.classList.remove('show'));
+                if (pollingStatus) {
+                    pollingStatus.style.display = 'none';
+                }
+            }
+        });
+
+        // Start polling for updates
+        function startPolling() {
+            pollInterval = setInterval(async () => {
+                // Skip polling if a dropdown is open to prevent flickering
+                if (openDropdownIndex === null) {
+                    await loadAgents();
+                    await loadStatistics();
+                }
+            }, POLL_INTERVAL);
+        }
+
+        // Stop polling (cleanup)
+        function stopPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', stopPolling);
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
