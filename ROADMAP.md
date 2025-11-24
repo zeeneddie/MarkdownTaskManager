@@ -110,8 +110,22 @@ Nov    Dec    Jan    Feb    Mar    Apr    May    Jun
 
 ### Week 48 Complete ✅
 
-### Next Steps (Week 49)
-- [ ] Database migration (quality_gate_configs tables)
+### Week 49 Progress (24 Nov 2025)
+
+**Day 1: Database Migration** ✅
+- [x] Created SQLAlchemy models (`quality_gate_config.py`)
+- [x] Created Alembic migration 010 (5 new tables)
+- [x] Fixed models/__init__.py with correct imports
+- [x] Migration tested and applied successfully
+
+**New Tables (5):**
+- `quality_gate_configs` - Main config per project
+- `quality_category_configs` - Category settings (SIG, SOLID, etc.)
+- `quality_check_configs` - Individual check settings
+- `quality_workflow_rules` - Per-workflow blocking rules
+- `quality_config_history` - Audit trail
+
+### Next Steps (Week 49 Day 2+)
 - [ ] API endpoints (8 new Quality Gates config endpoints)
 - [ ] Frontend UI (quality-gates-config.html)
 - [ ] Integration testing
