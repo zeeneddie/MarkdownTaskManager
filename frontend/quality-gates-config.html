@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quality Gates Configuration - Markdown Task Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .nav {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .nav a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .nav a.active {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+        }
+
+        .btn-primary:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .btn-danger {
+            background: #e53e3e;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c53030;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: #f7fafc;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-header h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .panel-body {
+            padding: 1.5rem;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        /* Category Cards */
+        .category-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+        }
+
+        .category-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+        }
+
+        .category-card.disabled {
+            opacity: 0.6;
+            background: #f7fafc;
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .category-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .category-toggle {
+            position: relative;
+            width: 48px;
+            height: 26px;
+        }
+
+        .category-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e0;
+            transition: .3s;
+            border-radius: 26px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #48bb78;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(22px);
+        }
+
+        .category-settings {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-top: 0.5rem;
+        }
+
+        .setting-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .setting-group label {
+            font-size: 0.85rem;
+            color: #718096;
+        }
+
+        .setting-group input[type="number"] {
+            width: 60px;
+            padding: 0.25rem 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        /* Workflow Cards */
+        .workflow-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .workflow-card:hover {
+            border-color: #667eea;
+        }
+
+        .workflow-header {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+            color: #2d3748;
+        }
+
+        .severity-badges {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.75rem;
+        }
+
+        .severity-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .severity-badge.critical {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .severity-badge.critical.active {
+            background: #c53030;
+            color: white;
+        }
+
+        .severity-badge.high {
+            background: #feebc8;
+            color: #c05621;
+        }
+
+        .severity-badge.high.active {
+            background: #dd6b20;
+            color: white;
+        }
+
+        .severity-badge.medium {
+            background: #fefcbf;
+            color: #975a16;
+        }
+
+        .severity-badge.medium.active {
+            background: #d69e2e;
+            color: white;
+        }
+
+        .severity-badge.low {
+            background: #c6f6d5;
+            color: #276749;
+        }
+
+        .severity-badge.low.active {
+            background: #38a169;
+            color: white;
+        }
+
+        .workflow-settings {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .workflow-setting {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .workflow-setting input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+
+        .workflow-setting input[type="number"] {
+            width: 50px;
+            padding: 0.25rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+        }
+
+        /* Checks Table */
+        .checks-panel {
+            margin-bottom: 2rem;
+        }
+
+        .checks-filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-group label {
+            font-size: 0.85rem;
+            color: #718096;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .checks-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .checks-table th {
+            background: #f7fafc;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-size: 0.85rem;
+            color: #718096;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .checks-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        .checks-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .check-name {
+            font-weight: 500;
+        }
+
+        .severity-pill {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .severity-pill.critical { background: #fed7d7; color: #c53030; }
+        .severity-pill.high { background: #feebc8; color: #c05621; }
+        .severity-pill.medium { background: #fefcbf; color: #975a16; }
+        .severity-pill.low { background: #c6f6d5; color: #276749; }
+
+        /* History Panel */
+        .history-panel {
+            margin-bottom: 2rem;
+        }
+
+        .history-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-time {
+            font-size: 0.8rem;
+            color: #718096;
+            min-width: 150px;
+        }
+
+        .history-change {
+            flex: 1;
+        }
+
+        .history-type {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #2d3748;
+        }
+
+        .history-detail {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-top: 0.25rem;
+        }
+
+        /* Status Banner */
+        .status-banner {
+            background: #c6f6d5;
+            color: #276749;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-banner.warning {
+            background: #fefcbf;
+            color: #975a16;
+        }
+
+        .status-banner.error {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .status-text {
+            font-weight: 500;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            color: #718096;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            background: #2d3748;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: #48bb78;
+        }
+
+        .toast.error {
+            background: #e53e3e;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Quality Gates Configuration</h1>
+        <p>Configure quality checks, categories, and workflow rules</p>
+        <nav class="nav">
+            <a href="index.html">Hub</a>
+            <a href="quality-dashboard.html">Quality Dashboard</a>
+            <a href="quality-gates-config.html" class="active">Gates Config</a>
+            <a href="technical-debt-dashboard.html">Tech Debt</a>
+            <a href="agent-dashboard.html">Agents</a>
+        </nav>
+        <div class="header-actions">
+            <button class="btn btn-primary" onclick="saveConfig()">Save Configuration</button>
+            <button class="btn btn-secondary" onclick="validateConfig()">Validate</button>
+            <button class="btn btn-danger" onclick="resetConfig()">Reset to Defaults</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Status Banner -->
+        <div id="statusBanner" class="status-banner" style="display: none;">
+            <span class="status-text" id="statusText"></span>
+            <button class="btn btn-secondary" onclick="hideStatus()">Dismiss</button>
+        </div>
+
+        <!-- Main Grid: Categories & Workflow Rules -->
+        <div class="main-grid">
+            <!-- Categories Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Quality Categories</h2>
+                    <span id="categoryCount">0 categories</span>
+                </div>
+                <div class="panel-body" id="categoriesContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading categories...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workflow Rules Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Workflow Rules</h2>
+                    <span id="workflowCount">0 workflows</span>
+                </div>
+                <div class="panel-body" id="workflowsContainer">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        Loading workflow rules...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Individual Checks Panel -->
+        <div class="panel checks-panel">
+            <div class="panel-header">
+                <h2>Individual Checks</h2>
+                <span id="checkCount">0 checks</span>
+            </div>
+            <div class="panel-body">
+                <div class="checks-filters">
+                    <div class="filter-group">
+                        <label>Category:</label>
+                        <select id="filterCategory" onchange="filterChecks()">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Severity:</label>
+                        <select id="filterSeverity" onchange="filterChecks()">
+                            <option value="">All Severities</option>
+                            <option value="critical">Critical</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Search:</label>
+                        <input type="text" id="filterSearch" placeholder="Search checks..." oninput="filterChecks()">
+                    </div>
+                </div>
+                <table class="checks-table">
+                    <thead>
+                        <tr>
+                            <th>Enabled</th>
+                            <th>Check Name</th>
+                            <th>Category</th>
+                            <th>Severity</th>
+                            <th>Threshold</th>
+                        </tr>
+                    </thead>
+                    <tbody id="checksTableBody">
+                        <tr>
+                            <td colspan="5" class="loading">
+                                <div class="spinner"></div>
+                                Loading checks...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- History Panel -->
+        <div class="panel history-panel">
+            <div class="panel-header">
+                <h2>Configuration History</h2>
+                <button class="btn btn-secondary" onclick="loadHistory()">Refresh</button>
+            </div>
+            <div class="panel-body" id="historyContainer">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading history...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/quality/config';
+        let currentConfig = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadConfig();
+            loadHistory();
+        });
+
+        // Load configuration
+        async function loadConfig() {
+            try {
+                const response = await fetch(API_BASE);
+                if (!response.ok) throw new Error('Failed to load config');
+                currentConfig = await response.json();
+                renderCategories(currentConfig.categories);
+                renderWorkflows(currentConfig.workflow_rules);
+                renderChecks(currentConfig.categories);
+                populateCategoryFilter(currentConfig.categories);
+            } catch (error) {
+                showToast('Error loading configuration: ' + error.message, 'error');
+            }
+        }
+
+        // Render categories
+        function renderCategories(categories) {
+            const container = document.getElementById('categoriesContainer');
+            document.getElementById('categoryCount').textContent = `${categories.length} categories`;
+
+            container.innerHTML = categories.map(cat => `
+                <div class="category-card ${!cat.enabled ? 'disabled' : ''}" data-category="${cat.category_id}">
+                    <div class="category-header">
+                        <span class="category-name">
+                            ${cat.category_name || cat.category_id}
+                            <span style="color: #718096; font-weight: normal;">(${cat.checks?.length || 0})</span>
+                        </span>
+                        <label class="category-toggle">
+                            <input type="checkbox" ${cat.enabled ? 'checked' : ''}
+                                   onchange="toggleCategory('${cat.category_id}', this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="category-settings">
+                        <div class="setting-group">
+                            <label>Target:</label>
+                            <input type="number" value="${cat.target_score}" min="0" max="100"
+                                   onchange="updateCategoryTarget('${cat.category_id}', this.value)">
+                            <span>%</span>
+                        </div>
+                        <div class="setting-group">
+                            <label>Weight:</label>
+                            <input type="number" value="${cat.weight}" min="0" max="10" step="0.1"
+                                   onchange="updateCategoryWeight('${cat.category_id}', this.value)">
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Render workflow rules
+        function renderWorkflows(workflows) {
+            const container = document.getElementById('workflowsContainer');
+            document.getElementById('workflowCount').textContent = `${workflows.length} workflows`;
+
+            container.innerHTML = workflows.map(wf => `
+                <div class="workflow-card" data-workflow="${wf.workflow_type}">
+                    <div class="workflow-header">${wf.workflow_type.replace(/_/g, ' ')}</div>
+                    <div class="severity-badges">
+                        ${['critical', 'high', 'medium', 'low'].map(sev => `
+                            <span class="severity-badge ${sev} ${wf.blocking_severities.includes(sev) ? 'active' : ''}"
+                                  onclick="toggleBlockingSeverity('${wf.workflow_type}', '${sev}')">
+                                ${sev.charAt(0).toUpperCase() + sev.slice(1)}
+                            </span>
+                        `).join('')}
+                    </div>
+                    <div class="workflow-settings">
+                        <div class="workflow-setting">
+                            <label>Coverage:</label>
+                            <input type="number" value="${wf.required_coverage}" min="0" max="100"
+                                   onchange="updateWorkflow('${wf.workflow_type}', 'required_coverage', this.value)">%
+                        </div>
+                        <div class="workflow-setting">
+                            <input type="checkbox" ${wf.e2e_required ? 'checked' : ''}
+                                   onchange="updateWorkflow('${wf.workflow_type}', 'e2e_required', this.checked)">
+                            <label>E2E Required</label>
+                        </div>
+                        <div class="workflow-setting">
+                            <input type="checkbox" ${wf.regression_required ? 'checked' : ''}
+                                   onchange="updateWorkflow('${wf.workflow_type}', 'regression_required', this.checked)">
+                            <label>Regression Required</label>
+                        </div>
+                        <div class="workflow-setting">
+                            <label>Max Iterations:</label>
+                            <input type="number" value="${wf.max_iterations}" min="1" max="10"
+                                   onchange="updateWorkflow('${wf.workflow_type}', 'max_iterations', this.value)">
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Render checks table
+        function renderChecks(categories) {
+            const tbody = document.getElementById('checksTableBody');
+            const allChecks = [];
+
+            categories.forEach(cat => {
+                (cat.checks || []).forEach(check => {
+                    allChecks.push({ ...check, category_name: cat.category_name || cat.category_id });
+                });
+            });
+
+            document.getElementById('checkCount').textContent = `${allChecks.length} checks`;
+
+            if (allChecks.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="5" style="text-align: center; color: #718096; padding: 2rem;">
+                        No individual checks configured yet. Checks are created when quality scans run.
+                    </td></tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = allChecks.map(check => `
+                <tr data-check="${check.check_id}" data-category="${check.category_id}">
+                    <td>
+                        <input type="checkbox" ${check.enabled ? 'checked' : ''}
+                               onchange="toggleCheck('${check.check_id}', this.checked)">
+                    </td>
+                    <td class="check-name">${check.check_name || check.check_id}</td>
+                    <td>${check.category_name}</td>
+                    <td><span class="severity-pill ${check.severity}">${check.severity}</span></td>
+                    <td>${check.threshold_value ? check.threshold_value + ' ' + (check.threshold_type || '') : '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Populate category filter
+        function populateCategoryFilter(categories) {
+            const select = document.getElementById('filterCategory');
+            select.innerHTML = '<option value="">All Categories</option>' +
+                categories.map(cat => `<option value="${cat.category_id}">${cat.category_name || cat.category_id}</option>`).join('');
+        }
+
+        // Filter checks
+        function filterChecks() {
+            const category = document.getElementById('filterCategory').value;
+            const severity = document.getElementById('filterSeverity').value;
+            const search = document.getElementById('filterSearch').value.toLowerCase();
+
+            document.querySelectorAll('#checksTableBody tr').forEach(row => {
+                const matchCategory = !category || row.dataset.category === category;
+                const matchSeverity = !severity || row.querySelector('.severity-pill')?.classList.contains(severity);
+                const matchSearch = !search || row.querySelector('.check-name')?.textContent.toLowerCase().includes(search);
+                row.style.display = matchCategory && matchSeverity && matchSearch ? '' : 'none';
+            });
+        }
+
+        // Toggle category
+        async function toggleCategory(categoryId, enabled) {
+            try {
+                const response = await fetch(`${API_BASE}/category/${categoryId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled })
+                });
+                if (!response.ok) throw new Error('Failed to update category');
+                showToast(`Category ${enabled ? 'enabled' : 'disabled'}`, 'success');
+                loadConfig();
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Update category target
+        async function updateCategoryTarget(categoryId, targetScore) {
+            try {
+                const response = await fetch(`${API_BASE}/category/${categoryId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target_score: parseInt(targetScore) })
+                });
+                if (!response.ok) throw new Error('Failed to update target');
+                showToast('Target score updated', 'success');
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Update category weight
+        async function updateCategoryWeight(categoryId, weight) {
+            try {
+                const response = await fetch(`${API_BASE}/category/${categoryId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ weight: parseFloat(weight) })
+                });
+                if (!response.ok) throw new Error('Failed to update weight');
+                showToast('Weight updated', 'success');
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Toggle blocking severity
+        async function toggleBlockingSeverity(workflowType, severity) {
+            const workflow = currentConfig.workflow_rules.find(w => w.workflow_type === workflowType);
+            if (!workflow) return;
+
+            const severities = [...workflow.blocking_severities];
+            const index = severities.indexOf(severity);
+            if (index > -1) {
+                severities.splice(index, 1);
+            } else {
+                severities.push(severity);
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/workflow/${workflowType}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ blocking_severities: severities })
+                });
+                if (!response.ok) throw new Error('Failed to update workflow');
+                showToast('Blocking severities updated', 'success');
+                loadConfig();
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Update workflow setting
+        async function updateWorkflow(workflowType, field, value) {
+            try {
+                const body = {};
+                body[field] = typeof value === 'boolean' ? value : parseInt(value);
+
+                const response = await fetch(`${API_BASE}/workflow/${workflowType}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (!response.ok) throw new Error('Failed to update workflow');
+                showToast('Workflow updated', 'success');
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Toggle check
+        async function toggleCheck(checkId, enabled) {
+            try {
+                const response = await fetch(`${API_BASE}/check/${checkId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enabled })
+                });
+                if (!response.ok) throw new Error('Failed to update check');
+                showToast(`Check ${enabled ? 'enabled' : 'disabled'}`, 'success');
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Save configuration (full PUT)
+        async function saveConfig() {
+            showToast('Configuration is auto-saved on each change', 'success');
+        }
+
+        // Validate configuration
+        async function validateConfig() {
+            try {
+                const response = await fetch(`${API_BASE}/validate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const result = await response.json();
+
+                const banner = document.getElementById('statusBanner');
+                const text = document.getElementById('statusText');
+
+                if (result.valid) {
+                    banner.className = 'status-banner';
+                    text.textContent = 'Configuration is valid! ' +
+                        (result.warnings.length ? `${result.warnings.length} warning(s)` : 'No issues found.');
+                } else {
+                    banner.className = 'status-banner error';
+                    text.textContent = `Configuration has ${result.errors.length} error(s). Please fix before using.`;
+                }
+                banner.style.display = 'flex';
+            } catch (error) {
+                showToast('Error validating: ' + error.message, 'error');
+            }
+        }
+
+        // Reset configuration
+        async function resetConfig() {
+            if (!confirm('Are you sure you want to reset to default configuration? This cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/reset`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (!response.ok) throw new Error('Failed to reset');
+                showToast('Configuration reset to defaults', 'success');
+                loadConfig();
+                loadHistory();
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Load history
+        async function loadHistory() {
+            try {
+                const response = await fetch(`${API_BASE}/history?limit=10`);
+                if (!response.ok) throw new Error('Failed to load history');
+                const history = await response.json();
+                renderHistory(history);
+            } catch (error) {
+                document.getElementById('historyContainer').innerHTML =
+                    '<p style="color: #718096; text-align: center;">Unable to load history</p>';
+            }
+        }
+
+        // Render history
+        function renderHistory(history) {
+            const container = document.getElementById('historyContainer');
+
+            if (history.length === 0) {
+                container.innerHTML = '<p style="color: #718096; text-align: center;">No configuration changes yet</p>';
+                return;
+            }
+
+            container.innerHTML = history.map(entry => `
+                <div class="history-item">
+                    <div class="history-time">${new Date(entry.changed_at).toLocaleString()}</div>
+                    <div class="history-change">
+                        <div class="history-type">${entry.change_type.replace(/_/g, ' ')}</div>
+                        <div class="history-detail">
+                            ${entry.entity_type ? `${entry.entity_type}: ${entry.entity_id}` : ''}
+                            ${entry.changed_by ? ` by ${entry.changed_by}` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Hide status banner
+        function hideStatus() {
+            document.getElementById('statusBanner').style.display = 'none';
+        }
+
+        // Show toast notification
+        function showToast(message, type = '') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>

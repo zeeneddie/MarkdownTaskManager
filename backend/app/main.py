@@ -100,6 +100,14 @@ async def quality_dashboard():
         return FileResponse(str(quality_dashboard_file))
     raise HTTPException(status_code=404, detail="Quality dashboard page not found")
 
+@app.get("/quality-gates-config.html")
+async def quality_gates_config():
+    """Serve quality gates configuration interface"""
+    config_file = frontend_path / "quality-gates-config.html"
+    if config_file.exists():
+        return FileResponse(str(config_file))
+    raise HTTPException(status_code=404, detail="Quality gates config page not found")
+
 @app.get("/project-wizard.html")
 async def project_wizard_page():
     """Serve project wizard interface"""
