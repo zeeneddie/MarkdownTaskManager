@@ -1,0 +1,22 @@
+# ML/AI Dependencies (Optional)
+# Install with: pip install -r requirements-ml.txt
+#
+# These are required for:
+# - AgentEvolver self-evolution features (Week 17-26)
+# - Embedding-based experience search
+# - Pattern matching with semantic similarity
+#
+# Without these, core functionality still works but
+# advanced AI features will be disabled.
+
+# Vector embeddings for experience store
+sentence-transformers==2.2.2
+
+# PyTorch (required by sentence-transformers)
+torch>=2.2.0
+
+# Transformers library
+transformers>=4.36.2
+
+# Note: ChromaDB is in main requirements as it's used
+# for quality metrics storage as well as embeddings
