@@ -125,10 +125,18 @@ Nov    Dec    Jan    Feb    Mar    Apr    May    Jun
 - `quality_workflow_rules` - Per-workflow blocking rules
 - `quality_config_history` - Audit trail
 
-### Next Steps (Week 49 Day 2+)
-- [ ] API endpoints (8 new Quality Gates config endpoints)
+**Day 2: API Endpoints** ✅
+- [x] Created comprehensive API router (`quality_gate_config.py`)
+- [x] 7 new endpoints: GET/PUT config, PATCH category/check/workflow, POST reset/validate, GET history
+- [x] Pydantic schemas inline for type safety
+- [x] Registered router in main.py
+- [x] Fixed enum column handling (String instead of PostgreSQL ENUM)
+- [x] All endpoints tested and working
+- [x] Total API endpoints: 144 (was 137)
+
+### Next Steps (Week 49 Day 3+)
 - [ ] Frontend UI (quality-gates-config.html)
-- [ ] Integration testing
+- [ ] Integration testing with quality dashboard
 
 ---
 

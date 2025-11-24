@@ -32,7 +32,7 @@ def upgrade() -> None:
     op.create_table(
         'quality_gate_configs',
         sa.Column('id', postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column('project_id', sa.Integer(), nullable=True),  # Integer to match projects.id
+        sa.Column('project_id', sa.Integer(), nullable=True),  # Optional: links to external project system
         sa.Column('name', sa.String(100), nullable=False, server_default='default'),
         sa.Column('description', sa.Text(), nullable=True),
         sa.Column('is_active', sa.Boolean(), nullable=False, server_default='true'),
@@ -40,7 +40,6 @@ def upgrade() -> None:
         sa.Column('updated_at', sa.DateTime(), server_default=sa.func.now(), onupdate=sa.func.now()),
         sa.Column('created_by', sa.String(100), nullable=True),
         sa.PrimaryKeyConstraint('id'),
-        sa.ForeignKeyConstraint(['project_id'], ['projects.id'], ondelete='CASCADE'),
         sa.UniqueConstraint('project_id', 'name', name='uq_quality_gate_config_project_name')
     )
 

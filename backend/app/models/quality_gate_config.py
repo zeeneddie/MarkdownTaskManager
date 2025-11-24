@@ -69,7 +69,7 @@ class QualityGateConfig(Base):
     __tablename__ = "quality_gate_configs"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True)  # Integer to match projects.id
+    project_id = Column(Integer, nullable=True)  # Optional: links to external project system
     name = Column(String(100), nullable=False, default="default")
     description = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
@@ -124,7 +124,7 @@ class QualityCheckConfig(Base):
     check_name = Column(String(200), nullable=True)  # Human-readable name
     category_id = Column(String(50), nullable=False)  # Reference to category
     enabled = Column(Boolean, default=True)
-    severity = Column(SQLEnum(Severity), default=Severity.MEDIUM)
+    severity = Column(String(20), default="medium")  # Uses Severity enum values
     threshold_value = Column(Float, nullable=True)  # Configurable threshold
     threshold_type = Column(String(20), nullable=True)  # 'max', 'min', 'percentage'
     description = Column(Text, nullable=True)  # Check description
@@ -176,8 +176,8 @@ class QualityConfigHistory(Base):
     config_id = Column(UUID(as_uuid=True), ForeignKey("quality_gate_configs.id", ondelete="CASCADE"), nullable=False)
     changed_at = Column(DateTime, server_default=func.now())
     changed_by = Column(String(100), nullable=True)
-    change_type = Column(SQLEnum(ChangeType), nullable=False)
-    entity_type = Column(SQLEnum(EntityType), nullable=True)
+    change_type = Column(String(50), nullable=False)  # Uses ChangeType enum values
+    entity_type = Column(String(50), nullable=True)  # Uses EntityType enum values
     entity_id = Column(String(100), nullable=True)  # ID of changed entity
     old_value = Column(JSONB, nullable=True)  # Previous state
     new_value = Column(JSONB, nullable=True)  # New state
