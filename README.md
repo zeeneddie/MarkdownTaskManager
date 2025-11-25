@@ -6,23 +6,25 @@
 
 A complete task management system that transforms your Markdown files into an interactive Kanban board, without database or server. Perfect for developers, distributed teams and integration with AI assistants.
 
-> **Week 48 Status (Nov 2025):**
-> - Hub Portal live met 11 dashboards
-> - 137 API endpoints operationeel
+> **Week 50 Status (Nov 2025):**
+> - Hub Portal live met 12 dashboards
+> - 151 API endpoints operationeel
 > - 10 AI agents (100% local via Ollama)
-> - Code cleanup: 33,307 node_modules files verwijderd uit git
-> - Zie `evaluation.md` voor externe evaluatie en Week 48 response
+> - Quality Gate Integration & Agent Validation Loop shipped
+> - Zie `PROJECT_STATUS_SUMMARY.md` voor actuele status
 
 ![Application Overview](docs/images/app-overview.jpg)
 
 ---
 
-## Project Status: Week 48 COMPLETE
+## Project Status: Week 50 COMPLETE
 
 > **Fase 4: UI + Intelligence** in progress
-> - Hub Portal + 11 dashboards operationeel
-> - 137 API endpoints, 34 database tables
+> - Hub Portal + 12 dashboards operationeel
+> - 151 API endpoints, 39 database tables (PostgreSQL via Docker)
 > - 10 AI agents, 6 Ollama models (~25GB)
+> - Quality Gate Integration & Agent Validation Loop
+> - ChromaDB for experience storage
 > - [Full roadmap](./ROADMAP.md) | [Architecture](./ARCHITECTURE.md)
 
 ---
@@ -102,14 +104,38 @@ task-manager.html  -->  Browser  -->  Your Markdown files
 ## Agentic Task Management System
 
 This repository includes an **AI-powered agentic system** with:
-- **FastAPI Backend** - 137 API endpoints, 34 tables
+- **FastAPI Backend** - 151 API endpoints, 39 tables
 - **10 AI Agents** - 100% local (Ollama, 6 models)
-- **11 Dashboards** - Hub Portal, Agent, Estimation, Evolution, etc.
+- **12 Dashboards** - Hub Portal, Agent, Quality Gates Config, Evolution, etc.
 - **16 SuperClaude Commands** - Domain expertise
-- **Quality Gates** - 42 validation rules
+- **Quality Gates** - 42 validation rules + Integration & Validation Loop
 - **ML Training Pipeline** - Effort prediction
 
 [Read the complete guide](./HERSTART_PROJECT.md)
+
+---
+
+## Database & Infrastructure
+
+**PostgreSQL (Docker)**
+- 39 tables for task management, agents, quality gates, A/B testing
+- Docker container: `project_manager_db` on port 5433
+- Credentials: `user:password` (configurable via `.env`)
+
+**ChromaDB (Docker)**
+- Experience storage for agent evolution
+- Container: `project_manager_chromadb` on port 8001
+- Persistent storage for agent learning
+
+**Quick Start:**
+```bash
+cd backend
+docker-compose up -d db chromadb  # Start databases
+source .venv/bin/activate
+uvicorn app.main:app --host 0.0.0.0 --port 8000  # Start API
+```
+
+[See full setup guide](./HERSTART_PROJECT.md)
 
 ---
 

@@ -19,6 +19,7 @@ from app.models.quality_gate_config import (
     ChangeType,
     EntityType
 )
+from app.models.ab_testing import Experiment, ExperimentVariant, ExperimentResult
 
 __all__ = [
     # User
@@ -43,4 +44,6 @@ __all__ = [
     "QualityGateConfig", "QualityCategoryConfig", "QualityCheckConfig",
     "QualityWorkflowRules", "QualityConfigHistory",
     "Severity", "ChangeType", "EntityType",
+    # A/B Testing
+    "Experiment", "ExperimentVariant", "ExperimentResult",
 ]

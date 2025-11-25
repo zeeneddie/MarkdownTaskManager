@@ -323,6 +323,141 @@
             margin-top: 2rem;
         }
 
+        /* Workflow Gates Styles (Week 50) */
+        .workflow-gates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .gate-card {
+            background: #f7fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #718096;
+            transition: all 0.2s;
+        }
+
+        .gate-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .gate-card.gate-configured {
+            border-left-color: #48bb78;
+            background: linear-gradient(135deg, #f0fff4 0%, #f7fafc 100%);
+        }
+
+        .gate-card.gate-default {
+            border-left-color: #ed8936;
+            background: linear-gradient(135deg, #fffaf0 0%, #f7fafc 100%);
+        }
+
+        .gate-card.gate-unknown {
+            border-left-color: #a0aec0;
+        }
+
+        .gate-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .gate-icon {
+            font-size: 1.25rem;
+        }
+
+        .gate-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #2d3748;
+            flex: 1;
+        }
+
+        .gate-status-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .gate-status-badge.configured {
+            background: #c6f6d5;
+            color: #276749;
+        }
+
+        .gate-status-badge.default {
+            background: #feebc8;
+            color: #c05621;
+        }
+
+        .gate-body {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .gate-section {
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.5);
+            border-radius: 4px;
+        }
+
+        .gate-section-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+
+        .gate-requirement {
+            font-size: 0.8rem;
+            color: #4a5568;
+            padding: 0.2rem 0;
+        }
+
+        .severities-container,
+        .phases-container {
+            display: flex;
+            gap: 0.25rem;
+            flex-wrap: wrap;
+        }
+
+        .severity-tag {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .severity-tag.severity-critical { background: #fed7d7; color: #c53030; }
+        .severity-tag.severity-high { background: #feebc8; color: #c05621; }
+        .severity-tag.severity-medium { background: #fefcbf; color: #975a16; }
+        .severity-tag.severity-low { background: #e2e8f0; color: #4a5568; }
+        .severity-tag.severity-error { background: #fed7d7; color: #c53030; }
+        .severity-tag.severity-warning { background: #feebc8; color: #c05621; }
+
+        .phase-tag {
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            background: #e2e8f0;
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        #gateConfigStatus {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-bottom: 0.5rem;
+        }
+
         @media (max-width: 768px) {
             .charts-grid {
                 grid-template-columns: 1fr;
@@ -426,6 +561,15 @@
         <div class="findings-section">
             <h2>📋 Compliance Scorecards</h2>
             <div class="compliance-grid" id="complianceGrid">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Workflow Gate Status (Week 50) -->
+        <div class="findings-section">
+            <h2>🚦 Workflow Quality Gates</h2>
+            <p id="gateConfigStatus">Loading configuration...</p>
+            <div class="workflow-gates-grid" id="workflowGatesGrid">
                 <!-- Populated by JavaScript -->
             </div>
         </div>
@@ -782,12 +926,124 @@
             }, 2000);
         }
 
+        // Workflow Gates Functions (Week 50)
+        async function fetchWorkflowGates() {
+            try {
+                const response = await fetch('/api/quality/gate/status');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Failed to fetch workflow gates:', error);
+                return null;
+            }
+        }
+
+        function renderWorkflowGates(data) {
+            const grid = document.getElementById('workflowGatesGrid');
+            if (!grid) return;
+
+            if (!data || !data.workflows) {
+                grid.innerHTML = `
+                    <div class="gate-card gate-unknown">
+                        <div class="gate-header">
+                            <span class="gate-icon">⚠️</span>
+                            <span class="gate-title">No Configuration</span>
+                        </div>
+                        <div class="gate-status">Quality gate configuration not available</div>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = '';
+
+            data.workflows.forEach(workflow => {
+                const card = document.createElement('div');
+                const isConfigured = workflow.configured;
+                const statusClass = isConfigured ? 'gate-configured' : 'gate-default';
+
+                card.className = `gate-card ${statusClass}`;
+
+                const icon = isConfigured ? '✅' : '⚙️';
+                const statusText = isConfigured ? 'Configured' : 'Using Defaults';
+
+                // Build blocking severities display
+                const severities = workflow.blocking_severities || ['critical'];
+                const severityTags = severities.map(s =>
+                    `<span class="severity-tag severity-${s}">${s}</span>`
+                ).join('');
+
+                // Build requirements display
+                const requirements = [];
+                if (workflow.required_coverage > 0) {
+                    requirements.push(`📊 ${workflow.required_coverage}% coverage`);
+                }
+                if (workflow.e2e_required) {
+                    requirements.push('🔄 E2E required');
+                }
+                if (workflow.regression_required) {
+                    requirements.push('🔙 Regression required');
+                }
+
+                const requirementsHtml = requirements.length > 0
+                    ? requirements.map(r => `<div class="gate-requirement">${r}</div>`).join('')
+                    : '<div class="gate-requirement">No special requirements</div>';
+
+                // Build phases display
+                const phasesHtml = workflow.phases.map(p =>
+                    `<span class="phase-tag">${p}</span>`
+                ).join('');
+
+                card.innerHTML = `
+                    <div class="gate-header">
+                        <span class="gate-icon">${icon}</span>
+                        <span class="gate-title">${workflow.workflow_type}</span>
+                        <span class="gate-status-badge ${isConfigured ? 'configured' : 'default'}">${statusText}</span>
+                    </div>
+                    <div class="gate-body">
+                        <div class="gate-section">
+                            <div class="gate-section-title">Blocking Severities</div>
+                            <div class="severities-container">${severityTags}</div>
+                        </div>
+                        <div class="gate-section">
+                            <div class="gate-section-title">Requirements</div>
+                            ${requirementsHtml}
+                        </div>
+                        <div class="gate-section">
+                            <div class="gate-section-title">Validation Phases</div>
+                            <div class="phases-container">${phasesHtml}</div>
+                        </div>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+
+            // Update config status indicator
+            const configStatus = data.active_config
+                ? `✅ Active Config: ${data.config_name || 'Default'}`
+                : '⚙️ Using Default Configuration';
+
+            const statusEl = document.getElementById('gateConfigStatus');
+            if (statusEl) {
+                statusEl.textContent = configStatus;
+            }
+        }
+
+        async function initWorkflowGates() {
+            const data = await fetchWorkflowGates();
+            renderWorkflowGates(data);
+        }
+
         // Initialize on load
         window.addEventListener('load', () => {
             initCharts();
             updateMetrics();
             renderComplianceGrid();
             renderFindings();
+            initWorkflowGates();
         });
     </script>
 </body>
