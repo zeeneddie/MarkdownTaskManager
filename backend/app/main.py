@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pathlib import Path
-from app.api import epics, features, stories, tasks, sprints, auth, project, workflows, projects, scheduler, estimation, estimation_history, project_wizard, websocket, maintenance, ml_training, evolution, quality_dashboard, self_navigating, attribution, task_generation, continuous_learning, rollback, quality_gate_config, quality_gate_evaluation, agent_validation
+from app.api import epics, features, stories, tasks, sprints, auth, project, workflows, projects, scheduler, estimation, estimation_history, project_wizard, websocket, maintenance, ml_training, evolution, quality_dashboard, self_navigating, attribution, task_generation, continuous_learning, rollback, quality_gate_config, quality_gate_evaluation, agent_validation, ab_testing
 from app.api.week10 import green_paper_routes
 from app.api.week11 import task_generation_routes
 from app.database import engine
@@ -59,6 +59,7 @@ app.include_router(task_generation_routes.router)  # Week 11: Task Generation fr
 app.include_router(quality_gate_config.router)  # Week 49: Quality Gates Configuration UI
 app.include_router(quality_gate_evaluation.router)  # Week 50: Quality Gate Evaluation API
 app.include_router(agent_validation.router)  # Week 50: Agent Validation Loop API
+app.include_router(ab_testing.router)  # Week 51: A/B Testing for Agent Evolution
 # app.include_router(websocket.router)  # Week 15: Real-time WebSocket Updates
 
 # Mount frontend static files
