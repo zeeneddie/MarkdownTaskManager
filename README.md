@@ -106,10 +106,12 @@ task-manager.html  -->  Browser  -->  Your Markdown files
 This repository includes an **AI-powered agentic system** with:
 - **FastAPI Backend** - 151 API endpoints, 39 tables
 - **10 AI Agents** - 100% local (Ollama, 6 models)
+- **LLM Council** - Multi-model consensus voor kritieke beslissingen (NEW!)
 - **12 Dashboards** - Hub Portal, Agent, Quality Gates Config, Evolution, etc.
 - **16 SuperClaude Commands** - Domain expertise
 - **Quality Gates** - 42 validation rules + Integration & Validation Loop
 - **ML Training Pipeline** - Effort prediction
+- **A/B Testing Framework** - Continuous agent evolution
 
 [Read the complete guide](./HERSTART_PROJECT.md)
 
@@ -136,6 +138,36 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000  # Start API
 ```
 
 [See full setup guide](./HERSTART_PROJECT.md)
+
+---
+
+## LLM Council: Multi-Model Decision Making
+
+**"Wisdom of crowds" for critical decisions**
+
+Instead of relying on a single AI model, the **LLM Council** consults 5-6 local Ollama models simultaneously for:
+- Architecture & design decisions
+- Epic/Feature/Story generation validation
+- Quality gate override assessments
+- Project planning & resource allocation
+
+**3-Stage Process:**
+1. **Response** - Query all models in parallel
+2. **Peer Review** - Models anonymously evaluate each other's answers
+3. **Synthesis** - Chairman model (deepseek-r1) creates final consensus
+
+**Example Use Cases:**
+- "Should we use microservices or monolith?" → 6 models debate → Consensus decision
+- "Is this quality gate override safe?" → Risk assessment from multiple perspectives
+- "Are these user stories complete?" → Multi-model validation
+
+**Benefits:**
+- Reduces single-model bias
+- Catches blind spots and edge cases
+- Provides dissenting opinions for edge cases
+- Higher confidence in critical decisions
+
+[Read full integration plan](./docs/roadmap/active/LLM_COUNCIL_INTEGRATION.md)
 
 ---
 

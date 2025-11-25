@@ -14,6 +14,7 @@
 | DONE | Fase 1-3 | [Completed Phases](#-completed-phases) |
 | **ACTIVE** | Fase 4 | [UI + Intelligence](docs/roadmap/active/fase-4-ui-intelligence.md) |
 | **NEW** | Frontend | [Frontend Unification](docs/roadmap/active/frontend-unification.md) |
+| **NEW** | Decision | [LLM Council](docs/roadmap/active/LLM_COUNCIL_INTEGRATION.md) |
 | PLANNED | Fase 5-9 | [Future Phases](#-future-phases) |
 | PARALLEL | Evolution | [AgentEvolver](docs/roadmap/parallel/agentevolver-integration.md) |
 | PARALLEL | Validation | [Validation Framework](docs/roadmap/parallel/validation-framework.md) |
@@ -44,6 +45,7 @@ Nov    Dec    Jan    Feb    Mar    Apr    May    Jun
               [F5   ][F6   ][F7   ][F8         ][F9   ]
        [=== AgentEvolver (parallel) ===]
        [=== Validation (parallel) =====]
+       [Council]  <- LLM Council (Week 51-52)
               [FE]  <- Frontend Unification
 ```
 
@@ -214,6 +216,30 @@ Nov    Dec    Jan    Feb    Mar    Apr    May    Jun
 
 ### Week 50 Complete ✅
 
+### Week 51 Planning (25 Nov - 29 Nov 2025)
+
+**Dual Track Implementation:**
+
+**Track 1: A/B Testing Framework** (Primary - Week 51 Plan)
+- Day 1: Database models + Migration 011
+- Day 2: Experiment Service Layer
+- Day 3: REST API Endpoints (8 new)
+- Day 4: Evolution Metrics Service
+- Day 5: Testing & Documentation
+
+**Track 2: LLM Council Integration** (NEW - Parallel)
+- Day 1-2: Database schema + Core service
+- Day 3: Peer review logic
+- Day 4: Synthesis & API endpoints
+- Day 5: Basic agent integration hooks
+
+**Rationale:** Both systems complement each other:
+- A/B Testing = Data-driven evolution
+- LLM Council = Wisdom-driven decisions
+
+[See Week 51 detailed plan](docs/roadmap/active/WEEK_51_PLAN.md)
+[See LLM Council plan](docs/roadmap/active/LLM_COUNCIL_INTEGRATION.md)
+
 ---
 
 ## Fase Overview
@@ -251,6 +277,7 @@ Nov    Dec    Jan    Feb    Mar    Apr    May    Jun
 |-------|-------|----------|-------|
 | [AgentEvolver](docs/roadmap/parallel/agentevolver-integration.md) | 17-26 | Self-evolving agents |
 | [Validation](docs/roadmap/parallel/validation-framework.md) | 17-26 | 5-phase validation pipeline |
+| [LLM Council](docs/roadmap/active/LLM_COUNCIL_INTEGRATION.md) | 51-52 | **NEW** Multi-model consensus decisions |
 
 ---
 
