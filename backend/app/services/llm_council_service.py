@@ -455,6 +455,513 @@ GENERATION QUALITY CONSIDERATIONS:
         return None
 
     # ========================================================================
+    # STAGE 2: PEER REVIEW - Models Review Each Other (Blind)
+    # ========================================================================
+
+    async def peer_review(
+        self,
+        session_id: UUID
+    ) -> List[CouncilReview]:
+        """
+        Stage 2: Models review each other's responses (blind/anonymous).
+
+        Each model reviews all OTHER models' responses.
+        Reviews are anonymous (model names hidden during review).
+
+        Args:
+            session_id: UUID of the council session
+
+        Returns:
+            List of successful CouncilReview objects
+
+        Raises:
+            ValueError: If session not found or not enough responses
+        """
+        # Get session with responses
+        session = await self.get_session(session_id)
+        if not session:
+            raise ValueError(f"Session {session_id} not found")
+
+        responses = session.responses
+
+        if len(responses) < 2:
+            raise ValueError("Need at least 2 responses for peer review")
+
+        # Each model reviews all others
+        review_tasks = []
+        for reviewer_model in self.models.keys():
+            # Find this model's response
+            reviewer_response = next(
+                (r for r in responses if r.model_name == reviewer_model),
+                None
+            )
+
+            if not reviewer_response:
+                continue  # This model didn't respond in Stage 1
+
+            # Review all other responses
+            for response_to_review in responses:
+                if response_to_review.model_name == reviewer_model:
+                    continue  # Don't review own response
+
+                review_tasks.append(
+                    self._review_single_response(
+                        reviewer_model,
+                        response_to_review,
+                        session
+                    )
+                )
+
+        # Execute all reviews concurrently
+        reviews = await asyncio.gather(*review_tasks, return_exceptions=True)
+
+        # Filter successful reviews
+        successful_reviews = [
+            r for r in reviews
+            if isinstance(r, CouncilReview)
+        ]
+
+        print(
+            f"✓ Stage 2 complete: {len(successful_reviews)} reviews from {len(responses)} models"
+        )
+
+        return successful_reviews
+
+    async def _review_single_response(
+        self,
+        reviewer_model: str,
+        response_to_review: CouncilResponse,
+        session: CouncilSession
+    ) -> CouncilReview:
+        """
+        Single model reviews another's response.
+
+        Args:
+            reviewer_model: Name of model doing the review
+            response_to_review: Response being reviewed
+            session: Council session context
+
+        Returns:
+            CouncilReview object
+
+        Raises:
+            Exception: If review fails
+        """
+        # Build review prompt (anonymized - no model names shown)
+        prompt = f"""You are peer-reviewing a technical recommendation from another expert.
+
+ORIGINAL QUESTION:
+{session.question}
+
+RECOMMENDATION TO REVIEW:
+{response_to_review.response_text}
+
+Rate this recommendation on:
+1. ACCURACY (0-10): Is it technically correct?
+2. COMPLETENESS (0-10): Does it address all aspects?
+3. CLARITY (0-10): Is it easy to understand?
+4. FEASIBILITY (0-10): Can it be realistically implemented?
+
+Provide brief comments explaining your scores.
+
+FORMAT:
+ACCURACY: [0-10]
+COMPLETENESS: [0-10]
+CLARITY: [0-10]
+FEASIBILITY: [0-10]
+COMMENTS: [Your explanation]
+"""
+
+        try:
+            # Query reviewer model
+            async with aiohttp.ClientSession() as http_session:
+                async with http_session.post(
+                    f"{self.ollama_url}/api/generate",
+                    json={
+                        "model": reviewer_model,
+                        "prompt": prompt,
+                        "stream": False
+                    },
+                    timeout=aiohttp.ClientTimeout(total=60)
+                ) as response:
+                    response.raise_for_status()
+                    data = await response.json()
+                    review_text = data.get("response", "")
+
+                    # Parse scores
+                    scores = self._parse_review_scores(review_text)
+
+                    # Save review
+                    review = CouncilReview(
+                        id=uuid4(),
+                        session_id=session.id,
+                        reviewer_model=reviewer_model,
+                        reviewed_response_id=response_to_review.id,
+                        accuracy_score=scores["accuracy"],
+                        completeness_score=scores["completeness"],
+                        clarity_score=scores["clarity"],
+                        feasibility_score=scores["feasibility"],
+                        comments=scores.get("comments"),
+                        created_at=datetime.utcnow()
+                    )
+
+                    self.db.add(review)
+                    await self.db.commit()
+                    await self.db.refresh(review)
+
+                    return review
+
+        except Exception as e:
+            raise Exception(f"Error in peer review by {reviewer_model}: {e}")
+
+    def _parse_review_scores(self, review_text: str) -> Dict:
+        """
+        Parse review scores from review text.
+
+        Args:
+            review_text: Model's review text
+
+        Returns:
+            Dict with scores and comments
+        """
+        scores = {
+            "accuracy": 5.0,
+            "completeness": 5.0,
+            "clarity": 5.0,
+            "feasibility": 5.0,
+            "comments": None
+        }
+
+        # Parse each score
+        for key in ["accuracy", "completeness", "clarity", "feasibility"]:
+            pattern = rf'{key}:\s*(\d+(?:\.\d+)?)'
+            match = re.search(pattern, review_text, re.IGNORECASE)
+            if match:
+                value = float(match.group(1))
+                scores[key] = min(max(value, 0.0), 10.0)  # Clamp 0-10
+
+        # Parse comments
+        comments_match = re.search(
+            r'COMMENTS:\s*(.+?)(?=\n[A-Z]+:|$)',
+            review_text,
+            re.IGNORECASE | re.DOTALL
+        )
+        if comments_match:
+            scores["comments"] = comments_match.group(1).strip()
+
+        return scores
+
+    # ========================================================================
+    # STAGE 3: SYNTHESIS - Chairman Creates Final Decision
+    # ========================================================================
+
+    async def synthesize(
+        self,
+        session_id: UUID,
+        chairman_model: str = "deepseek-r1:latest"
+    ) -> CouncilDecision:
+        """
+        Stage 3: Chairman synthesizes final decision.
+
+        Considers:
+        - All model responses
+        - Peer review scores
+        - Model weights
+        - Consensus level
+
+        Args:
+            session_id: UUID of the council session
+            chairman_model: Model to use for synthesis (default: deepseek-r1)
+
+        Returns:
+            CouncilDecision object
+
+        Raises:
+            ValueError: If session not found or missing data
+        """
+        # Get session with responses and reviews
+        session = await self.get_session(session_id)
+        if not session:
+            raise ValueError(f"Session {session_id} not found")
+
+        if not session.responses:
+            raise ValueError("No responses to synthesize")
+
+        # Calculate aggregate scores per response
+        response_scores = self._calculate_aggregate_scores(
+            session.responses,
+            session.reviews
+        )
+
+        # Calculate consensus level
+        consensus_level = self._calculate_consensus(
+            session.responses,
+            response_scores
+        )
+
+        # Identify dissenting opinions
+        dissenting_opinions = self._detect_outliers(
+            session.responses,
+            response_scores
+        )
+
+        # Build synthesis prompt for chairman
+        prompt = f"""You are the chairman synthesizing the council's decision.
+
+ORIGINAL QUESTION:
+{session.question}
+
+COUNCIL RESPONSES ({len(session.responses)}):
+{self._format_responses_for_synthesis(session.responses, response_scores)}
+
+PEER REVIEW SUMMARY:
+{self._format_review_summary(session.reviews)}
+
+CONSENSUS LEVEL: {consensus_level:.1f}%
+
+TASK:
+Synthesize the best elements from all responses into a final recommendation.
+Balance majority opinions with valuable dissenting views.
+Explain your reasoning and rate your confidence.
+
+FORMAT:
+FINAL DECISION: [Synthesized recommendation]
+REASONING: [Why this synthesis is best]
+CONFIDENCE: [0-100]%
+KEY CONSIDERATIONS: [Important points to remember]
+"""
+
+        try:
+            # Query chairman model
+            async with aiohttp.ClientSession() as http_session:
+                async with http_session.post(
+                    f"{self.ollama_url}/api/generate",
+                    json={
+                        "model": chairman_model,
+                        "prompt": prompt,
+                        "stream": False
+                    },
+                    timeout=aiohttp.ClientTimeout(total=120)
+                ) as response:
+                    response.raise_for_status()
+                    data = await response.json()
+                    decision_text = data.get("response", "")
+
+                    # Parse decision
+                    final_decision = self._extract_decision(decision_text)
+                    confidence = self._extract_confidence(decision_text)
+                    reasoning = self._extract_reasoning(decision_text)
+
+                    # Save decision
+                    decision = CouncilDecision(
+                        id=uuid4(),
+                        session_id=session.id,
+                        chairman_model=chairman_model,
+                        final_decision=final_decision or decision_text,
+                        confidence=confidence,
+                        consensus_level=consensus_level,
+                        dissenting_opinions=dissenting_opinions if dissenting_opinions else None,
+                        synthesis_reasoning=reasoning,
+                        created_at=datetime.utcnow()
+                    )
+
+                    self.db.add(decision)
+
+                    # Update session status
+                    session.status = "complete"
+                    session.completed_at = datetime.utcnow()
+
+                    await self.db.commit()
+                    await self.db.refresh(decision)
+
+                    print(
+                        f"✓ Stage 3 complete: Decision with {consensus_level:.1f}% consensus"
+                    )
+
+                    return decision
+
+        except Exception as e:
+            raise Exception(f"Error in synthesis by {chairman_model}: {e}")
+
+    def _calculate_aggregate_scores(
+        self,
+        responses: List[CouncilResponse],
+        reviews: List[CouncilReview]
+    ) -> Dict[str, float]:
+        """
+        Calculate aggregate review scores per response.
+
+        Args:
+            responses: List of council responses
+            reviews: List of council reviews
+
+        Returns:
+            Dict mapping response_id to average review score
+        """
+        scores = {}
+
+        for response in responses:
+            # Get all reviews for this response
+            response_reviews = [
+                r for r in reviews
+                if r.reviewed_response_id == response.id
+            ]
+
+            if response_reviews:
+                # Average of all 4 scores from all reviews
+                avg_score = sum(
+                    (r.accuracy_score + r.completeness_score +
+                     r.clarity_score + r.feasibility_score) / 4
+                    for r in response_reviews
+                ) / len(response_reviews)
+
+                scores[str(response.id)] = avg_score
+            else:
+                scores[str(response.id)] = 5.0  # Default middle score
+
+        return scores
+
+    def _calculate_consensus(
+        self,
+        responses: List[CouncilResponse],
+        response_scores: Dict[str, float]
+    ) -> float:
+        """
+        Calculate consensus level (0-100%).
+
+        Uses:
+        - Confidence values from responses
+        - Review scores
+        - Standard deviation of confidences
+
+        Args:
+            responses: List of council responses
+            response_scores: Aggregate review scores
+
+        Returns:
+            Consensus level as percentage (0-100)
+        """
+        if not responses:
+            return 0.0
+
+        # Calculate variance in confidence values
+        confidences = [r.confidence for r in responses]
+        avg_confidence = sum(confidences) / len(confidences)
+        variance = sum((c - avg_confidence) ** 2 for c in confidences) / len(confidences)
+        std_dev = variance ** 0.5
+
+        # Calculate variance in review scores
+        scores = list(response_scores.values())
+        avg_score = sum(scores) / len(scores) if scores else 5.0
+        score_variance = sum((s - avg_score) ** 2 for s in scores) / len(scores) if scores else 1.0
+        score_std_dev = score_variance ** 0.5
+
+        # Lower std_dev = higher consensus
+        # Normalize: std_dev of 0 = 100%, std_dev of 0.5 = 0%
+        confidence_consensus = max(0, 100 * (1 - std_dev / 0.5))
+        score_consensus = max(0, 100 * (1 - score_std_dev / 5.0))
+
+        # Weighted average
+        consensus = (confidence_consensus * 0.6 + score_consensus * 0.4)
+
+        return min(max(consensus, 0.0), 100.0)
+
+    def _detect_outliers(
+        self,
+        responses: List[CouncilResponse],
+        response_scores: Dict[str, float]
+    ) -> List[str]:
+        """
+        Detect outlier responses that differ significantly from consensus.
+
+        Args:
+            responses: List of council responses
+            response_scores: Aggregate review scores
+
+        Returns:
+            List of dissenting opinion texts
+        """
+        if len(responses) < 3:
+            return []  # Need at least 3 for outlier detection
+
+        outliers = []
+
+        # Calculate mean and std dev of review scores
+        scores = list(response_scores.values())
+        avg_score = sum(scores) / len(scores)
+        variance = sum((s - avg_score) ** 2 for s in scores) / len(scores)
+        std_dev = variance ** 0.5
+
+        # Responses with scores >2 std devs from mean
+        for response in responses:
+            score = response_scores.get(str(response.id), 5.0)
+
+            if abs(score - avg_score) > 2 * std_dev:
+                # Extract just the recommendation part
+                rec_match = re.search(
+                    r'RECOMMENDATION:\s*(.+?)(?=\nREASONING:|$)',
+                    response.response_text,
+                    re.IGNORECASE | re.DOTALL
+                )
+                if rec_match:
+                    outliers.append(rec_match.group(1).strip())
+
+        return outliers
+
+    def _format_responses_for_synthesis(
+        self,
+        responses: List[CouncilResponse],
+        response_scores: Dict[str, float]
+    ) -> str:
+        """Format responses for synthesis prompt."""
+        lines = []
+
+        for i, response in enumerate(responses, 1):
+            score = response_scores.get(str(response.id), 5.0)
+            weight = self.models.get(response.model_name, {}).get("weight", 1.0)
+
+            lines.append(f"\n--- Response {i} ---")
+            lines.append(f"Weight: {weight}")
+            lines.append(f"Confidence: {response.confidence:.0%}")
+            lines.append(f"Peer Review Score: {score:.1f}/10")
+            lines.append(f"Content: {response.response_text[:500]}...")
+
+        return "\n".join(lines)
+
+    def _format_review_summary(self, reviews: List[CouncilReview]) -> str:
+        """Format review summary for synthesis prompt."""
+        if not reviews:
+            return "(No reviews available)"
+
+        total_reviews = len(reviews)
+        avg_accuracy = sum(r.accuracy_score for r in reviews) / total_reviews
+        avg_completeness = sum(r.completeness_score for r in reviews) / total_reviews
+        avg_clarity = sum(r.clarity_score for r in reviews) / total_reviews
+        avg_feasibility = sum(r.feasibility_score for r in reviews) / total_reviews
+
+        return f"""
+Total Reviews: {total_reviews}
+Average Accuracy: {avg_accuracy:.1f}/10
+Average Completeness: {avg_completeness:.1f}/10
+Average Clarity: {avg_clarity:.1f}/10
+Average Feasibility: {avg_feasibility:.1f}/10
+Overall Average: {(avg_accuracy + avg_completeness + avg_clarity + avg_feasibility) / 4:.1f}/10
+"""
+
+    def _extract_decision(self, decision_text: str) -> Optional[str]:
+        """Extract final decision from synthesis text."""
+        match = re.search(
+            r'FINAL DECISION:\s*(.+?)(?=\n(?:REASONING|CONFIDENCE|KEY CONSIDERATIONS)|$)',
+            decision_text,
+            re.IGNORECASE | re.DOTALL
+        )
+
+        if match:
+            return match.group(1).strip()
+
+        return None
+
+    # ========================================================================
     # UTILITY METHODS
     # ========================================================================
 
