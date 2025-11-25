@@ -1,8 +1,8 @@
 # ARCHITECTURE - Agentic Task Management System
 
-**Datum:** 2025-11-24
-**Versie:** 3.2 (Week 49 Quality Gates UI)
-**Status:** Fase 1-3 Compleet ✅ | Week 49 Quality Gates UI ✅ | 12 Dashboards | 144 Endpoints
+**Datum:** 2025-11-25
+**Versie:** 3.3 (Week 51 A/B Testing Framework)
+**Status:** Fase 1-3 Compleet ✅ | Week 51 A/B Testing ✅ | 12 Dashboards | 153 Endpoints | 42 Tables
 
 ---
 
@@ -1326,6 +1326,384 @@ Workflow Router
 - Savings: 2-3 hours per code review × 50 reviews/month = 100-150 hours/month
 - Break-even: <1 month
 - Ongoing Value: Continuous quality improvement, reduced technical debt
+
+---
+
+## 🧪 A/B TESTING FRAMEWORK ARCHITECTURE (Week 51)
+
+**Status:** ✅ SHIPPED (Week 51 - 25 Nov 2025)
+**Doel:** Data-driven agent evolution through multi-variant experimentation
+**Leveraged:** 2,150+ lines production code, 53 comprehensive tests, 9 API endpoints
+
+### Design Filosofie
+
+**"Measure, Learn, Improve"** - Continuous agent evolution through:
+1. Multi-variant experimentation (control vs treatment)
+2. Statistical significance testing (p-values, confidence intervals)
+3. Automatic winner detection and rollout
+4. Performance tracking over time
+
+### High-Level Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                     A/B TESTING FRAMEWORK                           │
+│                                                                     │
+│  ┌──────────────────┐   ┌──────────────────┐   ┌────────────────┐  │
+│  │ EXPERIMENT       │   │ TRAFFIC          │   │ STATISTICAL    │  │
+│  │ MANAGEMENT       │   │ ALLOCATION       │   │ ANALYSIS       │  │
+│  │                  │   │                  │   │                │  │
+│  │ • Create         │   │ • Deterministic  │   │ • P-values     │  │
+│  │ • Start/Pause    │   │   Hash           │   │ • Confidence   │  │
+│  │ • Complete       │   │ • Sticky         │   │   Intervals    │  │
+│  │ • Winner         │   │   Assignment     │   │ • Winner       │  │
+│  │   Declaration    │   │ • Weighted       │   │   Detection    │  │
+│  │                  │   │   Random         │   │                │  │
+│  └────────┬─────────┘   └────────┬─────────┘   └───────┬────────┘  │
+│           │                      │                     │            │
+│           └──────────────────────┴─────────────────────┘            │
+│                                  ↓                                  │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                     RESULT TRACKING                         │   │
+│  │  • Success/failure logging                                  │   │
+│  │  • Metrics: success_rate, execution_time, quality_score     │   │
+│  │  • Work type classification                                 │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                  ↓                                  │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │                  EVOLUTION METRICS                          │   │
+│  │  • Performance tracking per agent                           │   │
+│  │  • Trend analysis (improving/stable/declining)              │   │
+│  │  • Daily/weekly aggregation                                 │   │
+│  │  • Cross-agent comparison                                   │   │
+│  │  • ChromaDB milestone storage                               │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Database Schema (3 Nieuwe Tables)
+
+**Migration 011** - `846bf79a97f4_add_ab_testing_tables.py`
+
+```sql
+-- Experiments table
+CREATE TABLE experiments (
+    id UUID PRIMARY KEY,
+    agent_id VARCHAR(50) NOT NULL,
+    feature_name VARCHAR(200) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
+    created_at TIMESTAMP NOT NULL,
+    started_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    winner_variant_id UUID,
+    extra_metadata JSONB DEFAULT '{}',
+    CONSTRAINT check_experiment_status
+        CHECK (status IN ('DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED', 'CANCELLED'))
+);
+
+-- Experiment variants table
+CREATE TABLE experiment_variants (
+    id UUID PRIMARY KEY,
+    experiment_id UUID REFERENCES experiments(id) ON DELETE CASCADE,
+    variant_name VARCHAR(100) NOT NULL,
+    traffic_percentage FLOAT NOT NULL,
+    config_json JSONB NOT NULL DEFAULT '{}',
+    is_control BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL,
+    CONSTRAINT check_traffic_percentage
+        CHECK (traffic_percentage >= 0 AND traffic_percentage <= 100)
+);
+
+-- Experiment results table
+CREATE TABLE experiment_results (
+    id UUID PRIMARY KEY,
+    variant_id UUID REFERENCES experiment_variants(id) ON DELETE CASCADE,
+    task_id VARCHAR(100) NOT NULL,
+    work_type VARCHAR(50),
+    success BOOLEAN NOT NULL,
+    metrics_json JSONB NOT NULL DEFAULT '{}',
+    error_message TEXT,
+    created_at TIMESTAMP NOT NULL
+);
+```
+
+### Service Layer (2 Services)
+
+#### ABTestingService (`ab_testing_service.py` - 550 lines)
+
+**Experiment Lifecycle:**
+- `create_experiment()` - Setup with variants (validates traffic = 100%, 1 control)
+- `start_experiment()` - Activate (DRAFT → ACTIVE)
+- `pause_experiment()` - Temporarily stop (ACTIVE → PAUSED)
+- `complete_experiment()` - Declare winner (ACTIVE → COMPLETED)
+
+**Traffic Allocation:**
+- `allocate_traffic()` - Deterministic sticky assignment
+- SHA256 hash(task_id + experiment_id) → consistent variant
+- Weighted random selection based on traffic_percentage
+- Same task always gets same variant
+
+**Statistical Analysis:**
+- `analyze_experiment()` - Complete statistical report
+- Confidence intervals (95%) using normal approximation
+- P-value calculation (two-proportion z-test)
+- Winner detection with significance threshold (p < 0.05)
+- Minimum samples enforcement (30+ per variant)
+
+**Result Tracking:**
+- `log_result()` - Track variant outcomes with metrics
+- Metrics: success_rate, execution_time_ms, code_quality_score, retry_count
+
+#### EvolutionMetricsService (`evolution_metrics_service.py` - 500 lines)
+
+**Agent Performance:**
+- `get_agent_performance()` - Comprehensive metrics
+- total_experiments, active, completed counts
+- average_success_rate, improvement_rate
+- best_variant identification
+
+**Trend Analysis:**
+- `analyze_trends()` - Time series analysis
+- Daily values with trend direction (improving/stable/declining)
+- Standard deviation and percentage change
+
+**Metrics Aggregation:**
+- `aggregate_metrics()` - Daily/weekly rollups
+- Daily: 30 days history
+- Weekly: 90 days history (ISO weeks)
+
+**ChromaDB Integration:**
+- `store_evolution_milestone()` - Save significant achievements
+- `retrieve_evolution_milestones()` - Query by agent/type
+- Milestone types: major_improvement (≥20%), improvement_threshold (≥10%), high_success_rate (≥95%)
+
+### REST API (9 Endpoints)
+
+**Router:** `/api/evolution/*` (ab_testing.py - 650 lines)
+
+```
+POST   /api/evolution/experiments              - Create experiment
+GET    /api/evolution/experiments              - List experiments
+GET    /api/evolution/experiments/{id}         - Get experiment
+PUT    /api/evolution/experiments/{id}/start   - Start experiment
+PUT    /api/evolution/experiments/{id}/pause   - Pause experiment
+PUT    /api/evolution/experiments/{id}/complete - Complete with winner
+POST   /api/evolution/experiments/{id}/results - Log result
+GET    /api/evolution/experiments/{id}/analysis - Statistical analysis
+POST   /api/evolution/experiments/{id}/allocate - Traffic allocation
+```
+
+**Pydantic Schemas:**
+- VariantCreateRequest, ExperimentCreateRequest
+- CompleteExperimentRequest, LogResultRequest
+- ExperimentResponse, AnalysisResponse
+- Full validation: traffic sum = 100, exactly 1 control, min 2 variants
+
+### Testing Coverage (53 Tests)
+
+**Unit Tests** (`test_ab_testing_service.py` - 18 tests):
+- Experiment creation validation (traffic sum, control count)
+- Lifecycle transitions (start, pause, complete)
+- Traffic allocation (sticky assignment, distribution)
+- Statistical analysis (confidence intervals, p-values, normal CDF)
+- Result logging
+
+**Integration Tests** (`test_ab_testing_api.py` - 20 tests):
+- API endpoint validation
+- Request/response schemas
+- Error handling (400, 404, 422, 500)
+- UUID validation
+
+**Evolution Metrics Tests** (`test_evolution_metrics.py` - 15 tests):
+- Agent performance tracking
+- Trend analysis (improving/declining detection)
+- Metrics aggregation (daily/weekly)
+- Cross-agent comparison
+- ChromaDB integration
+- Milestone detection
+
+### Experiment Lifecycle
+
+```
+┌──────────┐
+│  DRAFT   │ ← create_experiment()
+└────┬─────┘
+     │ start_experiment()
+     ↓
+┌──────────┐      pause_experiment()      ┌──────────┐
+│  ACTIVE  │ ←─────────────────────────→ │  PAUSED  │
+└────┬─────┘                              └──────────┘
+     │ complete_experiment(winner_id)
+     ↓
+┌──────────┐
+│COMPLETED │
+└──────────┘
+```
+
+**During ACTIVE state:**
+- Traffic allocated via `allocate_traffic(task_id)`
+- Results logged via `log_result(variant_id, task_id, success, metrics)`
+- Analysis available via `analyze_experiment()`
+
+### Traffic Allocation Logic
+
+**Deterministic Sticky Assignment:**
+```python
+hash_value = SHA256(f"{task_id}-{experiment_id}") % 100  # 0-99
+cumulative = 0
+for variant in sorted(variants):
+    cumulative += variant.traffic_percentage
+    if hash_value < cumulative:
+        return variant
+```
+
+**Properties:**
+- Same task always gets same variant (sticky)
+- Distribution matches traffic percentages over many tasks
+- No external state required (hash is deterministic)
+- Works across restarts and deployments
+
+### Statistical Analysis
+
+**Confidence Intervals (95%):**
+- Normal approximation to binomial distribution
+- Z-score = 1.96 for 95% confidence
+- Standard error: `sqrt(p*(1-p)/n)`
+- Margin: `z * standard_error`
+
+**P-Value Calculation:**
+- Two-proportion z-test
+- Null hypothesis: variant_rate == control_rate
+- Pooled proportion across both groups
+- Significant if p < 0.05
+
+**Winner Detection:**
+- Minimum 30 samples per variant
+- P-value < 0.05 (statistically significant)
+- Improvement > 0 (better than control)
+- Consensus level = 1 - p_value
+
+### Integration met Agents
+
+**Felix (Architecture Agent):**
+```typescript
+// Create experiment for async processing
+const experiment = await abTesting.createExperiment({
+  agent_id: "felix",
+  feature_name: "async_processing",
+  variants: [
+    { variant_name: "control", traffic_percentage: 50,
+      config_json: {mode: "sync"}, is_control: true },
+    { variant_name: "async", traffic_percentage: 50,
+      config_json: {mode: "async"}, is_control: false }
+  ]
+});
+
+await abTesting.startExperiment(experiment.id);
+
+// For each task
+const variant = await abTesting.allocateTraffic(experiment.id, task.id);
+const result = await felix.processWithConfig(task, variant.config_json);
+
+await abTesting.logResult({
+  variant_id: variant.id,
+  task_id: task.id,
+  success: result.success,
+  metrics: {
+    execution_time_ms: result.duration,
+    code_quality_score: result.quality
+  }
+});
+
+// After sufficient data
+const analysis = await abTesting.analyzeExperiment(experiment.id);
+if (analysis.recommended_winner && analysis.consensus_level > 0.8) {
+  await abTesting.completeExperiment(experiment.id, analysis.recommended_winner);
+}
+```
+
+### Evolution Metrics Dashboard
+
+**Agent Performance View:**
+- Total experiments (active, completed)
+- Average success rate
+- Improvement rate (variant vs control)
+- Best performing variant
+- Performance trends (7/30/90 days)
+
+**Cross-Agent Comparison:**
+- Success rate rankings
+- Improvement rate rankings
+- Side-by-side metrics
+
+**Trend Analysis:**
+- Daily/weekly performance charts
+- Trend direction indicators
+- Standard deviation
+
+**Milestones:**
+- Major improvements (≥20%)
+- Improvement thresholds (≥10%)
+- High success rates (≥95%)
+- Stored in ChromaDB for semantic search
+
+### Production Metrics (Week 51 Output)
+
+**Code Volume:**
+- Production code: 2,150+ lines
+- Test code: 53 comprehensive tests
+- Total: ~2,800 lines
+
+**Database:**
+- 3 new tables (experiments, experiment_variants, experiment_results)
+- 7 indexes for query performance
+- 2 CHECK constraints for data integrity
+- CASCADE DELETE for referential integrity
+
+**API:**
+- 9 new endpoints (full CRUD + analysis)
+- 8 Pydantic request/response schemas
+- Comprehensive validation
+- Error handling (400, 404, 422, 500)
+
+**Services:**
+- 2 services (ABTesting, EvolutionMetrics)
+- Traffic allocation logic
+- Statistical analysis
+- ChromaDB integration
+
+**Testing:**
+- 18 unit tests (service layer)
+- 20 integration tests (API)
+- 15 evolution metrics tests
+- 100% coverage of critical paths
+
+### Rollout Strategy
+
+**Phase 1: Felix Agent (Week 51)**
+- Experiment with async vs sync processing
+- Monitor success rates and execution times
+- Collect baseline data (30+ samples per variant)
+
+**Phase 2: Marcus + Quinn (Week 52)**
+- Maintenance strategy experiments
+- Quality gate threshold experiments
+- Cross-agent comparison
+
+**Phase 3: All Agents (Week 53+)**
+- Full A/B testing coverage
+- Continuous evolution
+- Automatic winner rollout
+
+### Success Metrics
+
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| **Experiment Velocity** | 10+ experiments/week | Experiment creation rate |
+| **Statistical Confidence** | >95% consensus | P-value < 0.05 |
+| **Improvement Rate** | +15% average | Variant vs control |
+| **Winner Accuracy** | >90% stable | Post-rollout performance |
+| **Sample Size** | 30+ per variant | Before analysis |
 
 ---
 
