@@ -35,7 +35,7 @@
 | Core Agents | 10 | 10 | - |
 | Stack Agent Templates | 0 | 5 per stack | NEW |
 | Platform Agents | 0 | 4 | NEW |
-| LLM Providers | 1 (Ollama) | 4 (+ Claude Haiku/Sonnet/Opus) | +300% |
+| LLM Providers | 2 (Ollama + Codex) | 5 (+ Claude Haiku/Sonnet/Opus) | +400% |
 | Knowledge Layers | 1 | 2 | +100% |
 | Supported Stacks | 1 (Python) | 4 (Python, JS, Go, Rust) | +300% |
 
@@ -352,29 +352,39 @@ Feedback Loop (outcome → future enhancements)
 
 ---
 
-## Claude Model Routing Strategy
+## Multi-Model Routing Strategy
+
+### Provider Registry (Week 54 - IMPLEMENTED)
+
+| Provider | Models | Tier | Cost | Use Case |
+|----------|--------|------|------|----------|
+| **Ollama** | qwen2.5-coder, deepseek-r1, codellama, mistral | Free | $0 | Simple tasks, privacy, offline |
+| **Codex CLI** | gpt-5.1-codex-max, gpt-5-codex, o3 | Deep | ~$15-60/M | Complex analysis, architecture |
+| **Claude CLI** | Haiku, Sonnet, Opus | Varied | $1-75/M | Balanced tasks (planned) |
 
 ### Model Selection Matrix
 
-| Task Type | Complexity | Model | Rationale |
-|-----------|------------|-------|-----------|
-| Scaffolding | Low | Haiku | Fast, cheap |
-| Quick fixes | Low | Haiku | Fast, cheap |
-| Daily coding | Medium | Sonnet | Balanced |
-| Code review | Medium | Sonnet | Good analysis |
-| Architecture | High | Opus | Deep reasoning |
-| Security audit | High | Opus | Critical analysis |
-| Complex debugging | High | Opus | Deep investigation |
+| Task Type | Complexity | Provider | Model | Rationale |
+|-----------|------------|----------|-------|-----------|
+| Simple generation | Low | Ollama | qwen2.5-coder | Free, fast, local |
+| Quick fixes | Low | Ollama | qwen2.5-coder | Free, fast |
+| Documentation | Low | Ollama | mistral | Good at prose |
+| Debugging | Medium | Ollama | codellama | Specialized |
+| Code review | Medium | **Codex** | gpt-5.1-codex-max | Deep analysis |
+| Refactoring | Medium | **Codex** | gpt-5.1-codex-max | Structural understanding |
+| Architecture | High | **Codex** | gpt-5.1-codex-max | Multi-file reasoning |
+| Security audit | High | **Codex** | gpt-5.1-codex-max | Critical analysis |
+| Complex analysis | High | **Codex** | gpt-5.1-codex-max | Deep investigation |
 
-### Cost Estimates
+### Cost Estimates (Updated with Codex)
 
-| Scenario | Ollama | Haiku | Sonnet | Opus | Monthly Cost |
-|----------|--------|-------|--------|------|--------------|
-| Conservative | 80% | 15% | 4% | 1% | ~$20 |
-| Balanced | 60% | 25% | 12% | 3% | ~$50 |
-| Premium | 30% | 30% | 30% | 10% | ~$150 |
+| Scenario | Ollama | Codex | Claude | Monthly Cost |
+|----------|--------|-------|--------|--------------|
+| Conservative | 85% | 10% | 5% | ~$30 |
+| Balanced | 60% | 25% | 15% | ~$75 |
+| Premium | 40% | 35% | 25% | ~$200 |
 
-**Recommendation:** Start Conservative, monitor quality, scale up where needed.
+**Recommendation:** Use Ollama for routine tasks, Codex for complex analysis, Claude for specific needs.
 
 ---
 

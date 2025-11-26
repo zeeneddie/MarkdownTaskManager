@@ -62,6 +62,7 @@
 +---------------------------------------------------------------------+
 |  MULTI-MODEL LAYER (Provider Registry)                               |
 |  - Ollama (Local): qwen2.5-coder, deepseek-r1, codellama, mistral   |
+|  - Codex CLI: gpt-5.1-codex-max, o3 (complex analysis)              |
 |  - Claude CLI: Haiku (fast), Sonnet (balanced), Opus (deep)         |
 |  - Model Router: Task complexity -> Optimal model                    |
 +---------------------------------------------------------------------+
@@ -113,25 +114,35 @@
 
 ### Nieuwe Architectuur Componenten
 
-#### 1. Provider Registry (Multi-LLM Abstractie)
+#### 1. Provider Registry (Multi-LLM Abstractie) - IMPLEMENTED
 
 ```python
+# Located in: backend/app/providers/
+
 class LLMProvider:
-    name: str           # "ollama", "claude", "openai"
+    name: str           # "ollama", "codex", "claude"
     tier: str           # "free", "fast", "balanced", "deep"
     cost_input: float   # per million tokens
     cost_output: float  # per million tokens
+    is_local: bool      # True for Ollama
     is_active: bool
     config: Dict        # model-specific settings
+
+# Implemented Providers:
+# - OllamaProvider: Local, free, qwen2.5-coder/deepseek-r1/codellama/mistral
+# - CodexProvider: OpenAI CLI, gpt-5.1-codex-max for complex analysis
 
 # Model Routing Strategy
 TASK_TO_MODEL = {
     "simple_generation": "ollama/qwen2.5-coder:7b",    # Free, local
-    "quick_fix": "claude/haiku",                       # $1/$5 per M
-    "standard_work": "claude/sonnet",                  # $3/$15 per M
-    "architecture": "claude/opus",                     # $15/$75 per M
-    "security_audit": "claude/opus",
-    "complex_analysis": "claude/opus",
+    "quick_fix": "ollama/qwen2.5-coder:7b",            # Free, fast
+    "documentation": "ollama/mistral:latest",          # Good at prose
+    "debugging": "ollama/codellama:latest",            # Specialized
+    "code_review": "codex/gpt-5.1-codex-max",          # Deep analysis
+    "refactoring": "codex/gpt-5.1-codex-max",          # Structural
+    "architecture": "codex/gpt-5.1-codex-max",         # Multi-file reasoning
+    "security_audit": "codex/gpt-5.1-codex-max",       # Critical analysis
+    "complex_analysis": "codex/gpt-5.1-codex-max",     # Deep investigation
 }
 ```
 
