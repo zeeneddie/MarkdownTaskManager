@@ -1,6 +1,6 @@
 # Project Manager API Backend
 
-FastAPI-based backend for the Markdown Task Manager project with PostgreSQL database.
+FastAPI-based backend for the Multi-Stack AI Agent Platform project with PostgreSQL database.
 
 ## Features
 

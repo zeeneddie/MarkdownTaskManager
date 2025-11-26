@@ -9,11 +9,14 @@ Handles business logic for BMAD green-paper sessions:
 - Progressive validation checkpoints
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Union
 from uuid import UUID, uuid4
 from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+
+# Type alias for flexible project ID
+ProjectId = Union[str, int, UUID]
 
 # TODO: Import models when created
 # from app.models.green_paper import GreenPaperSession, Constitution, Specification
@@ -39,14 +42,14 @@ class GreenPaperService:
 
     async def start_session(
         self,
-        project_id: UUID,
+        project_id: ProjectId,
         metadata: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Start a new BMAD green-paper session.
 
         Args:
-            project_id: The project UUID
+            project_id: The project ID (string, int, or UUID)
             metadata: Optional session metadata
 
         Returns:
@@ -78,7 +81,7 @@ class GreenPaperService:
             current_question=1,
             total_questions=6,
             progress_percentage=0,
-            metadata=metadata or {}
+            generation_metadata=metadata or {}
         )
 
         self.db.add(session)
@@ -97,15 +100,15 @@ class GreenPaperService:
 
     async def get_session(
         self,
-        project_id: UUID,
-        session_id: UUID
+        session_id: UUID,
+        project_id: Optional[UUID] = None
     ) -> Dict[str, Any]:
         """
         Retrieve session status and answers.
 
         Args:
-            project_id: The project UUID
             session_id: The session UUID
+            project_id: Optional project UUID (for additional validation)
 
         Returns:
             Session data with current progress
@@ -115,17 +118,24 @@ class GreenPaperService:
         """
         from app.models.green_paper import GreenPaperSession, Answer
 
-        # Get session
-        result = await self.db.execute(
-            select(GreenPaperSession).where(
-                GreenPaperSession.id == session_id,
-                GreenPaperSession.project_id == str(project_id)
+        # Get session - project_id is optional for flexibility
+        if project_id:
+            result = await self.db.execute(
+                select(GreenPaperSession).where(
+                    GreenPaperSession.id == session_id,
+                    GreenPaperSession.project_id == str(project_id)
+                )
             )
-        )
+        else:
+            result = await self.db.execute(
+                select(GreenPaperSession).where(
+                    GreenPaperSession.id == session_id
+                )
+            )
         session = result.scalar_one_or_none()
 
         if not session:
-            raise ValueError(f"Session {session_id} not found for project {project_id}")
+            raise ValueError(f"Session {session_id} not found")
 
         # Get all answers
         answers_result = await self.db.execute(
@@ -222,21 +232,21 @@ class GreenPaperService:
 
     async def submit_answer(
         self,
-        project_id: UUID,
         session_id: UUID,
         question_number: int,
         answer: str,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
+        project_id: Optional[UUID] = None
     ) -> Dict[str, Any]:
         """
         Submit or update an answer to a BMAD question.
 
         Args:
-            project_id: The project UUID
             session_id: The session UUID
             question_number: Question number (1-6)
             answer: The answer text
             metadata: Optional metadata (time_spent, revision_count)
+            project_id: Optional project UUID (for additional validation)
 
         Returns:
             Answer submission result with progress
@@ -247,17 +257,24 @@ class GreenPaperService:
         """
         from app.models.green_paper import GreenPaperSession, Answer, SessionStatus
 
-        # 1. Validate session exists and belongs to project
-        result = await self.db.execute(
-            select(GreenPaperSession).where(
-                GreenPaperSession.id == session_id,
-                GreenPaperSession.project_id == str(project_id)
+        # 1. Validate session exists (project_id is optional for validation)
+        if project_id:
+            result = await self.db.execute(
+                select(GreenPaperSession).where(
+                    GreenPaperSession.id == session_id,
+                    GreenPaperSession.project_id == str(project_id)
+                )
             )
-        )
+        else:
+            result = await self.db.execute(
+                select(GreenPaperSession).where(
+                    GreenPaperSession.id == session_id
+                )
+            )
         session = result.scalar_one_or_none()
 
         if not session:
-            raise ValueError(f"Session {session_id} not found for project {project_id}")
+            raise ValueError(f"Session {session_id} not found")
 
         if session.status != SessionStatus.IN_PROGRESS:
             raise ValueError(f"Session {session_id} is not in progress (status: {session.status})")
@@ -472,23 +489,87 @@ class GreenPaperService:
         # For now, we'll create a placeholder constitution record
         # In production, this would trigger the actual agent workflow
 
-        # 5. Create constitution record (status: draft)
+        # 5. Call Ollama API directly for constitution generation
+        import httpx
+        import json as json_module
+
+        ollama_response = None
+        constitution_json = None
+        constitution_markdown = None
+        word_count = 0
+        generation_status = ConstitutionStatus.DRAFT
+
+        try:
+            # Call Ollama API (deepseek-r1 for reasoning)
+            async with httpx.AsyncClient(timeout=300.0) as client:  # 5 min timeout for CPU inference
+                response = await client.post(
+                    "http://localhost:11434/api/generate",
+                    json={
+                        "model": "deepseek-r1:latest",
+                        "prompt": peter_prompt,
+                        "stream": False,
+                        "options": {
+                            "temperature": 0.7,
+                            "num_predict": 4000
+                        }
+                    }
+                )
+
+                if response.status_code == 200:
+                    ollama_response = response.json()
+                    raw_response = ollama_response.get("response", "")
+
+                    # Try to parse JSON from response
+                    try:
+                        # Find JSON in response (may be wrapped in markdown code blocks)
+                        json_start = raw_response.find('{')
+                        json_end = raw_response.rfind('}') + 1
+                        if json_start >= 0 and json_end > json_start:
+                            json_str = raw_response[json_start:json_end]
+                            constitution_json = json_module.loads(json_str)
+                            generation_status = ConstitutionStatus.DRAFT  # Ready for review
+
+                            # Generate markdown from JSON
+                            constitution_markdown = self._json_to_markdown(constitution_json)
+                            word_count = len(constitution_markdown.split())
+                        else:
+                            # No JSON found, use raw response as markdown
+                            constitution_markdown = raw_response
+                            constitution_json = {"raw_response": raw_response}
+                            word_count = len(raw_response.split())
+                    except json_module.JSONDecodeError:
+                        constitution_markdown = raw_response
+                        constitution_json = {"raw_response": raw_response, "parse_error": True}
+                        word_count = len(raw_response.split())
+                else:
+                    constitution_json = {"error": f"Ollama returned status {response.status_code}"}
+                    constitution_markdown = f"# Generation Error\n\nOllama returned status {response.status_code}"
+
+        except httpx.TimeoutException:
+            constitution_json = {"error": "Ollama request timed out (5 minutes)"}
+            constitution_markdown = "# Generation Timeout\n\nThe LLM request timed out. CPU inference can be slow - try again."
+        except Exception as e:
+            constitution_json = {"error": str(e), "workflow_request": workflow_request}
+            constitution_markdown = f"# Generation Error\n\n{str(e)}\n\nPeter agent prompt was prepared but LLM call failed."
+
+        # 6. Create constitution record
         constitution = Constitution(
             session_id=session_id,
             project_id=str(project_id),
-            status=ConstitutionStatus.DRAFT,
-            content_json={
-                "status": "generation_in_progress",
-                "workflow_request": workflow_request
-            },
-            content_markdown="# Constitution Generation In Progress\n\nPeter agent is processing your BMAD answers...",
-            word_count=0,
+            status=generation_status,
+            content_json=constitution_json or {"status": "generation_failed"},
+            content_markdown=constitution_markdown or "# Constitution Generation Failed",
+            word_count=word_count,
             generated_by="Peter",
             generation_attempt=1,
             metadata={
                 "workflow_triggered_at": datetime.utcnow().isoformat(),
                 "model": "deepseek-r1:latest",
-                "answers_provided": len(answers_data)
+                "answers_provided": len(answers_data),
+                "ollama_response_meta": {
+                    "total_duration": ollama_response.get("total_duration") if ollama_response else None,
+                    "eval_count": ollama_response.get("eval_count") if ollama_response else None
+                }
             }
         )
 
@@ -496,27 +577,85 @@ class GreenPaperService:
         await self.db.commit()
         await self.db.refresh(constitution)
 
-        # 6. Trigger the actual agent workflow
-        # This would normally call: workflow_id = await self.agent_service.execute_workflow(workflow_request)
-        # For now, we'll return a placeholder workflow_id
-
-        # 6. Return task_id and workflow info
+        # 7. Return task_id and workflow info
         return {
             "constitution_id": constitution.id,
             "project_id": str(project_id),
             "session_id": str(session_id),
-            "status": constitution.status,
-            "workflow_id": f"workflow_{constitution.id}",  # Placeholder
+            "status": str(constitution.status),
+            "workflow_id": f"workflow_{constitution.id}",
             "agent": "Peter",
             "model": "deepseek-r1:latest",
-            "estimated_completion_time": "2-5 minutes",
-            "message": "Constitution generation started. Peter agent is processing your BMAD answers.",
+            "word_count": word_count,
+            "message": "Constitution generated by Peter agent." if word_count > 0 else "Constitution generation encountered issues.",
             "next_steps": [
-                "Wait for constitution generation to complete",
                 "Review the generated constitution",
-                "Approve or request changes"
+                "Approve or request changes",
+                "Generate specification with Felix agent"
             ]
         }
+
+    def _json_to_markdown(self, constitution_json: Dict[str, Any]) -> str:
+        """Convert constitution JSON to readable markdown."""
+        md = ["# Project Constitution\n"]
+
+        if "problem_statement" in constitution_json:
+            md.append("## 1. Problem Statement\n")
+            md.append(f"{constitution_json['problem_statement']}\n")
+
+        if "stakeholders" in constitution_json:
+            md.append("\n## 2. Stakeholders\n")
+            for s in constitution_json.get("stakeholders", []):
+                md.append(f"### {s.get('role', 'Unknown')}\n")
+                md.append(f"- **Priority**: {s.get('priority', 'N/A')}\n")
+                md.append(f"- **Description**: {s.get('description', '')}\n")
+                if s.get('needs'):
+                    md.append(f"- **Needs**: {', '.join(s['needs'])}\n")
+                md.append(f"- **Success**: {s.get('success_definition', '')}\n")
+
+        if "core_functionalities" in constitution_json:
+            md.append("\n## 3. Core Functionalities\n")
+            for f in constitution_json.get("core_functionalities", []):
+                md.append(f"### {f.get('name', 'Feature')}\n")
+                md.append(f"- **Priority**: {f.get('priority', 'N/A')}\n")
+                md.append(f"- **Description**: {f.get('description', '')}\n")
+                md.append(f"- **Stakeholder**: {f.get('stakeholder', '')}\n")
+
+        if "success_criteria" in constitution_json:
+            md.append("\n## 4. Success Criteria\n")
+            md.append("| Metric | Target | Measurement | Timeframe |\n")
+            md.append("|--------|--------|-------------|------------|\n")
+            for c in constitution_json.get("success_criteria", []):
+                md.append(f"| {c.get('metric', '')} | {c.get('target', '')} | {c.get('measurement', '')} | {c.get('timeframe', '')} |\n")
+
+        if "technical_constraints" in constitution_json:
+            md.append("\n## 5. Technical Constraints\n")
+            for c in constitution_json.get("technical_constraints", []):
+                md.append(f"- **{c.get('constraint', '')}**: {c.get('reason', '')} (Impact: {c.get('impact', 'N/A')})\n")
+
+        if "timeline" in constitution_json:
+            md.append("\n## 6. Timeline\n")
+            timeline = constitution_json["timeline"]
+            if "phases" in timeline:
+                md.append("### Phases\n")
+                for p in timeline.get("phases", []):
+                    md.append(f"- **{p.get('name', 'Phase')}**: {p.get('duration_weeks', '?')} weeks\n")
+            md.append(f"\n**Total Duration**: {timeline.get('total_duration_weeks', '?')} weeks\n")
+
+        if "risks_and_assumptions" in constitution_json:
+            md.append("\n## 7. Risks & Assumptions\n")
+            ra = constitution_json["risks_and_assumptions"]
+            if "risks" in ra:
+                md.append("### Risks\n")
+                for r in ra.get("risks", []):
+                    md.append(f"- **{r.get('risk', '')}** - Likelihood: {r.get('likelihood', '?')}, Impact: {r.get('impact', '?')}\n")
+                    md.append(f"  - Mitigation: {r.get('mitigation', '')}\n")
+            if "assumptions" in ra:
+                md.append("### Assumptions\n")
+                for a in ra.get("assumptions", []):
+                    md.append(f"- {a}\n")
+
+        return "\n".join(md)
 
     async def _format_answers_for_peter(
         self,
@@ -1024,7 +1163,7 @@ Maintain the same overall structure but incorporate the user's feedback.
 
     async def generate_specification(
         self,
-        project_id: UUID,
+        project_id,  # Can be str or UUID
         constitution_id: UUID,
         options: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
@@ -1032,7 +1171,7 @@ Maintain the same overall structure but incorporate the user's feedback.
         Trigger Felix to generate HLD specification.
 
         Args:
-            project_id: The project UUID
+            project_id: The project ID (string or UUID)
             constitution_id: The constitution UUID
             options: Generation options
 
@@ -1045,17 +1184,20 @@ Maintain the same overall structure but incorporate the user's feedback.
         from app.models.green_paper import Constitution, Specification, SpecificationStatus, ConstitutionStatus
         import json
 
+        # Normalize project_id to string
+        project_id_str = str(project_id) if project_id else None
+
         # 1. Verify constitution is approved
         result = await self.db.execute(
             select(Constitution).where(
                 Constitution.id == constitution_id,
-                Constitution.project_id == str(project_id)
+                Constitution.project_id == project_id_str
             )
         )
         constitution = result.scalar_one_or_none()
 
         if not constitution:
-            raise ValueError(f"Constitution {constitution_id} not found for project {project_id}")
+            raise ValueError(f"Constitution {constitution_id} not found for project {project_id_str}")
 
         if constitution.status != ConstitutionStatus.APPROVED:
             raise InvalidStatusError(
@@ -1071,37 +1213,97 @@ Maintain the same overall structure but incorporate the user's feedback.
         felix_prompt = await self._format_constitution_for_felix(
             constitution_json,
             constitution_markdown,
-            project_id
+            project_id_str
         )
 
-        # 4. Trigger Felix agent workflow
+        # 4. Trigger Felix agent workflow via Ollama API
         workflow_request = {
             "agent_name": "Felix",
             "workflow_type": "NEW_FEATURE",
             "task_description": "Generate High-Level Design specification from constitution",
             "prompt": felix_prompt,
             "model": "qwen2.5-coder:7b",
-            "project_id": str(project_id),
+            "project_id": project_id_str,
             "constitution_id": str(constitution_id),
             "options": options or {}
         }
 
-        # 5. Create specification record (status: draft)
+        # 5. Call Ollama API directly for specification generation
+        import httpx
+        import json as json_module
+
+        ollama_response = None
+        specification_json = None
+        specification_markdown = None
+        generation_status = SpecificationStatus.DRAFT
+
+        try:
+            # Call Ollama API (qwen2.5-coder:7b for Felix)
+            async with httpx.AsyncClient(timeout=600.0) as client:  # 10 min timeout for CPU inference
+                response = await client.post(
+                    "http://localhost:11434/api/generate",
+                    json={
+                        "model": "qwen2.5-coder:7b",
+                        "prompt": felix_prompt,
+                        "stream": False,
+                        "options": {
+                            "temperature": 0.7,
+                            "num_predict": 6000  # Longer for HLD specification
+                        }
+                    }
+                )
+
+                if response.status_code == 200:
+                    ollama_response = response.json()
+                    raw_response = ollama_response.get("response", "")
+
+                    # Try to parse JSON from response
+                    try:
+                        # Find JSON in response (may be wrapped in markdown code blocks)
+                        json_start = raw_response.find('{')
+                        json_end = raw_response.rfind('}') + 1
+                        if json_start >= 0 and json_end > json_start:
+                            json_str = raw_response[json_start:json_end]
+                            specification_json = json_module.loads(json_str)
+                            generation_status = SpecificationStatus.DRAFT  # Ready for review
+
+                            # Generate markdown from JSON
+                            specification_markdown = self._specification_json_to_markdown(specification_json)
+                        else:
+                            # No JSON found, use raw response as markdown
+                            specification_markdown = raw_response
+                            specification_json = {"raw_response": raw_response}
+                    except json_module.JSONDecodeError:
+                        specification_markdown = raw_response
+                        specification_json = {"raw_response": raw_response, "parse_error": True}
+                else:
+                    specification_json = {"error": f"Ollama returned status {response.status_code}"}
+                    specification_markdown = f"# Generation Error\n\nOllama returned status {response.status_code}"
+
+        except httpx.TimeoutException:
+            specification_json = {"error": "Ollama request timed out (10 minutes)"}
+            specification_markdown = "# Generation Timeout\n\nThe LLM request timed out. CPU inference can be slow - try again."
+        except Exception as e:
+            specification_json = {"error": str(e), "workflow_request": workflow_request}
+            specification_markdown = f"# Generation Error\n\n{str(e)}\n\nFelix agent prompt was prepared but LLM call failed."
+
+        # 6. Create specification record
         specification = Specification(
             constitution_id=constitution_id,
-            project_id=str(project_id),
-            status=SpecificationStatus.DRAFT,
-            content_json={
-                "status": "generation_in_progress",
-                "workflow_request": workflow_request
-            },
-            content_markdown="# Specification Generation In Progress\n\nFelix agent is processing the approved constitution...",
+            project_id=project_id_str,
+            status=generation_status,
+            content_json=specification_json or {"status": "generation_failed"},
+            content_markdown=specification_markdown or "# Specification Generation Failed",
             generated_by="Felix",
             generation_attempt=1,
             metadata={
                 "workflow_triggered_at": datetime.utcnow().isoformat(),
                 "model": "qwen2.5-coder:7b",
-                "constitution_id": str(constitution_id)
+                "constitution_id": str(constitution_id),
+                "ollama_response_meta": {
+                    "total_duration": ollama_response.get("total_duration") if ollama_response else None,
+                    "eval_count": ollama_response.get("eval_count") if ollama_response else None
+                }
             }
         )
 
@@ -1109,21 +1311,22 @@ Maintain the same overall structure but incorporate the user's feedback.
         await self.db.commit()
         await self.db.refresh(specification)
 
-        # 6. Return task_id and workflow info
+        # 7. Return task_id and workflow info
         return {
-            "specification_id": specification.id,
-            "project_id": str(project_id),
+            "specification_id": str(specification.id),
+            "project_id": project_id_str,
             "constitution_id": str(constitution_id),
-            "status": specification.status,
-            "workflow_id": f"workflow_{specification.id}",  # Placeholder
+            "status": str(specification.status.value) if hasattr(specification.status, 'value') else str(specification.status),
+            "workflow_id": f"workflow_{specification.id}",
             "agent": "Felix",
             "model": "qwen2.5-coder:7b",
-            "estimated_completion_time": "3-7 minutes",
-            "message": "Specification generation started. Felix agent is processing the approved constitution.",
+            "content_preview": specification_markdown[:500] if specification_markdown else None,
+            "generation_complete": specification_json and "error" not in specification_json,
+            "message": "Specification generation complete." if (specification_json and "error" not in specification_json) else "Specification generation encountered an issue.",
             "next_steps": [
-                "Wait for specification generation to complete",
                 "Review the generated HLD specification",
-                "Approve or request changes"
+                "Approve or request changes",
+                "Generate epics from specification"
             ]
         }
 
@@ -1131,9 +1334,10 @@ Maintain the same overall structure but incorporate the user's feedback.
         self,
         constitution_json: Dict[str, Any],
         constitution_markdown: str,
-        project_id: UUID
+        project_id  # Can be str or UUID
     ) -> str:
         """Format approved constitution into Felix's prompt."""
+        import json
 
         prompt = f"""You are Felix, the Feature Architect agent using qwen2.5-coder:7b model.
 
@@ -1155,13 +1359,13 @@ Your task is to generate a comprehensive HIGH-LEVEL DESIGN (HLD) SPECIFICATION.
 {json.dumps(constitution_json.get('success_criteria', []), indent=2)}
 
 ### Technical Constraints
-{json.dumps(constitution_json.get('technical_constraints', []), indent=2)}
+{json.dumps(constitution_json.get('technical_constraints', []), indent=2, default=str)}
 
 ### Timeline
-{json.dumps(constitution_json.get('timeline', {{}}), indent=2)}
+{json.dumps(constitution_json.get('timeline', dict()), indent=2, default=str)}
 
 ### Risks & Assumptions
-{json.dumps(constitution_json.get('risks_and_assumptions', {{}}), indent=2)}
+{json.dumps(constitution_json.get('risks_and_assumptions', dict()), indent=2, default=str)}
 
 ## Your Task
 
@@ -1354,6 +1558,151 @@ Before returning the specification, verify:
 Generate the HIGH-LEVEL DESIGN SPECIFICATION now. Return ONLY valid JSON, no additional commentary.
 """
         return prompt
+
+    def _specification_json_to_markdown(self, spec_json: Dict[str, Any]) -> str:
+        """Convert specification JSON to readable markdown."""
+        md = ["# High-Level Design Specification\n"]
+
+        # Architecture Overview
+        if "architecture_overview" in spec_json:
+            arch = spec_json["architecture_overview"]
+            md.append("## 1. Architecture Overview\n")
+            md.append(f"**Style**: {arch.get('style', 'N/A')}\n")
+            if arch.get('components'):
+                md.append("\n**Major Components**:\n")
+                for c in arch.get('components', []):
+                    md.append(f"- {c}\n")
+            if arch.get('communication_patterns'):
+                md.append("\n**Communication Patterns**:\n")
+                for p in arch.get('communication_patterns', []):
+                    md.append(f"- {p}\n")
+            md.append(f"\n**Deployment**: {arch.get('deployment', 'N/A')}\n")
+            md.append(f"\n**Justification**: {arch.get('justification', '')}\n")
+
+        # Components
+        if "components" in spec_json:
+            md.append("\n## 2. Component Breakdown\n")
+            for comp in spec_json.get('components', []):
+                md.append(f"### {comp.get('name', 'Component')}\n")
+                md.append(f"- **Responsibility**: {comp.get('responsibility', '')}\n")
+                if comp.get('technology_stack'):
+                    md.append(f"- **Technology**: {', '.join(comp['technology_stack'])}\n")
+                if comp.get('dependencies'):
+                    md.append(f"- **Dependencies**: {', '.join(comp['dependencies'])}\n")
+                md.append(f"- **Scalability**: {comp.get('scalability', '')}\n")
+                if comp.get('stakeholders'):
+                    md.append(f"- **Stakeholders**: {', '.join(comp['stakeholders'])}\n")
+
+        # Data Model
+        if "data_model" in spec_json:
+            dm = spec_json["data_model"]
+            md.append("\n## 3. Data Model\n")
+            if dm.get('entities'):
+                md.append("### Entities\n")
+                for e in dm.get('entities', []):
+                    md.append(f"**{e.get('name', 'Entity')}**\n")
+                    if e.get('attributes'):
+                        md.append(f"- Attributes: {', '.join(e['attributes'])}\n")
+                    if e.get('relationships'):
+                        md.append(f"- Relationships: {', '.join(e['relationships'])}\n")
+            md.append(f"\n**Storage Strategy**: {dm.get('storage_strategy', 'N/A')}\n")
+            md.append(f"\n**Data Flow**: {dm.get('data_flow', '')}\n")
+            md.append(f"\n**Consistency**: {dm.get('consistency', '')}\n")
+            md.append(f"\n**Security**: {dm.get('security', '')}\n")
+
+        # API Design
+        if "api_design" in spec_json:
+            api = spec_json["api_design"]
+            md.append("\n## 4. API Design\n")
+            md.append(f"**Style**: {api.get('style', 'N/A')}\n")
+            md.append(f"**Authentication**: {api.get('authentication', 'N/A')}\n")
+            md.append(f"**Versioning**: {api.get('versioning', 'N/A')}\n")
+            if api.get('endpoints'):
+                md.append("\n### Endpoints\n")
+                md.append("| Path | Method | Description | Domain |\n")
+                md.append("|------|--------|-------------|--------|\n")
+                for ep in api.get('endpoints', []):
+                    md.append(f"| {ep.get('path', '')} | {ep.get('method', '')} | {ep.get('description', '')} | {ep.get('domain', '')} |\n")
+
+        # Integration Points
+        if "integration_points" in spec_json:
+            md.append("\n## 5. Integration Points\n")
+            for ip in spec_json.get('integration_points', []):
+                md.append(f"### {ip.get('system', 'System')}\n")
+                md.append(f"- **Purpose**: {ip.get('purpose', '')}\n")
+                md.append(f"- **Mechanism**: {ip.get('mechanism', '')}\n")
+
+        # Quality Attributes
+        if "quality_attributes" in spec_json:
+            qa = spec_json["quality_attributes"]
+            md.append("\n## 6. Quality Attributes\n")
+            for attr in ['performance', 'scalability', 'reliability', 'security', 'maintainability']:
+                if attr in qa:
+                    md.append(f"### {attr.capitalize()}\n")
+                    attr_data = qa[attr]
+                    if isinstance(attr_data, dict):
+                        for k, v in attr_data.items():
+                            if isinstance(v, list):
+                                md.append(f"**{k.capitalize()}**: {', '.join(v)}\n")
+                            else:
+                                md.append(f"**{k.capitalize()}**: {v}\n")
+
+        # Technology Stack
+        if "technology_stack" in spec_json:
+            ts = spec_json["technology_stack"]
+            md.append("\n## 7. Technology Stack\n")
+            for layer in ['frontend', 'backend', 'database', 'devops']:
+                if layer in ts and ts[layer]:
+                    md.append(f"**{layer.capitalize()}**: {', '.join(ts[layer])}\n")
+            if ts.get('justifications'):
+                md.append("\n### Justifications\n")
+                for tech, reason in ts['justifications'].items():
+                    md.append(f"- **{tech}**: {reason}\n")
+
+        # Deployment & Infrastructure
+        if "deployment_infrastructure" in spec_json:
+            di = spec_json["deployment_infrastructure"]
+            md.append("\n## 8. Deployment & Infrastructure\n")
+            md.append(f"**Strategy**: {di.get('strategy', 'N/A')}\n")
+            if di.get('infrastructure'):
+                infra = di['infrastructure']
+                md.append(f"\n**Compute**: {infra.get('compute', 'N/A')}\n")
+                md.append(f"**Storage**: {infra.get('storage', 'N/A')}\n")
+                md.append(f"**Network**: {infra.get('network', 'N/A')}\n")
+            md.append(f"\n**Monitoring**: {di.get('monitoring', '')}\n")
+            md.append(f"**Disaster Recovery**: {di.get('disaster_recovery', '')}\n")
+            md.append(f"**Cost Estimate**: {di.get('cost_estimate', '')}\n")
+
+        # Development Phases
+        if "development_phases" in spec_json:
+            md.append("\n## 9. Development Phases\n")
+            for phase in spec_json.get('development_phases', []):
+                md.append(f"### Phase {phase.get('phase_number', '?')}: {phase.get('name', 'Phase')}\n")
+                md.append(f"- **Duration**: {phase.get('duration_weeks', '?')} weeks\n")
+                if phase.get('deliverables'):
+                    md.append(f"- **Deliverables**: {', '.join(phase['deliverables'])}\n")
+                if phase.get('dependencies'):
+                    md.append(f"- **Dependencies**: {', '.join(phase['dependencies'])}\n")
+                if phase.get('success_criteria'):
+                    md.append(f"- **Success Criteria**: {', '.join(phase['success_criteria'])}\n")
+
+        # Risk Mitigation
+        if "risk_mitigation" in spec_json:
+            md.append("\n## 10. Risk Mitigation\n")
+            for risk in spec_json.get('risk_mitigation', []):
+                md.append(f"### {risk.get('risk', 'Risk')}\n")
+                md.append(f"- **Mitigation**: {risk.get('mitigation_strategy', '')}\n")
+                md.append(f"- **Architectural Decision**: {risk.get('architectural_decision', '')}\n")
+                if risk.get('poc_recommendation'):
+                    md.append(f"- **PoC Recommendation**: {risk['poc_recommendation']}\n")
+
+        # Handle raw response (when JSON parsing failed)
+        if "raw_response" in spec_json:
+            md.append("\n---\n")
+            md.append("## Raw LLM Response\n")
+            md.append(f"{spec_json['raw_response']}\n")
+
+        return "".join(md)
 
     # ========== Specification Review ==========
 

@@ -1,6 +1,6 @@
-# 🧪 E2E Tests - Markdown Task Manager
+# 🧪 E2E Tests - Multi-Stack AI Agent Platform
 
-Geautomatiseerde End-to-End tests met Playwright voor het Markdown Task Manager project.
+Geautomatiseerde End-to-End tests met Playwright voor het Multi-Stack AI Agent Platform project.
 
 ## 📋 Wat wordt getest?
 

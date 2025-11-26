@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pathlib import Path
-from app.api import epics, features, stories, tasks, sprints, auth, project, workflows, projects, scheduler, estimation, estimation_history, project_wizard, websocket, maintenance, ml_training, evolution, quality_dashboard, self_navigating, attribution, task_generation, continuous_learning, rollback, quality_gate_config, quality_gate_evaluation, agent_validation, ab_testing, llm_council
+from app.api import epics, features, stories, tasks, sprints, auth, project, workflows, projects, scheduler, estimation, estimation_history, project_wizard, websocket, maintenance, ml_training, evolution, quality_dashboard, self_navigating, attribution, task_generation, continuous_learning, rollback, quality_gate_config, quality_gate_evaluation, agent_validation, ab_testing, llm_council, evolution_dashboard, spec_review
 from app.api.week10 import green_paper_routes
 from app.api.week11 import task_generation_routes
 from app.database import engine
@@ -61,10 +61,12 @@ app.include_router(quality_gate_evaluation.router)  # Week 50: Quality Gate Eval
 app.include_router(agent_validation.router)  # Week 50: Agent Validation Loop API
 app.include_router(ab_testing.router)  # Week 51: A/B Testing for Agent Evolution
 app.include_router(llm_council.router)  # Week 52: LLM Council Multi-Model Decision Making
+app.include_router(evolution_dashboard.router)  # Week 53: Evolution Dashboard - Real-time Agent Performance
+app.include_router(spec_review.router)  # Week 53: Quinn/Felix Spec Review (Option B+)
 # app.include_router(websocket.router)  # Week 15: Real-time WebSocket Updates
 
 # Mount frontend static files
-frontend_path = Path("/frontend")
+frontend_path = Path(__file__).parent.parent.parent / "frontend"
 if frontend_path.exists():
     app.mount("/static", StaticFiles(directory=str(frontend_path)), name="static")
 
@@ -79,6 +81,14 @@ async def root():
         "docs": "/api/docs",
         "redoc": "/api/redoc"
     }
+
+@app.get("/index.html")
+async def index_html():
+    """Serve index.html directly"""
+    frontend_file = frontend_path / "index.html"
+    if frontend_file.exists():
+        return FileResponse(str(frontend_file))
+    raise HTTPException(status_code=404, detail="Index page not found")
 
 @app.get("/sprint-planning.html")
 async def sprint_planning():
@@ -159,6 +169,14 @@ async def spec_kit_wizard_page():
     if spec_kit_file.exists():
         return FileResponse(str(spec_kit_file))
     raise HTTPException(status_code=404, detail="Spec-kit wizard page not found")
+
+@app.get("/llm-council-dashboard.html")
+async def llm_council_dashboard_page():
+    """Serve LLM council dashboard interface"""
+    council_file = frontend_path / "llm-council-dashboard.html"
+    if council_file.exists():
+        return FileResponse(str(council_file))
+    raise HTTPException(status_code=404, detail="LLM council dashboard page not found")
 
 @app.get("/api/health")
 async def health_check():

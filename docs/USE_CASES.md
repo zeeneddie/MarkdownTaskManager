@@ -2,7 +2,7 @@
 
 > **[Back to README](../README.md)**
 
-Real-world scenarios for using Markdown Task Manager effectively.
+Real-world scenarios for using Multi-Stack AI Agent Platform effectively.
 
 ---
 

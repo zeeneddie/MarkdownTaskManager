@@ -2,7 +2,7 @@
 
 > **[Back to README](../README.md)**
 
-Browser and system compatibility information for Markdown Task Manager.
+Browser and system compatibility information for Multi-Stack AI Agent Platform.
 
 ---
 

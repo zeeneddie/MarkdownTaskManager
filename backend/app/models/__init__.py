@@ -3,6 +3,7 @@
 from app.models.user import User
 from app.models.item import Item
 from app.models.sprint import Sprint
+from app.models.project import Project
 from app.models.task_hierarchy import Epic, Feature, Story, Task
 from app.models.green_paper import GreenPaperSession, Answer, Constitution, Specification
 from app.models.estimation_history import EstimationProject, FunctionPointEstimate, StoryPointEstimate, MLModelVersion
@@ -28,6 +29,8 @@ __all__ = [
     "Item",
     # Sprint
     "Sprint",
+    # Project
+    "Project",
     # Task Hierarchy
     "Epic", "Feature", "Story", "Task",
     # Green Paper

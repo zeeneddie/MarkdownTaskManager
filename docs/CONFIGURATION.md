@@ -2,7 +2,7 @@
 
 > **[Back to README](../README.md)**
 
-Guide to customizing your Markdown Task Manager setup.
+Guide to customizing your Multi-Stack AI Agent Platform setup.
 
 ---
 

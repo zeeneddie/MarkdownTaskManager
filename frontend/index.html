@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Markdown Task Manager</title>
+    <title>Multi-Stack AI Agent Platform</title>
     <style>
         * {
             margin: 0;
@@ -374,8 +374,17 @@
 </head>
 <body>
     <div class="header">
-        <h1>📋 Markdown Task Manager</h1>
-        <p>Projecten/MarkdownTaskManager - Hiërarchische task management met markdown</p>
+        <h1 id="projectTitle">📋 Multi-Stack AI Agent Platform</h1>
+        <p id="projectDescription">Projecten/MarkdownTaskManager - Hiërarchische task management met markdown</p>
+        <nav class="nav-bar" style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="project-wizard.html" style="background: rgba(255,255,255,0.2); color: white; padding: 0.5rem 1rem; border-radius: 20px; text-decoration: none; font-size: 0.85rem;">🧙 New Project</a>
+            <a href="agent-dashboard.html" style="background: rgba(255,255,255,0.2); color: white; padding: 0.5rem 1rem; border-radius: 20px; text-decoration: none; font-size: 0.85rem;">🤖 Agents</a>
+            <a href="sprint-planning.html" style="background: rgba(255,255,255,0.2); color: white; padding: 0.5rem 1rem; border-radius: 20px; text-decoration: none; font-size: 0.85rem;">🎯 Sprint</a>
+            <a href="quality-dashboard.html" style="background: rgba(255,255,255,0.2); color: white; padding: 0.5rem 1rem; border-radius: 20px; text-decoration: none; font-size: 0.85rem;">✅ Quality</a>
+            <a href="estimation-dashboard.html" style="background: rgba(255,255,255,0.2); color: white; padding: 0.5rem 1rem; border-radius: 20px; text-decoration: none; font-size: 0.85rem;">📊 Estimation</a>
+            <a href="evolution-dashboard.html" style="background: rgba(255,255,255,0.2); color: white; padding: 0.5rem 1rem; border-radius: 20px; text-decoration: none; font-size: 0.85rem;">🧬 Evolution</a>
+            <a href="spec-kit-wizard.html" style="background: rgba(255,255,255,0.2); color: white; padding: 0.5rem 1rem; border-radius: 20px; text-decoration: none; font-size: 0.85rem;">📝 Spec-Kit</a>
+        </nav>
     </div>
 
     <div class="container">
@@ -404,7 +413,7 @@
             <div class="main" id="main">
                 <div class="empty-state">
                     <div class="icon">📁</div>
-                    <h3>Welkom bij Markdown Task Manager</h3>
+                    <h3>Welkom bij Multi-Stack AI Agent Platform</h3>
                     <p>Klik op "Project Laden" om te beginnen</p>
                 </div>
             </div>
@@ -418,24 +427,89 @@
 
         const API_BASE = 'http://localhost:8000/api';
 
+        // Get project ID from URL parameter
+        function getUrlParameter(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
         async function loadProject() {
             setStatus('loading', 'Project laden...');
 
             try {
-                // Call real API endpoint
-                const response = await fetch(`${API_BASE}/project/`);
+                const projectId = getUrlParameter('project');
+                let projectInfo = null;
+                let response;
+
+                if (projectId) {
+                    // Load project info from wizard API
+                    const projectResponse = await fetch(`${API_BASE}/wizard/projects/${projectId}`);
+                    if (projectResponse.ok) {
+                        projectInfo = await projectResponse.json();
+                        // Update page title with project name
+                        document.getElementById('projectTitle').textContent = projectInfo.name || 'Project Manager';
+                        document.getElementById('projectDescription').textContent = projectInfo.description || 'Hierarchical project management';
+
+                        // Show project metadata
+                        console.log('Project loaded:', projectInfo);
+
+                        // Get project folder name from project name (convert to folder format)
+                        const projectFolderName = projectInfo.name.toLowerCase().replace(/\s+/g, '-');
+                        response = await fetch(`${API_BASE}/project/?project_name=${encodeURIComponent(projectFolderName)}`);
+                    } else {
+                        // Fallback to default project folder
+                        response = await fetch(`${API_BASE}/project/`);
+                    }
+                } else {
+                    // Default: load from project folder
+                    response = await fetch(`${API_BASE}/project/`);
+                }
 
                 if (!response.ok) {
                     throw new Error('Backend niet beschikbaar');
                 }
 
                 const result = await response.json();
-                projectData = {
-                    epics: result.data.epics.map(epic => ({
-                        ...epic,
-                        features: epic.features || []
-                    }))
-                };
+
+                // Handle different response formats
+                if (result.data && result.data.epics) {
+                    // Format from /api/project/ endpoint
+                    projectData = {
+                        epics: result.data.epics.map(epic => ({
+                            ...epic,
+                            features: epic.features || []
+                        })),
+                        projectInfo: projectInfo
+                    };
+                } else if (result.epics) {
+                    // Direct epics format
+                    projectData = {
+                        epics: result.epics.map(epic => ({
+                            ...epic,
+                            features: epic.features || []
+                        })),
+                        projectInfo: projectInfo
+                    };
+                } else if (result.project_data && result.project_data.epics) {
+                    // Format from wizard session
+                    projectData = {
+                        epics: result.project_data.epics.map(epic => ({
+                            ...epic,
+                            features: epic.features || []
+                        })),
+                        projectInfo: projectInfo
+                    };
+                } else if (projectInfo) {
+                    // Project exists but has no epics yet - show empty state with project info
+                    projectData = {
+                        epics: [],
+                        projectInfo: projectInfo
+                    };
+                } else {
+                    // Fallback - treat as empty project
+                    projectData = { epics: [] };
+                    console.warn('Unknown response format:', result);
+                }
 
                 /* OLD MOCK DATA - Now using real API!
                 projectData = {
@@ -488,7 +562,8 @@
                 */
 
                 renderTree(projectData);
-                setStatus('success', `${projectData.epics.length} epics geladen ✅`);
+                const projectName = projectData.projectInfo?.name || 'Demo';
+                setStatus('success', `${projectName}: ${projectData.epics.length} epics geladen ✅`);
             } catch (error) {
                 setStatus('error', `Fout: ${error.message}`);
                 console.error(error);

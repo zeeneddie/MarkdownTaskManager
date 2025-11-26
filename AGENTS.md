@@ -2,24 +2,73 @@
 
 **Doel**: Complete agent system documentation op één plek
 **Doelgroep**: Developers working with agents
-**Last Updated**: 2025-11-21 (AgentEvolver Integration Added)
+**Last Updated**: 2025-11-26 (3-Layer Architecture Added)
 
 ---
 
 ## 🎯 Quick Overview
 
-**10 Specialized AI Agents** - 100% Local Execution (Ollama)
+**3-Layer Agent Architecture** - Scalable multi-stack platform
+**10 Core Agents** - Cross-stack expertise (Ollama + Claude routing)
+**Stack Agent Templates** - Per-project tech-stack agents
+**4 Platform Agents** - Meta-level observability & optimization
 **9 Work Type Workflows** - Intelligent routing
-**4 Scrum Ceremonies** - Automated
-**16 SuperClaude Commands** - Domain expertise
 **Quality Gates** - Integrated validation
-**🧬 Self-Evolution** - Week 17-26: Agents die zichzelf verbeteren!
+**🧬 Self-Evolution** - Continuous improvement via A/B testing
 
 ---
 
-## 📋 The 10 Agents
+## 🏗️ 3-Layer Agent Architecture (Week 54+)
 
-### Core Agents (8)
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    MULTI-STACK PLATFORM                              │
+│                                                                      │
+│  ┌───────────────────────────────────────────────────────────────┐  │
+│  │            LAAG 1: CORE AGENTS (10 - Cross-Stack)             │  │
+│  │                                                                │  │
+│  │  Felix (Architecture)     Quinn (Quality)      Betty (Bugs)    │  │
+│  │  Eliza (Estimation)       Diana (Docs)         Marcus (Maint)  │  │
+│  │  Tessa (Testing)          Miguel (Migration)   Peter (PO)      │  │
+│  │  Paul (Project Lead)                                           │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+│                              │                                       │
+│  ┌───────────────────────────────────────────────────────────────┐  │
+│  │         LAAG 2: STACK AGENT TEMPLATES (Per Project)           │  │
+│  │                                                                │  │
+│  │  Python:      BackendDev_py, CodeRev_py, SecAudit_py          │  │
+│  │  JavaScript:  BackendDev_js, FrontendDev_js, CodeRev_js       │  │
+│  │  Go:          BackendDev_go, CodeRev_go, SecAudit_go          │  │
+│  │  Rust:        BackendDev_rs, CodeRev_rs, SecAudit_rs          │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+│                              │                                       │
+│  ┌───────────────────────────────────────────────────────────────┐  │
+│  │           LAAG 3: PLATFORM AGENTS (Meta-niveau)               │  │
+│  │                                                                │  │
+│  │  ObservabilityEngineer    - Agent behavior monitoring          │  │
+│  │  PromptEngineer           - Meta-prompting, optimization       │  │
+│  │  IncidentResponder        - Cross-project incident handling    │  │
+│  │  ContextManager           - Cross-agent state management       │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+│                              │                                       │
+│  ┌───────────────────────────────────────────────────────────────┐  │
+│  │              PROVIDER REGISTRY (Multi-LLM Routing)            │  │
+│  │                                                                │  │
+│  │  Ollama (Local):  qwen2.5-coder, deepseek-r1, codellama       │  │
+│  │  Claude CLI:      Haiku (fast), Sonnet (balanced), Opus       │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Zie**: [Multi-Stack Platform Architecture](docs/architecture/multi-stack-platform.md)
+
+---
+
+## 📋 Layer 1: Core Agents (10)
+
+Cross-stack expertise - work on any project regardless of tech-stack.
+
+### Development Agents (8)
 
 #### 1. Felix - Feature Architect
 - **Role**: Architecture & feature design
@@ -113,6 +162,70 @@
 - **LLM**: local (tbd)
 - **Specialties**: externe APIs, message flows, contract testing
 - **Status**: gedefinieerd, nog te evalueren
+
+---
+
+## 🔧 Layer 2: Stack Agent Templates (Week 56-57)
+
+Stack-specific agents instantiated per project via **Stack Agent Factory**.
+
+| Stack | Available Templates | Model Preference |
+|-------|---------------------|------------------|
+| **Python** | BackendDev_py, CodeRev_py, SecAudit_py, Tester_py | qwen2.5-coder:7b |
+| **JavaScript** | BackendDev_js, FrontendDev_js, CodeRev_js, SecAudit_js | qwen2.5-coder:7b |
+| **Go** | BackendDev_go, CodeRev_go, SecAudit_go, Tester_go | deepseek-coder |
+| **Rust** | BackendDev_rs, CodeRev_rs, SecAudit_rs, Tester_rs | deepseek-coder |
+
+### Template Example
+
+```python
+STACK_TEMPLATES = {
+    "BackendDev": {
+        "python": {
+            "prompt_additions": "Expert in FastAPI, Django, SQLAlchemy, SOLID principles",
+            "model_preference": "qwen2.5-coder:7b",
+            "capabilities": ["api_design", "database", "async", "testing"],
+        },
+        "javascript": {
+            "prompt_additions": "Expert in Node.js, Express, TypeORM, ES6+",
+            "model_preference": "qwen2.5-coder:7b",
+            "capabilities": ["api_design", "database", "async", "testing"],
+        },
+    },
+}
+```
+
+**Status:** PLANNED (Week 56-57)
+**Zie**: [Multi-Stack Platform Architecture](docs/architecture/multi-stack-platform.md)
+
+---
+
+## 🔍 Layer 3: Platform Agents (Week 54-55)
+
+Meta-level agents that monitor, optimize, and coordinate the entire platform.
+
+### ObservabilityEngineer
+- **Role**: Agent behavior monitoring
+- **Capabilities**: Action logging, decision tracing, performance metrics
+- **Output**: Real-time dashboards, pattern detection
+
+### PromptEngineer
+- **Role**: Meta-prompting & continuous improvement
+- **Capabilities**: Prompt A/B testing, automatic optimization, pattern learning
+- **Output**: Enhanced prompts, improvement recommendations
+
+### IncidentResponder
+- **Role**: Cross-project incident handling
+- **Capabilities**: Distributed debugging, cascading failure analysis, log aggregation
+- **Output**: Root cause analysis, remediation plans
+
+### ContextManager
+- **Role**: Cross-agent state management
+- **Capabilities**: Context sharing, handoff coordination, state persistence
+- **Output**: Seamless agent collaboration
+
+**Status:** PLANNED (Week 54-55)
+**Zie**: [Multi-Stack Platform Architecture](docs/architecture/multi-stack-platform.md)
 
 ---
 
@@ -588,9 +701,32 @@ POST /api/self-questioning/schedules         # Create schedule
 
 ---
 
-## 🔧 LLM Configuration (100% Local)
+## 🔧 LLM Configuration (Multi-Provider)
 
-**All models via Ollama** - No cloud dependencies, complete privacy
+### Provider Registry (Week 54+)
+
+| Model | Tier | Cost (Input/Output) | Use Case |
+|-------|------|---------------------|----------|
+| Ollama (local) | Free | $0 / $0 | Simple tasks, privacy, offline |
+| Claude Haiku | Fast | $1 / $5 per M | Quick fixes, bulk generation |
+| Claude Sonnet | Balanced | $3 / $15 per M | Daily work, most tasks |
+| Claude Opus | Deep | $15 / $75 per M | Architecture, security, complex |
+
+### Task-to-Model Routing
+
+```python
+TASK_ROUTING = {
+    "simple_generation": "ollama/qwen2.5-coder:7b",
+    "quick_fix": "claude/haiku",
+    "code_review": "claude/sonnet",
+    "standard_work": "claude/sonnet",
+    "architecture": "claude/opus",
+    "security_audit": "claude/opus",
+    "complex_analysis": "claude/opus",
+}
+```
+
+### Local Models (Ollama - Current)
 
 | Model | Size | Agents | Specialty |
 |-------|------|--------|-----------|
@@ -602,9 +738,9 @@ POST /api/self-questioning/schedules         # Create schedule
 
 **Benefits**:
 - ✅ Complete privacy (no data leaves your machine)
-- ✅ No API costs
+- ✅ Cost control (local = free)
 - ✅ Offline capability
-- ✅ Consistent performance
+- ✅ Smart routing (complexity → optimal model)
 
 ---
 
@@ -700,14 +836,28 @@ curl http://localhost:8000/api/workflows/statistics
 
 ## 📚 Related Documentation
 
+### Architecture Documentation
+- **Main Overview**: [ARCHITECTURE.md](ARCHITECTURE.md)
+- **Self-Evolution**: [docs/architecture/self-evolution.md](docs/architecture/self-evolution.md)
+- **Project Profiles**: [docs/architecture/project-profiles.md](docs/architecture/project-profiles.md)
+- **Validation Framework**: [docs/architecture/validation-framework.md](docs/architecture/validation-framework.md)
+- **Quality Gates**: [docs/architecture/quality-gates.md](docs/architecture/quality-gates.md)
+- **A/B Testing**: [docs/architecture/ab-testing.md](docs/architecture/ab-testing.md)
+- **LLM Council**: [docs/architecture/llm-council.md](docs/architecture/llm-council.md)
+- **Continuous Evolution**: [docs/architecture/continuous-evolution.md](docs/architecture/continuous-evolution.md)
+- **Multi-Stack Platform**: [docs/architecture/multi-stack-platform.md](docs/architecture/multi-stack-platform.md)
+
+### Agent Implementation
 - **Full Agent Specifications**: `backend/agents/AGENT_SPECIFICATIONS.md`
-- **Integration Guide**: `backend/agents/INTEGRATION_GUIDE.md`  
+- **Integration Guide**: `backend/agents/INTEGRATION_GUIDE.md`
 - **LLM Configuration**: `backend/agents/LLM_CONFIGURATION.md`
-- **Architecture Details**: `ARCHITECTURE.md`
-- **Planning & Roadmap**: `ROADMAP.md`
+
+### Planning
+- **Roadmap**: [ROADMAP.md](ROADMAP.md)
+- **Project Status**: [PROJECT_STATUS_SUMMARY.md](PROJECT_STATUS_SUMMARY.md)
 
 ---
 
-**Last Updated**: 2025-11-16  
-**Version**: 2.0 (Consolidated)  
-**Status**: ✅ Complete - All 10 agents operational
+**Last Updated**: 2025-11-26
+**Version**: 3.0 (3-Layer Architecture)
+**Status**: ✅ Complete - 10 Core Agents + Platform Agents Planned

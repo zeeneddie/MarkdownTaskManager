@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     """Application settings"""
 
     # Application
-    APP_NAME: str = "Markdown Task Manager - Agentic System"
+    APP_NAME: str = "Multi-Stack AI Agent Platform - Agentic System"
     VERSION: str = "2.0.0"
     ENVIRONMENT: str = "development"
     DEBUG: bool = True

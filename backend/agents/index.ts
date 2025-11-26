@@ -1,5 +1,5 @@
 /**
- * Markdown Task Manager - Agent System
+ * Multi-Stack AI Agent Platform - Agent System
  *
  * Main entry point for the KaibanJS agent orchestration system.
  * This system uses 8 specialized AI agents to analyze repositories,
@@ -29,7 +29,7 @@ const env = {
   OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
 };
 
-console.log('🤖 Markdown Task Manager - Agent System');
+console.log('🤖 Multi-Stack AI Agent Platform - Agent System');
 console.log('========================================');
 console.log('');
 console.log('Configured Agents:');

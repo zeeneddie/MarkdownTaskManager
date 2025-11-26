@@ -1,6 +1,6 @@
 "use strict";
 /**
- * Agent Types for Markdown Task Manager
+ * Agent Types for Multi-Stack AI Agent Platform
  *
  * This file defines the 10 specialized agents that will handle
  * different aspects of project analysis and task breakdown.

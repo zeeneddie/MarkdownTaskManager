@@ -2,7 +2,7 @@
 
 > **[Back to README](../README.md)**
 
-This guide covers all installation options for Markdown Task Manager.
+This guide covers all installation options for Multi-Stack AI Agent Platform.
 
 ---
 
@@ -236,7 +236,7 @@ open /path/to/task-manager.html
 ```bash
 # Use GitHub CLI
 gh issue list --state all --json number,title,body,labels
-# Convert to Markdown Task Manager format
+# Convert to Multi-Stack AI Agent Platform format
 ```
 
 **From Notion/Obsidian:**

@@ -1,7 +1,7 @@
 {
   "name": "markdown-task-manager-tests",
   "version": "1.0.0",
-  "description": "E2E tests for Markdown Task Manager using Playwright",
+  "description": "E2E tests for Multi-Stack AI Agent Platform using Playwright",
   "scripts": {
     "test": "playwright test",
     "test:headed": "playwright test --headed",

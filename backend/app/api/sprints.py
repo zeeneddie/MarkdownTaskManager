@@ -24,6 +24,13 @@ async def get_active_sprint(db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No active sprint found")
     return sprint
 
+@router.get("/backlog/items")
+async def get_backlog_items(db: AsyncSession = Depends(get_db)):
+    """Get all items not assigned to any sprint (backlog)"""
+    from app.crud import item as item_crud
+    items = await item_crud.get_unassigned_items(db)
+    return items
+
 @router.get("/{sprint_id}", response_model=Sprint)
 async def get_sprint(sprint_id: int, db: AsyncSession = Depends(get_db)):
     """Get a specific sprint by ID"""
@@ -145,13 +152,6 @@ async def get_sprint_items(sprint_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Sprint not found")
 
     items = await item_crud.get_items_by_sprint(db, sprint_id)
-    return items
-
-@router.get("/backlog/items")
-async def get_backlog_items(db: AsyncSession = Depends(get_db)):
-    """Get all items not assigned to any sprint (backlog)"""
-    from app.crud import item as item_crud
-    items = await item_crud.get_unassigned_items(db)
     return items
 
 @router.post("/{sprint_id}/assign")

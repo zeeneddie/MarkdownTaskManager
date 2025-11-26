@@ -15,9 +15,10 @@ logger = logging.getLogger(__name__)
 class MultiFileProjectParser:
     """Parse project from nested markdown file structure"""
 
-    def __init__(self, project_root: Path):
+    def __init__(self, project_root: Path, project_name: str = "MarkdownTaskManager"):
         self.project_root = Path(project_root)
-        self.epics_dir = self.project_root / "Projecten" / "MarkdownTaskManager"
+        self.project_name = project_name
+        self.epics_dir = self.project_root / "Projecten" / project_name
 
     def parse_project(self) -> Dict:
         """

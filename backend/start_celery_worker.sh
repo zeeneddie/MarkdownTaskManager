@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Start Celery Worker for Markdown Task Manager
+# Start Celery Worker for Multi-Stack AI Agent Platform
 #
 # Usage:
 #   ./start_celery_worker.sh
@@ -15,7 +15,7 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 echo -e "${GREEN}======================================${NC}"
-echo -e "${GREEN}Markdown Task Manager - Celery Worker${NC}"
+echo -e "${GREEN}Multi-Stack AI Agent Platform - Celery Worker${NC}"
 echo -e "${GREEN}======================================${NC}"
 echo ""
 

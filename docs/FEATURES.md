@@ -2,7 +2,7 @@
 
 > **[Back to README](../README.md)**
 
-Complete guide to all Markdown Task Manager features.
+Complete guide to all Multi-Stack AI Agent Platform features.
 
 ---
 

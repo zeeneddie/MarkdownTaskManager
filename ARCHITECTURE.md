@@ -1,2444 +1,302 @@
-# ARCHITECTURE - Agentic Task Management System
+# ARCHITECTURE - Multi-Stack AI Agent Platform
 
-**Datum:** 2025-11-25
-**Versie:** 3.3 (Week 51 A/B Testing Framework)
-**Status:** Fase 1-3 Compleet ✅ | Week 51 A/B Testing ✅ | 12 Dashboards | 153 Endpoints | 42 Tables
-
----
-
-## 🎯 Visie in één zin
-
-**We transformeren jouw bestaande Markdown Task Manager in een AI-powered systeem waar agents automatisch werk analyseren, opdelen, schatten en uitvoeren - terwijl jij gewoon in project.md blijft werken.**
+**Datum:** 2025-11-26
+**Versie:** 4.0 (Multi-Stack Platform Vision)
+**Status:** Fase 1-3 Compleet | Week 52 LLM Council | Week 53 Evolution + ProjectProfile | Week 54+ Multi-Stack Platform
 
 ---
 
-## 🏗️ Architectuur: De Lagen
+## Visie in een zin
+
+**Een AI-powered multi-stack platform waar agents automatisch werk analyseren, opdelen, schatten en uitvoeren - terwijl jij gewoon in project.md blijft werken.**
+
+---
+
+## Architectuur: De Lagen
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  👤 MENS (Jij)                                              │
-│  - Editeert project.md in vim/VSCode                        │
-│  - Gebruikt project-manager.html UI                         │
-│  - Beoordeelt agent voorstellen                             │
-└─────────────────────────────────────────────────────────────┘
-                            ↕
-┌─────────────────────────────────────────────────────────────┐
-│  📄 MARKDOWN (Bron van Waarheid)                            │
-│  - project.md = Epic → Feature → Story → Task              │
-│  - Git versie controle                                      │
-│  - Mens-leesbaar en editeerbaar                             │
-└─────────────────────────────────────────────────────────────┘
-                            ↕ (Sync Engine)
-┌─────────────────────────────────────────────────────────────┐
-│  🗄️ DATABASE (Query & Analytics)                            │
-│  - PostgreSQL met hierarchische structuur                   │
-│  - Snel doorzoekbaar voor agents                            │
-│  - Metrics en rapportages                                   │
-└─────────────────────────────────────────────────────────────┘
-                            ↕
-┌─────────────────────────────────────────────────────────────┐
-│  🔌 BACKEND API (FastAPI) ✅ KLAAR                          │
-│  - 144 REST endpoints (Week 49 verified)                    │
-│  - WebSocket voor real-time updates                         │
-│  - Authentification (JWT)                                   │
-└─────────────────────────────────────────────────────────────┘
-                            ↕
-┌─────────────────────────────────────────────────────────────┐
-│  🤖 AGENTS (De Intelligentie)                               │
-│  - 10 gespecialiseerde agents                               │
-│  - KaibanJS orchestratie                                    │
-│  - 100% Local (Ollama) - $0 API costs                      │
-└─────────────────────────────────────────────────────────────┘
-                            ↕
-┌─────────────────────────────────────────────────────────────┐
-│  🧬 SELF-EVOLUTION LAYER (NIEUW - Week 17-26)               │
-│  - Self-Questioning: Automatische taak generatie            │
-│  - Self-Navigating: Ervaring-geleide exploratie             │
-│  - Self-Attributing: Credit assignment & outcome analysis   │
-│  - Experience Store: ChromaDB (5 nieuwe collections)        │
-└─────────────────────────────────────────────────────────────┘
-                            ↕
-┌─────────────────────────────────────────────────────────────┐
-│  🧠 INTELLIGENCE LAYER                                       │
-│  - Function Point Calculator (IFPUG) ✅                     │
-│  - Story Point Estimator (PERT) ✅                          │
-│  - Work Type Router (9 workflows) ✅                        │
-│  - Quality Gates System ✅                                  │
-└─────────────────────────────────────────────────────────────┘
++---------------------------------------------------------------------+
+|  MENS (Jij)                                                          |
+|  - Editeert project.md in vim/VSCode                                 |
+|  - Gebruikt project-manager.html UI                                  |
+|  - Beoordeelt agent voorstellen                                      |
++---------------------------------------------------------------------+
+                            |
++---------------------------------------------------------------------+
+|  MARKDOWN (Bron van Waarheid)                                        |
+|  - project.md = Epic -> Feature -> Story -> Task                     |
+|  - Git versie controle                                               |
+|  - Mens-leesbaar en editeerbaar                                      |
++---------------------------------------------------------------------+
+                            | (Sync Engine)
++---------------------------------------------------------------------+
+|  DATABASE (Query & Analytics)                                        |
+|  - PostgreSQL met hierarchische structuur                            |
+|  - Snel doorzoekbaar voor agents                                     |
+|  - Metrics en rapportages                                            |
++---------------------------------------------------------------------+
+                            |
++---------------------------------------------------------------------+
+|  BACKEND API (FastAPI)                                               |
+|  - 196+ REST endpoints                                               |
+|  - WebSocket voor real-time updates                                  |
+|  - Authentification (JWT)                                            |
++---------------------------------------------------------------------+
+                            |
++---------------------------------------------------------------------+
+|  3-LAAGS AGENT ARCHITECTUUR (Multi-Stack Platform)                   |
+|                                                                      |
+|  Laag 1: Core Agents (10 - Cross-Stack)                              |
+|  - Felix, Quinn, Betty, Eliza, Diana, Marcus, Tessa, Miguel,         |
+|    Peter, Paul                                                       |
+|                                                                      |
+|  Laag 2: Stack Agent Templates (Per Project)                         |
+|  - BackendDev_{stack}, FrontendDev_{stack}, CodeReviewer_{stack},    |
+|    SecurityAuditor_{stack}, Tester_{stack}                           |
+|                                                                      |
+|  Laag 3: Platform Agents (Meta-niveau)                               |
+|  - ObservabilityEngineer, PromptEngineer                             |
+|  - (Later: IncidentResponder, ContextManager)                        |
++---------------------------------------------------------------------+
+                            |
++---------------------------------------------------------------------+
+|  MULTI-MODEL LAYER (Provider Registry)                               |
+|  - Ollama (Local): qwen2.5-coder, deepseek-r1, codellama, mistral   |
+|  - Claude CLI: Haiku (fast), Sonnet (balanced), Opus (deep)         |
+|  - Model Router: Task complexity -> Optimal model                    |
++---------------------------------------------------------------------+
+                            |
++---------------------------------------------------------------------+
+|  INTELLIGENCE LAYER                                                  |
+|  - Function Point Calculator (IFPUG)                                 |
+|  - Story Point Estimator (PERT)                                      |
+|  - Work Type Router (9 workflows)                                    |
+|  - Quality Gates System (42 validation rules)                        |
+|  - LLM Council (6-model consensus)                                   |
++---------------------------------------------------------------------+
+                            |
++---------------------------------------------------------------------+
+|  OBSERVABILITY LAYER (Agent Behavior Monitoring)                     |
+|  - Action logging (elke agent actie)                                 |
+|  - Decision tracing (welke keuzes, waarom)                           |
+|  - Performance metrics (success rate, duration, cost)                |
+|  - Pattern detection (wat werkt, wat niet)                           |
++---------------------------------------------------------------------+
+                            |
++---------------------------------------------------------------------+
+|  SELF-EVOLUTION LAYER                                                |
+|  - Self-Questioning: Automatische taak generatie                     |
+|  - Self-Navigating: Ervaring-geleide exploratie                      |
+|  - Self-Attributing: Credit assignment & outcome analysis            |
+|  - Experience Store: ChromaDB (5 collections)                        |
++---------------------------------------------------------------------+
 ```
 
 ---
 
-## 🧬 SELF-EVOLUTION LAYER ARCHITECTURE (Weeks 17-26)
+## Architectuur Documenten (Detail)
 
-**Bron:** github.com/zeeneddie/AgentEvolver
-**Status:** Goedgekeurd 2025-11-21
-**Impact:** Transformeert agents van statisch naar zelf-verbeterend
-
-### Design Filosofie
-
-**"Learn, Adapt, Evolve"** - Agents verbeteren zichzelf continu op basis van:
-1. Ervaring uit eerdere taken
-2. Analyse van successen en failures
-3. Zelf-gegenereerde trainingstaken
-
-### High-Level Architectuur
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                     SELF-EVOLUTION SYSTEM                           │
-│                                                                     │
-│  ┌──────────────────┐   ┌──────────────────┐   ┌────────────────┐  │
-│  │ SELF-QUESTIONING │   │ SELF-NAVIGATING  │   │ SELF-          │  │
-│  │                  │   │                  │   │ ATTRIBUTING    │  │
-│  │ • Task Generator │   │ • Experience     │   │ • Outcome      │  │
-│  │ • Environment    │   │   Consultant     │   │   Tracker      │  │
-│  │   Explorer       │   │ • Pattern        │   │ • Attribution  │  │
-│  │ • Training       │   │   Matcher        │   │   Processor    │  │
-│  │   Pipeline       │   │ • Relevance      │   │ • Credit       │  │
-│  │                  │   │   Scorer         │   │   Assigner     │  │
-│  └────────┬─────────┘   └────────┬─────────┘   └───────┬────────┘  │
-│           │                      │                      │           │
-│           └──────────────────────┼──────────────────────┘           │
-│                                  ↓                                  │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │                    EXPERIENCE STORE                          │  │
-│  │  ChromaDB Collections:                                       │  │
-│  │  • agent_experiences    (cross-task learnings)              │  │
-│  │  • successful_patterns  (wat werkte goed?)                  │  │
-│  │  • failure_analysis     (wat ging fout en waarom?)          │  │
-│  │  • estimation_accuracy  (schatting vs werkelijk)            │  │
-│  │  • quality_metrics      (code quality over tijd)            │  │
-│  └──────────────────────────────────────────────────────────────┘  │
-│                                  ↓                                  │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │                    POLICY EVOLVER                            │  │
-│  │  • A/B Testing Framework     • Safety Guardrails            │  │
-│  │  • Gradual Rollout          • Automatic Rollback            │  │
-│  │  • Performance Monitoring   • Evolution Dashboard           │  │
-│  └──────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### Kern Modules
-
-#### 1. Self-Questioning Module (Automatische Taak Generatie)
-
-**Doel:** Agent genereert zelf trainingstaken door omgeving te verkennen
-
-```typescript
-interface SelfQuestioningModule {
-  // Genereer trainingstaken gebaseerd op gaps in kennis
-  generateTrainingTasks(agent: Agent): Promise<TrainingTask[]>;
-
-  // Verken environment voor edge cases
-  exploreEnvironment(context: WorkflowContext): Promise<EdgeCase[]>;
-
-  // Training pipeline voor zelf-verbetering
-  runTrainingPipeline(tasks: TrainingTask[]): Promise<TrainingResult>;
-}
-```
-
-**Voorbeelden per Agent:**
-| Agent | Self-Questioning Voorbeeld |
-|-------|---------------------------|
-| Felix | Genereert edge-case specificaties |
-| Quinn | Creëert security test scenarios |
-| Betty | Simuleert nieuwe bug types |
-| Eliza | Test schattingen op historische data |
-
-#### 2. Self-Navigating Module (Ervaring-Geleide Exploratie)
-
-**Doel:** Hergebruik van cross-task kennis voor betere beslissingen
-
-```typescript
-interface SelfNavigatingModule {
-  // Raadpleeg ervaring voor huidige context
-  consultExperience(context: TaskContext): Promise<ExperienceGuidance>;
-
-  // Pattern matching tegen historische successen
-  matchPatterns(input: WorkflowInput): Promise<PatternMatch[]>;
-
-  // Bereken relevantie score
-  scoreRelevance(experience: Experience, context: Context): number;
-}
-```
-
-**Experience Consultation Flow:**
-```
-Nieuwe Taak → Query Experience Store → Rank by Relevance →
-→ Extract Guidance → Apply to Current Task → Log Outcome
-```
-
-#### 3. Self-Attributing Module (Credit Assignment)
-
-**Doel:** Identificeer welke stappen tot succes/falen leidden
-
-```typescript
-interface SelfAttributingModule {
-  // Track workflow outcome
-  trackOutcome(workflow: WorkflowExecution): Promise<OutcomeRecord>;
-
-  // Analyseer causale bijdrage van elke stap
-  analyzeAttribution(outcome: OutcomeRecord): Promise<Attribution>;
-
-  // Wijs credit toe aan specifieke acties
-  assignCredit(attribution: Attribution): Promise<CreditAssignment>;
-}
-```
-
-**Attribution Metrics:**
-| Metric | Beschrijving |
-|--------|-------------|
-| Success Contribution | Welke stappen droegen bij aan succes? |
-| Failure Root Cause | Waar ging het mis? |
-| Estimation Delta | Verschil tussen schatting en werkelijk |
-| Quality Impact | Effect op code quality |
-
-#### 4. Self-Questioning Module (Training Task Generation) - Week 23-24 ✅
-
-**Doel:** Agents genereren hun eigen training tasks op basis van prestatie-analyse
-
-```typescript
-interface SelfQuestioningModule {
-  // Generate questions from performance gaps
-  generateQuestions(input: QuestionInput): Promise<SelfQuestion[]>;
-
-  // Create synthetic training tasks from questions
-  generateTrainingTasks(input: TaskInput): Promise<SyntheticTask[]>;
-
-  // Discover edge cases from failure patterns
-  discoverEdgeCases(input: EdgeCaseInput): Promise<EdgeCase[]>;
-
-  // Run complete training session
-  runTrainingSession(config: TrainingConfig): Promise<TrainingResult>;
-}
-```
-
-**Question Categories:**
-| Category | Beschrijving | Voorbeeld |
-|----------|-------------|-----------|
-| `performance_gap` | Waar presteer ik onder? | "Waarom mis ik edge cases?" |
-| `edge_case` | Welke edge cases mis ik? | "Welke inputs breken dit?" |
-| `knowledge_gap` | Wat weet ik niet? | "Hoe werkt X bij microservices?" |
-| `skill_improvement` | Hoe kan ik beter? | "Welke patterns verbeteren dit?" |
-| `pattern_discovery` | Welke patterns werken? | "Wat werkte bij vergelijkbaar?" |
-
-**Training Pipeline (5 Stages):**
-```
-DATA_COLLECTION → SELF_QUESTIONING → TASK_GENERATION → TRAINING_EXECUTION → EVALUATION
-```
-
-**Training Modes:**
-| Mode | Questions | Tasks | Gebruik |
-|------|-----------|-------|---------|
-| Balanced | 5-10 | 3-5 | Steady improvement |
-| Intensive | 10-20 | 8-15 | Rapid skill building |
-| Focused | 2-5 | 1-3 | Targeted gap closure |
-
-### Data Model
-
-#### Experience Record
-```python
-class ExperienceRecord(BaseModel):
-    id: UUID
-    agent_id: str                    # Felix, Quinn, etc.
-    workflow_type: WorkType          # NEW_FEATURE, MAINTENANCE, etc.
-    task_context: Dict[str, Any]     # Input parameters
-    actions_taken: List[Action]      # Stappen uitgevoerd
-    outcome: Outcome                 # SUCCESS, PARTIAL, FAILURE
-    outcome_metrics: Dict[str, float] # Quality scores, time, etc.
-    attribution: Attribution         # Credit assignment
-    embedding: List[float]           # Voor semantic search
-    created_at: datetime
-    project_id: Optional[UUID]       # Link naar project
-```
-
-#### Pattern Record
-```python
-class PatternRecord(BaseModel):
-    id: UUID
-    pattern_type: str                # "architecture", "refactoring", etc.
-    pattern_name: str                # Human-readable naam
-    context_requirements: Dict       # Wanneer toepasbaar?
-    success_rate: float              # Historische success rate
-    usage_count: int                 # Hoe vaak gebruikt?
-    agents_successful: List[str]     # Welke agents gebruikten dit?
-    embedding: List[float]           # Voor semantic search
-```
-
-### Autonomie Levels (Balanced Gekozen)
-
-| Level | Beschrijving | Guard Rails |
-|-------|--------------|-------------|
-| **Conservatief** | Alleen menselijk-goedgekeurde verbeteringen | Human approval voor elke wijziging |
-| **Balanced** ✅ | Automatisch binnen guardrails | Automatic binnen thresholds, human voor grote wijzigingen |
-| **Agressief** | Volledig autonoom leren | Minimal oversight, alleen alerts bij anomalieën |
-
-### Safety Guardrails (Balanced Mode)
-
-```typescript
-const SAFETY_GUARDRAILS = {
-  // Maximale afwijking van baseline performance
-  maxPerformanceDelta: 0.15,  // ±15%
-
-  // Minimum confidence voor automatische toepassing
-  minConfidenceThreshold: 0.8,
-
-  // Rollback trigger
-  rollbackThreshold: {
-    successRateDropPercent: 10,
-    qualityScoreDropPercent: 15,
-    estimationErrorIncreasePercent: 20,
-  },
-
-  // Human approval vereist voor:
-  requireHumanApproval: [
-    'policy_changes',        // Wijzigingen in agent gedrag
-    'new_patterns',          // Nieuwe patterns toevoegen
-    'cross_workflow_rules',  // Regels die meerdere workflows raken
-  ],
-
-  // Automatic allowed voor:
-  automaticAllowed: [
-    'experience_logging',    // Loggen van ervaringen
-    'pattern_matching',      // Raadplegen van patterns
-    'outcome_tracking',      // Bijhouden van resultaten
-    'minor_weight_updates',  // Kleine gewichtsaanpassingen
-  ],
-};
-```
-
-### Integration met Bestaande Agents
-
-**Alle 10 agents krijgen evolution capabilities:**
-
-```typescript
-interface EvolvingAgent extends Agent {
-  // Bestaande capabilities
-  name: string;
-  role: string;
-  llm: OllamaModel;
-
-  // NIEUW: Evolution capabilities
-  evolution: {
-    // Raadpleeg ervaring voor beslissingen
-    consultExperience(context: TaskContext): Promise<Guidance>;
-
-    // Log outcome na taak completion
-    logOutcome(result: TaskResult): Promise<void>;
-
-    // Ontvang feedback voor verbetering
-    receiveFeedback(attribution: Attribution): Promise<void>;
-
-    // Performance metrics
-    getPerformanceMetrics(): PerformanceMetrics;
-  };
-}
-```
-
-### API Endpoints (Week 17-26)
-
-| Endpoint | Method | Beschrijving |
-|----------|--------|-------------|
-| `/api/evolution/experience` | POST | Log nieuwe ervaring |
-| `/api/evolution/experience/search` | POST | Zoek relevante ervaringen |
-| `/api/evolution/patterns` | GET | Lijst succesvolle patterns |
-| `/api/evolution/attribution` | POST | Log outcome attribution |
-| `/api/evolution/metrics` | GET | Evolution metrics dashboard |
-| `/api/evolution/health` | GET | System health check |
-
-### Success Metrics
-
-| Metric | Baseline | Target | Measurement |
-|--------|----------|--------|-------------|
-| Agent Success Rate | Huidige rate | +15% | Before/after comparison |
-| Estimation Accuracy | Huidige accuracy | +20% | Predicted vs actual hours |
-| Code Quality Score | Huidige score | +10% | Quality gate scores |
-| Experience Relevance | N/A | >80% | Semantic similarity score |
-| Self-generated Tasks | 0 | >100/week | Task generation count |
+| Document | Beschrijving | Status |
+|----------|--------------|--------|
+| **[Self-Evolution Layer](./docs/architecture/self-evolution.md)** | AgentEvolver integratie, ChromaDB, self-questioning | Week 17-26 |
+| **[Project Profiles](./docs/architecture/project-profiles.md)** | Dynamic agent configuration per project size/focus | Week 53 COMPLETE |
+| **[Validation Framework](./docs/architecture/validation-framework.md)** | 5-fase validatie pipeline, iteratie loops | Week 17-26 |
+| **[Quality Gates System](./docs/architecture/quality-gates.md)** | 28 checks, 8 categorien, pre-commit automation | Week 10-12 COMPLETE |
+| **[A/B Testing Framework](./docs/architecture/ab-testing.md)** | Multi-variant experimentation, statistical analysis | Week 51 COMPLETE |
+| **[LLM Council](./docs/architecture/llm-council.md)** | Multi-model consensus, 3-stage process | Week 52 COMPLETE |
+| **[Continuous Evolution](./docs/architecture/continuous-evolution.md)** | Trend analysis, gradual rollout, auto-scheduling | Week 53 COMPLETE |
+| **[Multi-Stack Platform](./docs/architecture/multi-stack-platform.md)** | Provider registry, stack templates, observability | Week 54-58 PLANNED |
 
 ---
 
-## ✅ VALIDATION FRAMEWORK ARCHITECTURE (Weeks 17-26)
+## Multi-Stack Platform Vision (Week 54+)
 
-**Bron:** github.com/zeeneddie/context-engineering-intro
-**Status:** Goedgekeurd 2025-11-21
-**Impact:** Transformeert code generatie van "hopelijk werkend" naar "gegarandeerd werkend"
-**Strategie:** Parallel implementatie met AgentEvolver (0 extra weken)
+### Nieuwe Architectuur Componenten
 
-### Design Filosofie
-
-> **"Als /validate slaagt, moet de gebruiker 100% vertrouwen hebben dat de applicatie correct werkt in productie."**
-
-**Kernprincipes:**
-1. **Iteratie tot Succes** - Agents fixen automatisch tot validatie slaagt
-2. **Early Failure** - Stop vroeg bij kritieke fouten
-3. **Comprehensive Coverage** - 5 fasen dekken alle aspecten
-4. **Configurable per Workflow** - Elk workflow type heeft eigen validatie regels
-
-### High-Level Architectuur
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                     VALIDATION FRAMEWORK                             │
-│                                                                     │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │                    5-PHASE VALIDATION PIPELINE                │  │
-│  │                                                                │  │
-│  │  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐      │  │
-│  │  │ PHASE 1│→│ PHASE 2│→│ PHASE 3│→│ PHASE 4│→│ PHASE 5│      │  │
-│  │  │LINTING │ │ TYPE   │ │ STYLE  │ │ UNIT   │ │ E2E    │      │  │
-│  │  │        │ │ CHECK  │ │ CHECK  │ │ TESTS  │ │ TESTS  │      │  │
-│  │  │ruff    │ │mypy    │ │black   │ │pytest  │ │API+DB  │      │  │
-│  │  │eslint  │ │tsc     │ │prettier│ │jest    │ │curl    │      │  │
-│  │  └────────┘ └────────┘ └────────┘ └────────┘ └────────┘      │  │
-│  └──────────────────────────────────────────────────────────────┘  │
-│                                ↓                                   │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │                    ITERATION LOOP                             │  │
-│  │                                                                │  │
-│  │   Generate Code → Validate → Failed? → Fix → Repeat           │  │
-│  │        ↑                        │                              │  │
-│  │        └────────────────────────┘                              │  │
-│  │                        (max 3 iterations)                      │  │
-│  └──────────────────────────────────────────────────────────────┘  │
-│                                ↓                                   │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │                    WORKFLOW INTEGRATION                       │  │
-│  │                                                                │  │
-│  │  NEW_FEATURE → Level 1-3    |  MAINTENANCE → Level 1-2        │  │
-│  │  BUG → Level 2-3 (regr.)    |  QUALITY_AUDIT → Level 1 only   │  │
-│  │  ENHANCEMENT → Level 1-3    |  MIGRATION → Level 3 (E2E)      │  │
-│  │  QUALITY_IMPROVEMENT → 1-2  |  TESTING → Level 2 (meta)       │  │
-│  │  PROJECT_DEFINITION → 1     |                                 │  │
-│  └──────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### Kern Modules
-
-#### 1. ValidationService (Python Backend)
-
-**Locatie:** `backend/app/services/validation_service.py`
+#### 1. Provider Registry (Multi-LLM Abstractie)
 
 ```python
-class ValidationService:
-    """5-Phase Validation Pipeline"""
+class LLMProvider:
+    name: str           # "ollama", "claude", "openai"
+    tier: str           # "free", "fast", "balanced", "deep"
+    cost_input: float   # per million tokens
+    cost_output: float  # per million tokens
+    is_active: bool
+    config: Dict        # model-specific settings
 
-    async def run_full_validation(
-        self,
-        project_path: str,
-        phases: List[ValidationPhase] = None,
-        config: ValidationConfig = None
-    ) -> ValidationResult:
-        """Run all or selected validation phases"""
-
-        results = ValidationResult()
-
-        for phase in phases or ValidationPhase.all():
-            phase_result = await self._run_phase(phase, project_path)
-            results.add(phase, phase_result)
-
-            if config.stop_on_first_failure and not phase_result.passed:
-                return results
-
-        return results
-
-    async def iterate_until_valid(
-        self,
-        code: str,
-        context: WorkflowContext,
-        max_iterations: int = 3
-    ) -> Tuple[str, ValidationResult]:
-        """Iterate on code until validation passes"""
-
-        for i in range(max_iterations):
-            result = await self.run_full_validation(code)
-
-            if result.all_passed:
-                return code, result
-
-            # Request fix from agent
-            code = await self._request_fix(code, result.errors, context)
-
-        raise ValidationMaxIterationsExceeded(max_iterations, result)
-```
-
-#### 2. ValidationLoop (TypeScript Agents)
-
-**Locatie:** `backend/agents/lib/validationLoop.ts`
-
-```typescript
-interface ValidationLoop {
-  // Configuration
-  maxIterations: number;        // Default: 3
-  phases: ValidationPhase[];    // Which phases to run?
-  stopOnFirstFailure: boolean;  // Early exit?
-
-  // Core loop
-  async validateAndIterate(
-    code: string,
-    context: WorkflowContext
-  ): Promise<ValidatedCode>;
-
-  // Per-phase executors
-  async runLinting(code: string): Promise<LintResult>;
-  async runTypeCheck(code: string): Promise<TypeCheckResult>;
-  async runStyleCheck(code: string): Promise<StyleResult>;
-  async runUnitTests(code: string): Promise<TestResult>;
-  async runE2ETests(code: string): Promise<E2EResult>;
-
-  // Fix request (to LLM)
-  async requestFix(
-    code: string,
-    errors: ValidationError[]
-  ): Promise<string>;
+# Model Routing Strategy
+TASK_TO_MODEL = {
+    "simple_generation": "ollama/qwen2.5-coder:7b",    # Free, local
+    "quick_fix": "claude/haiku",                       # $1/$5 per M
+    "standard_work": "claude/sonnet",                  # $3/$15 per M
+    "architecture": "claude/opus",                     # $15/$75 per M
+    "security_audit": "claude/opus",
+    "complex_analysis": "claude/opus",
 }
 ```
 
-### Data Models
-
-#### ValidationResult
+#### 2. Stack Agent Factory
 
 ```python
-class ValidationResult(BaseModel):
-    id: UUID
-    workflow_id: Optional[UUID]
-    phases_executed: List[ValidationPhase]
-    results: Dict[ValidationPhase, PhaseResult]
-    all_passed: bool
-    iteration_count: int
-    total_duration_ms: int
-    created_at: datetime
-
-class PhaseResult(BaseModel):
-    phase: ValidationPhase
-    passed: bool
-    duration_ms: int
-    errors: List[ValidationError]
-    warnings: List[ValidationWarning]
-    metrics: Dict[str, Any]  # coverage, etc.
-```
-
-#### ValidationConfig (Per Workflow)
-
-```python
-class ValidationConfig(BaseModel):
-    workflow_type: WorkType
-    phases: List[ValidationPhase]
-    max_iterations: int = 3
-    stop_on_first_failure: bool = True
-    required_coverage: float = 0.80
-    regression_test_required: bool = False
-    report_only: bool = False  # For QUALITY_AUDIT
-```
-
-### Per-Workflow Validation Rules
-
-| Workflow | Phases | Max Iter | Coverage | Special |
-|----------|--------|----------|----------|---------|
-| **NEW_FEATURE** | 1-5 (all) | 3 | 80% | - |
-| **MAINTENANCE** | 1-2, 4 | 2 | 70% | - |
-| **BUG** | 1, 4-5 | 3 | - | Regression test required |
-| **QUALITY_AUDIT** | 1-3 | 1 | - | Report only |
-| **ENHANCEMENT** | 1-5 | 3 | 80% | - |
-| **MIGRATION** | 5 only | 2 | - | E2E critical |
-| **QUALITY_IMPROVEMENT** | 1-2, 4 | 2 | 75% | - |
-| **TESTING** | 4 | 1 | - | Meta-validation |
-| **PROJECT_DEFINITION** | 1 | 1 | - | Template validation |
-
-### Integration met AgentEvolver
-
-**Perfecte Synergie!** Validation Framework integreert naadloos met AgentEvolver:
-
-```typescript
-interface ValidationExperience extends ExperienceRecord {
-  // Inherited from ExperienceRecord
-  agent_id: string;
-  workflow_type: WorkType;
-
-  // Validation-specific
-  validation_attempts: number;
-  failed_phases: ValidationPhase[];
-  fix_strategies_used: FixStrategy[];
-  final_result: 'SUCCESS' | 'MAX_ITERATIONS' | 'MANUAL';
-
-  // Learning
-  lessons_learned: string[];
-  common_error_patterns: ErrorPattern[];
+# Template-based agent instantiation per tech-stack
+STACK_AGENTS = {
+    "python": ["BackendDev_py", "CodeRev_py", "SecAudit_py", "Tester_py"],
+    "javascript": ["BackendDev_js", "FrontendDev_js", "CodeRev_js", "SecAudit_js", "Tester_js"],
+    "go": ["BackendDev_go", "CodeRev_go", "SecAudit_go", "Tester_go"],
+    "rust": ["BackendDev_rs", "CodeRev_rs", "SecAudit_rs", "Tester_rs"],
 }
+
+def create_stack_agent(stack: str, role: str, project_id: UUID) -> StackAgent:
+    """Instantiate stack-specific agent from template."""
+    template = AGENT_TEMPLATES[role]
+    return StackAgent(
+        name=f"{role}_{stack}",
+        stack=stack,
+        project_id=project_id,
+        prompt_template=template.get_prompt(stack),
+        model=template.get_model(stack),
+        capabilities=template.get_capabilities(stack),
+    )
 ```
 
-**How they work together:**
-
-| AgentEvolver | Validation Framework |
-|--------------|---------------------|
-| Self-Questioning | Generate validation test cases |
-| Self-Navigating | Learn from validation successes |
-| Self-Attributing | Track which validations fail |
-
-### API Endpoints
-
-| Endpoint | Method | Beschrijving |
-|----------|--------|-------------|
-| `/api/validation/run` | POST | Run validation pipeline |
-| `/api/validation/phases` | GET | List available phases |
-| `/api/validation/history` | GET | Validation history |
-| `/api/validation/iterate` | POST | Run with iteration loop |
-| `/api/validation/config` | GET | Get workflow config |
-| `/api/validation/config` | PUT | Update workflow config |
-
-### Success Metrics
-
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| First-Time Success | >80% | Code passes first try |
-| Iteration Success | >95% | Code passes within 3 iterations |
-| Unit Test Coverage | >80% | pytest/jest coverage |
-| E2E Coverage | >70% | Integration test coverage |
-| Validation Time | <5 min | Full pipeline execution |
-
----
-
-## 🛡️ QUALITY GATES SYSTEM ARCHITECTURE (Weeks 10-12)
-
-### High-Level Architectuur
-
-**Design Filosofie:** "By Design" Quality Approach - Verschuif kwaliteit naar links in de ontwikkelcyclus
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                     QUALITY GATES SYSTEM                            │
-│                                                                     │
-│  ┌──────────────────┐    ┌──────────────────┐    ┌──────────────┐ │
-│  │  PRE-COMMIT      │    │  QUALITY         │    │  QUALITY     │ │
-│  │  AUTOMATION      │───▶│  GATE            │───▶│  DASHBOARD   │ │
-│  │                  │    │  SERVICE         │    │              │ │
-│  │  • Husky Hooks   │    │  • 28 Checks     │    │  • 4 Charts  │ │
-│  │  • Git Stage     │    │  • 8 Categories  │    │  • Metrics   │ │
-│  │  • Auto-block    │    │  • Workflow Rules│    │  • History   │ │
-│  └──────────────────┘    └──────────────────┘    └──────────────┘ │
-│                                                                     │
-│  ┌──────────────────────────────────────────────────────────────┐  │
-│  │         DOCUMENTATION & TRAINING LAYER                       │  │
-│  │  • Developer Onboarding Guide                                │  │
-│  │  • Team Training Materials (2-3 hours)                       │  │
-│  │  • Quick Reference Cards                                     │  │
-│  │  • Configuration Guides                                      │  │
-│  └──────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### Kern Modules & Verantwoordelijkheden
-
-#### 1. QualityGateService (Centraal Controle Centrum)
-
-**Architectuur Beslissing:** Centralized Service Pattern
-**Rationale:** Eén gecentraliseerde service voor alle quality checks zorgt voor consistentie, onderhoudbaarheid en herbruikbaarheid
-
-**Module Structuur:**
-```
-QualityGateService
-│
-├── Configuration Manager
-│   ├── EnabledChecks Configuration (8 categories on/off)
-│   ├── BlockingRules per Workflow (MAINTENANCE, NEW_FEATURE, BUG, etc.)
-│   ├── Severity Thresholds (Critical, High, Medium, Low)
-│   └── Target Scores per Category (70-90%)
-│
-├── Check Executors (28 Quality Checks)
-│   ├── SIG-TOP-10 Executor (3 checks)
-│   │   ├── Cyclomatic Complexity Analyzer
-│   │   ├── Code Duplication Detector
-│   │   └── Parameter Count Checker
-│   │
-│   ├── SOLID Principles Executor (3 checks)
-│   │   ├── Single Responsibility Checker
-│   │   ├── Open-Closed Principle Validator
-│   │   └── Liskov Substitution Checker
-│   │
-│   ├── GRASP Patterns Executor (2 checks)
-│   │   ├── Information Expert Pattern Checker
-│   │   └── High Cohesion Analyzer
-│   │
-│   ├── TDD Executor (3 checks)
-│   │   ├── Test Existence Checker
-│   │   ├── Test First Validator
-│   │   └── Test Coverage Analyzer
-│   │
-│   ├── Testing Patterns Executor (6 checks)
-│   │   ├── AAA Pattern Checker (Arrange-Act-Assert)
-│   │   ├── F.I.R.S.T Principles Validator
-│   │   ├── Test Pyramid Validator
-│   │   ├── Mocking Best Practices
-│   │   ├── Test Independence Checker
-│   │   └── Test Naming Convention Validator
-│   │
-│   ├── Design Patterns Executor (5 checks)
-│   │   ├── Factory Pattern Usage Checker
-│   │   ├── Builder Pattern Validator
-│   │   ├── Strategy Pattern Checker
-│   │   ├── Observer Pattern Validator
-│   │   └── Dependency Injection Checker
-│   │
-│   ├── Clean Code Executor (5 checks)
-│   │   ├── YAGNI Checker (You Aren't Gonna Need It)
-│   │   ├── KISS Validator (Keep It Simple Stupid)
-│   │   ├── Magic Number Detector
-│   │   ├── Meaningful Names Validator
-│   │   └── Function Size Checker
-│   │
-│   └── Law of Demeter Executor (1 check)
-│       └── Call Chain Length Analyzer
-│
-├── Scoring Engine
-│   ├── Per-Check Score Calculator (0-100%)
-│   ├── Category Score Aggregator (weighted average)
-│   ├── Overall Quality Score (all categories combined)
-│   └── Compliance Status Determiner (Pass/Fail/Warning)
-│
-├── Workflow Integration Manager
-│   ├── Work Type Detector (analyze file changes)
-│   ├── Blocking Rule Selector (per workflow type)
-│   ├── Severity Filter (what blocks what workflow)
-│   └── Recommendation Generator (actionable fixes)
-│
-└── Results Formatter
-    ├── Console Output (colored, readable)
-    ├── JSON Export (for tools/API)
-    ├── HTML Report Generator
-    └── CSV Export (for analytics)
-```
-
-**Architectuur Beslissing:** Executor Pattern voor Checks
-**Rationale:** Elke check is een zelfstandige executor, eenvoudig uit te breiden zonder core service aan te passen
-
-#### 2. Pre-commit Automation Module
-
-**Architectuur Beslissing:** Git Hooks met Husky Framework
-**Rationale:** Automatisch quality enforcement op het moment van commit, voordat code de repository in gaat
-
-**Module Structuur:**
-```
-Pre-commit Automation
-│
-├── Git Integration Layer
-│   ├── Husky Hook Manager (.husky/ directory)
-│   │   ├── Pre-commit Hook Executable
-│   │   ├── Commit Message Hook
-│   │   └── Pre-push Hook (future)
-│   │
-│   └── Git Configuration Manager
-│       ├── Hooks Path Configuration (core.hooksPath)
-│       ├── Hook Permissions Manager (chmod +x)
-│       └── Hook Bypass Detector (--no-verify)
-│
-├── Staged Files Analyzer
-│   ├── Git Diff Parser (--cached --name-only)
-│   ├── File Filter (*.ts, *.tsx, *.js, *.jsx)
-│   ├── File Type Detector (source vs test)
-│   └── Change Type Analyzer (ACMR - Added, Copied, Modified, Renamed)
-│
-├── Quality Check Orchestrator
-│   ├── QualityGateService Caller
-│   ├── Configuration Builder (only staged files)
-│   ├── Command-line Flag Parser
-│   │   ├── --verbose (detailed output)
-│   │   ├── --strict (require 70% score)
-│   │   ├── --skip-tests (faster checks)
-│   │   └── --workflow=TYPE (specify workflow)
-│   │
-│   └── Performance Optimizer
-│       ├── Targeted Checks (only relevant files)
-│       ├── Parallel Execution (where possible)
-│       └── Caching Strategy (future)
-│
-├── Results Presenter
-│   ├── Terminal Output Formatter
-│   │   ├── Color-coded Severity (🚨❌⚠️ℹ️)
-│   │   ├── Category Summary Table
-│   │   ├── Per-File Findings List
-│   │   └── Recommendations Display
-│   │
-│   └── Exit Code Manager
-│       ├── 0 = All checks passed
-│       ├── 1 = Critical violations (blocks commit)
-│       └── 2 = Configuration error
-│
-└── Bypass & Emergency Procedures
-    ├── --no-verify Detection
-    ├── HUSKY=0 Environment Variable
-    ├── Emergency Bypass Documentation
-    └── Bypass Logging (audit trail)
-```
-
-**Architectuur Beslissing:** Only Check Staged Files
-**Rationale:** Performance - alleen gewijzigde code checken = sneller (0.5-5 sec vs 15-30 sec voor hele codebase)
-
-#### 3. Quality Dashboard Module
-
-**Architectuur Beslissing:** Static HTML + Client-side JavaScript
-**Rationale:** Geen extra backend service nodig, werkt overal waar je de data kunt serveren
-
-**Module Structuur:**
-```
-Quality Dashboard
-│
-├── Data Services Layer
-│   ├── QualityDashboardService
-│   │   ├── Data Aggregator (from QualityGateService)
-│   │   ├── Metrics Extractor
-│   │   │   ├── Overall Quality Score
-│   │   │   ├── Total Violations Count
-│   │   │   ├── Critical Issues Count
-│   │   │   ├── Files Checked Count
-│   │   │   └── Category Scores (8 categories)
-│   │   │
-│   │   ├── Historical Data Manager
-│   │   │   ├── 30-Day Rolling Window
-│   │   │   ├── Daily Snapshots Storage
-│   │   │   ├── Trend Calculator (improving/stable/declining)
-│   │   │   └── Data Persistence (JSON file)
-│   │   │
-│   │   └── Export Manager
-│   │       ├── JSON Exporter (API format)
-│   │       ├── CSV Exporter (spreadsheet)
-│   │       └── HTML Report Generator
-│   │
-│   └── Dashboard Data Generator (CLI Script)
-│       ├── Full Quality Check Runner
-│       ├── Data Transformer (QualityGateService → Dashboard format)
-│       ├── File Writer (quality-dashboard-data.json)
-│       └── HTTP Server (optional, port 8080)
-│
-├── Frontend Visualization Layer
-│   ├── Chart.js Integration
-│   │   ├── Radar Chart (Category Compliance)
-│   │   │   ├── 8 axes (one per category)
-│   │   │   ├── Target threshold line
-│   │   │   └── Current vs Target visualization
-│   │   │
-│   │   ├── Doughnut Chart (Severity Distribution)
-│   │   │   ├── Critical, High, Medium, Low segments
-│   │   │   ├── Color-coded (red, orange, yellow, blue)
-│   │   │   └── Percentage labels
-│   │   │
-│   │   ├── Line Chart (Quality Trend - 30 days)
-│   │   │   ├── Daily quality score timeline
-│   │   │   ├── Trend line
-│   │   │   └── Target threshold reference
-│   │   │
-│   │   └── Bar Chart (Check Coverage)
-│   │       ├── 28 bars (one per check)
-│   │       ├── Pass/Fail color coding
-│   │       └── Compliance percentage
-│   │
-│   ├── Metrics Cards Display
-│   │   ├── Overall Quality Score Card (large, prominent)
-│   │   ├── Total Violations Card
-│   │   ├── Critical Issues Card (highlighted if >0)
-│   │   └── Files Checked Card
-│   │
-│   ├── Category Compliance Scorecards (8 cards)
-│   │   ├── SIG-TOP-10 (target 90%)
-│   │   ├── SOLID (target 85%)
-│   │   ├── GRASP (target 85%)
-│   │   ├── TDD (target 80%)
-│   │   ├── Testing Patterns (target 80%)
-│   │   ├── Design Patterns (target 85%)
-│   │   ├── Clean Code (target 85%)
-│   │   └── Law of Demeter (target 90%)
-│   │
-│   ├── Recent Findings List
-│   │   ├── Top 10 by severity
-│   │   ├── File path + line number
-│   │   ├── Severity indicator
-│   │   └── Recommendation preview
-│   │
-│   └── Action Buttons
-│       ├── Refresh Data (re-run checks)
-│       ├── Export Report (download JSON/CSV)
-│       ├── View Full Report (detailed findings)
-│       └── Configuration Link
-│
-└── User Experience Layer
-    ├── Responsive Design (mobile-friendly)
-    ├── Real-time Data Refresh (manual trigger)
-    ├── Interactive Charts (hover tooltips)
-    ├── Loading States & Error Handling
-    └── Modern UI (clean, professional)
-```
-
-**Architectuur Beslissing:** Client-side Rendering
-**Rationale:** Dashboard is read-only view, geen complex backend state management nodig
-
-#### 4. Documentation & Training Module
-
-**Architectuur Beslissing:** Documentation as Code (Markdown)
-**Rationale:** Versioned, searchable, developer-friendly, git-integrated
-
-**Module Structuur:**
-```
-Documentation & Training
-│
-├── Developer Onboarding Layer
-│   ├── DEVELOPER_ONBOARDING.md
-│   │   ├── "By Design" Philosophy Explanation
-│   │   ├── Quality Gates Overview
-│   │   ├── Quick Start Guide (5 min)
-│   │   └── First Commit Walkthrough
-│   │
-│   └── QUICK_REFERENCE.md (Cheatsheet)
-│       ├── Essential Commands (copy-paste ready)
-│       ├── Quality Categories Table
-│       ├── Severity Levels Guide
-│       ├── Common Fixes (code examples)
-│       └── Troubleshooting Steps
-│
-├── Usage Documentation Layer
-│   ├── QUALITY_GATE_USAGE_GUIDE.md (Complete Guide)
-│   │   ├── All 28 Checks Explained
-│   │   ├── Command-line Options
-│   │   ├── Workflow Integration
-│   │   ├── Dashboard Usage
-│   │   └── Best Practices
-│   │
-│   └── QUALITY_GATE_CONFIGURATION.md
-│       ├── EnabledChecks Configuration
-│       ├── BlockingRules per Workflow
-│       ├── Thresholds & Targets
-│       └── Custom Check Creation
-│
-├── Team Training Layer
-│   ├── TEAM_TRAINING_GUIDE.md (2-3 hour curriculum)
-│   │   ├── Session 1: Introduction (30 min)
-│   │   │   ├── Problem Statement
-│   │   │   ├── Solution Overview
-│   │   │   └── Success Metrics
-│   │   │
-│   │   ├── Session 2: Using System (45 min)
-│   │   │   ├── Pre-commit Hooks Demo
-│   │   │   ├── Dashboard Walkthrough
-│   │   │   └── Manual Commands Practice
-│   │   │
-│   │   ├── Session 3: Best Practices (30 min)
-│   │   │   ├── "By Design" Approach
-│   │   │   ├── Common Violations & Fixes
-│   │   │   └── Code Quality Patterns
-│   │   │
-│   │   └── Session 4: Hands-on Practice (45 min)
-│   │       ├── Live Demos (passing/failing commits)
-│   │       ├── Practice Exercises (2 exercises)
-│   │       └── Q&A Session
-│   │
-│   └── Support Infrastructure
-│       ├── Office Hours Schedule (Tuesdays 3-4 PM)
-│       ├── Slack Channel (#quality-gates)
-│       ├── Quality Champions (designated team members)
-│       └── Feedback Collection Method
-│
-└── Launch & Operations Layer
-    ├── LAUNCH_CHECKLIST.md
-    │   ├── Pre-Launch Validation (technical + team)
-    │   ├── Launch Day Procedures
-    │   ├── Week 1 Monitoring Plan
-    │   └── Rollback Procedures
-    │
-    └── Extension Documentation
-        └── QUALITY_GATE_EXTENSION.md
-            ├── How to Add New Checks
-            ├── Custom Check Interface
-            ├── Testing New Checks
-            └── Documentation Requirements
-```
-
-**Architectuur Beslissing:** Comprehensive Documentation from Day 1
-**Rationale:** Team adoption cruciale succesfactor - goede docs = snelle adoptie = ROI
-
-### Workflow Integration Architectuur
-
-**Architectuur Beslissing:** Different Rules per Work Type
-**Rationale:** Not all work types need same quality level - bugs need quick fixes, features need high quality
-
-```
-Workflow Router
-│
-├── Work Type Detection
-│   ├── File Path Analysis (src/ vs tests/ vs migrations/)
-│   ├── Commit Message Parsing (fix:, feat:, refactor:, etc.)
-│   ├── Branch Name Detection (bugfix/, feature/, hotfix/)
-│   └── Manual Override (--workflow flag)
-│
-├── Workflow Definitions (8 types)
-│   │
-│   ├── MAINTENANCE Workflow
-│   │   ├── Blocking Rules: Critical violations only
-│   │   ├── Rationale: Quick dependency updates shouldn't be blocked by minor issues
-│   │   ├── Quality Target: >60%
-│   │   └── Speed: Fast (skip expensive checks)
-│   │
-│   ├── NEW_FEATURE Workflow
-│   │   ├── Blocking Rules: Critical + High violations
-│   │   ├── Rationale: New features set quality baseline for future
-│   │   ├── Quality Target: >80%
-│   │   └── Checks: Full suite (all 28 checks)
-│   │
-│   ├── BUG Workflow
-│   │   ├── Blocking Rules: Critical violations + must have tests
-│   │   ├── Rationale: Bug fixes need tests to prevent regression
-│   │   ├── Quality Target: >70%
-│   │   └── Required: Regression test must exist
-│   │
-│   ├── REFACTORING Workflow
-│   │   ├── Blocking Rules: Critical + High + Medium violations
-│   │   ├── Rationale: Refactoring opportunity to improve quality
-│   │   ├── Quality Target: >85%
-│   │   └── Focus: Code complexity, SOLID, Clean Code
-│   │
-│   ├── QUALITY_AUDIT Workflow
-│   │   ├── Blocking Rules: All violations logged (informational)
-│   │   ├── Rationale: Audit mode - gather data, don't block
-│   │   ├── Quality Target: N/A (measurement only)
-│   │   └── Output: Comprehensive report
-│   │
-│   ├── MIGRATION Workflow
-│   │   ├── Blocking Rules: Critical violations only
-│   │   ├── Rationale: Migrations are complex, focus on showstoppers
-│   │   ├── Quality Target: >65%
-│   │   └── Special: Allow technical debt documentation
-│   │
-│   ├── DOCUMENTATION Workflow
-│   │   ├── Blocking Rules: None (docs should always commit)
-│   │   ├── Rationale: Documentation updates should be frictionless
-│   │   ├── Quality Target: N/A
-│   │   └── Checks: Markdown linting, link validation
-│   │
-│   └── HOTFIX Workflow
-│       ├── Blocking Rules: Critical security violations only
-│       ├── Rationale: Production fires need fast fixes
-│       ├── Quality Target: >60%
-│       └── Post-commit: Create follow-up quality improvement task
-│
-└── Routing Logic
-    ├── Priority: Manual flag > Branch name > Commit message > File path
-    ├── Default: NEW_FEATURE (most strict)
-    └── Override: --no-verify bypasses all (emergency only)
-```
-
-### Data Flow Scenarios
-
-#### Scenario 1: Developer Commits Code (Happy Path)
-
-```
-1. Developer: git add feature.ts
-2. Developer: git commit -m "feat: add user authentication"
-
-3. Git triggers: .husky/pre-commit hook
-
-4. Pre-commit Script:
-   ├── Detect staged files: [feature.ts, feature.test.ts]
-   ├── Detect workflow: "feat:" prefix → NEW_FEATURE
-   ├── Call QualityGateService with:
-   │   ├── Files: [feature.ts, feature.test.ts]
-   │   ├── Workflow: NEW_FEATURE
-   │   └── Blocking: Critical + High
-   │
-   └── Get results:
-       ├── Overall Score: 87%
-       ├── Violations: 0 Critical, 0 High, 2 Medium, 1 Low
-       └── Decision: ALLOW COMMIT ✅
-
-5. Terminal Output:
-   ╔══════════════════════════════════════════════════════╗
-   ║  ✅ Quality Gates: PASSED (87%)                      ║
-   ╚══════════════════════════════════════════════════════╝
-
-   Category Scores:
-   • SIG-TOP-10: 92% ✅
-   • SOLID: 88% ✅
-   • TDD: 100% ✅
-
-   Medium Issues (2):
-   ⚠️  feature.ts:45 - Magic number detected (max_retries = 3)
-   ⚠️  feature.ts:67 - Function could be more cohesive
-
-   Recommendations available in full report.
-
-6. Git: Commit allowed, continue to object creation
-
-7. Developer: Sees commit success message
-```
-
-#### Scenario 2: Developer Commits Code (Violations Detected)
-
-```
-1. Developer: git add bugfix.ts
-2. Developer: git commit -m "fix: resolve login issue"
-
-3. Git triggers: .husky/pre-commit hook
-
-4. Pre-commit Script:
-   ├── Detect staged files: [bugfix.ts]
-   ├── Detect workflow: "fix:" prefix → BUG
-   ├── Call QualityGateService with:
-   │   ├── Files: [bugfix.ts]
-   │   ├── Workflow: BUG
-   │   └── Blocking: Critical + requires tests
-   │
-   └── Get results:
-       ├── Overall Score: 54%
-       ├── Violations: 1 Critical, 2 High, 5 Medium, 3 Low
-       ├── Missing: No test file found
-       └── Decision: BLOCK COMMIT ❌
-
-5. Terminal Output:
-   ╔══════════════════════════════════════════════════════╗
-   ║  ❌ Quality Gates: FAILED (54%)                      ║
-   ║  Commit blocked - fix violations to continue         ║
-   ╚══════════════════════════════════════════════════════╝
-
-   🚨 CRITICAL (1):
-   • bugfix.ts:23 - Cyclomatic complexity 18 (limit: 10)
-     → Extract methods to reduce complexity
-
-   ❌ HIGH (2):
-   • bugfix.ts:12 - No test file found for bug fix
-     → Create bugfix.test.ts with regression test
-   • bugfix.ts:45 - SRP violation: class handles auth + logging
-     → Separate concerns into AuthService and Logger
-
-   ⚠️  MEDIUM (5):
-   • bugfix.ts:8 - Magic number: timeout = 5000
-   • bugfix.ts:15 - Long parameter list (7 params)
-   • ... (3 more)
-
-   ℹ️  To bypass (emergency only): git commit --no-verify
-   ℹ️  Full report: npm run quality:check:verbose
-
-6. Git: Commit rejected (exit code 1)
-
-7. Developer: Fixes violations, commits again
-```
-
-#### Scenario 3: Quality Dashboard Update
-
-```
-1. Developer/Lead: npm run dashboard:generate
-
-2. Dashboard Generator Script:
-   ├── Run full quality check (entire codebase)
-   ├── Call QualityGateService with:
-   │   ├── Files: all *.ts, *.tsx, *.js, *.jsx
-   │   ├── Workflow: QUALITY_AUDIT
-   │   └── Blocking: None (informational)
-   │
-   └── Get comprehensive results
-
-3. QualityDashboardService:
-   ├── Aggregate metrics from QualityGateService
-   ├── Extract: Overall score, category scores, violations, findings
-   ├── Load historical data (past 30 days)
-   ├── Calculate trends (improving/stable/declining)
-   ├── Prepare dashboard data structure
-   └── Save to quality-dashboard-data.json
-
-4. File System: quality-dashboard-data.json created
-
-5. Developer: npm run dashboard:serve
-
-6. HTTP Server: Starts on port 8080
-
-7. Browser: Open http://localhost:8080
-
-8. Dashboard Frontend:
-   ├── Fetch quality-dashboard-data.json
-   ├── Render 4 Chart.js charts:
-   │   ├── Radar Chart (8 categories)
-   │   ├── Doughnut Chart (severity distribution)
-   │   ├── Line Chart (30-day trend)
-   │   └── Bar Chart (28 checks coverage)
-   │
-   ├── Display key metrics cards
-   ├── Show category compliance scorecards
-   └── List recent findings (top 10)
-
-9. User: Views comprehensive quality metrics
-```
-
-### Architecture Decision Records (ADRs)
-
-#### ADR-001: Centralized QualityGateService
-
-**Decision:** Create single centralized service for all quality checks
-
-**Context:** Needed consistent, reusable quality checking across multiple contexts (pre-commit, CI/CD, dashboard, manual)
-
-**Alternatives Considered:**
-- Distributed checks (each context implements own checks)
-- Plugin architecture (checks as separate packages)
-
-**Chosen:** Centralized service
-
-**Rationale:**
-- Single source of truth for quality rules
-- Easier to maintain and extend
-- Consistent scoring across all contexts
-- Reusable in backend API, agents, CLI tools
-
-**Consequences:**
-✅ Consistency guaranteed
-✅ Easy to add new checks (one place)
-✅ Configuration centralized
-⚠️ Potential single point of failure (mitigated by thorough testing)
-
-#### ADR-002: Pre-commit Hooks with Husky
-
-**Decision:** Use Husky framework for Git pre-commit hooks
-
-**Context:** Needed automatic quality enforcement at commit time
-
-**Alternatives Considered:**
-- CI/CD only (post-commit checking)
-- IDE plugins (local editor checking)
-- Manual commands (developer discipline)
-
-**Chosen:** Pre-commit hooks with Husky
-
-**Rationale:**
-- Catches issues before they enter repository
-- Automatic (no developer action needed)
-- Fast feedback (immediate)
-- Works for all team members (via git config)
-- Emergency bypass available (--no-verify)
-
-**Consequences:**
-✅ Shift quality left (catch early)
-✅ Automatic enforcement
-✅ Fast feedback loop
-⚠️ Adds ~1-5 seconds to commit time (acceptable tradeoff)
-⚠️ Requires npm install (documented in onboarding)
-
-#### ADR-003: Static Dashboard (No Backend Service)
-
-**Decision:** Build dashboard as static HTML with client-side JavaScript
-
-**Context:** Needed visual quality metrics and trends
-
-**Alternatives Considered:**
-- Full backend dashboard service (Flask/FastAPI app)
-- Integration into existing project-manager.html
-- Terminal-only reports (no UI)
-
-**Chosen:** Static HTML dashboard
-
-**Rationale:**
-- No additional service to maintain
-- Works anywhere (file://, http://, localhost)
-- Fast rendering (client-side Chart.js)
-- Easy deployment (single HTML file + data JSON)
-- Optional HTTP server for convenience
-
-**Consequences:**
-✅ Simple deployment
-✅ No backend service needed
-✅ Fast client-side rendering
-⚠️ Data must be regenerated (no real-time updates)
-✅ Acceptable tradeoff (dashboard is periodic review tool, not real-time monitor)
-
-#### ADR-004: Workflow-Specific Blocking Rules
-
-**Decision:** Different quality gates per workflow type (MAINTENANCE, NEW_FEATURE, BUG, etc.)
-
-**Context:** Not all work types have same quality requirements
-
-**Alternatives Considered:**
-- Same strict rules for all work
-- No blocking (advisory only)
-- Manual workflow selection only
-
-**Chosen:** Automatic workflow detection + specific rules
-
-**Rationale:**
-- Bug fixes need speed + regression tests
-- New features need high quality (set baseline)
-- Maintenance updates need low friction
-- Refactoring is quality improvement opportunity
-- Balance quality with pragmatism
-
-**Consequences:**
-✅ Pragmatic quality enforcement
-✅ Faster hotfixes when needed
-✅ High quality for features
-✅ Team satisfaction (not overly strict)
-⚠️ More complex configuration (documented thoroughly)
-
-#### ADR-005: Documentation as Code (Markdown)
-
-**Decision:** All documentation in Markdown files, version controlled
-
-**Context:** Needed comprehensive documentation for team adoption
-
-**Alternatives Considered:**
-- Wiki (Confluence, Notion)
-- Inline code comments only
-- README.md only
-
-**Chosen:** Comprehensive Markdown docs in /docs
-
-**Rationale:**
-- Version controlled (git)
-- Searchable (grep, IDE search)
-- Developer-friendly format
-- Easy to update
-- Works offline
-- No external dependencies
-
-**Consequences:**
-✅ Documentation versioned with code
-✅ Easy to update and review (PRs)
-✅ Searchable and indexable
-✅ No external service dependency
-⚠️ Requires discipline to keep updated (mitigated by documentation in PRs)
-
-### Success Metrics & Business Value
-
-**Achievement Metrics (Weeks 10-12):**
-- 28 quality checks implemented ✅
-- 8 quality categories covered ✅
-- 3 workflow types integrated ✅
-- 162 pages documentation created ✅
-- 0 TypeScript compilation errors ✅
-- Pre-commit hooks: 1-5 sec performance ✅
-- Dashboard: 4 interactive charts ✅
-
-**Business Value:**
-- **Time Savings:** -56% code review cycles (fewer quality issues in reviews)
-- **Quality Improvement:** +37% overall quality score baseline
-- **Issue Prevention:** 0 critical issues escaping to production
-- **Developer Efficiency:** Immediate feedback (vs. waiting for CI/CD)
-- **Team Enablement:** 2-3 hour training gets team productive
-
-**ROI Calculation:**
-- Development Time: 5 days (Week 10-12)
-- Documentation Time: 3 days
-- Total Investment: 8 developer days
-- Savings: 2-3 hours per code review × 50 reviews/month = 100-150 hours/month
-- Break-even: <1 month
-- Ongoing Value: Continuous quality improvement, reduced technical debt
-
----
-
-## 🧪 A/B TESTING FRAMEWORK ARCHITECTURE (Week 51)
-
-**Status:** ✅ SHIPPED (Week 51 - 25 Nov 2025)
-**Doel:** Data-driven agent evolution through multi-variant experimentation
-**Leveraged:** 2,150+ lines production code, 53 comprehensive tests, 9 API endpoints
-
-### Design Filosofie
-
-**"Measure, Learn, Improve"** - Continuous agent evolution through:
-1. Multi-variant experimentation (control vs treatment)
-2. Statistical significance testing (p-values, confidence intervals)
-3. Automatic winner detection and rollout
-4. Performance tracking over time
-
-### High-Level Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                     A/B TESTING FRAMEWORK                           │
-│                                                                     │
-│  ┌──────────────────┐   ┌──────────────────┐   ┌────────────────┐  │
-│  │ EXPERIMENT       │   │ TRAFFIC          │   │ STATISTICAL    │  │
-│  │ MANAGEMENT       │   │ ALLOCATION       │   │ ANALYSIS       │  │
-│  │                  │   │                  │   │                │  │
-│  │ • Create         │   │ • Deterministic  │   │ • P-values     │  │
-│  │ • Start/Pause    │   │   Hash           │   │ • Confidence   │  │
-│  │ • Complete       │   │ • Sticky         │   │   Intervals    │  │
-│  │ • Winner         │   │   Assignment     │   │ • Winner       │  │
-│  │   Declaration    │   │ • Weighted       │   │   Detection    │  │
-│  │                  │   │   Random         │   │                │  │
-│  └────────┬─────────┘   └────────┬─────────┘   └───────┬────────┘  │
-│           │                      │                     │            │
-│           └──────────────────────┴─────────────────────┘            │
-│                                  ↓                                  │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │                     RESULT TRACKING                         │   │
-│  │  • Success/failure logging                                  │   │
-│  │  • Metrics: success_rate, execution_time, quality_score     │   │
-│  │  • Work type classification                                 │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-│                                  ↓                                  │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │                  EVOLUTION METRICS                          │   │
-│  │  • Performance tracking per agent                           │   │
-│  │  • Trend analysis (improving/stable/declining)              │   │
-│  │  • Daily/weekly aggregation                                 │   │
-│  │  • Cross-agent comparison                                   │   │
-│  │  • ChromaDB milestone storage                               │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### Database Schema (3 Nieuwe Tables)
-
-**Migration 011** - `846bf79a97f4_add_ab_testing_tables.py`
+#### 3. Observability System (Agent Behavior Monitoring)
 
 ```sql
--- Experiments table
-CREATE TABLE experiments (
-    id UUID PRIMARY KEY,
+-- Agent action logging
+CREATE TABLE agent_actions (
+    id SERIAL PRIMARY KEY,
+    task_id UUID NOT NULL,
     agent_id VARCHAR(50) NOT NULL,
-    feature_name VARCHAR(200) NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
-    created_at TIMESTAMP NOT NULL,
-    started_at TIMESTAMP,
-    completed_at TIMESTAMP,
-    winner_variant_id UUID,
-    extra_metadata JSONB DEFAULT '{}',
-    CONSTRAINT check_experiment_status
-        CHECK (status IN ('DRAFT', 'ACTIVE', 'PAUSED', 'COMPLETED', 'CANCELLED'))
+    action_type VARCHAR(50) NOT NULL,
+    input_summary TEXT,
+    output_summary TEXT,
+    decision_rationale TEXT,
+    model_used VARCHAR(50),
+    token_input INTEGER,
+    token_output INTEGER,
+    duration_ms INTEGER,
+    success BOOLEAN,
+    confidence_score DECIMAL(3,2),
+    created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Experiment variants table
-CREATE TABLE experiment_variants (
-    id UUID PRIMARY KEY,
-    experiment_id UUID REFERENCES experiments(id) ON DELETE CASCADE,
-    variant_name VARCHAR(100) NOT NULL,
-    traffic_percentage FLOAT NOT NULL,
-    config_json JSONB NOT NULL DEFAULT '{}',
-    is_control BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMP NOT NULL,
-    CONSTRAINT check_traffic_percentage
-        CHECK (traffic_percentage >= 0 AND traffic_percentage <= 100)
+-- Decision tracing
+CREATE TABLE decision_traces (
+    id SERIAL PRIMARY KEY,
+    task_id UUID NOT NULL,
+    sequence_number INTEGER NOT NULL,
+    agent_id VARCHAR(50) NOT NULL,
+    decision_point VARCHAR(100),
+    options JSONB,
+    selected_option VARCHAR(100),
+    selection_rationale TEXT,
+    outcome VARCHAR(50),
+    created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Experiment results table
-CREATE TABLE experiment_results (
-    id UUID PRIMARY KEY,
-    variant_id UUID REFERENCES experiment_variants(id) ON DELETE CASCADE,
-    task_id VARCHAR(100) NOT NULL,
-    work_type VARCHAR(50),
-    success BOOLEAN NOT NULL,
-    metrics_json JSONB NOT NULL DEFAULT '{}',
-    error_message TEXT,
-    created_at TIMESTAMP NOT NULL
+-- Daily performance aggregates
+CREATE TABLE agent_performance_daily (
+    id SERIAL PRIMARY KEY,
+    agent_id VARCHAR(50) NOT NULL,
+    date DATE NOT NULL,
+    total_actions INTEGER,
+    successful_actions INTEGER,
+    avg_duration_ms INTEGER,
+    total_tokens INTEGER,
+    total_cost_cents INTEGER,
+    UNIQUE(agent_id, date)
 );
 ```
 
-### Service Layer (2 Services)
+#### 4. PromptEngineer + Meta-Prompting
 
-#### ABTestingService (`ab_testing_service.py` - 550 lines)
-
-**Experiment Lifecycle:**
-- `create_experiment()` - Setup with variants (validates traffic = 100%, 1 control)
-- `start_experiment()` - Activate (DRAFT → ACTIVE)
-- `pause_experiment()` - Temporarily stop (ACTIVE → PAUSED)
-- `complete_experiment()` - Declare winner (ACTIVE → COMPLETED)
-
-**Traffic Allocation:**
-- `allocate_traffic()` - Deterministic sticky assignment
-- SHA256 hash(task_id + experiment_id) → consistent variant
-- Weighted random selection based on traffic_percentage
-- Same task always gets same variant
-
-**Statistical Analysis:**
-- `analyze_experiment()` - Complete statistical report
-- Confidence intervals (95%) using normal approximation
-- P-value calculation (two-proportion z-test)
-- Winner detection with significance threshold (p < 0.05)
-- Minimum samples enforcement (30+ per variant)
-
-**Result Tracking:**
-- `log_result()` - Track variant outcomes with metrics
-- Metrics: success_rate, execution_time_ms, code_quality_score, retry_count
-
-#### EvolutionMetricsService (`evolution_metrics_service.py` - 500 lines)
-
-**Agent Performance:**
-- `get_agent_performance()` - Comprehensive metrics
-- total_experiments, active, completed counts
-- average_success_rate, improvement_rate
-- best_variant identification
-
-**Trend Analysis:**
-- `analyze_trends()` - Time series analysis
-- Daily values with trend direction (improving/stable/declining)
-- Standard deviation and percentage change
-
-**Metrics Aggregation:**
-- `aggregate_metrics()` - Daily/weekly rollups
-- Daily: 30 days history
-- Weekly: 90 days history (ISO weeks)
-
-**ChromaDB Integration:**
-- `store_evolution_milestone()` - Save significant achievements
-- `retrieve_evolution_milestones()` - Query by agent/type
-- Milestone types: major_improvement (≥20%), improvement_threshold (≥10%), high_success_rate (≥95%)
-
-### REST API (9 Endpoints)
-
-**Router:** `/api/evolution/*` (ab_testing.py - 650 lines)
-
-```
-POST   /api/evolution/experiments              - Create experiment
-GET    /api/evolution/experiments              - List experiments
-GET    /api/evolution/experiments/{id}         - Get experiment
-PUT    /api/evolution/experiments/{id}/start   - Start experiment
-PUT    /api/evolution/experiments/{id}/pause   - Pause experiment
-PUT    /api/evolution/experiments/{id}/complete - Complete with winner
-POST   /api/evolution/experiments/{id}/results - Log result
-GET    /api/evolution/experiments/{id}/analysis - Statistical analysis
-POST   /api/evolution/experiments/{id}/allocate - Traffic allocation
-```
-
-**Pydantic Schemas:**
-- VariantCreateRequest, ExperimentCreateRequest
-- CompleteExperimentRequest, LogResultRequest
-- ExperimentResponse, AnalysisResponse
-- Full validation: traffic sum = 100, exactly 1 control, min 2 variants
-
-### Testing Coverage (53 Tests)
-
-**Unit Tests** (`test_ab_testing_service.py` - 18 tests):
-- Experiment creation validation (traffic sum, control count)
-- Lifecycle transitions (start, pause, complete)
-- Traffic allocation (sticky assignment, distribution)
-- Statistical analysis (confidence intervals, p-values, normal CDF)
-- Result logging
-
-**Integration Tests** (`test_ab_testing_api.py` - 20 tests):
-- API endpoint validation
-- Request/response schemas
-- Error handling (400, 404, 422, 500)
-- UUID validation
-
-**Evolution Metrics Tests** (`test_evolution_metrics.py` - 15 tests):
-- Agent performance tracking
-- Trend analysis (improving/declining detection)
-- Metrics aggregation (daily/weekly)
-- Cross-agent comparison
-- ChromaDB integration
-- Milestone detection
-
-### Experiment Lifecycle
-
-```
-┌──────────┐
-│  DRAFT   │ ← create_experiment()
-└────┬─────┘
-     │ start_experiment()
-     ↓
-┌──────────┐      pause_experiment()      ┌──────────┐
-│  ACTIVE  │ ←─────────────────────────→ │  PAUSED  │
-└────┬─────┘                              └──────────┘
-     │ complete_experiment(winner_id)
-     ↓
-┌──────────┐
-│COMPLETED │
-└──────────┘
-```
-
-**During ACTIVE state:**
-- Traffic allocated via `allocate_traffic(task_id)`
-- Results logged via `log_result(variant_id, task_id, success, metrics)`
-- Analysis available via `analyze_experiment()`
-
-### Traffic Allocation Logic
-
-**Deterministic Sticky Assignment:**
 ```python
-hash_value = SHA256(f"{task_id}-{experiment_id}") % 100  # 0-99
-cumulative = 0
-for variant in sorted(variants):
-    cumulative += variant.traffic_percentage
-    if hash_value < cumulative:
-        return variant
-```
+class PromptEngineer:
+    """Continuous improvement of agent prompts via meta-prompting."""
 
-**Properties:**
-- Same task always gets same variant (sticky)
-- Distribution matches traffic percentages over many tasks
-- No external state required (hash is deterministic)
-- Works across restarts and deployments
+    async def intercept_task(self, task: Task, agent: Agent) -> EnhancedPrompt:
+        """Enhance prompt based on context and historical performance."""
+        # Get agent's recent performance
+        metrics = await self.get_agent_metrics(agent.id)
 
-### Statistical Analysis
+        # Get relevant patterns from experience store
+        patterns = await self.get_successful_patterns(agent.id, task.context)
 
-**Confidence Intervals (95%):**
-- Normal approximation to binomial distribution
-- Z-score = 1.96 for 95% confidence
-- Standard error: `sqrt(p*(1-p)/n)`
-- Margin: `z * standard_error`
+        # Generate enhanced prompt
+        return await self.enhance_prompt(
+            original_prompt=agent.base_prompt,
+            task_context=task.context,
+            performance_insights=metrics,
+            proven_patterns=patterns,
+        )
 
-**P-Value Calculation:**
-- Two-proportion z-test
-- Null hypothesis: variant_rate == control_rate
-- Pooled proportion across both groups
-- Significant if p < 0.05
-
-**Winner Detection:**
-- Minimum 30 samples per variant
-- P-value < 0.05 (statistically significant)
-- Improvement > 0 (better than control)
-- Consensus level = 1 - p_value
-
-### Integration met Agents
-
-**Felix (Architecture Agent):**
-```typescript
-// Create experiment for async processing
-const experiment = await abTesting.createExperiment({
-  agent_id: "felix",
-  feature_name: "async_processing",
-  variants: [
-    { variant_name: "control", traffic_percentage: 50,
-      config_json: {mode: "sync"}, is_control: true },
-    { variant_name: "async", traffic_percentage: 50,
-      config_json: {mode: "async"}, is_control: false }
-  ]
-});
-
-await abTesting.startExperiment(experiment.id);
-
-// For each task
-const variant = await abTesting.allocateTraffic(experiment.id, task.id);
-const result = await felix.processWithConfig(task, variant.config_json);
-
-await abTesting.logResult({
-  variant_id: variant.id,
-  task_id: task.id,
-  success: result.success,
-  metrics: {
-    execution_time_ms: result.duration,
-    code_quality_score: result.quality
-  }
-});
-
-// After sufficient data
-const analysis = await abTesting.analyzeExperiment(experiment.id);
-if (analysis.recommended_winner && analysis.consensus_level > 0.8) {
-  await abTesting.completeExperiment(experiment.id, analysis.recommended_winner);
-}
-```
-
-### Evolution Metrics Dashboard
-
-**Agent Performance View:**
-- Total experiments (active, completed)
-- Average success rate
-- Improvement rate (variant vs control)
-- Best performing variant
-- Performance trends (7/30/90 days)
-
-**Cross-Agent Comparison:**
-- Success rate rankings
-- Improvement rate rankings
-- Side-by-side metrics
-
-**Trend Analysis:**
-- Daily/weekly performance charts
-- Trend direction indicators
-- Standard deviation
-
-**Milestones:**
-- Major improvements (≥20%)
-- Improvement thresholds (≥10%)
-- High success rates (≥95%)
-- Stored in ChromaDB for semantic search
-
-### Production Metrics (Week 51 Output)
-
-**Code Volume:**
-- Production code: 2,150+ lines
-- Test code: 53 comprehensive tests
-- Total: ~2,800 lines
-
-**Database:**
-- 3 new tables (experiments, experiment_variants, experiment_results)
-- 7 indexes for query performance
-- 2 CHECK constraints for data integrity
-- CASCADE DELETE for referential integrity
-
-**API:**
-- 9 new endpoints (full CRUD + analysis)
-- 8 Pydantic request/response schemas
-- Comprehensive validation
-- Error handling (400, 404, 422, 500)
-
-**Services:**
-- 2 services (ABTesting, EvolutionMetrics)
-- Traffic allocation logic
-- Statistical analysis
-- ChromaDB integration
-
-**Testing:**
-- 18 unit tests (service layer)
-- 20 integration tests (API)
-- 15 evolution metrics tests
-- 100% coverage of critical paths
-
-### Rollout Strategy
-
-**Phase 1: Felix Agent (Week 51)**
-- Experiment with async vs sync processing
-- Monitor success rates and execution times
-- Collect baseline data (30+ samples per variant)
-
-**Phase 2: Marcus + Quinn (Week 52)**
-- Maintenance strategy experiments
-- Quality gate threshold experiments
-- Cross-agent comparison
-
-**Phase 3: All Agents (Week 53+)**
-- Full A/B testing coverage
-- Continuous evolution
-- Automatic winner rollout
-
-### Success Metrics
-
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| **Experiment Velocity** | 10+ experiments/week | Experiment creation rate |
-| **Statistical Confidence** | >95% consensus | P-value < 0.05 |
-| **Improvement Rate** | +15% average | Variant vs control |
-| **Winner Accuracy** | >90% stable | Post-rollout performance |
-| **Sample Size** | 30+ per variant | Before analysis |
-
----
-
-## 🔄 Data Flow: Hoe het werkt
-
-### Scenario 1: Jij maakt een nieuwe Epic
-
-```
-1. Jij: vim project.md
-   → Voeg toe: ### EPIC-010 | Betaling integratie
-
-2. File Watcher detecteert wijziging
-
-3. Sync Engine parse project.md
-   → Maakt EPIC-010 in PostgreSQL
-
-4. Feature Architect Agent (Claude) triggert
-   → Analyseert epic
-   → Maakt breakdown:
-      - FEATURE-010: Stripe API integratie
-      - FEATURE-011: Betaling UI componenten
-
-5. Estimation Engine Agent (Ollama) triggert
-   → Berekent: EPIC-010 = 21 FP (Large)
-   → Berekent: FEATURE-010 = 13 FP, 5 stories
-   → Story points: STORY-010 = 5 SP, STORY-011 = 8 SP
-
-6. Sync Engine schrijft terug naar project.md
-   → Je ziet nu volledige breakdown met schattingen
-
-7. WebSocket broadcast
-   → project-manager.html toont live updates
-```
-
-### Scenario 2: Agent voert maintenance uit
-
-```
-1. Code Maintenance Agent (scheduled, weekly)
-   → Scant codebase: npm audit, pip-audit
-   → Vindt 3 security vulnerabilities (HIGH)
-
-2. Agent maakt werk items in database
-   → TASK-050: Update lodash 4.17.19 → 4.17.21
-   → TASK-051: Update express 4.17.1 → 4.18.2
-   → TASK-052: Update django 3.2 → 3.2.20
-
-3. Sync Engine schrijft naar project.md
-   → Jij ziet nieuwe tasks in MAINTENANCE epic
-
-4. Agent voert updates uit (local, Ollama)
-   → Update dependencies
-   → Run tests
-   → Create PR
-
-5. Jij: Review PR en merge
-   → Agent markeert tasks als COMPLETED
-
-6. project.md updated automatisch
+    async def evaluate_and_update(self, task_result: TaskResult):
+        """A/B test prompt variations and roll out improvements."""
+        if task_result.success:
+            await self.store_successful_pattern(task_result)
+        else:
+            await self.analyze_failure(task_result)
 ```
 
 ---
 
-## 🎨 Wat heb je NU al gebouwd
+## Current Status
 
-### ✅ Volledig Klaar
+### Production Metrics
 
-1. **project.md** - Jouw hierarchische werk structuur
-2. **project-manager.html** - UI om project.md te bekijken/editen
-3. **Backend (FastAPI)** - 45 REST endpoints, PostgreSQL, Alembic migrations
-4. **Database Schema** - Items table (epic/feature/story/task), Sprints table
-5. **Example Project** - Test data in example-project/project.md
+| Metric | Value |
+|--------|-------|
+| **API Endpoints** | 196+ |
+| **Database Tables** | 49 |
+| **Dashboards** | 14 |
+| **Agents** | 10 Core + Stack Templates |
+| **Ollama Models** | 6 (~25GB) |
+| **Quality Checks** | 42 rules, 8 categories |
+| **ChromaDB Collections** | 5 |
+| **Test Coverage** | 130+ comprehensive tests |
 
-### 📊 Status Check
+### Phase Status
 
 ```
-Backend:           ████████████████████ 100% ✅ (148 endpoints)
-Frontend:          ████████████████████ 100% ✅ (12 dashboards)
-Sync Engine:       ████████████████████ 100% ✅ (Fase 1)
-Agents:            ████████████████████ 100% ✅ (10 agents, 6 Ollama models)
-Quality Gates:     ████████████████████ 100% ✅ (Fase 3 Week 10-12)
-Estimation:        ████████████████████ 100% ✅ (FP + Story Points)
-Real-time UI:      ████████░░░░░░░░░░░░  40% 🔄 (Fase 4 Active)
-E2E Testing:       ████████████████████ 100% ✅ (Week 48 Complete)
-```
-
----
-
-## 🚀 Bouwfasen: De Roadmap
-
-### 📦 FASE 1: Sync Engine (Week 1-2) - Foundation
-
-**Doel:** project.md ↔ PostgreSQL sync werkend
-
-**Wat bouwen we:**
-```
-1. Markdown Parser (Python)
-   - Parse project.md structuur
-   - Extracteer: Epic → Feature → Story → Task
-   - Parse metadata: SP, status, owner, target date
-
-2. Sync Engine
-   - sync_from_markdown(): project.md → PostgreSQL
-   - sync_from_database(): PostgreSQL → project.md
-   - Conflict detectie (last-write-wins)
-
-3. File Watcher (Watchdog)
-   - Detecteer wijzigingen in project.md
-   - Trigger automatische sync
-   - Debounce (2 sec) voor autosave
-
-4. Tests
-   - Parse example-project/project.md
-   - Validate import naar PostgreSQL
-   - Validate export terug naar project.md
-```
-
-**Deliverables:**
-- ✅ `backend/app/sync/parser.py` - Markdown parser
-- ✅ `backend/app/sync/engine.py` - Sync engine
-- ✅ `backend/app/sync/watcher.py` - File watcher
-- ✅ Tests in `backend/tests/test_sync.py`
-
-**Demo aan het eind:**
-```bash
-# Jij: Edit project.md
-vim project.md  # Wijzig STORY-001 SP van 5 naar 8
-
-# Systeem: Auto-sync
-[2025-11-19 10:23:15] File change detected: project.md
-[2025-11-19 10:23:16] Parsing markdown...
-[2025-11-19 10:23:17] Updated database: STORY-001.sp = 8
-[2025-11-19 10:23:17] Sync complete ✅
-
-# Check database
-psql -U user -d project_manager -c "SELECT id, sp FROM items WHERE id='STORY-001';"
-# Result: STORY-001 | 8
-```
-
-**Success Criteria:**
-- ✅ Parse 100% van valide project.md files
-- ✅ Sync latency <1 seconde
-- ✅ Bidirectioneel: markdown ↔ database
-- ✅ 0 data verlies
-
----
-
-### 🤖 FASE 2: Agent Foundation (Week 3-4) - Intelligence
-
-**Doel:** Agents kunnen werk analyseren en opdelen
-
-**Wat bouwen we:**
-```
-1. KaibanJS Setup (TypeScript)
-   - Installeer KaibanJS framework
-   - Configureer multi-agent kanban board
-   - Define 8 specialized agents
-
-2. SuperClaude Framework Integration
-   - Install 16 slash commands
-   - Setup AI personas:
-     - security_expert (voor security audits)
-     - performance_expert (voor optimalisatie)
-     - code_reviewer (voor code review)
-     - architect (voor design decisions)
-
-3. Spec-Kit Integration
-   - Integrate /constitution → /specify → /plan → /tasks flow
-   - Map naar NEW_FEATURE work type
-   - Create templates voor specs
-
-4. Agent-Database Interface
-   - Agents lezen uit PostgreSQL (snel)
-   - Agents schrijven naar PostgreSQL
-   - Sync engine update project.md automatisch
-```
-
-**De 8 Agents:**
-
-1. **Feature Architect** (Cloud - Claude Sonnet 4.5)
-   - Analyseert requirements
-   - Maakt Epic breakdown → Features → Stories
-   - Gebruikt spec-kit workflow
-
-2. **Estimation Engine** (Local - Ollama Llama 3.1)
-   - Berekent Function Points (IFPUG method)
-   - Berekent Story Points (Fibonacci)
-   - Confidence intervals (±10-25%)
-
-3. **Maintenance Specialist** (Local - Ollama DeepSeek)
-   - Scant dependencies (npm audit, pip-audit)
-   - Vindt code smells (SonarQube)
-   - Maakt maintenance tasks automatisch
-
-4. **Quality Inspector** (Cloud - Claude + personas)
-   - Security audit (OWASP Top 10)
-   - Performance audit (Lighthouse)
-   - Code quality audit (complexity, duplication)
-
-5. **Bug Hunter** (Local - Ollama Qwen 2.5)
-   - Reproduceert bugs
-   - Root cause analysis
-   - Fix + regression test
-
-6. **Test Engineer** (Local - Ollama DeepSeek)
-   - Schrijft unit tests (pytest, Jest)
-   - E2E tests (Playwright)
-   - BDD scenarios (Cucumber)
-
-7. **Migration Architect** (Cloud - GPT-4)
-   - Analyseert legacy systeem
-   - Planning migratie strategie
-   - Data mapping + transformatie
-
-8. **Documentation Writer** (Local - Ollama Llama 3.1)
-   - README updates
-   - API documentation (Swagger)
-   - ADRs (Architecture Decision Records)
-
-**Deliverables:**
-- ✅ `backend/agents/config.ts` - KaibanJS configuratie
-- ✅ `backend/agents/feature_architect.ts`
-- ✅ `backend/agents/estimation_engine.py`
-- ✅ `backend/agents/maintenance_specialist.py`
-- ✅ ... (alle 8 agents)
-
-**Demo aan het eind:**
-```bash
-# Jij: Create new epic
-POST /api/epics
-{
-  "title": "Payment Integration",
-  "description": "Add Stripe payment processing",
-  "priority": "HIGH"
-}
-
-# Feature Architect Agent triggert automatisch
-[Agent: Feature Architect] Analyzing epic EPIC-010...
-[Agent: Feature Architect] Creating breakdown:
-  - FEATURE-010: Stripe API Integration (Backend)
-  - FEATURE-011: Payment UI Components (Frontend)
-  - FEATURE-012: Webhook Handlers (Backend)
-
-[Agent: Feature Architect] Creating stories for FEATURE-010:
-  - STORY-010: Setup Stripe SDK
-  - STORY-011: Implement payment flow
-  - STORY-012: Add error handling
-
-# Estimation Engine triggert
-[Agent: Estimation Engine] Calculating estimates...
-  - EPIC-010: 21 FP (Large)
-  - FEATURE-010: 13 FP
-  - STORY-010: 5 SP (6-10 hours)
-  - STORY-011: 8 SP (10-16 hours)
-  - STORY-012: 3 SP (4-6 hours)
-
-# Sync engine schrijft naar project.md
-[Sync Engine] Updating project.md...
-[Sync Engine] Complete ✅
-
-# Jij ziet nu volledige breakdown in project.md met schattingen!
-```
-
-**Success Criteria:**
-- ✅ 8 agents gedefined en werkend
-- ✅ Agents kunnen Epic → Feature → Story breakdown maken
-- ✅ Estimation accuracy ±20% (pilot fase)
-- ✅ Agent changes zichtbaar in project.md
-
----
-
-### 📊 FASE 3: Estimation & Intelligence (Week 5-6) - Brain
-
-**Doel:** Accurate schattingen met Function Points en Story Points
-
-**Wat bouwen we:**
-```
-1. Function Point Calculator (Python)
-   - IFPUG methodology implementatie
-   - Count ILF, EIF, EI, EO, EQ
-   - Complexity adjustment (simple/average/complex)
-   - FP = Σ(component_count × weight)
-
-2. Story Point Estimator (Python)
-   - Fibonacci mapping (1,2,3,5,8,13,21)
-   - Complexity factoren:
-     - Code complexity
-     - Dependencies
-     - Testing effort
-     - Risk factor
-   - Three-point estimation (optimistic, likely, pessimistic)
-
-3. ML-Based Refinement (scikit-learn)
-   - Collect historische data:
-     - Estimated SP vs Actual hours
-     - Work type, technology, team
-   - Train regression model
-   - Prediction: adjusted_sp = model.predict(features)
-   - Retrain maandelijks met nieuwe data
-
-4. Confidence Intervals
-   - ±10%: Well-understood work
-   - ±15%: Moderate understanding
-   - ±20%: Low understanding
-   - ±25%: High uncertainty (migrations)
-
-5. Work Type Router
-   - Classify work:
-     - NEW_FEATURE → spec-kit workflow
-     - MAINTENANCE → code-maintenance-agent
-     - BUG → time-boxed approach
-     - QUALITY_AUDIT → security personas
-     - MIGRATION → 5-stage pipeline
-     - etc.
-   - Route naar juiste workflow
-   - Apply correct estimation method
-```
-
-**Deliverables:**
-- ✅ `backend/estimation/function_points.py`
-- ✅ `backend/estimation/story_points.py`
-- ✅ `backend/estimation/ml_refiner.py`
-- ✅ `backend/estimation/confidence.py`
-- ✅ `backend/workflows/router.py`
-
-**Demo aan het eind:**
-```python
-# Example: Estimate a new feature
-from estimation import estimate_feature
-
-feature = {
-    "title": "User Authentication",
-    "description": "JWT-based auth with refresh tokens",
-    "components": {
-        "ILF": 2,  # User table, Session table
-        "EIF": 1,  # External auth provider (Google OAuth)
-        "EI": 4,   # Login, Register, Refresh, Logout
-        "EO": 2,   # User profile, Session list
-        "EQ": 3    # Check auth status, Get current user, Validate token
-    },
-    "complexity": "average"
-}
-
-result = estimate_feature(feature)
-
-print(result)
-# Output:
-# {
-#   "function_points": 34,
-#   "t_shirt_size": "L",
-#   "estimated_sprints": 3,
-#   "story_breakdown": [
-#     {"id": "STORY-001", "title": "Setup JWT library", "sp": 3},
-#     {"id": "STORY-002", "title": "Implement login endpoint", "sp": 5},
-#     {"id": "STORY-003", "title": "Implement register endpoint", "sp": 5},
-#     {"id": "STORY-004", "title": "Add refresh token flow", "sp": 8},
-#     {"id": "STORY-005", "title": "Google OAuth integration", "sp": 8},
-#     {"id": "STORY-006", "title": "Write auth tests", "sp": 5}
-#   ],
-#   "total_sp": 34,
-#   "confidence": "±15%",
-#   "estimated_hours": {
-#     "optimistic": 50,
-#     "likely": 68,
-#     "pessimistic": 90
-#   }
-# }
-```
-
-**Success Criteria:**
-- ✅ Function Point calculator volgt IFPUG standaard
-- ✅ Story Point schattingen binnen ±15% van actuals
-- ✅ Work Type Router 100% accuracy
-- ✅ ML model trained met eerste dataset
-
----
-
-### 🔴 FASE 4: Real-Time Dashboard (Week 7-8) - Live Updates
-
-**Doel:** Live updates in UI, agent activiteit zichtbaar
-
-**Wat bouwen we:**
-```
-1. WebSocket Server (FastAPI)
-   - WebSocket endpoint: ws://localhost:8000/ws
-   - Redis pub/sub voor event broadcasting
-   - Event types:
-     - ItemCreated
-     - ItemUpdated
-     - ItemDeleted
-     - AgentStarted
-     - AgentProgress
-     - AgentCompleted
-     - AgentError
-
-2. Enhanced project-manager.html
-   - WebSocket client connectie
-   - Auto-refresh bij events (geen page reload!)
-   - Live status indicators:
-     - 🟢 Live (connected)
-     - 🟡 Connecting...
-     - 🔴 Disconnected
-   - Smooth animations (geen flikkeren)
-
-3. Agent Activity Dashboard
-   - Real-time agent status:
-     - 🤖 Feature Architect: RUNNING (EPIC-010)
-     - 🤖 Estimation Engine: IDLE
-     - 🤖 Test Engineer: QUEUED (STORY-015)
-   - Progress indicators:
-     - Feature breakdown: 60% complete (3/5 features)
-   - Task queue visualization:
-     - 2 tasks in queue
-     - 1 task running
-     - 15 tasks completed today
-
-4. Notifications
-   - Browser notifications:
-     - "Feature Architect completed EPIC-010 breakdown"
-     - "Estimation Engine: STORY-010 estimated at 5 SP"
-   - Notification preferences (user settings)
-```
-
-**Deliverables:**
-- ✅ `backend/app/websocket.py` - WebSocket server
-- ✅ `backend/app/events.py` - Event broadcaster
-- ✅ `project-manager.html` - Enhanced met WebSocket
-- ✅ `agent-dashboard.html` - Nieuwe agent monitoring UI
-
-**Demo aan het eind:**
-```javascript
-// Open project-manager.html in browser
-
-// You see:
-// 🟢 Live - Connected to server
-
-// Agent starts working
-// You see notification:
-// 🤖 Feature Architect started analyzing EPIC-010
-
-// Progress updates appear in real-time:
-// 🤖 Feature Architect: Creating FEATURE-010... (20%)
-// 🤖 Feature Architect: Creating FEATURE-011... (40%)
-// 🤖 Feature Architect: Creating FEATURE-012... (60%)
-
-// UI updates automatically (no refresh!)
-// New features appear in tree view
-
-// Agent completes
-// 🤖 Feature Architect completed EPIC-010 breakdown ✅
-// 🤖 Estimation Engine started estimating...
-
-// You see SP values appear in real-time:
-// STORY-010: -- → 5 SP
-// STORY-011: -- → 8 SP
-// STORY-012: -- → 3 SP
-```
-
-**Success Criteria:**
-- ✅ WebSocket latency <500ms
-- ✅ UI updates zonder page refresh
-- ✅ Agent activiteit 100% zichtbaar
-- ✅ Smooth UX (geen flikkeren)
-
----
-
-### 🧪 FASE 5: Quality & Testing (Week 9-10) - Safety Net
-
-**Doel:** Automated quality gates en testing
-
-**Wat bouwen we:**
-```
-1. Quality Gate Engine
-   - Pre-merge checks:
-     - ✅ All tests pass (100%)
-     - ✅ Code coverage ≥80%
-     - ✅ No security vulnerabilities (Critical/High)
-     - ✅ Performance within bounds
-     - ✅ Cyclomatic complexity ≤15
-   - Automated blocking:
-     - Cannot merge PR if gates fail
-     - Override requires approval
-
-2. Basil Integration (Quality Management)
-   - Install Basil tool
-   - Track Technical Debt Ratio (TDR)
-   - Quality metrics dashboard:
-     - Code duplication %
-     - Test coverage %
-     - Security vulnerabilities count
-     - Performance benchmarks
-   - Remediation prioritization
-
-3. Test Automation Agent Enhancements
-   - Auto-generate unit tests
-   - Auto-generate E2E tests voor critical paths
-   - Mutation testing (optional)
-   - Visual regression testing (Percy)
-
-4. Security Integration
-   - OWASP ZAP automated scanning
-   - Snyk dependency scanning
-   - Pre-commit hooks:
-     - Linting (ESLint, Pylint)
-     - Secret detection
-     - Code formatting
-```
-
-**Deliverables:**
-- ✅ `backend/quality/gates.py` - Quality gate engine
-- ✅ `backend/quality/basil_integration.py`
-- ✅ `.github/workflows/quality-gates.yml` - CI/CD pipeline
-- ✅ `backend/tests/` - Uitgebreide test suite
-
-**Demo aan het eind:**
-```bash
-# Developer creates PR
-git checkout -b feature/payment-integration
-git commit -m "Add payment integration"
-git push origin feature/payment-integration
-
-# CI/CD pipeline runs
-[GitHub Actions] Running quality gates...
-
-✅ Tests: 247/247 passed (100%)
-✅ Coverage: 84% (target: 80%)
-❌ Security: 1 HIGH vulnerability found
-   - lodash 4.17.19 has prototype pollution vulnerability
-   - Suggested fix: npm update lodash@4.17.21
-✅ Performance: All benchmarks within 5% of baseline
-✅ Complexity: Max complexity 12 (target: ≤15)
-
-[Quality Gates] FAILED - 1 HIGH security vulnerability
-[Quality Gates] PR blocked - fix security issue to merge
-
-# Developer fixes
-npm update lodash@4.17.21
-git commit -m "Update lodash to fix vulnerability"
-git push
-
-# CI/CD re-runs
-[Quality Gates] ✅ ALL CHECKS PASSED
-[Quality Gates] PR approved for merge
-```
-
-**Success Criteria:**
-- ✅ Quality gates block bad code
-- ✅ 0 false positives
-- ✅ Security scan <2 min
-- ✅ Developer satisfaction ≥4/5
-
----
-
-### 🚢 FASE 6: Production Ready (Week 11-12) - Polish
-
-**Doel:** Productie-klaar systeem met monitoring
-
-**Wat bouwen we:**
-```
-1. Monitoring & Observability
-   - Prometheus metrics
-   - Grafana dashboards:
-     - Agent execution time
-     - Estimation accuracy
-     - Sync latency
-     - Error rates
-   - ELK stack (Elasticsearch, Logstash, Kibana)
-   - Alerting (email, Slack)
-
-2. Performance Optimization
-   - Database indexing optimization
-   - Query performance tuning
-   - WebSocket connection pooling
-   - Caching (Redis)
-
-3. Documentation
-   - User guide (Nederlands + English)
-   - API documentation (OpenAPI/Swagger)
-   - Agent workflow diagrams
-   - Troubleshooting guide
-
-4. Backup & Recovery
-   - Automated database backups
-   - project.md git auto-commit
-   - Disaster recovery plan
-   - Rollback procedures
-```
-
-**Deliverables:**
-- ✅ Prometheus + Grafana setup
-- ✅ Complete documentation
-- ✅ Backup scripts
-- ✅ Production deployment guide
-
----
-
-## 📈 Verwachte Resultaten
-
-### Na Fase 1 (Week 2)
-```
-✅ Edit project.md → Automatisch in database
-✅ API change → Automatisch in project.md
-✅ Git-friendly (diffs, branches werken)
-```
-
-### Na Fase 2 (Week 4)
-```
-✅ Agent maakt Epic breakdown automatisch
-✅ Agent schat Story Points
-✅ 8 agents operationeel
-```
-
-### Na Fase 3 (Week 6)
-```
-✅ Function Point calculator werkend
-✅ Estimation accuracy ±15%
-✅ ML model leert van historische data
-```
-
-### Na Fase 4 (Week 8)
-```
-✅ Real-time updates in UI
-✅ Agent activiteit zichtbaar
-✅ Notificaties werkend
-```
-
-### Na Fase 5 (Week 10)
-```
-✅ Quality gates blokkeren slechte code
-✅ Automated testing
-✅ Security scanning
-```
-
-### Na Fase 6 (Week 12)
-```
-✅ Productie-klaar systeem
-✅ Monitoring & alerting
-✅ Complete documentatie
+Backend:           [####################] 100% - 196 endpoints
+Frontend:          [####################] 100% - 14 dashboards
+Sync Engine:       [####################] 100% - Fase 1
+Agents:            [####################] 100% - 10 agents
+Quality Gates:     [####################] 100% - Fase 3 Week 10-12
+A/B Testing:       [####################] 100% - Week 51
+LLM Council:       [####################] 100% - Week 52
+Continuous Evol:   [####################] 100% - Week 53
+Multi-Stack:       [                    ]   0% - Week 54-58 PLANNED
 ```
 
 ---
 
-## 💰 ROI & Business Value
+## Quick Links
 
-### Kosten Besparing
-- **Manueel:** 32 repos × 5 dagen × €450 = **€72,000**
-- **Geautomatiseerd:** Development (€31,500) + Execution (€9,900) = **€41,400**
-- **Besparing:** **€30,600 (42.5%)**
+### Core Documents
 
-### Toekomstige Migraties
-- **Eerste batch:** €41,400 (incl. development)
-- **Volgende batches:** ~€200/repo (alleen execution)
-- **Break-even:** Na eerste 32-repo batch
-- **ROI:** 90% sneller voor toekomstige migraties
+- **[PROJECT_STATUS_SUMMARY.md](./PROJECT_STATUS_SUMMARY.md)** - Single entry point (START HERE)
+- **[ROADMAP.md](./ROADMAP.md)** - 40-week planning master
+- **[AGENTS.md](./AGENTS.md)** - AI agent system reference
+- **[README.md](./README.md)** - Project introduction
 
-### Kwaliteit Verbeteringen
-- ✅ Estimation accuracy: ±25% → ±10%
-- ✅ Test coverage: variabel → 80%+
-- ✅ Technical Debt Ratio: 20% → <10%
-- ✅ Time to production: 3-4 sprints → 2 sprints
+### Architecture Details
+
+- **[docs/architecture/](./docs/architecture/)** - All architecture detail documents
+- **[docs/reviews/](./docs/reviews/)** - Platform reviews and analyses
+- **[docs/roadmap/](./docs/roadmap/)** - Phase-specific roadmaps
 
 ---
 
-## 🎯 Success Metrics
+## Related Documentation
 
-### Technical Metrics
-| Metric | Current | Target | After Phase |
-|--------|---------|--------|-------------|
-| Estimation Accuracy | ±25% | ±10% | Phase 3 |
-| Test Coverage | 40-90% | ≥80% | Phase 5 |
-| Sync Latency | N/A | <1s | Phase 1 |
-| Agent Automation | 0% | 70% | Phase 2 |
-| Time to Production | 18-24d | 12d | Phase 6 |
-
-### Business Metrics
-| Metric | Target |
-|--------|--------|
-| Cost Reduction | 42.5% |
-| Developer Satisfaction | ≥4.5/5 |
-| Code Quality (TDR) | <10% |
-| Security Vulnerabilities | 0 Critical/High |
+- **Full Agent Specifications**: `backend/agents/AGENT_SPECIFICATIONS.md`
+- **Integration Guide**: `backend/agents/INTEGRATION_GUIDE.md`
+- **LLM Configuration**: `backend/agents/LLM_CONFIGURATION.md`
+- **Quality Gates Config**: `docs/quality/QUALITY_GATE_CONFIGURATION.md`
 
 ---
 
-## 🚦 Start Nu: Volgende Stappen
-
-### Deze Week
-1. **Build Markdown Parser** (2 dagen)
-   - Parse project.md structuur
-   - Unit tests
-
-2. **Build Sync Engine** (2 dagen)
-   - sync_from_markdown()
-   - sync_from_database()
-
-3. **Add File Watcher** (1 dag)
-   - Watchdog integration
-   - Auto-sync
-
-### Volgende Week
-4. **Test met example-project** (1 dag)
-5. **Setup KaibanJS** (2 dagen)
-6. **Define 8 agents** (2 dagen)
-
----
-
-## 📚 Belangrijke Documenten
-
-1. **plan.md** - Complete architectuur plan (65KB)
-2. **MARKDOWN_INTEGRATION_STRATEGY.md** - Sync strategie (dit document)
-3. **BACKEND_IMPLEMENTATION_SUMMARY.md** - Backend documentatie
-4. **project.md** - Jouw werk structuur (source of truth)
-
----
-
-## ❓ Veelgestelde Vragen
-
-### Moet ik project-manager.html aanpassen?
-**Antwoord:** Nee, niet in Fase 1. Later voegen we WebSocket toe voor real-time updates (Fase 4).
-
-### Kan ik gewoon in project.md blijven werken?
-**Antwoord:** Ja! Dat is het hele punt. Edit in vim, VSCode, of project-manager.html - het sync automatisch.
-
-### Wat als markdown en database conflicteren?
-**Antwoord:** Last-write-wins strategie. Conflict wordt gelogd, nieuwste versie wint. Manual merge voor critical conflicts.
-
-### Hoe duur zijn de cloud LLMs?
-**Antwoord:** Hybrid approach: 70% local (Ollama, gratis), 30% cloud (Claude/GPT-4, ~€50/maand voor normaal gebruik).
-
-### Kan ik het systeem offline gebruiken?
-**Antwoord:** Ja! Edit project.md offline, sync gebeurt zodra backend weer online is.
-
----
-
-**🎉 Je bent klaar om te beginnen!**
-
-Fase 1 (Sync Engine) is de foundation voor alles. Zodra dat werkt, komen alle andere lagen er bovenop.
-
-Zullen we beginnen met de Markdown Parser? 🚀
+**Last Updated**: 2025-11-26
+**Version**: 4.0 (Multi-Stack Platform Vision)
+**Status**: Active Development

@@ -1,4 +1,4 @@
-# Management Scripts - Markdown Task Manager
+# Management Scripts - Multi-Stack AI Agent Platform
 
 Deze scripts beheren alle services voor het Agentic Task Management System.
 

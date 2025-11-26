@@ -2,8 +2,9 @@
 Project API - Endpoints for project visualization
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pathlib import Path
+from typing import Optional
 import sys
 
 # Add sync module to path
@@ -13,17 +14,21 @@ from app.sync.parser import MultiFileProjectParser
 
 router = APIRouter(prefix="/api/project", tags=["project"])
 
+# Project root path
+PROJECT_ROOT = Path("/home/eddie/Projects/MarkdownTaskManager")
+
 
 @router.get("/")
-async def get_project():
+async def get_project(
+    project_name: Optional[str] = Query("MarkdownTaskManager", description="Project folder name")
+):
     """
     Get full project structure (epics, features, stories, tasks).
 
     Returns parsed markdown project data.
     """
     try:
-        project_root = Path("/home/eddie/Projects/MarkdownTaskManager")
-        parser = MultiFileProjectParser(project_root)
+        parser = MultiFileProjectParser(PROJECT_ROOT, project_name)
 
         project_data = parser.parse_project()
 
@@ -44,11 +49,12 @@ async def get_project():
 
 
 @router.get("/epics")
-async def get_epics():
+async def get_epics(
+    project_name: Optional[str] = Query("MarkdownTaskManager", description="Project folder name")
+):
     """Get all epics"""
     try:
-        project_root = Path("/home/eddie/Projects/MarkdownTaskManager")
-        parser = MultiFileProjectParser(project_root)
+        parser = MultiFileProjectParser(PROJECT_ROOT, project_name)
 
         project_data = parser.parse_project()
 
@@ -65,13 +71,15 @@ async def get_epics():
 
 
 @router.get("/epic/{epic_id}")
-async def get_epic(epic_id: str):
+async def get_epic(
+    epic_id: str,
+    project_name: Optional[str] = Query("MarkdownTaskManager", description="Project folder name")
+):
     """Get single epic by ID"""
     try:
-        project_root = Path("/home/eddie/Projects/MarkdownTaskManager")
-        parser = MultiFileProjectParser(project_root)
+        parser = MultiFileProjectParser(PROJECT_ROOT, project_name)
 
-        epic_dir = project_root / "Projecten" / "MarkdownTaskManager" / epic_id
+        epic_dir = PROJECT_ROOT / "Projecten" / project_name / epic_id
 
         if not epic_dir.exists():
             raise HTTPException(
@@ -96,11 +104,12 @@ async def get_epic(epic_id: str):
 
 
 @router.get("/stats")
-async def get_project_stats():
+async def get_project_stats(
+    project_name: Optional[str] = Query("MarkdownTaskManager", description="Project folder name")
+):
     """Get project statistics"""
     try:
-        project_root = Path("/home/eddie/Projects/MarkdownTaskManager")
-        parser = MultiFileProjectParser(project_root)
+        parser = MultiFileProjectParser(PROJECT_ROOT, project_name)
 
         project_data = parser.parse_project()
 

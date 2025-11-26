@@ -109,7 +109,7 @@ MarkdownTaskManager/
 ### Hub Portal Features
 
 #### 1. Header Section
-- Logo/Title: "Markdown Task Manager"
+- Logo/Title: "Multi-Stack AI Agent Platform"
 - Status indicators:
   - Backend: Online/Offline (fetch /api/health)
   - Ollama: X models loaded

@@ -1,7 +1,7 @@
 # SuperClaude Framework - Command Mapping voor Agentic Task Manager
 
 **Datum:** 2025-11-15
-**Project:** Markdown Task Manager → AI-Powered Agentic Platform
+**Project:** Multi-Stack AI Agent Platform → AI-Powered Agentic Platform
 **SuperClaude Version:** v4.1.9
 **Status:** Fase 2 Week 6 - SuperClaude Integration
 

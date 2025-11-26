@@ -1,9 +1,9 @@
-# ROADMAP: Agentic Task Management System
+# ROADMAP: Multi-Stack AI Agent Platform
 
-**Project:** Markdown Task Manager -> AI-Powered Agentic Platform
+**Project:** Multi-Stack AI Agent Platform
 **Start:** 2025-11-12 (Week 46)
 **Eind:** 2026-06-22 (40 weken)
-**Status:** Week 50 IN PROGRESS | Quality Gates Dashboard Integration
+**Status:** Week 53 COMPLETE | Week 54 ACTIVE | Multi-Stack Platform Evolution
 
 ---
 
@@ -11,26 +11,33 @@
 
 | Status | Fase | Document |
 |--------|------|----------|
-| DONE | Fase 1-3 | [Completed Phases](#-completed-phases) |
-| **ACTIVE** | Fase 4 | [UI + Intelligence](docs/roadmap/active/fase-4-ui-intelligence.md) |
-| **NEW** | Frontend | [Frontend Unification](docs/roadmap/active/frontend-unification.md) |
-| **NEW** | Decision | [LLM Council](docs/roadmap/active/LLM_COUNCIL_INTEGRATION.md) |
-| PLANNED | Fase 5-9 | [Future Phases](#-future-phases) |
+| DONE | Fase 1-3 | [Completed Phases](#completed-phases) |
+| DONE | Week 46-53 | [Weekly Progress](#weekly-progress-history) |
+| **ACTIVE** | Week 54-58 | [Multi-Stack Platform](#-week-54-58-multi-stack-platform-foundation) |
+| PLANNED | Fase 5-9 | [Future Phases](#future-phases) |
 | PARALLEL | Evolution | [AgentEvolver](docs/roadmap/parallel/agentevolver-integration.md) |
-| PARALLEL | Validation | [Validation Framework](docs/roadmap/parallel/validation-framework.md) |
+| NEW | Review | [2025-11-26 Platform Review](docs/reviews/2025-11-26_MULTI_STACK_PLATFORM_REVIEW.md) |
 
 ---
 
 ## Executive Summary
 
-**Visie:** Transformeer Markdown Task Manager naar AI-powered platform waar agents automatisch werk analyseren, opdelen, schatten en uitvoeren.
+### Visie Update (2025-11-26)
 
-**Key Numbers:**
-- 10 AI Agents (100% local via Ollama)
-- 9 Work Type Workflows
-- 16 SuperClaude Commands
-- 42 Quality Gate Rules
-- 29 Repositories to migrate
+**Oude Visie:** Single-project AI platform met 10 agents.
+
+**Nieuwe Visie:** Multi-stack platform waar meerdere projecten met verschillende tech-stacks worden beheerd door gespecialiseerde, stack-aware agents.
+
+### Key Numbers (Updated)
+
+| Metric | Week 53 | Week 58 Target | Change |
+|--------|---------|----------------|--------|
+| Core Agents | 10 | 10 | - |
+| Stack Agent Templates | 0 | 5 per stack | NEW |
+| Platform Agents | 0 | 4 | NEW |
+| LLM Providers | 1 (Ollama) | 4 (+ Claude Haiku/Sonnet/Opus) | +300% |
+| Knowledge Layers | 1 | 2 | +100% |
+| Supported Stacks | 1 (Python) | 4 (Python, JS, Go, Rust) | +300% |
 
 ---
 
@@ -41,319 +48,474 @@
 Nov    Dec    Jan    Feb    Mar    Apr    May    Jun
 |------|------|------|------|------|------|------|------|
 [F1-3 DONE]
-       [F4 ACTIVE]
+       [F4 DONE]
+       [Week 54-58: MULTI-STACK PLATFORM]
               [F5   ][F6   ][F7   ][F8         ][F9   ]
        [=== AgentEvolver (parallel) ===]
        [=== Validation (parallel) =====]
-       [Council]  <- LLM Council (Week 51-52)
-              [FE]  <- Frontend Unification
+       [Council DONE]
+              [Stack Support]
+                     [Multi-Project]
 ```
 
 ---
 
-## Current Focus (Week 50)
+## 🚀 Week 54-58: Multi-Stack Platform Foundation
 
-### Active Work
-1. **Quality Gate Integration** - Connecting config with validation workflows
-2. **Dashboard Visualization** - Workflow gate status in Quality Dashboard
-3. **Testing Framework** - Agent validation loop setup
+### Overview
 
-### Week 47 Completed (24-29 Nov 2025)
-- [x] Hub Portal implementatie (index.html) ✅
-- [x] Shared navigation component (11 dashboards) ✅
-- [x] Backend health indicators ✅
-- [x] Standalone Integration (task-manager.html, project-manager.html) ✅
-- [x] **Backend Verification** - Docker, API endpoints, CORS fixes ✅
-- [x] **E2E Testing** - All 8 dashboards tested ✅
-- [x] **Bug Fixes** - Estimation NaN + Evolution 404 errors ✅
-- [x] **Documentation Update** ✅
+**Goal:** Transform single-project system into multi-stack agent platform.
 
-### Week 48 Progress (24 Nov 2025)
+**Key Deliverables:**
+1. Claude model routing (Haiku/Sonnet/Opus)
+2. Agent Observability System
+3. Stack Agent Templates
+4. PromptEngineer + Meta-Prompting
+5. Enhanced Betty (+ ErrorDetective)
+6. Standards System (.standards/)
 
-**Day 1: Bug Fixes** ✅
-- [x] **OpenAPI Bug Fixes** - Fixed `KeyError: '$ref'` in 2 routers
-- [x] **DB Column Mapping** - Fixed 5x `extra_metadata` → `metadata` in `technical_debt.py`
-- [x] **Quality Dashboard Enabled** - 5/7 endpoints working
-- [x] **Enum Value Fixes** - PostgreSQL enum compatibility
-- [x] **Database Reset** - Clean state with all 34 tables
+### Architecture Overview
 
-**Day 2: E2E Testing** ✅
-- [x] **Hub Portal Test** - Backend healthy, 6 models, 10 agents ready
-- [x] **Dashboard Verification** - 11/11 dashboards accessible
-  - Fixed: Added routes for `evolution-dashboard.html`, `spec-kit-wizard.html`
-- [x] **API Coverage** - 137 endpoints verified, 8/9 key endpoints working
-- [x] **Ollama/Agent Status** - 6 models loaded (~25GB), 10 agents operational
-- [x] **Database Integrity** - 34 tables, migration 009 applied
-- [x] **Test Report** - `docs/testing/WEEK48_E2E_REPORT.md`
-
-**Day 3: Documentation Update** ✅
-- [x] **ROADMAP.md** - Week 48 progress updated
-- [x] **ARCHITECTURE.md** - Status 3.1, 137 endpoints, 11 dashboards
-- [x] **frontend-unification.md** - Marked COMPLETE
-- [x] **API Documentation** - OpenAPI verified (137 endpoints, 102 schemas)
-
-**Day 4: Fase 5 Design** ✅
-- [x] **Quality Gates UI Design** - `docs/design/FASE5_QUALITY_GATES_UI_DESIGN.md`
-  - 3 UI wireframes (main layout, category panel, workflow rules)
-  - 8 API endpoints designed
-  - 5 database tables designed
-  - Week 49 implementation plan
-- [x] **Evaluation Review** - Response added to `evaluation.md`
-
-**Day 5: Code Cleanup** ✅
-- [x] **Root .gitignore** - Created with node_modules, Python, IDE patterns
-- [x] **node_modules removed** - 33,307 files removed from git tracking
-- [x] **pytest tests** - 187 passed, 73 failed (DB), 82 errors (connection)
-- [x] **ML dependencies** - Documented as optional in `requirements-ml.txt`
-- [x] **Root cleanup** - 30+ markdown files → 8 (rest to docs/archive/)
-
-**Known Issues (Medium Priority)**
-- `sprints.capacity` column missing (schema mismatch)
-
-### Week 48 Complete ✅
-
-### Week 49 Progress (24 Nov 2025)
-
-**Day 1: Database Migration** ✅
-- [x] Created SQLAlchemy models (`quality_gate_config.py`)
-- [x] Created Alembic migration 010 (5 new tables)
-- [x] Fixed models/__init__.py with correct imports
-- [x] Migration tested and applied successfully
-
-**New Tables (5):**
-- `quality_gate_configs` - Main config per project
-- `quality_category_configs` - Category settings (SIG, SOLID, etc.)
-- `quality_check_configs` - Individual check settings
-- `quality_workflow_rules` - Per-workflow blocking rules
-- `quality_config_history` - Audit trail
-
-**Day 2: API Endpoints** ✅
-- [x] Created comprehensive API router (`quality_gate_config.py`)
-- [x] 7 new endpoints: GET/PUT config, PATCH category/check/workflow, POST reset/validate, GET history
-- [x] Pydantic schemas inline for type safety
-- [x] Registered router in main.py
-- [x] Fixed enum column handling (String instead of PostgreSQL ENUM)
-- [x] All endpoints tested and working
-- [x] Total API endpoints: 144 (was 137)
-
-**Day 3: Frontend UI** ✅
-- [x] Created `quality-gates-config.html` (700+ lines)
-- [x] Category configuration panel (enable/disable, target score, weight)
-- [x] Workflow rules panel (blocking severities, coverage, requirements)
-- [x] Individual checks table with filtering
-- [x] Configuration history viewer
-- [x] Auto-save on change, validate, reset to defaults
-- [x] Registered route in main.py
-- [x] Total dashboards: 12 (was 11)
-
-**Day 4: Integration Testing** ✅
-- [x] Quality Gates Config UI tested in browser via Playwright
-- [x] Category toggle/update working (auto-save + toast notification)
-- [x] Workflow rules update working (coverage, severities, checkboxes)
-- [x] Reset to defaults with confirmation dialog working
-- [x] History audit trail logging all changes correctly
-- [x] Quality Dashboard integration verified (8 categories displayed)
-- [x] Screenshots: `week49_quality_dashboard_integration.png`
-
-**Day 5: Polish & Documentation** ✅
-- [x] Added Pydantic Field validation constraints (ge/le for scores, coverage, iterations)
-- [x] Updated ARCHITECTURE.md (v3.2, 144 endpoints, 12 dashboards)
-- [x] Updated PROJECT_STATUS_SUMMARY.md with Week 49 summary
-- [x] Updated ROADMAP.md with Week 49 completion
-
-### Week 49 Complete ✅
-
-### Week 50 Progress (24 Nov 2025)
-
-**Day 1: Quality Gate Integration Service** ✅
-- [x] Created `quality_gate_integration_service.py` (390 lines)
-- [x] WORK_TYPE_PHASES mapping (8 workflow types)
-- [x] QualityGateResult dataclass for evaluation results
-- [x] Methods: get_validation_config(), evaluate_gate(), log_gate_result()
-
-**Day 2: Quality Dashboard Visualization** ✅
-- [x] Created `quality_gate_evaluation.py` API router (4 endpoints)
-- [x] GET `/api/quality/gate/{workflow_type}/config`
-- [x] POST `/api/quality/gate/{workflow_type}/evaluate`
-- [x] GET `/api/quality/gate/status`
-- [x] GET `/api/quality/gate/workflow-types`
-- [x] Added Workflow Quality Gates section to quality-dashboard.html
-- [x] Dynamic rendering of 8 workflow cards
-- [x] Blocking severities, coverage requirements, validation phases
-- [x] Screenshot: `week50_quality_gates_dashboard.png`
-
-**Day 3: Testing Framework Setup** ✅
-- [x] Created `tests/api/week50/` test directory
-- [x] `conftest.py` with pytest fixtures for quality gate testing
-- [x] `test_quality_gate_evaluation.py` - 18 API endpoint tests
-- [x] `test_quality_gate_service.py` - 16 service unit tests
-- [x] All 34 tests passing
-
-**Day 4: Agent Validation Loop Implementation** ✅
-- [x] Created `agent_validation_loop_service.py` (490+ lines)
-  - `AgentValidationLoopService` with `run_validation_loop()` method
-  - `FixSuggestionGenerator` for structured fix suggestions
-  - `ValidationLoopResult`, `ValidationAttempt`, `FixSuggestion` dataclasses
-- [x] Created `agent_validation.py` API router (3 endpoints)
-  - POST `/api/agent/validate/quick` - Quick validation check
-  - POST `/api/agent/validate/loop` - Run full validation loop
-  - GET `/api/agent/validate/workflow-types` - List workflow types
-- [x] Registered router in main.py
-- [x] All endpoints tested and working
-
-**Day 5: Integration Tests for Quality Gate Blocking** ✅
-- [x] Created `test_agent_validation_integration.py` (21 tests)
-  - 6 API endpoint tests (quick validate, loop, workflow types)
-  - 2 Quality gate blocking tests (critical errors, warnings)
-  - 4 Workflow-specific validation tests (phases per workflow type)
-  - 3 Fix suggestion generator tests
-  - 2 ValidationLoopResult dataclass tests
-  - 2 Iteration behavior tests (stops on success, tracks errors)
-  - 2 Coverage requirement tests (pass/fail based on coverage)
-- [x] All 21 tests passing
-- [x] Proper mocking of service layer for API tests
-- [x] Correct dataclass signatures used (ValidationResult, ValidationPhaseResult, ValidationConfig)
-
-### Week 50 Complete ✅
-
-### Week 51 Complete ✅
-
-**A/B Testing Framework & Evolution Metrics (25 Nov 2025)**
-
-**Day 1: Database Foundation** ✅
-- [x] SQLAlchemy models (ab_testing.py) - 3 models, 200 lines
-- [x] Alembic migration 011 - 3 tables created
-- [x] TypeScript types (ABTesting.ts) - 250 lines
-
-**Day 2: Service Layer** ✅
-- [x] Experiment Service (ab_testing_service.py) - 550 lines
-- [x] Traffic allocation logic (deterministic sticky assignment)
-- [x] Statistical analysis (confidence intervals, p-values)
-
-**Day 3: REST API** ✅
-- [x] 9 API endpoints (ab_testing.py) - 650 lines
-- [x] Pydantic schemas with validation
-- [x] Router registration in main.py
-- [x] Backend verified working
-
-**Day 4: Evolution Metrics** ✅
-- [x] Evolution Metrics Service (evolution_metrics_service.py) - 500 lines
-- [x] Performance tracking + trend analysis
-- [x] Daily/weekly aggregation
-- [x] ChromaDB integration for milestones
-
-**Day 5: Testing & Documentation** ✅
-- [x] 18 unit tests (test_ab_testing_service.py)
-- [x] 20 API integration tests (test_ab_testing_api.py)
-- [x] 15 evolution metrics tests (test_evolution_metrics.py)
-- [x] Documentation updates (ROADMAP, ARCHITECTURE, PROJECT_STATUS_SUMMARY)
-
-**Total Week 51 Output:**
-- 2,150+ lines of production code
-- 53 comprehensive tests
-- 9 new API endpoints
-- 3 new database tables
-- Complete A/B testing framework
-
-### Week 51 Planning (25 Nov - 29 Nov 2025)
-
-**Dual Track Implementation:**
-
-**Track 1: A/B Testing Framework** (Primary - Week 51 Plan)
-- Day 1: Database models + Migration 011
-- Day 2: Experiment Service Layer
-- Day 3: REST API Endpoints (8 new)
-- Day 4: Evolution Metrics Service
-- Day 5: Testing & Documentation
-
-**Track 2: LLM Council Integration** (NEW - Parallel)
-- Day 1-2: Database schema + Core service
-- Day 3: Peer review logic
-- Day 4: Synthesis & API endpoints
-- Day 5: Basic agent integration hooks
-
-**Rationale:** Both systems complement each other:
-- A/B Testing = Data-driven evolution
-- LLM Council = Wisdom-driven decisions
-
-[See Week 51 detailed plan](docs/roadmap/active/WEEK_51_PLAN.md)
-[See LLM Council plan](docs/roadmap/active/LLM_COUNCIL_INTEGRATION.md)
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    MULTI-STACK AGENT PLATFORM                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  LAAG 1: CORE AGENTS (Cross-Stack, 10)                                       │
+│  ┌─────────┬─────────┬─────────┬─────────┬─────────┐                        │
+│  │ Felix   │ Quinn   │ Betty   │ Eliza   │ Diana   │                        │
+│  │ Arch    │ Quality │ Debug   │ Estim   │ Docs    │                        │
+│  │         │ Orch    │ +ErrDet │         │         │                        │
+│  ├─────────┼─────────┼─────────┼─────────┼─────────┤                        │
+│  │ Marcus  │ Tessa   │ Miguel  │ Peter   │ Paul    │                        │
+│  │ Maint   │ Test    │ Migrate │ Product │ Plan    │                        │
+│  │ Orch    │ Orch    │         │         │         │                        │
+│  └─────────┴─────────┴─────────┴─────────┴─────────┘                        │
+│                                                                              │
+│  LAAG 2: STACK AGENTS (Per Project, Templates)                               │
+│  ┌─────────────────────────────────────────────────────────────────┐        │
+│  │ Template: BackendDev | FrontendDev | CodeReviewer | SecAudit    │        │
+│  │                                                                  │        │
+│  │ Instances per stack:                                             │        │
+│  │ • Python:     BackendDev_py,  CodeRev_py,  SecAudit_py          │        │
+│  │ • JavaScript: BackendDev_js,  FrontendDev_js, CodeRev_js        │        │
+│  │ • Go:         BackendDev_go,  CodeRev_go,  SecAudit_go          │        │
+│  │ • Rust:       BackendDev_rs,  CodeRev_rs,  SecAudit_rs          │        │
+│  └─────────────────────────────────────────────────────────────────┘        │
+│                                                                              │
+│  LAAG 3: PLATFORM AGENTS (Meta-niveau)                                       │
+│  ┌─────────────────┬─────────────────┬─────────────────┐                    │
+│  │ Observability   │ PromptEngineer  │ ContextManager  │                    │
+│  │ (Agent Monitor) │ (Meta-Prompting)│ (State Handoff) │                    │
+│  └─────────────────┴─────────────────┴─────────────────┘                    │
+│                                                                              │
+│  LAAG 4: PROVIDERS & KNOWLEDGE                                               │
+│  ┌───────────────────────────────┬─────────────────────────────────┐        │
+│  │ Providers:                    │ Knowledge:                       │        │
+│  │ • Ollama (free, local)        │ • ChromaDB (semantic search)    │        │
+│  │ • Claude Haiku ($1/$5)        │ • .standards/ (codified rules)  │        │
+│  │ • Claude Sonnet ($3/$15)      │                                 │        │
+│  │ • Claude Opus ($15/$75)       │                                 │        │
+│  └───────────────────────────────┴─────────────────────────────────┘        │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Fase Overview
+### Week 54: Provider & Observability Foundation
 
-### Completed Phases
+**Focus:** Multi-LLM support + Agent behavior monitoring
+
+| Dag | Taak | Output | Lines Est. |
+|-----|------|--------|------------|
+| 1 | Provider Registry | `providers/` module, base interfaces | 400 |
+| 2 | Claude CLI Integration | `claude_provider.py`, auth flow | 350 |
+| 3 | Model Router | Task → Model mapping, cost awareness | 300 |
+| 4 | Database Migration 015 | `agent_actions`, `decision_traces`, `llm_providers` | 200 |
+| 5 | Observability Service | Action logging, performance tracking | 500 |
+
+**Database Tables (4 new):**
+```sql
+-- LLM Provider configuration
+CREATE TABLE llm_providers (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    tier VARCHAR(20) NOT NULL,
+    cost_input_per_m DECIMAL(10,4),
+    cost_output_per_m DECIMAL(10,4),
+    is_active BOOLEAN DEFAULT true,
+    config JSONB
+);
+
+-- Agent action logging (observability)
+CREATE TABLE agent_actions (
+    id SERIAL PRIMARY KEY,
+    task_id UUID NOT NULL,
+    agent_id VARCHAR(50) NOT NULL,
+    action_type VARCHAR(50) NOT NULL,
+    input_summary TEXT,
+    output_summary TEXT,
+    decision_rationale TEXT,
+    model_used VARCHAR(50),
+    token_input INTEGER,
+    token_output INTEGER,
+    duration_ms INTEGER,
+    success BOOLEAN,
+    confidence_score DECIMAL(3,2),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Decision traces for debugging
+CREATE TABLE decision_traces (
+    id SERIAL PRIMARY KEY,
+    task_id UUID NOT NULL,
+    sequence_number INTEGER NOT NULL,
+    agent_id VARCHAR(50) NOT NULL,
+    decision_point VARCHAR(100),
+    options JSONB,
+    selected_option VARCHAR(100),
+    selection_rationale TEXT,
+    outcome VARCHAR(50),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Agent performance daily aggregates
+CREATE TABLE agent_performance_daily (
+    id SERIAL PRIMARY KEY,
+    agent_id VARCHAR(50) NOT NULL,
+    date DATE NOT NULL,
+    total_actions INTEGER,
+    successful_actions INTEGER,
+    avg_duration_ms INTEGER,
+    total_tokens INTEGER,
+    total_cost_cents INTEGER,
+    UNIQUE(agent_id, date)
+);
+```
+
+**API Endpoints (6 new):**
+- `GET /api/providers` - List LLM providers
+- `POST /api/providers/{id}/test` - Test provider connection
+- `GET /api/providers/usage` - Usage statistics
+- `POST /api/routing/select-model` - Get recommended model
+- `GET /api/observability/actions` - Agent action history
+- `GET /api/observability/performance` - Performance metrics
+
+---
+
+### Week 55: Agent Enhancements
+
+**Focus:** Core agent upgrades + Observability Dashboard
+
+| Dag | Taak | Output | Lines Est. |
+|-----|------|--------|------------|
+| 1 | Observability Dashboard | `observability-dashboard.html` | 800 |
+| 2 | Betty Enhancement | + ErrorDetective capabilities | 400 |
+| 3 | Quinn Enhancement | + 3-fase methodology, 6-dimensie review | 450 |
+| 4 | Standards System | `.standards/` structure, loader | 350 |
+| 5 | Integration Testing | E2E tests for new features | 400 |
+
+**Betty Enhancement (ErrorDetective merge):**
+- Distributed system debugging
+- Cascading failure analysis
+- Temporal analysis (timeline reconstruction)
+- Cross-service correlation
+- Log aggregation patterns
+
+**Quinn Enhancement (Senior Code Reviewer methodology):**
+- 3-fase review: Context Analysis → Comprehensive Review → Documentation
+- 6-dimensie review: Functionality, Security, Performance, Quality, Architecture, Error Handling
+- Severity-based output format
+- OWASP Top 10 integration
+
+**Standards System:**
+```
+.standards/
+├── python/
+│   ├── fastapi-patterns.md
+│   ├── sqlalchemy-best-practices.md
+│   └── security/
+│       └── sql-injection-prevention.md
+├── javascript/
+│   ├── typescript-strict.md
+│   └── react-patterns.md
+├── security/
+│   ├── owasp-top-10.md
+│   └── api-security.md
+└── testing/
+    ├── unit-test-patterns.md
+    └── e2e-strategies.md
+```
+
+---
+
+### Week 56: Stack Agent Templates
+
+**Focus:** Multi-stack support foundation
+
+| Dag | Taak | Output | Lines Est. |
+|-----|------|--------|------------|
+| 1 | Stack Agent Factory | Template instantiation system | 500 |
+| 2 | Python Stack Agents | BackendDev_py, CodeRev_py, SecAudit_py | 600 |
+| 3 | JavaScript Stack Agents | BackendDev_js, FrontendDev_js, CodeRev_js | 600 |
+| 4 | Stack Detection | Auto-detect project tech stack | 300 |
+| 5 | Project Registration | Onboarding flow with stack agents | 400 |
+
+**Stack Agent Template:**
+```python
+class StackAgentFactory:
+    STACK_CONFIGS = {
+        "python": {
+            "backend": {
+                "frameworks": ["FastAPI", "Django", "Flask"],
+                "tools": ["uv", "black", "isort", "mypy", "pytest"],
+                "standards": [".standards/python/"],
+                "model_preference": "sonnet"
+            },
+            "reviewer": {
+                "linters": ["ruff", "pylint", "bandit"],
+                "focus": ["PEP compliance", "Type hints", "SOLID"],
+                "model_preference": "opus"
+            },
+            "security": {
+                "tools": ["bandit", "safety", "pip-audit"],
+                "focus": ["OWASP Python", "Dependencies"],
+                "model_preference": "opus"
+            }
+        },
+        "javascript": { ... },
+        "go": { ... },
+        "rust": { ... }
+    }
+```
+
+---
+
+### Week 57: PromptEngineer & Meta-Prompting
+
+**Focus:** Continuous agent improvement
+
+| Dag | Taak | Output | Lines Est. |
+|-----|------|--------|------------|
+| 1 | PromptEngineer Agent | Core meta-prompting service | 600 |
+| 2 | Prompt Analysis | Performance-based prompt analysis | 400 |
+| 3 | Prompt A/B Testing | Experiment framework for prompts | 450 |
+| 4 | Meta-Prompting Pipeline | Real-time prompt enhancement | 400 |
+| 5 | Integration Testing | Full flow tests | 350 |
+
+**Meta-Prompting Flow:**
+```
+Task Arrival
+    │
+    ▼
+PromptEngineer Intercept
+    ├── Fetch base agent prompt
+    ├── Fetch relevant .standards/
+    ├── Fetch recent performance patterns
+    └── Generate enhanced prompt
+    │
+    ▼
+Enhanced Prompt
+    ├── Original agent prompt
+    ├── Context injection (project, stack)
+    ├── Standards injection
+    └── Performance tuning
+    │
+    ▼
+Execute with Enhanced Prompt
+    │
+    ▼
+Feedback Loop (outcome → future enhancements)
+```
+
+---
+
+### Week 58: Polish & Production Ready
+
+**Focus:** Cost tracking, optimization, documentation
+
+| Dag | Taak | Output | Lines Est. |
+|-----|------|--------|------------|
+| 1 | Cost Tracking Dashboard | Budget management UI | 500 |
+| 2 | Performance Optimization | Token efficiency, caching | 400 |
+| 3 | Documentation Update | ARCHITECTURE, AGENTS, README | 300 |
+| 4 | Integration Testing | Full platform E2E | 400 |
+| 5 | Go-Live Prep | Production checklist | 200 |
+
+**Cost Tracking Features:**
+- Daily/monthly spend tracking
+- Per-agent cost breakdown
+- Budget alerts (80% warning)
+- Cost-aware model fallback
+- Usage forecasting
+
+---
+
+## Claude Model Routing Strategy
+
+### Model Selection Matrix
+
+| Task Type | Complexity | Model | Rationale |
+|-----------|------------|-------|-----------|
+| Scaffolding | Low | Haiku | Fast, cheap |
+| Quick fixes | Low | Haiku | Fast, cheap |
+| Daily coding | Medium | Sonnet | Balanced |
+| Code review | Medium | Sonnet | Good analysis |
+| Architecture | High | Opus | Deep reasoning |
+| Security audit | High | Opus | Critical analysis |
+| Complex debugging | High | Opus | Deep investigation |
+
+### Cost Estimates
+
+| Scenario | Ollama | Haiku | Sonnet | Opus | Monthly Cost |
+|----------|--------|-------|--------|------|--------------|
+| Conservative | 80% | 15% | 4% | 1% | ~$20 |
+| Balanced | 60% | 25% | 12% | 3% | ~$50 |
+| Premium | 30% | 30% | 30% | 10% | ~$150 |
+
+**Recommendation:** Start Conservative, monitor quality, scale up where needed.
+
+---
+
+## Weekly Progress History
+
+### Week 53 COMPLETE (25-29 Nov 2025)
+
+**Completed:**
+- Evolution Dashboard (real-time metrics)
+- Automatic Experiment Scheduler
+- Gradual Rollout System
+- Performance Trend Analysis
+- ProjectProfile System
+- Quinn/Felix Spec Review
+
+**Output:** 6,060+ lines, 130+ tests, 31 endpoints
+
+### Week 52 COMPLETE
+
+**Completed:** LLM Council multi-model decision making
+**Output:** 3,300+ lines, 47 tests, 8 endpoints, 4 tables
+
+### Week 51 COMPLETE
+
+**Completed:** A/B Testing Framework & Evolution Metrics
+**Output:** 2,150+ lines, 53 tests, 9 endpoints, 3 tables
+
+### Week 50 COMPLETE
+
+**Completed:** Quality Gate Integration & Agent Validation Loop
+**Output:** 55 tests, 7 endpoints
+
+### Week 49 COMPLETE
+
+**Completed:** Quality Gates Configuration UI
+**Output:** 700+ lines, 12 dashboards, 144 endpoints
+
+### Week 48 COMPLETE
+
+**Completed:** Bug fixes, E2E testing, documentation, Fase 5 design
+
+### Week 47 COMPLETE
+
+**Completed:** Hub Portal, navigation, backend verification
+
+---
+
+## Completed Phases
 
 | Fase | Weeks | Status | Key Deliverables |
 |------|-------|--------|------------------|
-| [Fase 1](docs/roadmap/completed/fase-1-foundation.md) | 1-4 | DONE | FastAPI, PostgreSQL, Frontend |
-| [Fase 2](docs/roadmap/completed/fase-2-agent-foundation.md) | 5-8 | DONE | 10 Agents, 9 Workflows, Quality Gates |
-| [Fase 3](docs/roadmap/completed/fase-3-intelligence-layer.md) | 9-12 | DONE | Felix AI, Estimation, ML Pipeline |
+| Fase 1 | 1-4 | DONE | FastAPI, PostgreSQL, Frontend |
+| Fase 2 | 5-8 | DONE | 10 Agents, 9 Workflows, Quality Gates |
+| Fase 3 | 9-12 | DONE | Felix AI, Estimation, ML Pipeline |
+| Fase 4 | 13-16 | DONE | UI Dashboards, Hub Portal (280% delivered) |
 
-**Total Completed:** 12 weeks, ~25,000 lines of code
-
-### Active Phases
-
-| Fase | Weeks | Status | Focus |
-|------|-------|--------|-------|
-| [Fase 4](docs/roadmap/active/fase-4-ui-intelligence.md) | 13-16 | ACTIVE | UI Dashboards + Estimation |
-| [Frontend Unification](docs/roadmap/active/frontend-unification.md) | 13-14 | ✅ **DONE** | Hub Portal + Navigation (Fase 1-3 Complete) |
-
-### Future Phases
-
-| Fase | Weeks | Document | Focus |
-|------|-------|----------|-------|
-| [Fase 5](docs/roadmap/active/fase-5-quality-testing.md) | 17-20 | Quality & Testing |
-| [Fase 6](docs/roadmap/active/fase-6-advanced-features.md) | 21-24 | Advanced Features |
-| [Fase 7](docs/roadmap/active/fase-7-migration-pilot.md) | 25-28 | Migration Pilot (3 repos) |
-| [Fase 8](docs/roadmap/active/fase-8-full-migration.md) | 29-36 | Full Migration (29 repos) |
-| [Fase 9](docs/roadmap/active/fase-9-optimization.md) | 37-40 | Optimization & Learning |
-
-### Parallel Tracks
-
-| Track | Weeks | Document | Focus |
-|-------|-------|----------|-------|
-| [AgentEvolver](docs/roadmap/parallel/agentevolver-integration.md) | 17-26 | Self-evolving agents |
-| [Validation](docs/roadmap/parallel/validation-framework.md) | 17-26 | 5-phase validation pipeline |
-| [LLM Council](docs/roadmap/active/LLM_COUNCIL_INTEGRATION.md) | 51-52 | **NEW** Multi-model consensus decisions |
+**Total Completed:** 16 weeks, ~35,000 lines of code
 
 ---
 
-## Milestones
+## Future Phases
+
+| Fase | Weeks | Focus | Status |
+|------|-------|-------|--------|
+| Fase 5 | 17-20 | Quality & Testing | Planned |
+| Fase 6 | 21-24 | Advanced Features | Planned |
+| Fase 7 | 25-28 | Migration Pilot (3 repos) | Planned |
+| Fase 8 | 29-36 | Full Migration (29 repos) | Planned |
+| Fase 9 | 37-40 | Optimization & Learning | Planned |
+
+---
+
+## Milestones (Updated)
 
 | Date | Milestone | Status |
 |------|-----------|--------|
-| 2025-11-19 | Fase 3 Complete (7 weken vroeg!) | DONE |
+| 2025-11-19 | Fase 3 Complete | DONE |
 | 2025-11-24 | Self-Questioning Complete | DONE |
-| 2025-12-01 | Hub Portal Live | PLANNED |
-| 2026-01-05 | Fase 4 Complete | PLANNED |
-| 2026-02-02 | Fase 5 Complete | PLANNED |
-| 2026-03-02 | Fase 6 Complete | PLANNED |
-| 2026-03-30 | Pilot Complete (3 repos) | PLANNED |
-| 2026-05-25 | Full Migration (29 repos) | PLANNED |
-| 2026-06-22 | PROJECT COMPLETE | PLANNED |
+| 2025-11-26 | Multi-Stack Platform Review | DONE |
+| 2025-12-06 | Provider Registry Live | PLANNED |
+| 2025-12-13 | Observability Dashboard Live | PLANNED |
+| 2025-12-20 | Stack Templates Live | PLANNED |
+| 2025-12-27 | PromptEngineer Live | PLANNED |
+| 2026-01-03 | Multi-Stack Platform v1.0 | PLANNED |
 
 ---
 
-## Success Metrics
+## Success Metrics (Updated)
 
-| Metric | Target | Current |
-|--------|--------|---------|
-| Agent Success Rate | +15% | Baseline |
-| Estimation Accuracy | +/-15% | +/-20% |
-| Auto-classification | >95% | 95% |
-| Quality Gate Pass | >98% | 95% |
-| Manual Intervention | <3% | TBD |
+| Metric | Target | Current | Week 58 Target |
+|--------|--------|---------|----------------|
+| Agent Success Rate | +15% | Baseline | Measurable via Observability |
+| Estimation Accuracy | +/-15% | +/-20% | +/-15% |
+| Auto-classification | >95% | 95% | 95% |
+| Quality Gate Pass | >98% | 95% | 98% |
+| Supported Stacks | 4 | 1 | 4 |
+| Cost per Task | <$0.10 | N/A | Tracked |
+
+---
+
+## Risk Summary (Updated)
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Claude API Costs | MEDIUM | Budget controls, Ollama fallback |
+| Stack Template Complexity | MEDIUM | Start with 2 stacks, grow organically |
+| Observability Overhead | LOW | Configurable log levels |
+| Meta-prompting Latency | LOW | Cache enhanced prompts |
+| Multi-project Complexity | MEDIUM | Thorough testing, gradual rollout |
+
+---
+
+## Resource Planning (Updated)
+
+### Team
+- 1 Developer (full-time)
+- AI Agents (10 core + stack templates)
+
+### Infrastructure
+- PostgreSQL (Docker)
+- ChromaDB (Docker)
+- Ollama (6 models, ~25GB)
+- Claude CLI (subscription-based)
+
+### Costs (Updated)
+- Infrastructure: ~$50/month
+- Claude API (Conservative): ~$20/month
+- Claude API (Balanced): ~$50/month
+- Total Project: ~$1,200-2,400 over 40 weeks
 
 ---
 
 ## Quick Links
 
 ### Documentation
-- [PROJECT_STATUS_SUMMARY.md](PROJECT_STATUS_SUMMARY.md) - Start here
+- [PROJECT_STATUS_SUMMARY.md](PROJECT_STATUS_SUMMARY.md) - Current status
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Technical deep dive
-- [AGENTS.md](AGENTS.md) - 10 AI agents reference
+- [AGENTS.md](AGENTS.md) - Agent system reference
+
+### Reviews
+- [2025-11-26 Multi-Stack Platform Review](docs/reviews/2025-11-26_MULTI_STACK_PLATFORM_REVIEW.md)
 
 ### Phase Details
 - [docs/roadmap/completed/](docs/roadmap/completed/) - Completed phases
@@ -362,34 +524,5 @@ Nov    Dec    Jan    Feb    Mar    Apr    May    Jun
 
 ---
 
-## Resource Planning
-
-### Team
-- 1 Developer (full-time)
-- AI Agents (10, local execution)
-
-### Infrastructure
-- PostgreSQL (Docker)
-- ChromaDB (Docker)
-- Ollama (6 models, ~25GB)
-
-### Costs
-- Infrastructure: ~$50/month
-- API Costs: $0 (100% local)
-- Total Project: ~$600 over 40 weeks
-
----
-
-## Risk Summary
-
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| LLM Quality | HIGH | Multiple models, fallbacks |
-| Estimation Accuracy | MEDIUM | ML refinement, feedback loop |
-| Migration Complexity | MEDIUM | Pilot first, gradual rollout |
-| Performance | LOW | Caching, optimization |
-
----
-
-**Last Updated:** 2025-11-24 (Week 50 Day 5)
+**Last Updated:** 2025-11-26 (Week 54 Planning)
 **Next Review:** Weekly (Friday)

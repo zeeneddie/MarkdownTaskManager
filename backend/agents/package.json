@@ -1,7 +1,7 @@
 {
   "name": "markdown-task-manager-agents",
   "version": "1.0.0",
-  "description": "KaibanJS agent orchestration for Markdown Task Manager",
+  "description": "KaibanJS agent orchestration for Multi-Stack AI Agent Platform",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",

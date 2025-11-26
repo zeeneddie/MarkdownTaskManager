@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Test Runner Script for Markdown Task Manager
+# Test Runner Script for Multi-Stack AI Agent Platform
 # Usage: ./run-tests.sh [command]
 #
 # Commands:
@@ -166,7 +166,7 @@ clean_results() {
 
 show_help() {
     cat << EOF
-Test Runner Script for Markdown Task Manager
+Test Runner Script for Multi-Stack AI Agent Platform
 
 Usage: ./run-tests.sh [command]
 

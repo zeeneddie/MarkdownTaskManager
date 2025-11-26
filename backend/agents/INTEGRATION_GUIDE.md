@@ -1,6 +1,6 @@
 # Agent Integration Guide
 
-**Project:** Markdown Task Manager - Agentic System
+**Project:** Multi-Stack AI Agent Platform - Agentic System
 **Version:** 1.0
 **Date:** 2025-11-13
 **Status:** Week 5 Day 2 - Integration Planning

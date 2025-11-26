@@ -1,4 +1,4 @@
-# Evaluatie – Markdown Task Manager
+# Evaluatie – Multi-Stack AI Agent Platform
 
 **Last Review:** Week 48 (2025-11-24)
 **Reviewer Response:** See [Week 48 Response](#week-48-response) below

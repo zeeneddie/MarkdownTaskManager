@@ -324,50 +324,47 @@ async def complete_wizard(request: WizardCompleteRequest):
     """
     try:
         # Import here to avoid circular imports
-        from app.database import SessionLocal
+        from app.database import AsyncSessionLocal
         from app.models import Project
 
-        db = SessionLocal()
+        # Map template to project_type
+        project_type = "brownfield" if request.template == "migration" else "greenfield"
 
-        try:
-            # Create project in database
+        # Build tech stack array
+        tech_stack = [request.language]
+        if request.framework:
+            tech_stack.append(request.framework)
+        if request.database:
+            tech_stack.append(request.database)
+
+        async with AsyncSessionLocal() as db:
+            # Create project in database matching existing schema
             new_project = Project(
                 name=request.name,
                 description=request.description,
-                status="active"
+                project_type=project_type,
+                project_status="active",
+                tech_stack=tech_stack,
+                stakeholders=[member.model_dump() for member in request.team],
+                constraints={
+                    "sprint_duration": request.sprintDuration,
+                    "working_hours": request.workingHours,
+                    "quality_gates": request.qualityGates,
+                    "auto_assign": request.autoAssign,
+                    "workflow": request.workflow,
+                    "template": request.template,
+                    "repo_url": request.repoUrl
+                },
+                business_goals={}
             )
 
-            # Store additional metadata as JSON (if your model supports it)
-            # Otherwise, you may need to extend the Project model
-            project_metadata = {
-                "template": request.template,
-                "repo_url": request.repoUrl,
-                "tech_stack": {
-                    "language": request.language,
-                    "framework": request.framework,
-                    "database": request.database
-                },
-                "team": [member.dict() for member in request.team],
-                "sprint_duration": request.sprintDuration,
-                "working_hours": request.workingHours,
-                "workflow": request.workflow,
-                "quality_gates": request.qualityGates,
-                "auto_assign": request.autoAssign
-            }
-
-            # Note: If Project model doesn't have metadata field, this stores locally
-            # In production, extend the model or use a separate ProjectConfig table
-
             db.add(new_project)
-            db.commit()
-            db.refresh(new_project)
+            await db.commit()
+            await db.refresh(new_project)
 
             project_id = new_project.id
 
             logger.info(f"Created project: {project_id} - {request.name}")
-
-        finally:
-            db.close()
 
         # Get assigned agents
         agents = WORKFLOW_AGENTS.get(request.workflow, [])
@@ -439,3 +436,168 @@ async def delete_wizard_session(session_id: str):
     del wizard_sessions[session_id]
 
     return {"message": f"Session '{session_id}' deleted", "success": True}
+
+
+# ============================================================================
+# PROJECT RETRIEVAL ENDPOINTS
+# ============================================================================
+
+class ProjectResponse(BaseModel):
+    """Response for project retrieval"""
+    id: int
+    name: str
+    description: Optional[str]
+    project_type: str
+    project_status: str
+    tech_stack: Optional[List[str]]
+    constraints: Optional[Dict[str, Any]]
+    stakeholders: Optional[List[Dict[str, Any]]]
+    business_goals: Optional[Dict[str, Any]]
+    created_at: datetime
+    updated_at: Optional[datetime]
+
+    # Derived fields for wizard compatibility
+    @property
+    def workflow(self) -> str:
+        if self.constraints:
+            return self.constraints.get("workflow", "spec-kit")
+        return "spec-kit"
+
+    @property
+    def template(self) -> str:
+        if self.constraints:
+            return self.constraints.get("template", "web-app")
+        return "web-app"
+
+
+@router.get("/projects", response_model=List[ProjectResponse])
+async def list_projects():
+    """
+    List all projects
+
+    Returns all projects created via the wizard.
+    """
+    try:
+        from app.database import AsyncSessionLocal
+        from app.models import Project
+        from sqlalchemy import select
+
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(select(Project).order_by(Project.created_at.desc()))
+            projects = result.scalars().all()
+
+            return [
+                ProjectResponse(
+                    id=p.id,
+                    name=p.name,
+                    description=p.description,
+                    project_type=p.project_type,
+                    project_status=p.project_status,
+                    tech_stack=list(p.tech_stack) if p.tech_stack else [],
+                    constraints=p.constraints,
+                    stakeholders=p.stakeholders,
+                    business_goals=p.business_goals,
+                    created_at=p.created_at,
+                    updated_at=p.updated_at
+                )
+                for p in projects
+            ]
+
+    except Exception as e:
+        logger.error(f"Error listing projects: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list projects: {str(e)}"
+        )
+
+
+@router.get("/projects/{project_id}", response_model=ProjectResponse)
+async def get_project(project_id: int):
+    """
+    Get a specific project by ID
+
+    Returns project details including all configuration.
+    """
+    try:
+        from app.database import AsyncSessionLocal
+        from app.models import Project
+        from sqlalchemy import select
+
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(select(Project).where(Project.id == project_id))
+            project = result.scalar_one_or_none()
+
+            if not project:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Project with ID {project_id} not found"
+                )
+
+            return ProjectResponse(
+                id=project.id,
+                name=project.name,
+                description=project.description,
+                project_type=project.project_type,
+                project_status=project.project_status,
+                tech_stack=list(project.tech_stack) if project.tech_stack else [],
+                constraints=project.constraints,
+                stakeholders=project.stakeholders,
+                business_goals=project.business_goals,
+                created_at=project.created_at,
+                updated_at=project.updated_at
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting project: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get project: {str(e)}"
+        )
+
+
+@router.get("/projects/by-name/{project_name}", response_model=ProjectResponse)
+async def get_project_by_name(project_name: str):
+    """
+    Get a specific project by name
+
+    Returns project details including all configuration.
+    """
+    try:
+        from app.database import AsyncSessionLocal
+        from app.models import Project
+        from sqlalchemy import select
+
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(select(Project).where(Project.name == project_name))
+            project = result.scalar_one_or_none()
+
+            if not project:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Project '{project_name}' not found"
+                )
+
+            return ProjectResponse(
+                id=project.id,
+                name=project.name,
+                description=project.description,
+                project_type=project.project_type,
+                project_status=project.project_status,
+                tech_stack=list(project.tech_stack) if project.tech_stack else [],
+                constraints=project.constraints,
+                stakeholders=project.stakeholders,
+                business_goals=project.business_goals,
+                created_at=project.created_at,
+                updated_at=project.updated_at
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting project: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get project: {str(e)}"
+        )

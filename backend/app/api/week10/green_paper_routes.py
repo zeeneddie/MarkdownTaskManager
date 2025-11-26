@@ -8,12 +8,47 @@ FastAPI endpoints for BMAD green-paper workflow (Week 10):
 - Search & Discovery (1 endpoint)
 """
 
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from pydantic import BaseModel, Field, validator
+
+from app.models.project_profile import (
+    ProjectProfile,
+    ProjectSize,
+    FocusArea,
+    StrictnessLevel,
+    get_preset_profile
+)
+
+
+# Type alias for flexible project ID (accepts UUID string or integer)
+ProjectId = Union[str, int]
+
+
+def normalize_project_id(project_id: ProjectId) -> str:
+    """
+    Normalize project_id to string format.
+    - Integer IDs are converted to string
+    - UUID strings are kept as-is
+    - Validates UUID format if it looks like a UUID
+    """
+    if isinstance(project_id, int):
+        return str(project_id)
+
+    project_id_str = str(project_id)
+
+    # If it looks like a UUID (contains dashes), validate it
+    if '-' in project_id_str:
+        try:
+            UUID(project_id_str)
+        except ValueError:
+            raise ValueError(f"Invalid UUID format: {project_id_str}")
+
+    return project_id_str
 
 from app.database import get_db
 from app.services.week10.green_paper_service import (
@@ -31,16 +66,35 @@ router = APIRouter(prefix="/api/week10", tags=["Green-Paper Workflow"])
 
 # ========== Request/Response Models ==========
 
+class ProjectProfileConfig(BaseModel):
+    """Configuration for project profile at session start."""
+    size: str = Field(default="small", description="Project size: hobby, small, medium, large, enterprise")
+    preset: Optional[str] = Field(default=None, description="Use preset: club_app, startup_mvp, saas_product, fintech, healthcare")
+    focus_areas: Optional[Dict[str, str]] = Field(default=None, description="Focus area overrides: {area: strictness}")
+    team_size: int = Field(default=2, ge=1, le=500)
+    expected_users: int = Field(default=100, ge=1)
+    budget_type: str = Field(default="volunteer", description="volunteer, startup, corporate, enterprise")
+    timeline_weeks: int = Field(default=16, ge=0, le=520)
+
+
 class StartSessionRequest(BaseModel):
     """Request to start green-paper session."""
-    project_id: UUID
+    project_id: ProjectId = Field(..., description="Project ID (integer or UUID string)")
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
+    project_profile: Optional[ProjectProfileConfig] = Field(
+        default=None,
+        description="Project profile for agent configuration. Sets strictness levels for all agents throughout project lifecycle."
+    )
+
+    @validator('project_id', pre=True)
+    def validate_project_id(cls, v):
+        return normalize_project_id(v)
 
 
 class StartSessionResponse(BaseModel):
     """Response from starting session."""
     session_id: UUID
-    project_id: UUID
+    project_id: str  # Changed to str to support both int and UUID
     status: str
     questions: List[Dict[str, Any]]
     created_at: str
@@ -173,10 +227,26 @@ async def start_green_paper_session(
     ```
     """
     try:
+        # Build project profile from request
+        profile_data = None
+        if request.project_profile:
+            profile = _build_profile_from_config(request.project_profile)
+            profile_data = profile.to_dict()
+
+        # Merge profile into metadata for storage
+        metadata = request.metadata or {}
+        if profile_data:
+            metadata["project_profile"] = profile_data
+
         session = await service.start_session(
             project_id=request.project_id,
-            metadata=request.metadata
+            metadata=metadata
         )
+
+        # Add profile info to response
+        if profile_data:
+            session["project_profile"] = profile_data
+
         return session
     except ValueError as e:
         raise HTTPException(
@@ -432,7 +502,7 @@ async def generate_constitution(
     try:
         # Get project_id from session
         session = await service.get_session(session_id=session_id)
-        project_id = UUID(session["project_id"])
+        project_id = session["project_id"]  # Keep as string, can be int or UUID
 
         result = await service.generate_constitution(
             project_id=project_id,
@@ -511,7 +581,7 @@ async def get_constitution(
         if not constitution:
             raise ValueError(f"Constitution {constitution_id} not found")
 
-        project_id = UUID(constitution.project_id)
+        project_id = constitution.project_id  # Keep as string - may be int ID or UUID
 
         constitution_data = await service.get_constitution(
             project_id=project_id,
@@ -618,7 +688,7 @@ async def review_constitution(
         if not constitution:
             raise ValueError(f"Constitution {constitution_id} not found")
 
-        project_id = UUID(constitution.project_id)
+        project_id = constitution.project_id  # Keep as string - may be int ID or UUID
 
         result = await service.review_constitution(
             project_id=project_id,
@@ -712,7 +782,7 @@ async def regenerate_constitution(
         if not constitution:
             raise ValueError(f"Constitution {constitution_id} not found")
 
-        project_id = UUID(constitution.project_id)
+        project_id = constitution.project_id  # Keep as string - may be int ID or UUID
 
         result = await service.regenerate_constitution(
             project_id=project_id,
@@ -884,7 +954,8 @@ async def generate_specification(
         if not constitution:
             raise ValueError(f"Constitution {constitution_id} not found")
 
-        project_id = UUID(constitution.project_id)
+        # Keep project_id as string - it may be an integer ID or UUID
+        project_id = constitution.project_id
 
         result = await service.generate_specification(
             project_id=project_id,
@@ -965,7 +1036,7 @@ async def get_specification(
         if not specification:
             raise ValueError(f"Specification {specification_id} not found")
 
-        project_id = UUID(specification.project_id)
+        project_id = specification.project_id  # Keep as string - may be int ID or UUID
 
         specification_data = await service.get_specification(
             project_id=project_id,
@@ -1054,7 +1125,7 @@ async def review_specification(
         if not specification:
             raise ValueError(f"Specification {specification_id} not found")
 
-        project_id = UUID(specification.project_id)
+        project_id = specification.project_id  # Keep as string - may be int ID or UUID
 
         result = await service.review_specification(
             project_id=project_id,
@@ -1148,7 +1219,7 @@ async def regenerate_specification(
         if not specification:
             raise ValueError(f"Specification {specification_id} not found")
 
-        project_id = UUID(specification.project_id)
+        project_id = specification.project_id  # Keep as string - may be int ID or UUID
 
         result = await service.regenerate_specification(
             project_id=project_id,
@@ -1286,3 +1357,36 @@ async def health_check():
             "total": 14
         }
     }
+
+
+# ========== Helper Functions ==========
+
+def _build_profile_from_config(config: ProjectProfileConfig) -> ProjectProfile:
+    """
+    Build ProjectProfile from API config.
+
+    Priority:
+    1. If preset specified, use that
+    2. Otherwise build custom profile from size/focus_areas
+    """
+    # Use preset if specified
+    if config.preset:
+        return get_preset_profile(config.preset)
+
+    # Build custom profile
+    focus_areas = {}
+    if config.focus_areas:
+        for area_str, level_str in config.focus_areas.items():
+            try:
+                focus_areas[FocusArea(area_str)] = StrictnessLevel(level_str)
+            except ValueError:
+                pass  # Skip invalid values
+
+    return ProjectProfile(
+        size=ProjectSize(config.size),
+        focus_areas=focus_areas if focus_areas else None,
+        team_size=config.team_size,
+        expected_users=config.expected_users,
+        budget_type=config.budget_type,
+        timeline_weeks=config.timeline_weeks
+    )
