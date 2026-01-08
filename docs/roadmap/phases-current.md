@@ -177,6 +177,37 @@ tests/integration/api/test_stability_api.py: 9 passed, 6 skipped
 
 ## Upcoming Milestones
 
+### 🚀 PRIORITY 1: Project Restructuring (Week 145-146)
+**Status:** IN PROGRESS
+**Document:** [docs/architecture/project-structure-definition.md](../architecture/project-structure-definition.md)
+
+Professional project reorganization for better maintainability:
+
+| Phase | Description | Status | Commit |
+|-------|-------------|--------|--------|
+| Phase 1 | Safe Changes (.gitignore, Makefile, scripts/) | 🔄 IN PROGRESS | - |
+| Phase 2 | Documentation Migration (.project/ folder) | ⏳ PENDING | - |
+| Phase 3 | Archive structure | ⏳ PENDING | - |
+| Phase 4 | Source Reorganization (src/) | ⏳ PENDING | - |
+| Phase 5 | Test Reorganization (service-based) | ⏳ PENDING | - |
+| Phase 6 | Config Consolidation | ⏳ PENDING | - |
+| Phase 7 | CI/CD Pipeline | ⏳ PENDING | - |
+| Phase 8 | Validation | ⏳ PENDING | - |
+
+**Test Baseline (2026-01-08):**
+- ✅ 2541 passed
+- ❌ 16 failed
+- ⚠️ 30 errors
+- ⏭️ 117 skipped
+
+**Key Goals:**
+- Tests organized by service domain, NOT by week
+- Clean root (only README.md)
+- AI session bootstrap < 30 seconds
+- Service-based test structure
+
+---
+
 ### Week 144-146: Complete Stability Framework
 - `ExceptionAnalyzer` (Category 7)
 - `SQLAnalyzer` (Category 8)
