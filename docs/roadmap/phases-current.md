@@ -185,7 +185,7 @@ Professional project reorganization for better maintainability:
 
 | Phase | Description | Status | Commit |
 |-------|-------------|--------|--------|
-| Phase 1 | Safe Changes (.gitignore, Makefile, scripts/) | 🔄 IN PROGRESS | - |
+| Phase 1 | Safe Changes (.gitignore, Makefile, scripts/) | ✅ COMPLETE | 70d78cd7 |
 | Phase 2 | Documentation Migration (.project/ folder) | ⏳ PENDING | - |
 | Phase 3 | Archive structure | ⏳ PENDING | - |
 | Phase 4 | Source Reorganization (src/) | ⏳ PENDING | - |
@@ -195,10 +195,19 @@ Professional project reorganization for better maintainability:
 | Phase 8 | Validation | ⏳ PENDING | - |
 
 **Test Baseline (2026-01-08):**
-- ✅ 2541 passed
-- ❌ 16 failed
-- ⚠️ 30 errors
+- ✅ 2541 passed → **2557 passed** (+16)
+- ❌ 16 failed → **0 failed** (ALL FIXED!)
+- ⚠️ 30 errors (portal_roadmap - separate issue)
 - ⏭️ 117 skipped
+
+**Phase 1 Complete (2026-01-08):**
+- ✅ .gitignore, Makefile, scripts/ structure verified
+- ✅ 16 datetime timezone tests fixed
+- ✅ HCI-CRS onboarding services tested
+- ✅ Brown Paper flow operational (31 endpoints)
+
+**Suggestie voor volgende verbetering:**
+→ Fix 30 errors in `test_portal_roadmap.py` (async database session issue)
 
 **Key Goals:**
 - Tests organized by service domain, NOT by week
