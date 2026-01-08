@@ -264,7 +264,7 @@ class EvolutionDashboardService:
             failure_analyses=failure_analyses,
             recent_milestones=recent_milestones,
             time_range=time_range,
-            generated_at=datetime.utcnow()
+            generated_at=datetime.now(timezone.utc)
         )
 
 
@@ -466,7 +466,7 @@ class EvolutionDashboardService:
 
     def _get_cutoff_date(self, time_range: TimeRange) -> datetime:
         """Calculate cutoff date for time range."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         if time_range == TimeRange.SEVEN_DAYS:
             return now - timedelta(days=7)
@@ -576,7 +576,7 @@ class EvolutionDashboardService:
             (TrendDirection, improvement_rate_percentage)
         """
         # Get experiences split by time
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         mid_point = cutoff_date + (now - cutoff_date) / 2
 
         # Recent period (second half)
@@ -640,7 +640,7 @@ class EvolutionDashboardService:
         experiences.sort(key=lambda e: e.timestamp)
 
         # Split into buckets (weekly)
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         weeks_back = (now - cutoff_date).days // 7
         if weeks_back < 2:
             return 0.0
@@ -678,7 +678,7 @@ class EvolutionDashboardService:
         days: int = 30
     ) -> List[Tuple[str, float]]:
         """Get daily success rates for sparkline visualization."""
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
 
         experiences = await self.experience_store.get_agent_experiences(
             agent_id=agent_id,

@@ -221,7 +221,7 @@ class GradualRolloutService:
 
         # Update stage
         stage.status = StageStatus.ACTIVE.value
-        stage.started_at = datetime.utcnow()
+        stage.started_at = datetime.now(timezone.utc)
         stage.baseline_success_rate = baseline_success_rate
 
         # Update rollout
@@ -229,7 +229,7 @@ class GradualRolloutService:
         rollout.current_percentage = stage.traffic_percentage
         rollout.status = RolloutStatus.ACTIVE.value
         if stage_number == 0:
-            rollout.started_at = datetime.utcnow()
+            rollout.started_at = datetime.now(timezone.utc)
 
         await self.db.commit()
 
@@ -290,7 +290,7 @@ class GradualRolloutService:
 
             # Complete current stage
             current_stage.status = StageStatus.COMPLETED.value
-            current_stage.completed_at = datetime.utcnow()
+            current_stage.completed_at = datetime.now(timezone.utc)
             current_stage.duration_seconds = int(
                 (current_stage.completed_at - current_stage.started_at).total_seconds()
             )
@@ -302,7 +302,7 @@ class GradualRolloutService:
         if current_stage_num >= total_stages - 1:
             # Rollout complete
             rollout.status = RolloutStatus.COMPLETED.value
-            rollout.completed_at = datetime.utcnow()
+            rollout.completed_at = datetime.now(timezone.utc)
             rollout.current_percentage = 100.0
             await self.db.commit()
             return None
@@ -404,7 +404,7 @@ class GradualRolloutService:
 
         # Check stage duration
         if stage.started_at:
-            duration_minutes = (datetime.utcnow() - stage.started_at).total_seconds() / 60
+            duration_minutes = (datetime.now(timezone.utc) - stage.started_at).total_seconds() / 60
             if duration_minutes < config.stage_duration_minutes:
                 recommendations.append(
                     f"Stage running for {duration_minutes:.0f} min (need {config.stage_duration_minutes} min)"
@@ -460,7 +460,7 @@ class GradualRolloutService:
 
         # Update rollout status
         rollout.status = RolloutStatus.ROLLED_BACK.value
-        rollout.rolled_back_at = datetime.utcnow()
+        rollout.rolled_back_at = datetime.now(timezone.utc)
         rollout.rollback_reason = f"[{trigger.value}] {reason}"
         rollout.current_percentage = 0.0
 
@@ -479,7 +479,7 @@ class GradualRolloutService:
                 current_stage.status = StageStatus.ROLLED_BACK.value
                 current_stage.rollback_triggered = True
                 current_stage.rollback_reason = reason
-                current_stage.completed_at = datetime.utcnow()
+                current_stage.completed_at = datetime.now(timezone.utc)
 
         await self.db.commit()
         await self.db.refresh(rollout)
@@ -528,7 +528,7 @@ class GradualRolloutService:
             elif rollout.rolled_back_at:
                 elapsed_time = rollout.rolled_back_at - rollout.started_at
             else:
-                elapsed_time = datetime.utcnow() - rollout.started_at
+                elapsed_time = datetime.now(timezone.utc) - rollout.started_at
 
         # Estimate time remaining
         estimated_remaining = None

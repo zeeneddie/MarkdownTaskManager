@@ -17,7 +17,7 @@ Supports integration with:
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 from uuid import uuid4
@@ -112,7 +112,7 @@ class CDCSession:
     legacy_connection: Dict[str, str]
     new_connection: Dict[str, str]
     table_mappings: List[TableMapping] = field(default_factory=list)
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     started_at: Optional[datetime] = None
     stopped_at: Optional[datetime] = None
     status: str = "created"  # created, running, paused, stopped, failed
@@ -268,7 +268,7 @@ class CDCIntegrationService:
             raise ValueError(f"Session not found: {session_id}")
 
         session.status = "running"
-        session.started_at = datetime.utcnow()
+        session.started_at = datetime.now(timezone.utc)
 
         # Start the appropriate CDC provider
         if session.provider == CDCProvider.DEBEZIUM:
@@ -291,7 +291,7 @@ class CDCIntegrationService:
             raise ValueError(f"Session not found: {session_id}")
 
         session.status = "stopped"
-        session.stopped_at = datetime.utcnow()
+        session.stopped_at = datetime.now(timezone.utc)
 
         # Cancel the running task
         if session_id in self._running_tasks:
@@ -564,7 +564,7 @@ class CDCIntegrationService:
         conflict = conflicts[conflict_index]
         conflict.resolution_strategy = strategy
         conflict.resolved_by = resolved_by
-        conflict.resolved_at = datetime.utcnow()
+        conflict.resolved_at = datetime.now(timezone.utc)
 
         if strategy == "legacy_wins":
             conflict.resolved_data = conflict.legacy_data
@@ -671,7 +671,7 @@ class CDCIntegrationService:
         events = self.events.get(session_id, [])
 
         # Calculate metrics
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         recent_events = [
             e for e in events
             if (now - e.timestamp).total_seconds() < 3600  # Last hour

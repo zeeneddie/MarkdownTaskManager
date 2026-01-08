@@ -12,7 +12,7 @@ PostgreSQL-based context versioning with:
 import hashlib
 import json
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from app.harness.core.protocols import (
@@ -173,7 +173,7 @@ class MarQedVersionTracker(BaseAdapter, ContextVersionTrackerProtocol):
             content_hash=content_hash,
             agent_id=agent_id,
             session_id=session_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             layers=context,
             token_count=token_count,
             parent_version=parent_version,
@@ -354,7 +354,7 @@ class MarQedVersionTracker(BaseAdapter, ContextVersionTrackerProtocol):
         Returns:
             Number of snapshots removed
         """
-        cutoff = datetime.utcnow() - timedelta(days=retention_days)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
         removed_count = 0
 
         # Find snapshots to remove

@@ -395,7 +395,7 @@ class ExperimentSchedulerService:
             Scheduled experiment details
         """
         # Calculate start time based on priority
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if priority == ExperimentPriority.CRITICAL:
             start_at = now + timedelta(minutes=5)  # Start immediately
         elif priority == ExperimentPriority.HIGH:
@@ -512,7 +512,7 @@ class ExperimentSchedulerService:
         Returns:
             List of started experiment IDs
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         started_experiments = []
 
         # Query scheduled experiments
@@ -574,7 +574,7 @@ class ExperimentSchedulerService:
 
         # Check max duration
         if experiment.started_at:
-            duration_days = (datetime.utcnow() - experiment.started_at).days
+            duration_days = (datetime.now(timezone.utc) - experiment.started_at).days
             if duration_days >= self.config["max_experiment_duration_days"]:
                 return StoppingDecision(
                     should_stop=True,

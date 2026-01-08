@@ -6,7 +6,7 @@ Provides historical analysis, trend detection, and change management.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
@@ -146,7 +146,7 @@ class DeltaTrackingService:
             project_id=project_id,
             session_id=extraction_result.get("extraction_id", ""),
             tier=extraction_result.get("tier", "FREE"),
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             total_stories=len(stories),
             total_epics=extraction_result.get("total_epics", 0),
             total_features=extraction_result.get("total_features", 0),
@@ -809,7 +809,7 @@ class DeltaTrackingService:
         return {
             "report_type": "summary",
             "project_id": history.project_id,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "snapshot_count": len(history.snapshots),
             "event_count": len(history.events),
             "trends": [
@@ -828,7 +828,7 @@ class DeltaTrackingService:
         return {
             "report_type": "detailed",
             "project_id": history.project_id,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "snapshots": [
                 {
                     "id": s.snapshot_id,
@@ -893,7 +893,7 @@ class DeltaTrackingService:
         return {
             "report_type": "timeline",
             "project_id": history.project_id,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "timeline": timeline,
         }
 
