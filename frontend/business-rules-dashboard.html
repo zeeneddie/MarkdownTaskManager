@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Rules & Requirements - MarQed AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .tier-card { transition: all 0.3s ease; }
+        .tier-card:hover { transform: translateY(-4px); box-shadow: 0 10px 40px rgba(0,0,0,0.15); }
+        .tier-recommended { border: 2px solid #10B981; }
+        .stage-dot { transition: all 0.3s ease; }
+        .stage-dot.active { animation: pulse 2s infinite; }
+        .stage-dot.completed { background: #10B981; }
+        .rule-card:hover { background: #f8fafc; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            50% { opacity: 0.8; box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+        }
+        .tab-active { border-bottom: 3px solid #3B82F6; color: #3B82F6; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="text-gray-600 hover:text-gray-900">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                    </a>
+                    <h1 class="text-2xl font-bold text-gray-800">Business Rules & Requirements</h1>
+                    <span class="text-sm text-gray-500">Week 111-118</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="health-status" class="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        Service Healthy
+                    </span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Tabs -->
+    <div class="max-w-7xl mx-auto px-4 pt-4">
+        <div class="flex border-b border-gray-200 bg-white rounded-t-lg">
+            <button onclick="showTab('extraction')" id="tab-extraction"
+                    class="px-6 py-3 text-sm font-medium tab-active">
+                Business Rule Extraction
+            </button>
+            <button onclick="showTab('rules')" id="tab-rules"
+                    class="px-6 py-3 text-sm font-medium text-gray-600 hover:text-gray-800">
+                Extracted Rules
+            </button>
+            <button onclick="showTab('rmtoo')" id="tab-rmtoo"
+                    class="px-6 py-3 text-sm font-medium text-gray-600 hover:text-gray-800">
+                Requirements (rmtoo)
+            </button>
+            <button onclick="showTab('workflows')" id="tab-workflows"
+                    class="px-6 py-3 text-sm font-medium text-gray-600 hover:text-gray-800">
+                Detected Workflows
+            </button>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 py-6">
+        <!-- TAB 1: Extraction -->
+        <div id="content-extraction" class="tab-content">
+            <!-- Tier Selection -->
+            <section class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Extraction Tier</h2>
+                <div id="tier-cards" class="grid grid-cols-1 md:grid-cols-5 gap-3">
+                    <!-- Tier cards -->
+                </div>
+            </section>
+
+            <!-- 5-Stage Pipeline Visualization -->
+            <section class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Hybrid Extraction Pipeline</h2>
+                <div class="flex items-center justify-between">
+                    <div class="flex-1 flex items-center">
+                        <div class="stage-item text-center flex-1">
+                            <div id="stage-1" class="stage-dot w-12 h-12 mx-auto rounded-full bg-gray-200 flex items-center justify-center mb-2">
+                                <span class="font-bold text-gray-600">1</span>
+                            </div>
+                            <span class="text-xs font-medium">Static Analysis</span>
+                            <div class="text-xs text-gray-500">AST + Regex</div>
+                        </div>
+                        <div class="w-8 h-0.5 bg-gray-200" id="line-1-2"></div>
+                        <div class="stage-item text-center flex-1">
+                            <div id="stage-2" class="stage-dot w-12 h-12 mx-auto rounded-full bg-gray-200 flex items-center justify-center mb-2">
+                                <span class="font-bold text-gray-600">2</span>
+                            </div>
+                            <span class="text-xs font-medium">LLM Classification</span>
+                            <div class="text-xs text-gray-500">Rule Types</div>
+                        </div>
+                        <div class="w-8 h-0.5 bg-gray-200" id="line-2-3"></div>
+                        <div class="stage-item text-center flex-1">
+                            <div id="stage-3" class="stage-dot w-12 h-12 mx-auto rounded-full bg-gray-200 flex items-center justify-center mb-2">
+                                <span class="font-bold text-gray-600">3</span>
+                            </div>
+                            <span class="text-xs font-medium">LLM Extraction</span>
+                            <div class="text-xs text-gray-500">Deep Patterns</div>
+                        </div>
+                        <div class="w-8 h-0.5 bg-gray-200" id="line-3-4"></div>
+                        <div class="stage-item text-center flex-1">
+                            <div id="stage-4" class="stage-dot w-12 h-12 mx-auto rounded-full bg-gray-200 flex items-center justify-center mb-2">
+                                <span class="font-bold text-gray-600">4</span>
+                            </div>
+                            <span class="text-xs font-medium">Multi-LLM Validation</span>
+                            <div class="text-xs text-gray-500">Cross-Check</div>
+                        </div>
+                        <div class="w-8 h-0.5 bg-gray-200" id="line-4-5"></div>
+                        <div class="stage-item text-center flex-1">
+                            <div id="stage-5" class="stage-dot w-12 h-12 mx-auto rounded-full bg-gray-200 flex items-center justify-center mb-2">
+                                <span class="font-bold text-gray-600">5</span>
+                            </div>
+                            <span class="text-xs font-medium">Premium Synthesis</span>
+                            <div class="text-xs text-gray-500">Claude Opus</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- New Extraction Form -->
+            <section class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Start New Extraction</h2>
+                <form id="extraction-form" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Project</label>
+                        <select id="project-select" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            <option value="">Loading projects...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Source Path</label>
+                        <input type="text" id="source-path" placeholder="/path/to/code"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tier</label>
+                        <select id="tier-select" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            <option value="FREE">FREE (3 LLMs)</option>
+                            <option value="BASIC">BASIC (5 LLMs)</option>
+                            <option value="STANDARD" selected>STANDARD (7 LLMs)</option>
+                            <option value="PROFESSIONAL">PROFESSIONAL (9 LLMs)</option>
+                            <option value="PREMIUM">PREMIUM (10 LLMs + Human)</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit"
+                                class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+                            Start Extraction
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Active Sessions -->
+            <section class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800">Extraction Sessions</h2>
+                    <button onclick="loadSessions()" class="text-blue-600 hover:text-blue-800 text-sm">
+                        Refresh
+                    </button>
+                </div>
+                <div id="sessions-list" class="space-y-3">
+                    <p class="text-gray-500 text-center py-4">Loading sessions...</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- TAB 2: Extracted Rules -->
+        <div id="content-rules" class="tab-content hidden">
+            <section class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800">Extracted Business Rules</h2>
+                    <div class="flex gap-2">
+                        <select id="rules-session-filter" class="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                                onchange="loadRulesForSession(this.value)">
+                            <option value="">Select session...</option>
+                        </select>
+                        <select id="rules-type-filter" class="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                                onchange="filterRules()">
+                            <option value="">All Types</option>
+                            <option value="VALIDATION">Validation</option>
+                            <option value="AUTHORIZATION">Authorization</option>
+                            <option value="CALCULATION">Calculation</option>
+                            <option value="WORKFLOW">Workflow</option>
+                            <option value="DATA_ACCESS">Data Access</option>
+                            <option value="ERROR_HANDLING">Error Handling</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Rules Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+                    <div class="bg-blue-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-blue-600" id="stat-total-rules">0</div>
+                        <div class="text-xs text-gray-600">Total Rules</div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-green-600" id="stat-high-conf">0</div>
+                        <div class="text-xs text-gray-600">High Confidence</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-purple-600" id="stat-llm-validated">0</div>
+                        <div class="text-xs text-gray-600">LLM Validated</div>
+                    </div>
+                    <div class="bg-yellow-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-yellow-600" id="stat-ast-rules">0</div>
+                        <div class="text-xs text-gray-600">AST Extracted</div>
+                    </div>
+                    <div class="bg-indigo-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-indigo-600" id="stat-llm-rules">0</div>
+                        <div class="text-xs text-gray-600">LLM Extracted</div>
+                    </div>
+                    <div class="bg-pink-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-pink-600" id="stat-avg-conf">0%</div>
+                        <div class="text-xs text-gray-600">Avg Confidence</div>
+                    </div>
+                </div>
+
+                <!-- Rules List -->
+                <div id="rules-list" class="space-y-3 max-h-96 overflow-y-auto">
+                    <p class="text-gray-500 text-center py-4">Select a session to view rules</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- TAB 3: rmtoo Requirements -->
+        <div id="content-rmtoo" class="tab-content hidden">
+            <!-- Import Section -->
+            <section class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Import from Extraction Session</h2>
+                <p class="text-gray-600 text-sm mb-4">
+                    Convert extracted business rules to formal requirements using rmtoo format.
+                    Requirements are categorized as BR (Business), FR (Functional), NFR (Non-Functional), TR (Technical), or CMP (Compliance).
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Project</label>
+                        <select id="rmtoo-project" class="w-full px-3 py-2 border border-gray-300 rounded-md" onchange="loadRmtooStats(this.value)">
+                            <option value="">Select project...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Extraction Session</label>
+                        <select id="rmtoo-session" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            <option value="">Select session...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Min Confidence</label>
+                        <input type="number" id="rmtoo-min-confidence" value="0.5" min="0" max="1" step="0.1"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="importFromExtraction()"
+                                class="w-full bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition">
+                            Import Requirements
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Statistics Section -->
+            <section class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Requirements Statistics</h2>
+                <div class="grid grid-cols-2 md:grid-cols-7 gap-4">
+                    <div class="bg-purple-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-purple-600" id="rmtoo-total">0</div>
+                        <div class="text-xs text-gray-600">Total</div>
+                    </div>
+                    <div class="bg-blue-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-blue-600" id="rmtoo-br">0</div>
+                        <div class="text-xs text-gray-600">Business</div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-green-600" id="rmtoo-fr">0</div>
+                        <div class="text-xs text-gray-600">Functional</div>
+                    </div>
+                    <div class="bg-yellow-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-yellow-600" id="rmtoo-nfr">0</div>
+                        <div class="text-xs text-gray-600">Non-Func</div>
+                    </div>
+                    <div class="bg-orange-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-orange-600" id="rmtoo-tr">0</div>
+                        <div class="text-xs text-gray-600">Technical</div>
+                    </div>
+                    <div class="bg-red-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-red-600" id="rmtoo-cmp">0</div>
+                        <div class="text-xs text-gray-600">Compliance</div>
+                    </div>
+                    <div class="bg-indigo-50 rounded-lg p-3 text-center">
+                        <div class="text-2xl font-bold text-indigo-600" id="rmtoo-validated">0%</div>
+                        <div class="text-xs text-gray-600">Validated</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Requirements List -->
+            <section class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800">Requirements</h2>
+                    <div class="flex gap-2">
+                        <select id="rmtoo-category-filter" class="px-3 py-1 border border-gray-300 rounded-md text-sm" onchange="filterRequirements()">
+                            <option value="">All Categories</option>
+                            <option value="BR">Business Rules</option>
+                            <option value="FR">Functional</option>
+                            <option value="NFR">Non-Functional</option>
+                            <option value="TR">Technical</option>
+                            <option value="CMP">Compliance</option>
+                        </select>
+                        <select id="rmtoo-status-filter" class="px-3 py-1 border border-gray-300 rounded-md text-sm" onchange="filterRequirements()">
+                            <option value="">All Status</option>
+                            <option value="not done">Not Done</option>
+                            <option value="done">Done</option>
+                            <option value="approved">Approved</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="rmtoo-requirements-list" class="space-y-3 max-h-96 overflow-y-auto">
+                    <p class="text-gray-500 text-center py-4">Select a project to view requirements</p>
+                </div>
+            </section>
+
+            <!-- Export Deliverables -->
+            <section class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Export Deliverables</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <button onclick="generateOutput('html')"
+                            class="flex flex-col items-center p-4 border rounded-lg hover:bg-gray-50 transition">
+                        <svg class="w-10 h-10 text-orange-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
+                        </svg>
+                        <span class="font-medium">HTML Report</span>
+                        <span class="text-xs text-gray-500">Interactive docs</span>
+                    </button>
+                    <button onclick="generateOutput('markdown')"
+                            class="flex flex-col items-center p-4 border rounded-lg hover:bg-gray-50 transition">
+                        <svg class="w-10 h-10 text-gray-600 mb-2" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+                        </svg>
+                        <span class="font-medium">Markdown</span>
+                        <span class="text-xs text-gray-500">Git-friendly</span>
+                    </button>
+                    <button onclick="generateOutput('graph')"
+                            class="flex flex-col items-center p-4 border rounded-lg hover:bg-gray-50 transition">
+                        <svg class="w-10 h-10 text-blue-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                        </svg>
+                        <span class="font-medium">Dependency Graph</span>
+                        <span class="text-xs text-gray-500">DOT/SVG</span>
+                    </button>
+                    <button onclick="generateOutput('pdf')"
+                            class="flex flex-col items-center p-4 border rounded-lg hover:bg-gray-50 transition">
+                        <svg class="w-10 h-10 text-red-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2l5 5h-5V4zM8 17h8v-1H8v1zm0-3h8v-1H8v1z"/>
+                        </svg>
+                        <span class="font-medium">PDF</span>
+                        <span class="text-xs text-gray-500">Requires LaTeX</span>
+                    </button>
+                </div>
+
+                <!-- Export Status -->
+                <div id="export-status" class="mt-6 hidden">
+                    <div class="flex items-center p-4 bg-blue-50 rounded-lg">
+                        <svg class="w-5 h-5 text-blue-600 animate-spin mr-3" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span id="export-message">Generating...</span>
+                    </div>
+                </div>
+
+                <!-- Generated Files -->
+                <div id="generated-files" class="mt-6 hidden">
+                    <h3 class="text-sm font-medium text-gray-700 mb-2">Generated Files</h3>
+                    <div id="files-list" class="space-y-2"></div>
+                </div>
+            </section>
+
+            <!-- Traceability Matrix -->
+            <section class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800">Traceability Matrix</h2>
+                    <button onclick="loadTraceabilityMatrix()" class="px-3 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700">
+                        Load Matrix
+                    </button>
+                </div>
+                <div id="traceability-summary" class="grid grid-cols-3 gap-4 mb-4 hidden">
+                    <div class="bg-gray-50 rounded-lg p-3 text-center">
+                        <div class="text-xl font-bold text-gray-800" id="trace-total">0</div>
+                        <div class="text-xs text-gray-600">Total Requirements</div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-3 text-center">
+                        <div class="text-xl font-bold text-green-600" id="trace-linked">0</div>
+                        <div class="text-xs text-gray-600">Linked to Entities</div>
+                    </div>
+                    <div class="bg-blue-50 rounded-lg p-3 text-center">
+                        <div class="text-xl font-bold text-blue-600" id="trace-coverage">0%</div>
+                        <div class="text-xs text-gray-600">Coverage</div>
+                    </div>
+                </div>
+                <div id="traceability-matrix" class="overflow-x-auto">
+                    <p class="text-gray-500 text-center py-4">Click "Load Matrix" to view traceability</p>
+                </div>
+            </section>
+
+            <!-- Sync Operations -->
+            <section class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Sync with rmtoo Files</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="border rounded-lg p-4">
+                        <h3 class="font-medium text-gray-800 mb-2">Export to Files</h3>
+                        <p class="text-sm text-gray-600 mb-3">Export requirements from database to rmtoo .req files</p>
+                        <div class="flex gap-2">
+                            <input type="text" id="sync-output-path" placeholder="/path/to/requirements"
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm">
+                            <button onclick="syncDbToFiles()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                Export
+                            </button>
+                        </div>
+                        <label class="flex items-center mt-2 text-sm text-gray-600">
+                            <input type="checkbox" id="sync-git-commit" class="mr-2">
+                            Auto-commit to Git
+                        </label>
+                    </div>
+                    <div class="border rounded-lg p-4">
+                        <h3 class="font-medium text-gray-800 mb-2">Import from Files</h3>
+                        <p class="text-sm text-gray-600 mb-3">Import requirements from rmtoo .req files to database</p>
+                        <div class="flex gap-2">
+                            <input type="text" id="sync-input-path" placeholder="/path/to/requirements"
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm">
+                            <button onclick="syncFilesToDb()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                                Import
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Sync History -->
+                <div class="mt-4">
+                    <h3 class="font-medium text-gray-800 mb-2">Sync History</h3>
+                    <div id="sync-history" class="space-y-2 max-h-40 overflow-y-auto">
+                        <p class="text-gray-500 text-center text-sm py-2">No sync history yet</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- TAB 4: Detected Workflows -->
+        <div id="content-workflows" class="tab-content hidden">
+            <section class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-gray-800">Detected Workflow Patterns</h2>
+                    <select id="workflows-session-filter" class="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                            onchange="loadWorkflowsForSession(this.value)">
+                        <option value="">Select session...</option>
+                    </select>
+                </div>
+
+                <div id="workflows-list" class="space-y-4">
+                    <p class="text-gray-500 text-center py-4">Select a session to view detected workflows</p>
+                </div>
+            </section>
+
+            <!-- Entities Section -->
+            <section class="bg-white rounded-lg shadow-md p-6 mt-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Detected Entities</h2>
+                <div id="entities-list" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <p class="text-gray-500 col-span-3 text-center py-4">Select a session to view entities</p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        const HYBRID_API = `${API_BASE}/hybrid-extraction`;
+        let currentSessionId = null;
+        let allRules = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTiers();
+            loadProjects();
+            loadSessions();
+            loadRmtooProjects();  // Week 117: Load projects for rmtoo tab
+            checkHealth();
+        });
+
+        // Tab switching
+        function showTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('[id^="tab-"]').forEach(el => {
+                el.classList.remove('tab-active');
+                el.classList.add('text-gray-600');
+            });
+
+            document.getElementById(`content-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('tab-active');
+            document.getElementById(`tab-${tab}`).classList.remove('text-gray-600');
+
+            // Load data for specific tabs
+            if (tab === 'rules' || tab === 'workflows' || tab === 'rmtoo') {
+                populateSessionDropdowns();
+            }
+        }
+
+        // Load tiers
+        async function loadTiers() {
+            const tiers = [
+                { tier: 'FREE', price: 0, confidence: 60, llms: 3, color: 'gray' },
+                { tier: 'BASIC', price: 5, confidence: 70, llms: 5, color: 'blue' },
+                { tier: 'STANDARD', price: 25, confidence: 80, llms: 7, color: 'green', recommended: true },
+                { tier: 'PROFESSIONAL', price: 75, confidence: 90, llms: 9, color: 'purple' },
+                { tier: 'PREMIUM', price: 150, confidence: 95, llms: 10, color: 'yellow', human: true }
+            ];
+
+            const container = document.getElementById('tier-cards');
+            container.innerHTML = tiers.map(t => `
+                <div class="tier-card bg-white rounded-lg shadow p-3 cursor-pointer text-center ${t.recommended ? 'tier-recommended' : ''}"
+                     onclick="selectTier('${t.tier}')">
+                    ${t.recommended ? '<div class="text-xs text-green-600 font-semibold mb-1">RECOMMENDED</div>' : ''}
+                    <h3 class="text-sm font-bold">${t.tier}</h3>
+                    <div class="text-lg font-bold text-${t.color}-600">$${t.price}</div>
+                    <div class="text-xs text-gray-500">${t.confidence}% conf</div>
+                    <div class="text-xs text-gray-400">${t.llms} LLMs${t.human ? ' + Human' : ''}</div>
+                </div>
+            `).join('');
+        }
+
+        // Load projects
+        async function loadProjects() {
+            try {
+                const response = await fetch(`${API_BASE}/projects/`);
+                const data = await response.json();
+                const projects = data.projects || data;
+
+                const select = document.getElementById('project-select');
+                select.innerHTML = '<option value="">Select project...</option>' +
+                    projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            } catch (error) {
+                console.error('Error loading projects:', error);
+            }
+        }
+
+        // Load sessions
+        async function loadSessions() {
+            try {
+                const response = await fetch(`${HYBRID_API}/sessions`);
+                const sessions = await response.json();
+
+                const container = document.getElementById('sessions-list');
+                if (!sessions.length) {
+                    container.innerHTML = '<p class="text-gray-500 text-center py-4">No extraction sessions yet</p>';
+                    return;
+                }
+
+                container.innerHTML = sessions.map(s => `
+                    <div class="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer" onclick="selectSession('${s.id}')">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="font-medium text-gray-800">${s.source_path || 'Project ' + s.project_id}</div>
+                                <div class="text-sm text-gray-500">Tier: ${s.extraction_tier} | ${s.workflow_type || 'General'}</div>
+                            </div>
+                            <div class="text-right">
+                                <span class="px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(s.status)}">
+                                    ${s.status}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="mt-2 flex gap-4 text-sm text-gray-600">
+                            <span>${s.metrics?.total_rules || 0} rules</span>
+                            <span>${(s.metrics?.average_confidence * 100 || 0).toFixed(0)}% avg conf</span>
+                            <span>${s.llm_stats?.llm_rules_extracted || 0} LLM extracted</span>
+                        </div>
+                    </div>
+                `).join('');
+
+                populateSessionDropdowns();
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+            }
+        }
+
+        // Populate session dropdowns
+        async function populateSessionDropdowns() {
+            try {
+                const response = await fetch(`${HYBRID_API}/sessions`);
+                const sessions = await response.json();
+
+                const options = '<option value="">Select session...</option>' +
+                    sessions.map(s => `<option value="${s.id}">${s.source_path || 'Session ' + s.id.slice(0,8)}</option>`).join('');
+
+                ['rules-session-filter', 'workflows-session-filter', 'rmtoo-session'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerHTML = options;
+                });
+            } catch (error) {
+                console.error('Error populating dropdowns:', error);
+            }
+        }
+
+        // Select session
+        function selectSession(sessionId) {
+            currentSessionId = sessionId;
+            updatePipelineVisualization(sessionId);
+        }
+
+        // Update pipeline visualization
+        async function updatePipelineVisualization(sessionId) {
+            try {
+                const response = await fetch(`${HYBRID_API}/sessions/${sessionId}`);
+                const session = await response.json();
+
+                // Determine completed stages based on LLM stats
+                const stats = session.llm_stats || {};
+                let completedStages = 1; // Static always done if session exists
+
+                if (stats.rules_classified > 0) completedStages = 2;
+                if (stats.llm_rules_extracted > 0) completedStages = 3;
+                if (stats.multi_llm_validated > 0) completedStages = 4;
+                if (stats.premium_synthesis_performed) completedStages = 5;
+
+                // Update stage dots
+                for (let i = 1; i <= 5; i++) {
+                    const dot = document.getElementById(`stage-${i}`);
+                    const line = document.getElementById(`line-${i-1}-${i}`);
+
+                    dot.classList.remove('completed', 'active');
+                    dot.classList.remove('bg-green-500', 'bg-blue-500', 'text-white');
+                    dot.classList.add('bg-gray-200');
+
+                    if (i < completedStages) {
+                        dot.classList.add('completed', 'bg-green-500', 'text-white');
+                        dot.classList.remove('bg-gray-200');
+                        if (line) line.classList.add('bg-green-500');
+                    } else if (i === completedStages && session.status === 'running') {
+                        dot.classList.add('active', 'bg-blue-500', 'text-white');
+                        dot.classList.remove('bg-gray-200');
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating pipeline:', error);
+            }
+        }
+
+        // Load rules for session
+        async function loadRulesForSession(sessionId) {
+            if (!sessionId) return;
+
+            try {
+                const response = await fetch(`${HYBRID_API}/sessions/${sessionId}/rules`);
+                allRules = await response.json();
+
+                // Update stats
+                document.getElementById('stat-total-rules').textContent = allRules.length;
+                document.getElementById('stat-high-conf').textContent = allRules.filter(r => r.confidence >= 0.8).length;
+                document.getElementById('stat-llm-validated').textContent = allRules.filter(r => r.llm_validated).length;
+                document.getElementById('stat-ast-rules').textContent = allRules.filter(r => r.extraction_method === 'AST').length;
+                document.getElementById('stat-llm-rules').textContent = allRules.filter(r => r.extraction_method === 'LLM').length;
+
+                const avgConf = allRules.length > 0
+                    ? allRules.reduce((sum, r) => sum + r.confidence, 0) / allRules.length * 100
+                    : 0;
+                document.getElementById('stat-avg-conf').textContent = avgConf.toFixed(0) + '%';
+
+                filterRules();
+            } catch (error) {
+                console.error('Error loading rules:', error);
+            }
+        }
+
+        // Filter rules
+        function filterRules() {
+            const typeFilter = document.getElementById('rules-type-filter').value;
+            let filtered = allRules;
+
+            if (typeFilter) {
+                filtered = allRules.filter(r => r.rule_type === typeFilter);
+            }
+
+            const container = document.getElementById('rules-list');
+            if (!filtered.length) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-4">No rules match filter</p>';
+                return;
+            }
+
+            container.innerHTML = filtered.slice(0, 50).map(r => `
+                <div class="rule-card border rounded-lg p-3 cursor-pointer" onclick="showRuleDetail('${r.id}')">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 text-xs rounded ${getRuleTypeColor(r.rule_type)}">${r.rule_type}</span>
+                                <span class="px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-700">${r.extraction_method}</span>
+                                <span class="px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-600">${r.language}</span>
+                                ${r.llm_validated ? '<span class="px-2 py-0.5 text-xs rounded bg-green-100 text-green-700">LLM Validated</span>' : ''}
+                            </div>
+                            <div class="text-sm text-gray-800 mt-2 font-mono">${escapeHtml(r.condition.substring(0, 100))}...</div>
+                            <div class="text-xs text-gray-500 mt-1">${r.source_file}:${r.source_lines?.[0] || '?'}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-bold ${r.confidence >= 0.8 ? 'text-green-600' : r.confidence >= 0.6 ? 'text-yellow-600' : 'text-red-600'}">
+                                ${(r.confidence * 100).toFixed(0)}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load workflows for session
+        async function loadWorkflowsForSession(sessionId) {
+            if (!sessionId) return;
+
+            try {
+                const [workflowsRes, entitiesRes] = await Promise.all([
+                    fetch(`${HYBRID_API}/sessions/${sessionId}/workflows`),
+                    fetch(`${HYBRID_API}/sessions/${sessionId}/entities`)
+                ]);
+
+                const workflows = await workflowsRes.json();
+                const entities = await entitiesRes.json();
+
+                // Render workflows
+                const workflowsContainer = document.getElementById('workflows-list');
+                if (!workflows.length) {
+                    workflowsContainer.innerHTML = '<p class="text-gray-500 text-center py-4">No workflows detected</p>';
+                } else {
+                    workflowsContainer.innerHTML = workflows.map(w => `
+                        <div class="border rounded-lg p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="px-2 py-1 text-xs rounded bg-purple-100 text-purple-700">${w.workflow_type}</span>
+                                    <h3 class="font-medium text-gray-800 mt-1">${w.workflow_name}</h3>
+                                    <div class="text-sm text-gray-500">Entity: ${w.primary_entity || 'Unknown'}</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-lg font-bold text-purple-600">${(w.confidence * 100).toFixed(0)}%</div>
+                                    <div class="text-xs text-gray-500">${w.total_rules} rules</div>
+                                </div>
+                            </div>
+                            <div class="mt-2 flex gap-2 flex-wrap">
+                                ${(w.operations || []).map(op => `
+                                    <span class="px-2 py-1 text-xs rounded ${getOperationColor(op)}">${op}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                // Render entities
+                const entitiesContainer = document.getElementById('entities-list');
+                if (!entities.length) {
+                    entitiesContainer.innerHTML = '<p class="text-gray-500 col-span-3 text-center py-4">No entities detected</p>';
+                } else {
+                    entitiesContainer.innerHTML = entities.map(e => `
+                        <div class="border rounded-lg p-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <span class="px-2 py-0.5 text-xs rounded bg-indigo-100 text-indigo-700">${e.entity_type}</span>
+                                    <h3 class="font-medium text-gray-800 mt-1">${e.entity_name}</h3>
+                                </div>
+                                <div class="text-xs text-gray-500">${e.rule_count} rules</div>
+                            </div>
+                            <div class="flex gap-1">
+                                <span class="px-2 py-0.5 text-xs rounded ${e.has_create ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}">C</span>
+                                <span class="px-2 py-0.5 text-xs rounded ${e.has_read ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'}">R</span>
+                                <span class="px-2 py-0.5 text-xs rounded ${e.has_update ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-400'}">U</span>
+                                <span class="px-2 py-0.5 text-xs rounded ${e.has_delete ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-400'}">D</span>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading workflows:', error);
+            }
+        }
+
+        // =============================================
+        // rmtoo Requirements Management Functions
+        // =============================================
+
+        const REQUIREMENTS_API = `${API_BASE}/requirements`;
+        let currentProjectId = null;
+        let allRequirements = [];
+
+        // Load rmtoo projects dropdown
+        async function loadRmtooProjects() {
+            try {
+                const response = await fetch(`${API_BASE}/projects/`);
+                const data = await response.json();
+                const projects = data.projects || data;
+
+                const select = document.getElementById('rmtoo-project');
+                select.innerHTML = '<option value="">Select project...</option>' +
+                    projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            } catch (error) {
+                console.error('Error loading projects for rmtoo:', error);
+            }
+        }
+
+        // Load statistics for project
+        async function loadRmtooStats(projectId) {
+            if (!projectId) {
+                resetRmtooStats();
+                return;
+            }
+            currentProjectId = projectId;
+
+            try {
+                const response = await fetch(`${REQUIREMENTS_API}/projects/${projectId}/statistics`);
+                if (response.ok) {
+                    const stats = await response.json();
+
+                    document.getElementById('rmtoo-total').textContent = stats.total_requirements;
+                    document.getElementById('rmtoo-br').textContent = stats.by_category?.BR || 0;
+                    document.getElementById('rmtoo-fr').textContent = stats.by_category?.FR || 0;
+                    document.getElementById('rmtoo-nfr').textContent = stats.by_category?.NFR || 0;
+                    document.getElementById('rmtoo-tr').textContent = stats.by_category?.TR || 0;
+                    document.getElementById('rmtoo-cmp').textContent = stats.by_category?.CMP || 0;
+                    document.getElementById('rmtoo-validated').textContent = stats.validation_percentage.toFixed(0) + '%';
+
+                    // Load requirements list
+                    loadRequirementsList(projectId);
+                    loadSyncHistory(projectId);
+                } else {
+                    resetRmtooStats();
+                }
+            } catch (error) {
+                console.error('Error loading rmtoo stats:', error);
+                resetRmtooStats();
+            }
+        }
+
+        function resetRmtooStats() {
+            ['rmtoo-total', 'rmtoo-br', 'rmtoo-fr', 'rmtoo-nfr', 'rmtoo-tr', 'rmtoo-cmp'].forEach(id => {
+                document.getElementById(id).textContent = '0';
+            });
+            document.getElementById('rmtoo-validated').textContent = '0%';
+        }
+
+        // Load requirements list
+        async function loadRequirementsList(projectId) {
+            const category = document.getElementById('rmtoo-category-filter').value;
+            const status = document.getElementById('rmtoo-status-filter').value;
+
+            let url = `${REQUIREMENTS_API}/projects/${projectId}`;
+            const params = new URLSearchParams();
+            if (category) params.append('category', category);
+            if (status) params.append('status', status);
+            if (params.toString()) url += '?' + params.toString();
+
+            try {
+                const response = await fetch(url);
+                allRequirements = await response.json();
+                renderRequirements(allRequirements);
+            } catch (error) {
+                console.error('Error loading requirements:', error);
+            }
+        }
+
+        function filterRequirements() {
+            if (currentProjectId) {
+                loadRequirementsList(currentProjectId);
+            }
+        }
+
+        function renderRequirements(requirements) {
+            const container = document.getElementById('rmtoo-requirements-list');
+            if (!requirements.length) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-4">No requirements found</p>';
+                return;
+            }
+
+            container.innerHTML = requirements.map(r => `
+                <div class="border rounded-lg p-3 hover:bg-gray-50">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 text-xs rounded font-mono ${getCategoryColor(r.category)}">${r.name}</span>
+                                <span class="px-2 py-0.5 text-xs rounded ${getStatusColor(r.status)}">${r.status}</span>
+                                ${r.validated ? '<span class="px-2 py-0.5 text-xs rounded bg-green-100 text-green-700">Validated</span>' : ''}
+                            </div>
+                            <div class="text-sm text-gray-800 mt-2">${escapeHtml(r.description.substring(0, 150))}${r.description.length > 150 ? '...' : ''}</div>
+                            ${r.rationale ? `<div class="text-xs text-gray-500 mt-1 italic">${escapeHtml(r.rationale.substring(0, 100))}...</div>` : ''}
+                        </div>
+                        <div class="text-right ml-4">
+                            ${r.confidence ? `<div class="text-lg font-bold ${r.confidence >= 0.8 ? 'text-green-600' : r.confidence >= 0.6 ? 'text-yellow-600' : 'text-red-600'}">${(r.confidence * 100).toFixed(0)}%</div>` : ''}
+                            ${r.priority ? `<div class="text-xs text-gray-500">P${r.priority}</div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getCategoryColor(category) {
+            const colors = {
+                BR: 'bg-blue-100 text-blue-700',
+                FR: 'bg-green-100 text-green-700',
+                NFR: 'bg-yellow-100 text-yellow-700',
+                TR: 'bg-orange-100 text-orange-700',
+                CMP: 'bg-red-100 text-red-700'
+            };
+            return colors[category] || 'bg-gray-100 text-gray-700';
+        }
+
+        // Import from extraction session
+        async function importFromExtraction() {
+            const projectId = document.getElementById('rmtoo-project').value;
+            const sessionId = document.getElementById('rmtoo-session').value;
+            const minConfidence = parseFloat(document.getElementById('rmtoo-min-confidence').value);
+
+            if (!projectId) {
+                alert('Please select a project');
+                return;
+            }
+            if (!sessionId) {
+                alert('Please select an extraction session');
+                return;
+            }
+
+            showExportStatus('Importing requirements from extraction session...');
+
+            try {
+                const response = await fetch(`${REQUIREMENTS_API}/projects/${projectId}/import-from-extraction`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        extraction_session_id: sessionId,
+                        min_confidence: minConfidence
+                    })
+                });
+
+                hideExportStatus();
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`Imported ${result.requirements_imported} requirements!\nSkipped: ${result.skipped_count}`);
+                    loadRmtooStats(projectId);
+                } else {
+                    const error = await response.json();
+                    alert('Import failed: ' + (error.detail || 'Unknown error'));
+                }
+            } catch (error) {
+                hideExportStatus();
+                alert('Error importing requirements: ' + error.message);
+            }
+        }
+
+        // Generate documentation output
+        async function generateOutput(format) {
+            const projectId = document.getElementById('rmtoo-project').value;
+            if (!projectId) {
+                alert('Please select a project first');
+                return;
+            }
+
+            const messages = {
+                pdf: 'Generating PDF specification...',
+                graph: 'Generating dependency graph...',
+                markdown: 'Generating Markdown documentation...',
+                html: 'Generating HTML report...'
+            };
+
+            showExportStatus(messages[format] || 'Generating...');
+
+            try {
+                const response = await fetch(`${REQUIREMENTS_API}/projects/${projectId}/export`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        export_type: format,
+                        output_path: `/tmp/requirements-export-${projectId}`
+                    })
+                });
+
+                hideExportStatus();
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showGeneratedFiles([result.output_path]);
+                    alert(`Generated ${format.toUpperCase()} with ${result.requirements_included} requirements!`);
+                } else {
+                    const error = await response.json();
+                    alert(`Export failed: ${error.detail || 'Unknown error'}`);
+                }
+            } catch (error) {
+                hideExportStatus();
+                alert('Error generating export: ' + error.message);
+            }
+        }
+
+        // Load traceability matrix
+        async function loadTraceabilityMatrix() {
+            const projectId = document.getElementById('rmtoo-project').value;
+            if (!projectId) {
+                alert('Please select a project first');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${REQUIREMENTS_API}/projects/${projectId}/traceability-matrix`);
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Show summary
+                    document.getElementById('traceability-summary').classList.remove('hidden');
+                    document.getElementById('trace-total').textContent = data.total_requirements;
+                    document.getElementById('trace-linked').textContent = data.linked_requirements;
+                    document.getElementById('trace-coverage').textContent = data.coverage_percentage.toFixed(0) + '%';
+
+                    // Render matrix
+                    const container = document.getElementById('traceability-matrix');
+                    if (!data.matrix.length) {
+                        container.innerHTML = '<p class="text-gray-500 text-center py-4">No requirements in project</p>';
+                        return;
+                    }
+
+                    container.innerHTML = `
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-3 py-2 text-left font-medium text-gray-500">Requirement</th>
+                                    <th class="px-3 py-2 text-left font-medium text-gray-500">Category</th>
+                                    <th class="px-3 py-2 text-left font-medium text-gray-500">Links</th>
+                                    <th class="px-3 py-2 text-center font-medium text-gray-500">Coverage</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                ${data.matrix.map(row => `
+                                    <tr>
+                                        <td class="px-3 py-2">
+                                            <div class="font-mono text-xs">${row.requirement.name}</div>
+                                            <div class="text-gray-500 text-xs truncate max-w-xs">${row.requirement.description}</div>
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            <span class="px-2 py-0.5 text-xs rounded ${getCategoryColor(row.requirement.category)}">${row.requirement.category}</span>
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            ${row.links.length ? row.links.map(l => `
+                                                <span class="inline-block px-2 py-0.5 text-xs rounded bg-gray-100 text-gray-700 mr-1 mb-1">
+                                                    ${l.entity_type}: ${l.entity_name || l.entity_id}
+                                                </span>
+                                            `).join('') : '<span class="text-gray-400">No links</span>'}
+                                        </td>
+                                        <td class="px-3 py-2 text-center">
+                                            ${row.coverage ?
+                                                '<span class="text-green-600">✓</span>' :
+                                                '<span class="text-gray-300">○</span>'}
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading traceability matrix:', error);
+            }
+        }
+
+        // Sync operations
+        async function syncDbToFiles() {
+            const projectId = document.getElementById('rmtoo-project').value;
+            const outputPath = document.getElementById('sync-output-path').value;
+            const gitCommit = document.getElementById('sync-git-commit').checked;
+
+            if (!projectId) {
+                alert('Please select a project first');
+                return;
+            }
+            if (!outputPath) {
+                alert('Please enter an output path');
+                return;
+            }
+
+            showExportStatus('Exporting requirements to files...');
+
+            try {
+                const response = await fetch(`${REQUIREMENTS_API}/projects/${projectId}/sync/db-to-files`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        output_path: outputPath,
+                        git_auto_commit: gitCommit
+                    })
+                });
+
+                hideExportStatus();
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`Synced ${result.requirements_created + result.requirements_updated} requirements to ${outputPath}`);
+                    loadSyncHistory(projectId);
+                } else {
+                    const error = await response.json();
+                    alert('Sync failed: ' + (error.detail || 'Unknown error'));
+                }
+            } catch (error) {
+                hideExportStatus();
+                alert('Error syncing: ' + error.message);
+            }
+        }
+
+        async function syncFilesToDb() {
+            const projectId = document.getElementById('rmtoo-project').value;
+            const inputPath = document.getElementById('sync-input-path').value;
+
+            if (!projectId) {
+                alert('Please select a project first');
+                return;
+            }
+            if (!inputPath) {
+                alert('Please enter an input path');
+                return;
+            }
+
+            showExportStatus('Importing requirements from files...');
+
+            try {
+                const response = await fetch(`${REQUIREMENTS_API}/projects/${projectId}/sync/files-to-db`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        output_path: inputPath
+                    })
+                });
+
+                hideExportStatus();
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`Imported ${result.requirements_created} new, updated ${result.requirements_updated} requirements`);
+                    loadRmtooStats(projectId);
+                    loadSyncHistory(projectId);
+                } else {
+                    const error = await response.json();
+                    alert('Import failed: ' + (error.detail || 'Unknown error'));
+                }
+            } catch (error) {
+                hideExportStatus();
+                alert('Error importing: ' + error.message);
+            }
+        }
+
+        async function loadSyncHistory(projectId) {
+            try {
+                const response = await fetch(`${REQUIREMENTS_API}/projects/${projectId}/sync/history?limit=5`);
+                if (response.ok) {
+                    const sessions = await response.json();
+                    const container = document.getElementById('sync-history');
+
+                    if (!sessions.length) {
+                        container.innerHTML = '<p class="text-gray-500 text-center text-sm py-2">No sync history yet</p>';
+                        return;
+                    }
+
+                    container.innerHTML = sessions.map(s => `
+                        <div class="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
+                            <div>
+                                <span class="font-medium">${s.direction}</span>
+                                <span class="text-gray-500 mx-2">•</span>
+                                <span class="text-gray-600">${s.requirements_created + s.requirements_updated} reqs</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 text-xs rounded ${s.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">${s.status}</span>
+                                ${s.duration_ms ? `<span class="text-xs text-gray-400">${s.duration_ms}ms</span>` : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading sync history:', error);
+            }
+        }
+
+        function showExportStatus(message) {
+            document.getElementById('export-status').classList.remove('hidden');
+            document.getElementById('export-message').textContent = message;
+        }
+
+        function hideExportStatus() {
+            document.getElementById('export-status').classList.add('hidden');
+        }
+
+        function showGeneratedFiles(files) {
+            const container = document.getElementById('generated-files');
+            const list = document.getElementById('files-list');
+
+            container.classList.remove('hidden');
+            list.innerHTML = files.map(f => `
+                <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <span class="text-sm">${f}</span>
+                    <a href="${f}" download class="text-blue-600 hover:text-blue-800 text-sm">Download</a>
+                </div>
+            `).join('');
+        }
+
+        // Form submission
+        document.getElementById('extraction-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const projectId = document.getElementById('project-select').value;
+            const sourcePath = document.getElementById('source-path').value;
+            const tier = document.getElementById('tier-select').value;
+
+            if (!projectId) {
+                alert('Please select a project');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${HYBRID_API}/extract/${projectId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        source_path: sourcePath,
+                        extraction_tier: tier
+                    })
+                });
+
+                if (response.ok) {
+                    const session = await response.json();
+                    alert('Extraction started!');
+                    loadSessions();
+                    selectSession(session.id);
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + (error.detail || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error starting extraction:', error);
+                alert('Error starting extraction');
+            }
+        });
+
+        // Health check
+        async function checkHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const health = await response.json();
+
+                const statusEl = document.getElementById('health-status');
+                if (health.status === 'healthy') {
+                    statusEl.className = 'px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800';
+                    statusEl.textContent = 'Service Healthy';
+                } else {
+                    statusEl.className = 'px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800';
+                    statusEl.textContent = 'Partial';
+                }
+            } catch {
+                const statusEl = document.getElementById('health-status');
+                statusEl.className = 'px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800';
+                statusEl.textContent = 'Offline';
+            }
+        }
+
+        // Select tier
+        function selectTier(tier) {
+            document.getElementById('tier-select').value = tier;
+        }
+
+        // Helper functions
+        function getStatusColor(status) {
+            const colors = {
+                pending: 'bg-gray-100 text-gray-800',
+                running: 'bg-blue-100 text-blue-800',
+                completed: 'bg-green-100 text-green-800',
+                failed: 'bg-red-100 text-red-800'
+            };
+            return colors[status] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getRuleTypeColor(type) {
+            const colors = {
+                VALIDATION: 'bg-blue-100 text-blue-700',
+                AUTHORIZATION: 'bg-red-100 text-red-700',
+                CALCULATION: 'bg-green-100 text-green-700',
+                WORKFLOW: 'bg-purple-100 text-purple-700',
+                DATA_ACCESS: 'bg-yellow-100 text-yellow-700',
+                ERROR_HANDLING: 'bg-orange-100 text-orange-700',
+                NAVIGATION: 'bg-indigo-100 text-indigo-700',
+                THRESHOLD: 'bg-pink-100 text-pink-700'
+            };
+            return colors[type] || 'bg-gray-100 text-gray-700';
+        }
+
+        function getOperationColor(op) {
+            const colors = {
+                CREATE: 'bg-green-100 text-green-700',
+                READ: 'bg-blue-100 text-blue-700',
+                UPDATE: 'bg-yellow-100 text-yellow-700',
+                DELETE: 'bg-red-100 text-red-700'
+            };
+            return colors[op] || 'bg-gray-100 text-gray-700';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showRuleDetail(ruleId) {
+            const rule = allRules.find(r => r.id === ruleId);
+            if (rule) {
+                alert(`Rule: ${rule.id}\n\nCondition: ${rule.condition}\n\nAction: ${rule.action}\n\nConfidence: ${(rule.confidence * 100).toFixed(0)}%`);
+            }
+        }
+    </script>
+</body>
+</html>

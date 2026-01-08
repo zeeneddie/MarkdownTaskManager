@@ -1,0 +1,53 @@
+# Security Patterns Schema
+# This file documents the structure for all language-specific pattern files
+#
+# Each pattern file should follow this structure:
+# - language: identifier for the language/platform
+# - file_extensions: list of file extensions to scan
+# - patterns: organized by OWASP category
+#
+# Pattern Structure:
+#   - id: unique identifier
+#   - pattern: regex pattern (Python re syntax)
+#   - title: short description
+#   - description: detailed explanation
+#   - severity: critical|high|medium|low|info
+#   - owasp: OWASP Top 10 category (A01-A10)
+#   - cwe: CWE identifier (optional)
+#   - remediation: how to fix
+#   - references: list of URLs (optional)
+#   - false_positive_hints: patterns that indicate false positives (optional)
+
+schema_version: "1.0"
+
+severity_levels:
+  - critical  # CVSS 9.0-10.0 - Immediate action required
+  - high      # CVSS 7.0-8.9  - Fix before deployment
+  - medium    # CVSS 4.0-6.9  - Fix in next sprint
+  - low       # CVSS 0.1-3.9  - Fix when convenient
+  - info      # Informational - Best practice suggestions
+
+owasp_categories:
+  A01: "Broken Access Control"
+  A02: "Cryptographic Failures"
+  A03: "Injection"
+  A04: "Insecure Design"
+  A05: "Security Misconfiguration"
+  A06: "Vulnerable and Outdated Components"
+  A07: "Identification and Authentication Failures"
+  A08: "Software and Data Integrity Failures"
+  A09: "Security Logging and Monitoring Failures"
+  A10: "Server-Side Request Forgery"
+
+# Available languages (each has its own file):
+languages:
+  - python.yaml
+  - javascript.yaml
+  - csharp.yaml
+  - vbnet.yaml
+  - aspnet.yaml
+  - sql.yaml
+  - java.yaml
+  - go.yaml
+  - php.yaml
+  - ruby.yaml

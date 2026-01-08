@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RL Training Dashboard - Week 64</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #8b5cf6;
+            --success-color: #22c55e;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #1a1a2e 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(30, 41, 59, 0.95) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 12px;
+        }
+
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+            color: var(--text-primary);
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(99, 102, 241, 0.1) 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            transform: translateY(-2px);
+        }
+
+        .table {
+            color: var(--text-primary);
+        }
+
+        .table thead th {
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .table td {
+            border-color: rgba(99, 102, 241, 0.1);
+        }
+
+        .badge-running { background: var(--warning-color); }
+        .badge-completed { background: var(--success-color); }
+        .badge-failed { background: var(--danger-color); }
+        .badge-pending { background: var(--text-secondary); }
+
+        .progress {
+            background: rgba(99, 102, 241, 0.2);
+            border-radius: 10px;
+            height: 8px;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 10px;
+        }
+
+        .agent-chip {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin: 0.2rem;
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .nav-tabs {
+            border-bottom: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .nav-tabs .nav-link {
+            color: var(--text-secondary);
+            border: none;
+            padding: 1rem 1.5rem;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            background: transparent;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .form-control, .form-select {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: var(--text-primary);
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(15, 23, 42, 0.9);
+            border-color: var(--primary-color);
+            color: var(--text-primary);
+            box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+        }
+
+        .reward-bar {
+            height: 24px;
+            border-radius: 4px;
+            position: relative;
+        }
+
+        .reward-bar .fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .reward-positive .fill { background: var(--success-color); }
+        .reward-negative .fill { background: var(--danger-color); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .training-active {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">
+                <i class="bi bi-robot me-2"></i>RL Training Dashboard
+            </a>
+            <span class="badge bg-info ms-2">Week 64 - ART Framework</span>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="index.html"><i class="bi bi-house me-1"></i>Hub</a>
+                <a class="nav-link" href="kanban-dashboard.html"><i class="bi bi-kanban me-1"></i>Kanban</a>
+                <a class="nav-link" href="observability-dashboard.html"><i class="bi bi-graph-up me-1"></i>Observability</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <!-- Stats Overview -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-layers text-primary fs-1 me-3"></i>
+                        <div>
+                            <div class="stat-value" id="stat-environments">-</div>
+                            <div class="stat-label">Environments</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-play-circle text-success fs-1 me-3"></i>
+                        <div>
+                            <div class="stat-value" id="stat-training-runs">-</div>
+                            <div class="stat-label">Training Runs</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-bar-chart text-warning fs-1 me-3"></i>
+                        <div>
+                            <div class="stat-value" id="stat-episodes">-</div>
+                            <div class="stat-label">Total Episodes</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-check-circle text-info fs-1 me-3"></i>
+                        <div>
+                            <div class="stat-value" id="stat-policies">-</div>
+                            <div class="stat-label">Active Policies</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="row g-4">
+            <!-- Left Column: Environments & Training -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-layers me-2"></i>RL Environments</h5>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createEnvironmentModal">
+                            <i class="bi bi-plus-lg me-1"></i>New Environment
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="environments-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Agent</th>
+                                        <th>State Dims</th>
+                                        <th>Actions</th>
+                                        <th>Runs</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-play-circle me-2"></i>Training Runs</h5>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#startTrainingModal">
+                            <i class="bi bi-rocket me-1"></i>Start Training
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="training-runs-table">
+                                <thead>
+                                    <tr>
+                                        <th>Run Name</th>
+                                        <th>Environment</th>
+                                        <th>Algorithm</th>
+                                        <th>Status</th>
+                                        <th>Episodes</th>
+                                        <th>Best Reward</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Performance & Charts -->
+            <div class="col-lg-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Agent Performance (7d)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Training Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height: 200px;">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-award me-2"></i>Active Policies</h5>
+                    </div>
+                    <div class="card-body" id="policies-list">
+                        <p class="text-muted">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Training Progress (if active) -->
+        <div class="row mt-4" id="active-training-section" style="display: none;">
+            <div class="col-12">
+                <div class="card border-warning">
+                    <div class="card-header bg-warning bg-opacity-25">
+                        <h5 class="mb-0">
+                            <i class="bi bi-lightning me-2 training-active"></i>
+                            Active Training: <span id="active-run-name">-</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="chart-container">
+                                    <canvas id="rewardProgressChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <strong>Episode:</strong> <span id="current-episode">0</span> / <span id="max-episodes">100</span>
+                                    <div class="progress mt-2">
+                                        <div class="progress-bar" id="episode-progress" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Best Reward:</strong> <span id="best-reward" class="text-success">-</span>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Average Reward:</strong> <span id="avg-reward">-</span>
+                                </div>
+                                <button class="btn btn-danger" id="cancel-training-btn">
+                                    <i class="bi bi-stop-circle me-1"></i>Cancel Training
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Environment Modal -->
+    <div class="modal fade" id="createEnvironmentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create RL Environment</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="create-env-form">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Environment Name</label>
+                                <input type="text" class="form-control" id="env-name" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Agent Type</label>
+                                <select class="form-select" id="env-agent-type" required>
+                                    <option value="">Select agent...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" id="env-description" rows="2"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">State Space (JSON)</label>
+                                <textarea class="form-control" id="env-state-space" rows="4" placeholder='{"dimensions": [], "ranges": {}}'></textarea>
+                                <small class="text-muted">Leave empty for defaults</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Action Space (JSON)</label>
+                                <textarea class="form-control" id="env-action-space" rows="4" placeholder='{"actions": [], "type": "discrete"}'></textarea>
+                                <small class="text-muted">Leave empty for defaults</small>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="create-env-btn">Create Environment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Training Modal -->
+    <div class="modal fade" id="startTrainingModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Start Training Run</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="start-training-form">
+                        <div class="mb-3">
+                            <label class="form-label">Environment</label>
+                            <select class="form-select" id="training-environment" required>
+                                <option value="">Select environment...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Algorithm</label>
+                            <select class="form-select" id="training-algorithm" required>
+                                <option value="">Select algorithm...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Run Name (optional)</label>
+                            <input type="text" class="form-control" id="training-run-name">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Max Episodes</label>
+                            <input type="number" class="form-control" id="training-max-episodes" value="100" min="1" max="10000">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="start-training-btn">
+                        <i class="bi bi-play-fill me-1"></i>Start Training
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE = 'http://localhost:8000/api/rl';
+        let performanceChart, statusChart, rewardProgressChart;
+        let activeRunId = null;
+        let pollInterval = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboardStats();
+            loadEnvironments();
+            loadTrainingRuns();
+            loadAgentTypes();
+            loadAlgorithms();
+            initCharts();
+
+            // Event listeners
+            document.getElementById('create-env-btn').addEventListener('click', createEnvironment);
+            document.getElementById('start-training-btn').addEventListener('click', startTraining);
+            document.getElementById('cancel-training-btn').addEventListener('click', cancelTraining);
+        });
+
+        // API Functions
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    headers: { 'Content-Type': 'application/json' },
+                    ...options
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                throw error;
+            }
+        }
+
+        // Load Dashboard Stats
+        async function loadDashboardStats() {
+            try {
+                const stats = await apiCall('/dashboard/stats');
+                document.getElementById('stat-environments').textContent = stats.environments?.total || 0;
+                document.getElementById('stat-training-runs').textContent =
+                    Object.values(stats.training_runs || {}).reduce((a, b) => a + b, 0);
+                document.getElementById('stat-episodes').textContent = stats.total_episodes || 0;
+                document.getElementById('stat-policies').textContent = stats.active_policies || 0;
+
+                updateStatusChart(stats.training_runs || {});
+                updatePerformanceChart(stats.agent_performance_7d || {});
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        // Load Environments
+        async function loadEnvironments() {
+            try {
+                const data = await apiCall('/environments?limit=50');
+                const tbody = document.querySelector('#environments-table tbody');
+                tbody.innerHTML = '';
+
+                data.items.forEach(env => {
+                    const stateDims = env.state_space?.dimensions?.length || 0;
+                    const actions = env.action_space?.actions?.length || 0;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${env.name}</strong></td>
+                            <td><span class="agent-chip">${env.agent_type}</span></td>
+                            <td>${stateDims}</td>
+                            <td>${actions}</td>
+                            <td>${env.training_runs_count || 0}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="viewEnvironment(${env.id})">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                // Update environment dropdown
+                const select = document.getElementById('training-environment');
+                select.innerHTML = '<option value="">Select environment...</option>';
+                data.items.forEach(env => {
+                    select.innerHTML += `<option value="${env.id}">${env.name} (${env.agent_type})</option>`;
+                });
+            } catch (error) {
+                console.error('Failed to load environments:', error);
+            }
+        }
+
+        // Load Training Runs
+        async function loadTrainingRuns() {
+            try {
+                const data = await apiCall('/training?limit=20');
+                const tbody = document.querySelector('#training-runs-table tbody');
+                tbody.innerHTML = '';
+
+                data.items.forEach(run => {
+                    const statusClass = `badge-${run.status}`;
+                    const isRunning = run.status === 'running';
+
+                    if (isRunning && !activeRunId) {
+                        activeRunId = run.id;
+                        showActiveTraining(run);
+                    }
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${run.run_name || `Run #${run.id}`}</strong></td>
+                            <td>${run.environment_name || '-'}</td>
+                            <td><code>${run.algorithm}</code></td>
+                            <td><span class="badge ${statusClass}">${run.status}</span></td>
+                            <td>${run.total_episodes || 0}</td>
+                            <td>${run.best_reward?.toFixed(3) || '-'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-info" onclick="viewTrainingRun(${run.id})">
+                                    <i class="bi bi-bar-chart"></i>
+                                </button>
+                                ${run.status === 'pending' ? `
+                                    <button class="btn btn-sm btn-outline-success" onclick="executeTraining(${run.id})">
+                                        <i class="bi bi-play-fill"></i>
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error('Failed to load training runs:', error);
+            }
+        }
+
+        // Load Agent Types
+        async function loadAgentTypes() {
+            try {
+                const data = await apiCall('/agent-types');
+                const select = document.getElementById('env-agent-type');
+                select.innerHTML = '<option value="">Select agent...</option>';
+                data.types.forEach(type => {
+                    select.innerHTML += `<option value="${type.value}">${type.name} - ${type.description}</option>`;
+                });
+            } catch (error) {
+                console.error('Failed to load agent types:', error);
+            }
+        }
+
+        // Load Algorithms
+        async function loadAlgorithms() {
+            try {
+                const data = await apiCall('/algorithms');
+                const select = document.getElementById('training-algorithm');
+                select.innerHTML = '<option value="">Select algorithm...</option>';
+                data.algorithms.forEach(alg => {
+                    select.innerHTML += `<option value="${alg.value}">${alg.value} - ${alg.description}</option>`;
+                });
+            } catch (error) {
+                console.error('Failed to load algorithms:', error);
+            }
+        }
+
+        // Create Environment
+        async function createEnvironment() {
+            const name = document.getElementById('env-name').value;
+            const agentType = document.getElementById('env-agent-type').value;
+            const description = document.getElementById('env-description').value;
+
+            let stateSpace = null, actionSpace = null;
+            try {
+                const stateText = document.getElementById('env-state-space').value;
+                const actionText = document.getElementById('env-action-space').value;
+                if (stateText) stateSpace = JSON.parse(stateText);
+                if (actionText) actionSpace = JSON.parse(actionText);
+            } catch (e) {
+                alert('Invalid JSON in state/action space');
+                return;
+            }
+
+            try {
+                await apiCall('/environments', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name, agent_type: agentType, description,
+                        state_space: stateSpace, action_space: actionSpace
+                    })
+                });
+
+                bootstrap.Modal.getInstance(document.getElementById('createEnvironmentModal')).hide();
+                document.getElementById('create-env-form').reset();
+                loadEnvironments();
+                loadDashboardStats();
+            } catch (error) {
+                alert('Failed to create environment: ' + error.message);
+            }
+        }
+
+        // Start Training
+        async function startTraining() {
+            const environmentId = document.getElementById('training-environment').value;
+            const algorithm = document.getElementById('training-algorithm').value;
+            const runName = document.getElementById('training-run-name').value;
+            const maxEpisodes = parseInt(document.getElementById('training-max-episodes').value);
+
+            if (!environmentId || !algorithm) {
+                alert('Please select environment and algorithm');
+                return;
+            }
+
+            try {
+                // Create the training run
+                const run = await apiCall('/training', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        environment_id: parseInt(environmentId),
+                        algorithm,
+                        run_name: runName || null
+                    })
+                });
+
+                // Execute the training
+                await apiCall(`/training/${run.id}/execute`, {
+                    method: 'POST',
+                    body: JSON.stringify({ max_episodes: maxEpisodes })
+                });
+
+                activeRunId = run.id;
+                bootstrap.Modal.getInstance(document.getElementById('startTrainingModal')).hide();
+                document.getElementById('start-training-form').reset();
+                loadTrainingRuns();
+                showActiveTraining(run);
+                startPolling();
+            } catch (error) {
+                alert('Failed to start training: ' + error.message);
+            }
+        }
+
+        // Execute pending training
+        async function executeTraining(runId) {
+            try {
+                await apiCall(`/training/${runId}/execute`, {
+                    method: 'POST',
+                    body: JSON.stringify({ max_episodes: 100 })
+                });
+                activeRunId = runId;
+                loadTrainingRuns();
+                startPolling();
+            } catch (error) {
+                alert('Failed to execute training: ' + error.message);
+            }
+        }
+
+        // Cancel Training
+        async function cancelTraining() {
+            if (!activeRunId) return;
+
+            try {
+                await apiCall(`/training/${activeRunId}/cancel`, { method: 'POST' });
+                stopPolling();
+                activeRunId = null;
+                document.getElementById('active-training-section').style.display = 'none';
+                loadTrainingRuns();
+                loadDashboardStats();
+            } catch (error) {
+                alert('Failed to cancel training: ' + error.message);
+            }
+        }
+
+        // Show Active Training
+        function showActiveTraining(run) {
+            document.getElementById('active-training-section').style.display = 'block';
+            document.getElementById('active-run-name').textContent = run.run_name || `Run #${run.id}`;
+            startPolling();
+        }
+
+        // Polling for active training
+        function startPolling() {
+            if (pollInterval) return;
+            pollInterval = setInterval(async () => {
+                if (!activeRunId) {
+                    stopPolling();
+                    return;
+                }
+
+                try {
+                    const run = await apiCall(`/training/${activeRunId}`);
+                    updateActiveTrainingUI(run);
+
+                    if (run.status !== 'running') {
+                        stopPolling();
+                        activeRunId = null;
+                        document.getElementById('active-training-section').style.display = 'none';
+                        loadTrainingRuns();
+                        loadDashboardStats();
+                    }
+                } catch (error) {
+                    console.error('Polling error:', error);
+                }
+            }, 2000);
+        }
+
+        function stopPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+        }
+
+        function updateActiveTrainingUI(run) {
+            document.getElementById('current-episode').textContent = run.total_episodes || 0;
+            const maxEp = run.training_config?.max_episodes || 100;
+            document.getElementById('max-episodes').textContent = maxEp;
+            document.getElementById('episode-progress').style.width = `${(run.total_episodes / maxEp) * 100}%`;
+            document.getElementById('best-reward').textContent = run.best_reward?.toFixed(4) || '-';
+            document.getElementById('avg-reward').textContent = run.avg_reward?.toFixed(4) || '-';
+
+            // Update reward progress chart
+            if (run.metrics_history && rewardProgressChart) {
+                const labels = run.metrics_history.map((_, i) => i + 1);
+                const rewards = run.metrics_history.map(m => m.avg_reward || m.best_reward || 0);
+                rewardProgressChart.data.labels = labels;
+                rewardProgressChart.data.datasets[0].data = rewards;
+                rewardProgressChart.update('none');
+            }
+        }
+
+        // Initialize Charts
+        function initCharts() {
+            // Performance Chart
+            const perfCtx = document.getElementById('performanceChart').getContext('2d');
+            performanceChart = new Chart(perfCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Performance Score',
+                        data: [],
+                        backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // Status Chart
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            statusChart = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completed', 'Running', 'Failed', 'Pending'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['#22c55e', '#f59e0b', '#ef4444', '#94a3b8']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right' } }
+                }
+            });
+
+            // Reward Progress Chart
+            const rewardCtx = document.getElementById('rewardProgressChart').getContext('2d');
+            rewardProgressChart = new Chart(rewardCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Reward',
+                        data: [],
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.1)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function updateStatusChart(data) {
+            statusChart.data.datasets[0].data = [
+                data.completed || 0,
+                data.running || 0,
+                data.failed || 0,
+                data.pending || 0
+            ];
+            statusChart.update();
+        }
+
+        function updatePerformanceChart(data) {
+            const agents = Object.keys(data);
+            const values = Object.values(data);
+            performanceChart.data.labels = agents;
+            performanceChart.data.datasets[0].data = values;
+            performanceChart.update();
+        }
+
+        function viewEnvironment(id) {
+            alert(`View environment ${id} - TODO: implement detail view`);
+        }
+
+        function viewTrainingRun(id) {
+            alert(`View training run ${id} - TODO: implement detail view`);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+# Python Security Patterns
+# CyberStrike Security Scanner - Extensible Pattern Configuration
+
+language: python
+version: "1.0"
+file_extensions:
+  - ".py"
+  - ".pyw"
+  - ".pyx"
+
+patterns:
+  injection:
+    - id: PY-INJ-001
+      pattern: "f[\"'].*(?:SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|EXEC|EXECUTE).*\\{.*\\}.*[\"']"
+      title: SQL Injection via f-string
+      description: SQL query constructed using f-string interpolation is vulnerable to SQL injection
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: "Use parameterized queries with placeholders"
+
+    - id: PY-INJ-002
+      pattern: "[\"'].*(?:SELECT|INSERT|UPDATE|DELETE).*[\"']\\.format\\("
+      title: SQL Injection via .format()
+      description: SQL query uses .format() string interpolation which is vulnerable to injection
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use parameterized queries instead of string formatting
+
+    - id: PY-INJ-003
+      pattern: "[\"'].*(?:SELECT|INSERT|UPDATE|DELETE).*%s.*[\"'].*%"
+      title: SQL Injection via % formatting
+      description: SQL query uses % string formatting which is vulnerable to injection
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use parameterized queries with database driver placeholders
+
+    - id: PY-INJ-004
+      pattern: "\\.execute\\([^,]+\\+"
+      title: SQL Injection via string concatenation in execute()
+      description: execute() call with string concatenation may be vulnerable to SQL injection
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Never concatenate user input into SQL queries
+
+    - id: PY-INJ-005
+      pattern: "eval\\s*\\("
+      title: Use of eval()
+      description: eval() executes arbitrary code and is dangerous with untrusted input
+      severity: critical
+      owasp: A03
+      cwe: CWE-94
+      remediation: Use ast.literal_eval() for data parsing, or avoid dynamic code execution entirely
+
+    - id: PY-INJ-006
+      pattern: "exec\\s*\\("
+      title: Use of exec()
+      description: exec() executes arbitrary code and is dangerous with untrusted input
+      severity: critical
+      owasp: A03
+      cwe: CWE-94
+      remediation: Avoid exec() entirely. Use safer alternatives like function dispatch tables
+
+    - id: PY-INJ-007
+      pattern: "__import__\\s*\\("
+      title: Dynamic import
+      description: Dynamic imports with user input can lead to arbitrary code execution
+      severity: high
+      owasp: A03
+      cwe: CWE-94
+      remediation: Use importlib with a whitelist of allowed modules
+
+    - id: PY-INJ-008
+      pattern: "os\\.system\\([^\"']+\\+"
+      title: Command Injection via os.system()
+      description: os.system() with string concatenation is vulnerable to command injection
+      severity: critical
+      owasp: A03
+      cwe: CWE-78
+      remediation: Use subprocess.run() with a list of arguments (not shell=True)
+
+    - id: PY-INJ-009
+      pattern: "subprocess\\.\\w+\\([^)]*shell\\s*=\\s*True"
+      title: Subprocess with shell=True
+      description: subprocess with shell=True is vulnerable to shell injection
+      severity: high
+      owasp: A03
+      cwe: CWE-78
+      remediation: "Use subprocess.run(['cmd', 'arg1', 'arg2']) without shell=True"
+
+  crypto:
+    - id: PY-CRYPTO-001
+      pattern: "(?:password|passwd|pwd|wachtwoord)\\s*=\\s*[\"'][^\"']{4,}[\"']"
+      title: Hardcoded password
+      description: Password hardcoded in source code
+      severity: critical
+      owasp: A02
+      cwe: CWE-798
+      remediation: Use environment variables or a secrets manager
+
+    - id: PY-CRYPTO-002
+      pattern: "(?:api_key|apikey|api-key)\\s*=\\s*[\"'][^\"']{10,}[\"']"
+      title: Hardcoded API key
+      description: API key hardcoded in source code
+      severity: critical
+      owasp: A02
+      cwe: CWE-798
+      remediation: Store API keys in environment variables or secrets manager
+
+    - id: PY-CRYPTO-003
+      pattern: "(?:secret|secret_key|secretkey)\\s*=\\s*[\"'][^\"']{10,}[\"']"
+      title: Hardcoded secret
+      description: Secret value hardcoded in source code
+      severity: critical
+      owasp: A02
+      cwe: CWE-798
+      remediation: "Use environment variables: os.environ.get('SECRET_KEY')"
+
+    - id: PY-CRYPTO-004
+      pattern: "-----BEGIN (?:RSA |DSA |EC )?PRIVATE KEY-----"
+      title: Hardcoded private key
+      description: Private key embedded in source code
+      severity: critical
+      owasp: A02
+      cwe: CWE-321
+      remediation: Store private keys in secure key management systems
+
+    - id: PY-CRYPTO-005
+      pattern: "hashlib\\.md5\\("
+      title: Use of weak MD5 hash
+      description: MD5 is cryptographically broken and should not be used for security
+      severity: medium
+      owasp: A02
+      cwe: CWE-328
+      remediation: "Use SHA-256 or SHA-3 for hashing, bcrypt/Argon2 for passwords"
+
+    - id: PY-CRYPTO-006
+      pattern: "hashlib\\.sha1\\("
+      title: Use of weak SHA1 hash
+      description: SHA1 is deprecated for security purposes
+      severity: medium
+      owasp: A02
+      cwe: CWE-328
+      remediation: Use SHA-256 or SHA-3 for cryptographic hashing
+
+    - id: PY-CRYPTO-007
+      pattern: "random\\.(random|randint|choice)\\("
+      title: Non-cryptographic random for security
+      description: random module is not cryptographically secure
+      severity: medium
+      owasp: A02
+      cwe: CWE-330
+      remediation: "Use secrets module: secrets.token_hex(), secrets.randbelow()"
+
+  integrity:
+    - id: PY-INT-001
+      pattern: "pickle\\.loads?\\("
+      title: Insecure deserialization with pickle
+      description: pickle can execute arbitrary code during deserialization
+      severity: high
+      owasp: A08
+      cwe: CWE-502
+      remediation: Use JSON for data serialization, or sign pickle data with HMAC
+
+    - id: PY-INT-002
+      pattern: "yaml\\.load\\([^)]*(?:Loader\\s*=\\s*None|[^L])"
+      title: Unsafe YAML load
+      description: yaml.load() without SafeLoader can execute arbitrary code
+      severity: high
+      owasp: A08
+      cwe: CWE-502
+      remediation: "Use yaml.safe_load() or yaml.load(data, Loader=yaml.SafeLoader)"
+
+    - id: PY-INT-003
+      pattern: "yaml\\.unsafe_load\\("
+      title: Explicitly unsafe YAML load
+      description: yaml.unsafe_load() allows arbitrary code execution
+      severity: critical
+      owasp: A08
+      cwe: CWE-502
+      remediation: Use yaml.safe_load() instead
+
+  ssrf:
+    - id: PY-SSRF-001
+      pattern: "requests\\.(?:get|post|put|delete|patch)\\s*\\([^\"']+\\+"
+      title: SSRF via requests with user-controlled URL
+      description: HTTP request with URL concatenation may be vulnerable to SSRF
+      severity: high
+      owasp: A10
+      cwe: CWE-918
+      remediation: Validate and whitelist allowed URLs/domains. Block internal IP ranges.
+
+    - id: PY-SSRF-002
+      pattern: "urllib\\.request\\.urlopen\\s*\\([^\"']+\\+"
+      title: SSRF via urlopen with user-controlled URL
+      description: urlopen with URL concatenation may be vulnerable to SSRF
+      severity: high
+      owasp: A10
+      cwe: CWE-918
+      remediation: Validate URLs against a whitelist before making requests
+
+  auth:
+    - id: PY-AUTH-001
+      pattern: "verify\\s*=\\s*False"
+      title: SSL verification disabled
+      description: Disabling SSL verification allows man-in-the-middle attacks
+      severity: high
+      owasp: A07
+      cwe: CWE-295
+      remediation: Always verify SSL certificates in production
+
+  logging:
+    - id: PY-LOG-001
+      pattern: "log(?:ger)?\\.(?:info|debug|warning|error)\\([^)]*(?:password|wachtwoord|secret|token|key)[^)]*\\)"
+      title: Sensitive data in logs
+      description: Logging potentially sensitive information
+      severity: medium
+      owasp: A09
+      cwe: CWE-532
+      remediation: Sanitize logs to remove sensitive data. Use structured logging with field filtering.
+
+    - id: PY-LOG-002
+      pattern: "print\\([^)]*(?:password|wachtwoord|secret|token|key)[^)]*\\)"
+      title: Sensitive data in print statement
+      description: Printing potentially sensitive information
+      severity: medium
+      owasp: A09
+      cwe: CWE-532
+      remediation: Remove print statements with sensitive data. Use proper logging with sanitization.
+
+  config:
+    - id: PY-CFG-001
+      pattern: "DEBUG\\s*=\\s*True"
+      title: Debug mode enabled
+      description: Debug mode should be disabled in production
+      severity: medium
+      owasp: A05
+      cwe: CWE-489
+      remediation: Set DEBUG=False in production. Use environment variables.
+
+    - id: PY-CFG-002
+      pattern: "app\\.run\\([^)]*debug\\s*=\\s*True"
+      title: Flask debug mode in production
+      description: Flask debug mode enables interactive debugger
+      severity: high
+      owasp: A05
+      cwe: CWE-489
+      remediation: Never use debug=True in production
+
+  xss:
+    - id: PY-XSS-001
+      pattern: "\\|\\s*safe\\s*}}"
+      title: Django/Jinja2 safe filter
+      description: Using safe filter bypasses auto-escaping
+      severity: medium
+      owasp: A03
+      cwe: CWE-79
+      remediation: "Only use |safe with trusted, pre-sanitized content"
+
+    - id: PY-XSS-002
+      pattern: "mark_safe\\("
+      title: Django mark_safe usage
+      description: mark_safe() bypasses HTML escaping
+      severity: medium
+      owasp: A03
+      cwe: CWE-79
+      remediation: Ensure content passed to mark_safe is properly sanitized

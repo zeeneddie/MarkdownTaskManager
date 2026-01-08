@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Extraction Pipeline - MarQed AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .tier-card { transition: all 0.3s ease; }
+        .tier-card:hover { transform: translateY(-4px); box-shadow: 0 10px 40px rgba(0,0,0,0.15); }
+        .tier-recommended { border: 2px solid #10B981; }
+        .confidence-bar { transition: width 0.5s ease; }
+        .cycle-step { position: relative; }
+        .cycle-step::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -20px;
+            width: 40px;
+            height: 2px;
+            background: #E5E7EB;
+        }
+        .cycle-step:last-child::after { display: none; }
+        .cycle-step.completed::after { background: #10B981; }
+        .cycle-step.active { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="text-gray-600 hover:text-gray-900">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                    </a>
+                    <h1 class="text-2xl font-bold text-gray-800">Deep Extraction Pipeline</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="health-status" class="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        Service Healthy
+                    </span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Tier Selection Section -->
+        <section id="tier-selection" class="mb-12">
+            <h2 class="text-xl font-semibold text-gray-800 mb-6">Select Your Extraction Tier</h2>
+            <div id="tier-cards" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <!-- Tier cards loaded dynamically -->
+            </div>
+        </section>
+
+        <!-- Cost Calculator -->
+        <section id="cost-calculator" class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Cost Calculator</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Lines of Code</label>
+                    <input type="number" id="loc-input" value="50000" min="1000"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tier</label>
+                    <select id="tier-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        <option value="FREE">FREE ($0)</option>
+                        <option value="BASIC">BASIC ($5)</option>
+                        <option value="STANDARD" selected>STANDARD ($25)</option>
+                        <option value="PROFESSIONAL">PROFESSIONAL ($75)</option>
+                        <option value="PREMIUM">PREMIUM ($150)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Complexity</label>
+                    <select id="complexity-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        <option value="simple">Simple (0.8x)</option>
+                        <option value="moderate" selected>Moderate (1.0x)</option>
+                        <option value="complex">Complex (1.3x)</option>
+                        <option value="legacy">Legacy (1.5x)</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="calculateCost()"
+                            class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+                        Calculate
+                    </button>
+                </div>
+            </div>
+            <div id="cost-result" class="mt-4 p-4 bg-gray-50 rounded-md hidden">
+                <!-- Cost result shown here -->
+            </div>
+        </section>
+
+        <!-- Active Sessions -->
+        <section id="active-sessions" class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">Active Extraction Sessions</h2>
+                <button onclick="showNewSessionModal()"
+                        class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+                    + New Extraction
+                </button>
+            </div>
+            <div id="sessions-list" class="space-y-4">
+                <!-- Sessions loaded dynamically -->
+                <p class="text-gray-500 text-center py-8">Loading sessions...</p>
+            </div>
+        </section>
+
+        <!-- Session Detail (shown when session selected) -->
+        <section id="session-detail" class="bg-white rounded-lg shadow-md p-6 mb-8 hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold text-gray-800">Session Detail</h2>
+                <button onclick="closeSessionDetail()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Cycle Progress -->
+            <div class="mb-8">
+                <h3 class="text-lg font-medium text-gray-700 mb-4">Extraction Cycles</h3>
+                <div class="flex justify-between items-center">
+                    <div class="cycle-step flex flex-col items-center" id="cycle-1">
+                        <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center mb-2">
+                            <span class="text-lg font-bold">1</span>
+                        </div>
+                        <span class="text-sm text-gray-600">Analysis</span>
+                    </div>
+                    <div class="cycle-step flex flex-col items-center" id="cycle-2">
+                        <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center mb-2">
+                            <span class="text-lg font-bold">2</span>
+                        </div>
+                        <span class="text-sm text-gray-600">Enrichment</span>
+                    </div>
+                    <div class="cycle-step flex flex-col items-center" id="cycle-3">
+                        <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center mb-2">
+                            <span class="text-lg font-bold">3</span>
+                        </div>
+                        <span class="text-sm text-gray-600">Conflicts</span>
+                    </div>
+                    <div class="cycle-step flex flex-col items-center" id="cycle-4">
+                        <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center mb-2">
+                            <span class="text-lg font-bold">4</span>
+                        </div>
+                        <span class="text-sm text-gray-600">Review</span>
+                    </div>
+                    <div class="cycle-step flex flex-col items-center" id="cycle-5">
+                        <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center mb-2">
+                            <span class="text-lg font-bold">5</span>
+                        </div>
+                        <span class="text-sm text-gray-600">Synthesis</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Summary -->
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+                <div class="bg-purple-50 rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold text-purple-600" id="total-epics">0</div>
+                    <div class="text-sm text-gray-600">Epics</div>
+                </div>
+                <div class="bg-blue-50 rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold text-blue-600" id="total-features">0</div>
+                    <div class="text-sm text-gray-600">Features</div>
+                </div>
+                <div class="bg-green-50 rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold text-green-600" id="total-stories">0</div>
+                    <div class="text-sm text-gray-600">Stories</div>
+                </div>
+                <div class="bg-yellow-50 rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold text-yellow-600" id="total-tasks">0</div>
+                    <div class="text-sm text-gray-600">Tasks</div>
+                </div>
+                <div class="bg-indigo-50 rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold text-indigo-600" id="total-fp">0</div>
+                    <div class="text-sm text-gray-600">Function Points</div>
+                </div>
+            </div>
+
+            <!-- Confidence -->
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm font-medium text-gray-700">Confidence Score</span>
+                    <span class="text-sm font-bold" id="confidence-value">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-4">
+                    <div id="confidence-bar" class="confidence-bar bg-green-500 h-4 rounded-full" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>0%</span>
+                    <span id="confidence-target">Target: 80%</span>
+                    <span>100%</span>
+                </div>
+            </div>
+
+            <!-- Review Queue (if awaiting review) -->
+            <div id="review-queue" class="mb-8 hidden">
+                <h3 class="text-lg font-medium text-gray-700 mb-4">Items Pending Review</h3>
+                <div id="review-items" class="space-y-3">
+                    <!-- Review items loaded dynamically -->
+                </div>
+                <div class="flex gap-2 mt-4">
+                    <button onclick="autoResolveConflicts()"
+                            class="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 transition">
+                        Auto-Resolve with LLM
+                    </button>
+                    <button onclick="completeReview()"
+                            class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+                        Complete Review
+                    </button>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-4 flex-wrap">
+                <button onclick="runExtraction()" id="run-btn"
+                        class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition">
+                    Run Extraction
+                </button>
+                <button onclick="showUpgradeModal()" id="upgrade-btn"
+                        class="bg-purple-600 text-white px-6 py-2 rounded-md hover:bg-purple-700 transition">
+                    Upgrade Tier
+                </button>
+                <button onclick="openTierConfig()" id="tier-config-btn"
+                        class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition">
+                    Configure Tiers
+                </button>
+                <button onclick="viewResults()" id="results-btn"
+                        class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition hidden">
+                    View Results
+                </button>
+            </div>
+        </section>
+
+        <!-- Dashboard Stats -->
+        <section id="dashboard-stats" class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-6">Dashboard Statistics</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="text-2xl font-bold text-gray-800" id="stat-total-sessions">0</div>
+                    <div class="text-sm text-gray-600">Total Sessions</div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="text-2xl font-bold text-gray-800" id="stat-total-items">0</div>
+                    <div class="text-sm text-gray-600">Items Extracted</div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="text-2xl font-bold text-green-600" id="stat-revenue">$0</div>
+                    <div class="text-sm text-gray-600">Revenue</div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="text-2xl font-bold text-blue-600" id="stat-margin">0%</div>
+                    <div class="text-sm text-gray-600">Margin</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- New Session Modal -->
+    <div id="new-session-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-lg font-semibold mb-4">Start New Extraction</h3>
+            <form id="new-session-form">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Project ID</label>
+                    <input type="number" id="project-id" value="1" min="1"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Source Path</label>
+                    <input type="text" id="source-path" value="/path/to/project"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Workflow Type</label>
+                    <select id="workflow-type" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        <option value="GREEN_PAPER">GREEN_PAPER (New Project)</option>
+                        <option value="BROWN_PAPER">BROWN_PAPER (Legacy/Migration)</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tier</label>
+                    <select id="new-session-tier" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        <option value="FREE">FREE ($0 - 60% confidence)</option>
+                        <option value="BASIC">BASIC ($5 - 70% confidence)</option>
+                        <option value="STANDARD" selected>STANDARD ($25 - 80% confidence)</option>
+                        <option value="PROFESSIONAL">PROFESSIONAL ($75 - 90% confidence)</option>
+                        <option value="PREMIUM">PREMIUM ($150 - 95% confidence)</option>
+                    </select>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="hideNewSessionModal()"
+                            class="px-4 py-2 text-gray-600 hover:text-gray-800">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                        Start Extraction
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/deep-extraction';
+        let currentSessionId = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTiers();
+            loadSessions();
+            loadDashboardStats();
+            checkHealth();
+        });
+
+        // Load tier cards
+        async function loadTiers() {
+            try {
+                const response = await fetch(`${API_BASE}/tiers`);
+                const data = await response.json();
+
+                const container = document.getElementById('tier-cards');
+                container.innerHTML = data.tiers.map(tier => `
+                    <div class="tier-card bg-white rounded-lg shadow-md p-4 cursor-pointer ${tier.tier === 'STANDARD' ? 'tier-recommended' : ''}"
+                         onclick="selectTier('${tier.tier}')">
+                        ${tier.tier === 'STANDARD' ? '<div class="text-xs text-green-600 font-semibold mb-2">RECOMMENDED</div>' : ''}
+                        <h3 class="text-lg font-bold text-gray-800">${tier.tier}</h3>
+                        <div class="text-2xl font-bold text-blue-600 mb-2">$${tier.price_usd}</div>
+                        <div class="text-sm text-gray-600 mb-2">
+                            <span class="font-medium">${Math.round(tier.confidence_target * 100)}%</span> confidence
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            ${tier.llm_count} LLMs
+                            ${tier.human_review ? '+ Human Review' : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading tiers:', error);
+            }
+        }
+
+        // Load sessions
+        async function loadSessions() {
+            try {
+                const response = await fetch(`${API_BASE}/sessions?limit=10`);
+                const sessions = await response.json();
+
+                const container = document.getElementById('sessions-list');
+                if (sessions.length === 0) {
+                    container.innerHTML = '<p class="text-gray-500 text-center py-8">No extraction sessions yet. Start a new extraction!</p>';
+                    return;
+                }
+
+                container.innerHTML = sessions.map(s => `
+                    <div class="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer" onclick="selectSession('${s.id}')">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="font-medium text-gray-800">${s.source_path || 'Unknown project'}</div>
+                                <div class="text-sm text-gray-500">${s.workflow_type} | Tier: ${s.tier}</div>
+                            </div>
+                            <div class="text-right">
+                                <span class="px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(s.status)}">
+                                    ${s.status}
+                                </span>
+                                <div class="text-sm text-gray-500 mt-1">Cycle ${s.current_cycle}/5</div>
+                            </div>
+                        </div>
+                        <div class="mt-2 flex gap-4 text-sm text-gray-600">
+                            <span>${s.total_epics || 0} epics</span>
+                            <span>${s.total_features || 0} features</span>
+                            <span>${s.total_stories || 0} stories</span>
+                            <span>${s.total_tasks || 0} tasks</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+                document.getElementById('sessions-list').innerHTML =
+                    '<p class="text-red-500 text-center py-8">Error loading sessions</p>';
+            }
+        }
+
+        // Load dashboard stats
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch(`${API_BASE}/stats`);
+                const stats = await response.json();
+
+                document.getElementById('stat-total-sessions').textContent = stats.total_sessions || 0;
+                document.getElementById('stat-total-items').textContent = stats.total_items_extracted || 0;
+                document.getElementById('stat-revenue').textContent = `$${(stats.total_revenue_usd || 0).toFixed(2)}`;
+                document.getElementById('stat-margin').textContent = `${(stats.margin_percentage || 0).toFixed(1)}%`;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Check health
+        async function checkHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const health = await response.json();
+
+                const statusEl = document.getElementById('health-status');
+                if (health.status === 'healthy') {
+                    statusEl.className = 'px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800';
+                    statusEl.textContent = 'Service Healthy';
+                } else {
+                    statusEl.className = 'px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800';
+                    statusEl.textContent = 'Service Unhealthy';
+                }
+            } catch (error) {
+                const statusEl = document.getElementById('health-status');
+                statusEl.className = 'px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800';
+                statusEl.textContent = 'Service Offline';
+            }
+        }
+
+        // Calculate cost
+        async function calculateCost() {
+            const loc = document.getElementById('loc-input').value;
+            const tier = document.getElementById('tier-select').value;
+            const complexity = document.getElementById('complexity-select').value;
+
+            try {
+                const response = await fetch(
+                    `${API_BASE}/estimate-cost?lines_of_code=${loc}&tier=${tier}&complexity=${complexity}`,
+                    { method: 'POST' }
+                );
+                const data = await response.json();
+
+                const resultEl = document.getElementById('cost-result');
+                resultEl.classList.remove('hidden');
+                resultEl.innerHTML = `
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                            <div class="text-sm text-gray-500">Estimated Cost</div>
+                            <div class="text-2xl font-bold text-blue-600">$${data.estimated_cost_usd}</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Target Confidence</div>
+                            <div class="text-xl font-semibold">${Math.round(data.confidence_target * 100)}%</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">LLM Count</div>
+                            <div class="text-xl font-semibold">${data.llm_count}</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-gray-500">Multipliers</div>
+                            <div class="text-sm">LOC: ${data.loc_multiplier}x | Complexity: ${data.complexity_multiplier}x</div>
+                        </div>
+                    </div>
+                    ${data.upgrade_options.length > 0 ? `
+                        <div class="mt-4 pt-4 border-t">
+                            <div class="text-sm text-gray-500 mb-2">Upgrade Options</div>
+                            <div class="flex gap-2 flex-wrap">
+                                ${data.upgrade_options.map(opt => `
+                                    <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm">
+                                        ${opt.tier}: +$${opt.additional_cost} (+${Math.round(opt.confidence_gain * 100)}% conf)
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                `;
+            } catch (error) {
+                console.error('Error calculating cost:', error);
+            }
+        }
+
+        // Select session
+        async function selectSession(sessionId) {
+            currentSessionId = sessionId;
+            document.getElementById('session-detail').classList.remove('hidden');
+
+            try {
+                const response = await fetch(`${API_BASE}/sessions/${sessionId}`);
+                const session = await response.json();
+
+                // Update cycle indicators
+                for (let i = 1; i <= 5; i++) {
+                    const cycleEl = document.getElementById(`cycle-${i}`);
+                    const circleEl = cycleEl.querySelector('div');
+
+                    if (session.current_cycle > i) {
+                        cycleEl.classList.add('completed');
+                        circleEl.classList.remove('bg-gray-200');
+                        circleEl.classList.add('bg-green-500', 'text-white');
+                    } else if (session.current_cycle === i) {
+                        cycleEl.classList.add('active');
+                        circleEl.classList.remove('bg-gray-200');
+                        circleEl.classList.add('bg-blue-500', 'text-white');
+                    } else {
+                        cycleEl.classList.remove('completed', 'active');
+                        circleEl.classList.remove('bg-green-500', 'bg-blue-500', 'text-white');
+                        circleEl.classList.add('bg-gray-200');
+                    }
+                }
+
+                // Update stats
+                document.getElementById('total-epics').textContent = session.total_epics || 0;
+                document.getElementById('total-features').textContent = session.total_features || 0;
+                document.getElementById('total-stories').textContent = session.total_stories || 0;
+                document.getElementById('total-tasks').textContent = session.total_tasks || 0;
+                document.getElementById('total-fp').textContent = session.total_function_points || 0;
+
+                // Update confidence
+                const confidence = (session.avg_confidence || 0) * 100;
+                document.getElementById('confidence-value').textContent = `${confidence.toFixed(1)}%`;
+                document.getElementById('confidence-bar').style.width = `${confidence}%`;
+                document.getElementById('confidence-target').textContent =
+                    `Target: ${(session.tier_confidence_target * 100).toFixed(0)}%`;
+
+                // Show/hide buttons based on status
+                document.getElementById('run-btn').classList.toggle('hidden', session.status === 'completed');
+                document.getElementById('results-btn').classList.toggle('hidden', session.status !== 'completed');
+
+                // Load review queue if awaiting review
+                if (session.status === 'awaiting_review') {
+                    loadReviewQueue(sessionId);
+                } else {
+                    document.getElementById('review-queue').classList.add('hidden');
+                }
+
+            } catch (error) {
+                console.error('Error loading session:', error);
+            }
+        }
+
+        // Load review queue
+        async function loadReviewQueue(sessionId) {
+            try {
+                const response = await fetch(`${API_BASE}/sessions/${sessionId}/review-queue`);
+                const data = await response.json();
+
+                if (data.total_pending > 0) {
+                    document.getElementById('review-queue').classList.remove('hidden');
+
+                    const container = document.getElementById('review-items');
+                    container.innerHTML = [
+                        ...data.conflicts.map(c => `
+                            <div class="border rounded p-3 bg-yellow-50">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <span class="px-2 py-1 bg-yellow-200 text-yellow-800 rounded text-xs">CONFLICT</span>
+                                        <span class="ml-2 text-sm text-gray-600">${c.conflict_type} - ${c.item_type}</span>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button onclick="resolveConflict('${c.id}', 'a')"
+                                                class="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600">A</button>
+                                        <button onclick="resolveConflict('${c.id}', 'b')"
+                                                class="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600">B</button>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">LLM recommends: ${c.llm_recommendation || 'No recommendation'}</div>
+                            </div>
+                        `),
+                        ...data.consensus_items.map(i => `
+                            <div class="border rounded p-3 bg-blue-50">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <span class="px-2 py-1 bg-blue-200 text-blue-800 rounded text-xs">${i.item_type.toUpperCase()}</span>
+                                        <span class="ml-2 font-medium">${i.title}</span>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button onclick="decideConsensus('${i.id}', 'accept')"
+                                                class="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600">Accept</button>
+                                        <button onclick="decideConsensus('${i.id}', 'reject')"
+                                                class="px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600">Reject</button>
+                                    </div>
+                                </div>
+                                <div class="text-sm text-gray-600 mt-1">${i.description || ''}</div>
+                                <div class="text-xs text-gray-500 mt-1">Confidence: ${(i.confidence_score * 100).toFixed(1)}%</div>
+                            </div>
+                        `)
+                    ].join('');
+                }
+            } catch (error) {
+                console.error('Error loading review queue:', error);
+            }
+        }
+
+        // Run extraction
+        async function runExtraction() {
+            if (!currentSessionId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/sessions/${currentSessionId}/run`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+
+                alert(`Extraction ${result.status}!`);
+                selectSession(currentSessionId);
+                loadSessions();
+            } catch (error) {
+                console.error('Error running extraction:', error);
+                alert('Error running extraction');
+            }
+        }
+
+        // Auto-resolve conflicts
+        async function autoResolveConflicts() {
+            if (!currentSessionId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/sessions/${currentSessionId}/auto-resolve`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+
+                alert(`Auto-resolved ${result.resolved} conflicts!`);
+                selectSession(currentSessionId);
+            } catch (error) {
+                console.error('Error auto-resolving:', error);
+            }
+        }
+
+        // Complete review
+        async function completeReview() {
+            if (!currentSessionId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/sessions/${currentSessionId}/complete-review`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+
+                if (result.status === 'incomplete') {
+                    alert(`Cannot complete: ${result.message}`);
+                } else {
+                    alert('Review completed! Running final synthesis...');
+                    // Run cycle 5
+                    await fetch(`${API_BASE}/sessions/${currentSessionId}/cycles/5`, { method: 'POST' });
+                    selectSession(currentSessionId);
+                    loadSessions();
+                }
+            } catch (error) {
+                console.error('Error completing review:', error);
+            }
+        }
+
+        // Resolve conflict
+        async function resolveConflict(conflictId, choice) {
+            try {
+                await fetch(`${API_BASE}/conflicts/${conflictId}/resolve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ choice })
+                });
+                loadReviewQueue(currentSessionId);
+            } catch (error) {
+                console.error('Error resolving conflict:', error);
+            }
+        }
+
+        // Decide consensus
+        async function decideConsensus(consensusId, decision) {
+            try {
+                await fetch(`${API_BASE}/consensus/${consensusId}/decide`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ decision })
+                });
+                loadReviewQueue(currentSessionId);
+            } catch (error) {
+                console.error('Error deciding consensus:', error);
+            }
+        }
+
+        // View results
+        async function viewResults() {
+            if (!currentSessionId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/sessions/${currentSessionId}/results`);
+                const results = await response.json();
+
+                // Open in new window or show modal
+                console.log('Results:', results);
+                alert(`Extraction Complete!\n\nEpics: ${results.summary.total_epics}\nFeatures: ${results.summary.total_features}\nStories: ${results.summary.total_stories}\nTasks: ${results.summary.total_tasks}\n\nFunction Points: ${results.summary.total_function_points}\nTeam Size: ${results.recommendations.team_size}\nEstimated Duration: ${results.recommendations.estimated_duration_weeks} weeks`);
+            } catch (error) {
+                console.error('Error viewing results:', error);
+            }
+        }
+
+        // Open tier configuration page (Week 87)
+        function openTierConfig() {
+            if (!currentSessionId) {
+                alert('Please select a session first');
+                return;
+            }
+            window.open(`tier-hierarchy-config.html?session=${currentSessionId}`, '_blank');
+        }
+
+        // Close session detail
+        function closeSessionDetail() {
+            document.getElementById('session-detail').classList.add('hidden');
+            currentSessionId = null;
+        }
+
+        // Show new session modal
+        function showNewSessionModal() {
+            document.getElementById('new-session-modal').classList.remove('hidden');
+            document.getElementById('new-session-modal').classList.add('flex');
+        }
+
+        // Hide new session modal
+        function hideNewSessionModal() {
+            document.getElementById('new-session-modal').classList.add('hidden');
+            document.getElementById('new-session-modal').classList.remove('flex');
+        }
+
+        // Handle new session form
+        document.getElementById('new-session-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const data = {
+                project_id: parseInt(document.getElementById('project-id').value),
+                source_path: document.getElementById('source-path').value,
+                workflow_type: document.getElementById('workflow-type').value,
+                tier: document.getElementById('new-session-tier').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/sessions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const session = await response.json();
+
+                hideNewSessionModal();
+                loadSessions();
+                selectSession(session.id);
+            } catch (error) {
+                console.error('Error creating session:', error);
+                alert('Error creating session');
+            }
+        });
+
+        // Select tier from card
+        function selectTier(tier) {
+            document.getElementById('tier-select').value = tier;
+            document.getElementById('new-session-tier').value = tier;
+        }
+
+        // Helper function for status colors
+        function getStatusColor(status) {
+            const colors = {
+                'started': 'bg-blue-100 text-blue-800',
+                'running': 'bg-yellow-100 text-yellow-800',
+                'awaiting_review': 'bg-orange-100 text-orange-800',
+                'completed': 'bg-green-100 text-green-800',
+                'failed': 'bg-red-100 text-red-800',
+                'cancelled': 'bg-gray-100 text-gray-800'
+            };
+            return colors[status] || 'bg-gray-100 text-gray-800';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+{
+  "domain": "ecommerce",
+  "version": "1.0.0",
+  "compliance_standards": ["GDPR", "CCPA", "PCI-DSS"],
+  "terms": {
+    "product": {
+      "definition": "Item available for purchase",
+      "synonyms": ["item", "article", "goods", "SKU"],
+      "code_patterns": ["Product", "Item", "SKU", "Article"],
+      "pii": false
+    },
+    "order": {
+      "definition": "Customer purchase request",
+      "synonyms": ["purchase", "sale", "transaction"],
+      "code_patterns": ["Order", "Purchase", "Sale"],
+      "pii": true
+    },
+    "cart": {
+      "definition": "Collection of items for purchase",
+      "synonyms": ["basket", "shopping_cart", "bag"],
+      "code_patterns": ["Cart", "Basket", "ShoppingCart"],
+      "pii": false
+    },
+    "customer": {
+      "definition": "Person making purchases",
+      "synonyms": ["buyer", "shopper", "user", "client"],
+      "code_patterns": ["Customer", "Buyer", "Shopper"],
+      "pii": true
+    },
+    "inventory": {
+      "definition": "Available stock of products",
+      "synonyms": ["stock", "availability", "warehouse"],
+      "code_patterns": ["Inventory", "Stock", "Warehouse"],
+      "pii": false
+    },
+    "shipping": {
+      "definition": "Delivery of purchased items",
+      "synonyms": ["delivery", "fulfillment", "dispatch"],
+      "code_patterns": ["Shipping", "Delivery", "Fulfillment"],
+      "pii": true
+    },
+    "checkout": {
+      "definition": "Purchase completion process",
+      "synonyms": ["payment", "purchase_flow"],
+      "code_patterns": ["Checkout", "Payment", "Complete"],
+      "pii": true
+    },
+    "return": {
+      "definition": "Product return by customer",
+      "synonyms": ["refund", "exchange", "RMA"],
+      "code_patterns": ["Return", "Refund", "RMA"],
+      "pii": true
+    },
+    "discount": {
+      "definition": "Price reduction on products",
+      "synonyms": ["coupon", "promo", "voucher", "deal"],
+      "code_patterns": ["Discount", "Coupon", "Promo", "Voucher"],
+      "pii": false
+    },
+    "wishlist": {
+      "definition": "Saved products for future purchase",
+      "synonyms": ["favorites", "saved_items", "watch_list"],
+      "code_patterns": ["Wishlist", "Favorites", "SavedItems"],
+      "pii": false
+    },
+    "review": {
+      "definition": "Customer feedback on products",
+      "synonyms": ["rating", "feedback", "comment"],
+      "code_patterns": ["Review", "Rating", "Feedback"],
+      "pii": true
+    },
+    "category": {
+      "definition": "Product classification",
+      "synonyms": ["collection", "department", "group"],
+      "code_patterns": ["Category", "Collection", "Department"],
+      "pii": false
+    }
+  },
+  "abbreviations": {
+    "SKU": "Stock Keeping Unit",
+    "RMA": "Return Merchandise Authorization",
+    "PDP": "Product Detail Page",
+    "PLP": "Product Listing Page",
+    "AOV": "Average Order Value",
+    "GMV": "Gross Merchandise Value",
+    "LTV": "Lifetime Value",
+    "CAC": "Customer Acquisition Cost"
+  },
+  "compliance_patterns": {
+    "GDPR": {
+      "requirements": [
+        "Consent for marketing",
+        "Right to data access",
+        "Right to erasure",
+        "Data portability"
+      ],
+      "code_indicators": ["consent", "gdpr", "privacy", "data_request"]
+    },
+    "CCPA": {
+      "requirements": [
+        "Do not sell my data option",
+        "Right to know data collected",
+        "Right to delete",
+        "Non-discrimination"
+      ],
+      "code_indicators": ["ccpa", "do_not_sell", "opt_out"]
+    },
+    "Consumer_Rights": {
+      "requirements": [
+        "Clear pricing",
+        "Return policy disclosure",
+        "Shipping time estimates",
+        "Order confirmation"
+      ],
+      "code_indicators": ["price", "return_policy", "shipping_estimate"]
+    }
+  }
+}

@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolution Dashboard - Agent Performance & Learning</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .time-range-selector {
+            display: flex;
+            gap: 0.5rem;
+            background: #f5f5f5;
+            padding: 0.25rem;
+            border-radius: 8px;
+        }
+
+        .time-range-selector button {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            color: #666;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .time-range-selector button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .refresh-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .refresh-indicator.refreshing {
+            color: #667eea;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        .refreshing .spinner {
+            display: block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        /* Overview Cards */
+        .overview-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #888;
+            font-weight: 600;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .card-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-subtitle {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .card-trend {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .card-trend.positive {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .card-trend.negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Section Headers */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .section-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Agent Performance Grid */
+        .agents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .agent-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .agent-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .agent-card.excellent::before {
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        }
+
+        .agent-card.good::before {
+            background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        .agent-card.average::before {
+            background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .agent-card.poor::before {
+            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .agent-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        .agent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .agent-info h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
+            color: #333;
+        }
+
+        .agent-role {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .agent-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .agent-badge.improving {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .agent-badge.stable {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .agent-badge.declining {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .agent-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sparkline-container {
+            height: 60px;
+            margin-top: 1rem;
+        }
+
+        .sparkline {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Experiments Timeline */
+        .experiments-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+
+        .experiments-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e5e5e5;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .timeline-item:last-child {
+            border-bottom: none;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2.5rem;
+            top: 0.5rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #667eea;
+        }
+
+        .timeline-item.completed::before {
+            background: #10b981;
+            border-color: #10b981;
+        }
+
+        .timeline-item.active::before {
+            background: #667eea;
+            border-color: #667eea;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 8px rgba(102, 126, 234, 0);
+            }
+        }
+
+        .experiment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .experiment-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .experiment-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .experiment-status.active {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .experiment-status.completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .experiment-details {
+            display: flex;
+            gap: 2rem;
+            margin-top: 0.75rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .experiment-detail {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .experiment-result {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .result-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .result-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #10b981;
+        }
+
+        /* Charts */
+        .chart-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+
+        .chart-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+        }
+
+        /* Milestones */
+        .milestones-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .milestones-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+
+        .milestone-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background: #f8f9fa;
+            margin-bottom: 1rem;
+            transition: background 0.2s;
+        }
+
+        .milestone-item:hover {
+            background: #e9ecef;
+        }
+
+        .milestone-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .milestone-icon.success {
+            background: #d4edda;
+        }
+
+        .milestone-icon.pattern {
+            background: #d1ecf1;
+        }
+
+        .milestone-icon.skill {
+            background: #fff3cd;
+        }
+
+        .milestone-content {
+            flex: 1;
+        }
+
+        .milestone-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .milestone-description {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .milestone-meta {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 64px;
+            height: 64px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #888;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .overview-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .agents-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .agent-metrics {
+                grid-template-columns: 1fr;
+            }
+
+            .experiment-details {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div>
+                <h1>🧬 Evolution Dashboard</h1>
+            </div>
+            <div class="header-meta">
+                <div class="time-range-selector">
+                    <button class="time-range-btn active" data-range="30d">30 Days</button>
+                    <button class="time-range-btn" data-range="7d">7 Days</button>
+                    <button class="time-range-btn" data-range="90d">90 Days</button>
+                    <button class="time-range-btn" data-range="all">All Time</button>
+                </div>
+                <div class="refresh-indicator">
+                    <span class="refresh-text">Updated just now</span>
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="loading">
+        <div class="loading-spinner"></div>
+        <p>Loading evolution data...</p>
+    </div>
+
+    <!-- Main Container -->
+    <div id="mainContent" class="container" style="display: none;">
+        <!-- Overview Cards -->
+        <div class="overview-cards">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Total Experiments</span>
+                    <div class="card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        🧪
+                    </div>
+                </div>
+                <div class="card-value" id="totalExperiments">--</div>
+                <div class="card-subtitle">
+                    <span id="activeExperiments">--</span> active ·
+                    <span id="completedExperiments">--</span> completed
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Avg Success Rate</span>
+                    <div class="card-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+                        ✅
+                    </div>
+                </div>
+                <div class="card-value" id="avgSuccessRate">--</div>
+                <div class="card-subtitle">Across all agents</div>
+                <div class="card-trend positive" id="successTrend" style="display: none;">
+                    ↑ <span id="successTrendValue">--</span>% vs last period
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Agent Performance</span>
+                    <div class="card-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white;">
+                        📈
+                    </div>
+                </div>
+                <div class="card-subtitle" style="margin-bottom: 0.75rem;">
+                    <span id="improvingAgents" style="color: #10b981; font-weight: 600;">--</span> improving ·
+                    <span id="stableAgents" style="color: #3b82f6; font-weight: 600;">--</span> stable ·
+                    <span id="decliningAgents" style="color: #ef4444; font-weight: 600;">--</span> declining
+                </div>
+                <div class="card-subtitle">
+                    Top performer: <strong id="topPerformer">--</strong>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Learning Metrics</span>
+                    <div class="card-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;">
+                        🎯
+                    </div>
+                </div>
+                <div class="card-subtitle" style="margin-bottom: 0.5rem;">
+                    <strong id="totalExperiences">--</strong> experiences logged
+                </div>
+                <div class="card-subtitle">
+                    <span id="successfulPatterns">--</span> patterns ·
+                    <span id="failureAnalyses">--</span> failures analyzed
+                </div>
+            </div>
+        </div>
+
+        <!-- Agent Performance Grid -->
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Agent Performance</h2>
+                <p class="section-subtitle">Real-time metrics and 30-day trends</p>
+            </div>
+        </div>
+        <div class="agents-grid" id="agentsGrid">
+            <!-- Agent cards will be dynamically inserted here -->
+        </div>
+
+        <!-- Learning Velocity Chart -->
+        <div class="chart-section">
+            <h2>Learning Velocity</h2>
+            <p style="color: #666; margin-bottom: 1rem;">Success rate improvements over time</p>
+            <div class="chart-container">
+                <canvas id="velocityChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Experiments Timeline -->
+        <div class="experiments-section">
+            <h2>Active Experiments</h2>
+            <div class="timeline" id="experimentsTimeline">
+                <!-- Timeline items will be dynamically inserted here -->
+            </div>
+        </div>
+
+        <!-- Recent Milestones -->
+        <div class="milestones-section">
+            <h2>Recent Milestones</h2>
+            <div id="milestonesContainer">
+                <!-- Milestone items will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE_URL = 'http://localhost:8000';
+        const REFRESH_INTERVAL = 30000; // 30 seconds
+        let currentTimeRange = '30d';
+        let refreshTimer = null;
+        let velocityChart = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            loadDashboardData();
+            startAutoRefresh();
+        });
+
+        function setupEventListeners() {
+            // Time range selector
+            document.querySelectorAll('.time-range-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentTimeRange = e.target.dataset.range;
+                    loadDashboardData();
+                });
+            });
+        }
+
+        async function loadDashboardData() {
+            try {
+                showLoading();
+
+                // Load all data in parallel
+                const [overview, trends, experiments] = await Promise.all([
+                    fetchOverview(),
+                    fetchTrends(),
+                    fetchExperiments()
+                ]);
+
+                // Update UI
+                updateOverviewCards(overview);
+                updateAgentsGrid(trends);
+                updateVelocityChart(trends);
+                updateExperimentsTimeline(experiments);
+                updateMilestones();
+
+                hideLoading();
+                updateRefreshIndicator();
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                showError(error.message);
+            }
+        }
+
+        async function fetchOverview() {
+            const response = await fetch(`${API_BASE_URL}/api/evolution/dashboard/overview?time_range=${currentTimeRange}`);
+            if (!response.ok) throw new Error('Failed to fetch overview');
+            return await response.json();
+        }
+
+        async function fetchTrends() {
+            const response = await fetch(`${API_BASE_URL}/api/evolution/dashboard/trends?time_range=${currentTimeRange}`);
+            if (!response.ok) throw new Error('Failed to fetch trends');
+            return await response.json();
+        }
+
+        async function fetchExperiments() {
+            const response = await fetch(`${API_BASE_URL}/api/evolution/dashboard/experiments`);
+            if (!response.ok) throw new Error('Failed to fetch experiments');
+            return await response.json();
+        }
+
+        function updateOverviewCards(overview) {
+            document.getElementById('totalExperiments').textContent = overview.total_experiments;
+            document.getElementById('activeExperiments').textContent = overview.active_experiments;
+            document.getElementById('completedExperiments').textContent = overview.completed_experiments;
+
+            document.getElementById('avgSuccessRate').textContent = `${overview.avg_success_rate.toFixed(1)}%`;
+
+            document.getElementById('improvingAgents').textContent = overview.improving_agents;
+            document.getElementById('stableAgents').textContent = overview.stable_agents;
+            document.getElementById('decliningAgents').textContent = overview.declining_agents;
+            document.getElementById('topPerformer').textContent = overview.top_performer || 'N/A';
+
+            document.getElementById('totalExperiences').textContent = overview.total_experiences_logged.toLocaleString();
+            document.getElementById('successfulPatterns').textContent = overview.successful_patterns;
+            document.getElementById('failureAnalyses').textContent = overview.failure_analyses;
+
+            // Show improvement trend if available
+            if (overview.avg_improvement_rate !== undefined) {
+                const trendEl = document.getElementById('successTrend');
+                const trendValueEl = document.getElementById('successTrendValue');
+                trendValueEl.textContent = Math.abs(overview.avg_improvement_rate).toFixed(1);
+                trendEl.className = overview.avg_improvement_rate >= 0 ? 'card-trend positive' : 'card-trend negative';
+                trendEl.innerHTML = overview.avg_improvement_rate >= 0
+                    ? `↑ ${Math.abs(overview.avg_improvement_rate).toFixed(1)}% vs last period`
+                    : `↓ ${Math.abs(overview.avg_improvement_rate).toFixed(1)}% vs last period`;
+                trendEl.style.display = 'inline-flex';
+            }
+        }
+
+        function updateAgentsGrid(trends) {
+            const grid = document.getElementById('agentsGrid');
+            grid.innerHTML = '';
+
+            if (!trends.agents || trends.agents.length === 0) {
+                grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div><p>No agent data available</p></div>';
+                return;
+            }
+
+            trends.agents.forEach(agent => {
+                const card = createAgentCard(agent);
+                grid.appendChild(card);
+            });
+        }
+
+        function createAgentCard(agent) {
+            const card = document.createElement('div');
+            card.className = `agent-card ${agent.performance_level}`;
+
+            const trendBadgeClass = agent.trend_direction === 'improving' ? 'improving'
+                : agent.trend_direction === 'declining' ? 'declining' : 'stable';
+            const trendEmoji = agent.trend_direction === 'improving' ? '📈'
+                : agent.trend_direction === 'declining' ? '📉' : '➡️';
+
+            card.innerHTML = `
+                <div class="agent-header">
+                    <div class="agent-info">
+                        <h3>${capitalizeFirst(agent.agent_id)}</h3>
+                        <div class="agent-role">${agent.agent_role}</div>
+                    </div>
+                    <div class="agent-badge ${trendBadgeClass}">
+                        ${trendEmoji} ${agent.trend_direction}
+                    </div>
+                </div>
+                <div class="agent-metrics">
+                    <div class="metric">
+                        <div class="metric-value">${agent.success_rate.toFixed(1)}%</div>
+                        <div class="metric-label">Success Rate</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value">${agent.win_rate.toFixed(0)}%</div>
+                        <div class="metric-label">Win Rate</div>
+                    </div>
+                </div>
+                <div class="sparkline-container">
+                    <canvas class="sparkline" data-agent="${agent.agent_id}"></canvas>
+                </div>
+            `;
+
+            // Create sparkline
+            setTimeout(() => {
+                createSparkline(card.querySelector('.sparkline'), agent.daily_success_rates);
+            }, 0);
+
+            return card;
+        }
+
+        function createSparkline(canvas, data) {
+            if (!data || data.length === 0) return;
+
+            const ctx = canvas.getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.date),
+                    datasets: [{
+                        data: data.map(d => d.rate),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.parsed.y.toFixed(1)}% success`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false, min: 0, max: 100 }
+                    }
+                }
+            });
+        }
+
+        function updateVelocityChart(trends) {
+            const ctx = document.getElementById('velocityChart').getContext('2d');
+
+            if (!trends.agents || trends.agents.length === 0) {
+                return;
+            }
+
+            // Destroy existing chart
+            if (velocityChart) {
+                velocityChart.destroy();
+            }
+
+            // Prepare data for top 5 agents
+            const topAgents = trends.agents.slice(0, 5);
+            const colors = [
+                'rgba(102, 126, 234, 1)',
+                'rgba(118, 75, 162, 1)',
+                'rgba(16, 185, 129, 1)',
+                'rgba(59, 130, 246, 1)',
+                'rgba(245, 158, 11, 1)'
+            ];
+
+            const datasets = topAgents.map((agent, index) => ({
+                label: capitalizeFirst(agent.agent_id),
+                data: agent.daily_success_rates.map(d => ({ x: d.date, y: d.rate })),
+                borderColor: colors[index],
+                backgroundColor: colors[index].replace('1)', '0.1)'),
+                borderWidth: 3,
+                fill: false,
+                tension: 0.4
+            }));
+
+            velocityChart = new Chart(ctx, {
+                type: 'line',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: (context) => {
+                                    return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day',
+                                displayFormats: {
+                                    day: 'MMM dd'
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Success Rate (%)'
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        }
+
+        function updateExperimentsTimeline(experiments) {
+            const timeline = document.getElementById('experimentsTimeline');
+            timeline.innerHTML = '';
+
+            if (!experiments.experiments || experiments.experiments.length === 0) {
+                timeline.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🧪</div><p>No active experiments</p></div>';
+                return;
+            }
+
+            experiments.experiments.forEach(exp => {
+                const item = createTimelineItem(exp);
+                timeline.appendChild(item);
+            });
+        }
+
+        function createTimelineItem(exp) {
+            const item = document.createElement('div');
+            item.className = `timeline-item ${exp.status.toLowerCase()}`;
+
+            const statusClass = exp.status === 'ACTIVE' ? 'active' : 'completed';
+            const duration = exp.duration_days ? `${exp.duration_days.toFixed(1)} days` : 'Ongoing';
+
+            let resultHTML = '';
+            if (exp.winner_variant && exp.improvement_percentage !== null) {
+                resultHTML = `
+                    <div class="experiment-result">
+                        <span class="result-label">Winner: ${exp.winner_variant}</span>
+                        <span class="result-value">+${exp.improvement_percentage.toFixed(1)}%</span>
+                    </div>
+                `;
+            }
+
+            item.innerHTML = `
+                <div class="experiment-header">
+                    <div class="experiment-title">${exp.feature_name}</div>
+                    <div class="experiment-status ${statusClass}">${exp.status}</div>
+                </div>
+                <div class="experiment-details">
+                    <div class="experiment-detail">
+                        <span>👤</span>
+                        <span>${capitalizeFirst(exp.agent_id)}</span>
+                    </div>
+                    <div class="experiment-detail">
+                        <span>🧪</span>
+                        <span>${exp.variant_count} variants</span>
+                    </div>
+                    <div class="experiment-detail">
+                        <span>⏱️</span>
+                        <span>${duration}</span>
+                    </div>
+                    <div class="experiment-detail">
+                        <span>📊</span>
+                        <span>${exp.total_trials} trials</span>
+                    </div>
+                </div>
+                ${resultHTML}
+            `;
+
+            return item;
+        }
+
+        function updateMilestones() {
+            const container = document.getElementById('milestonesContainer');
+
+            // Placeholder milestones (will be replaced with real data)
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🏆</div>
+                    <p>Milestone tracking coming soon</p>
+                </div>
+            `;
+        }
+
+        function showLoading() {
+            document.getElementById('loadingState').style.display = 'flex';
+            document.getElementById('mainContent').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        }
+
+        function showError(message) {
+            hideLoading();
+            alert(`Error loading dashboard: ${message}`);
+        }
+
+        function updateRefreshIndicator() {
+            const indicator = document.querySelector('.refresh-indicator');
+            const text = indicator.querySelector('.refresh-text');
+            text.textContent = 'Updated just now';
+
+            // Add refreshing animation
+            indicator.classList.add('refreshing');
+            setTimeout(() => {
+                indicator.classList.remove('refreshing');
+            }, 1000);
+        }
+
+        function startAutoRefresh() {
+            refreshTimer = setInterval(() => {
+                loadDashboardData();
+            }, REFRESH_INTERVAL);
+        }
+
+        function capitalizeFirst(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (refreshTimer) clearInterval(refreshTimer);
+            if (velocityChart) velocityChart.destroy();
+        });
+    </script>
+</body>
+</html>

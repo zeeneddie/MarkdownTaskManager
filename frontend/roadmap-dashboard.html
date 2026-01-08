@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roadmap Dashboard - MarQed</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .drag-over { border: 2px dashed #3b82f6 !important; background: #eff6ff !important; }
+        .dragging { opacity: 0.5; }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-analyzing { background: #dbeafe; color: #1e40af; }
+        .status-completed { background: #d1fae5; color: #065f46; }
+        .status-failed { background: #fee2e2; color: #991b1b; }
+        .release-card { transition: all 0.2s ease; }
+        .release-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .tab-active { border-bottom: 2px solid #3b82f6; color: #3b82f6; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <a href="index.html" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <h1 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-road text-blue-600 mr-2"></i>
+                        Roadmap Dashboard
+                    </h1>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="refreshAll()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                    <button onclick="showCreateReleaseModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-plus mr-2"></i>Nieuwe Release
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Tabs -->
+    <div class="bg-white border-b">
+        <div class="max-w-7xl mx-auto px-4">
+            <nav class="flex gap-8">
+                <button onclick="showTab('analysis')" id="tab-analysis" class="py-4 px-2 font-medium text-gray-600 hover:text-gray-900 tab-active">
+                    <i class="fas fa-microscope mr-2"></i>Analyse Queue
+                </button>
+                <button onclick="showTab('releases')" id="tab-releases" class="py-4 px-2 font-medium text-gray-600 hover:text-gray-900">
+                    <i class="fas fa-flag-checkered mr-2"></i>Releases
+                </button>
+                <button onclick="showTab('roadmap')" id="tab-roadmap" class="py-4 px-2 font-medium text-gray-600 hover:text-gray-900">
+                    <i class="fas fa-map mr-2"></i>Roadmap View
+                </button>
+                <button onclick="showTab('public')" id="tab-public" class="py-4 px-2 font-medium text-gray-600 hover:text-gray-900">
+                    <i class="fas fa-globe mr-2"></i>Publieke Roadmaps
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        <!-- Stats Bar -->
+        <div id="stats-bar" class="grid grid-cols-5 gap-4 mb-6">
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="text-sm text-gray-500">Beschikbare Items</div>
+                <div class="text-2xl font-bold text-gray-800" id="stat-available">-</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="text-sm text-gray-500">In Analyse Queue</div>
+                <div class="text-2xl font-bold text-yellow-600" id="stat-pending">-</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="text-sm text-gray-500">Klaar voor Roadmap</div>
+                <div class="text-2xl font-bold text-green-600" id="stat-ready">-</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="text-sm text-gray-500">Op Roadmap</div>
+                <div class="text-2xl font-bold text-blue-600" id="stat-roadmap">-</div>
+            </div>
+            <div class="bg-white rounded-lg p-4 shadow-sm">
+                <div class="text-sm text-gray-500">Releases</div>
+                <div class="text-2xl font-bold text-purple-600" id="stat-releases">-</div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Analysis Queue -->
+        <div id="content-analysis" class="tab-content">
+            <div class="grid grid-cols-3 gap-6">
+                <!-- Available Backlog Items -->
+                <div class="bg-white rounded-lg shadow-sm">
+                    <div class="p-4 border-b flex justify-between items-center">
+                        <h3 class="font-semibold text-gray-800">
+                            <i class="fas fa-list text-gray-400 mr-2"></i>
+                            Beschikbare Items
+                        </h3>
+                        <select id="item-type-filter" onchange="loadAvailableItems()" class="text-sm border rounded px-2 py-1">
+                            <option value="">Alle types</option>
+                            <option value="epic">Epics</option>
+                            <option value="feature">Features</option>
+                            <option value="story">Stories</option>
+                        </select>
+                    </div>
+                    <div id="available-items" class="p-4 space-y-2 max-h-96 overflow-y-auto">
+                        <div class="text-gray-400 text-center py-4">Laden...</div>
+                    </div>
+                </div>
+
+                <!-- Analysis Queue -->
+                <div class="bg-white rounded-lg shadow-sm">
+                    <div class="p-4 border-b">
+                        <h3 class="font-semibold text-gray-800">
+                            <i class="fas fa-hourglass-half text-yellow-500 mr-2"></i>
+                            Analyse Queue
+                        </h3>
+                    </div>
+                    <div id="analysis-queue" class="p-4 space-y-2 max-h-96 overflow-y-auto">
+                        <div class="text-gray-400 text-center py-4">Laden...</div>
+                    </div>
+                </div>
+
+                <!-- Ready for Roadmap -->
+                <div class="bg-white rounded-lg shadow-sm">
+                    <div class="p-4 border-b">
+                        <h3 class="font-semibold text-gray-800">
+                            <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                            Klaar voor Roadmap
+                        </h3>
+                    </div>
+                    <div id="ready-items" class="p-4 space-y-2 max-h-96 overflow-y-auto">
+                        <div class="text-gray-400 text-center py-4">Laden...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Releases -->
+        <div id="content-releases" class="tab-content hidden">
+            <div class="grid grid-cols-3 gap-6" id="releases-grid">
+                <div class="text-gray-400 text-center py-8">Laden...</div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Roadmap View -->
+        <div id="content-roadmap" class="tab-content hidden">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-semibold text-gray-800">Roadmap Timeline</h3>
+                    <select id="roadmap-release-filter" onchange="loadRoadmapView()" class="border rounded px-3 py-2">
+                        <option value="">Alle Releases</option>
+                    </select>
+                </div>
+                <div id="roadmap-kanban" class="flex gap-4 overflow-x-auto pb-4">
+                    <div class="text-gray-400 text-center py-8 w-full">Laden...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Public Roadmaps -->
+        <div id="content-public" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-semibold text-gray-800">Publieke Roadmaps</h3>
+                <button onclick="showCreatePublicRoadmapModal()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    <i class="fas fa-plus mr-2"></i>Nieuwe Publieke Roadmap
+                </button>
+            </div>
+            <div id="public-roadmaps" class="grid grid-cols-2 gap-6">
+                <div class="text-gray-400 text-center py-8">Laden...</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create Release Modal -->
+    <div id="release-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="font-semibold text-lg">Nieuwe Release</h3>
+                <button onclick="closeModal('release-modal')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="release-form" onsubmit="createRelease(event)" class="p-4 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Naam</label>
+                    <input type="text" name="name" required class="w-full border rounded-lg px-3 py-2" placeholder="v1.0 - Initial Release">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Versie</label>
+                        <input type="text" name="version" class="w-full border rounded-lg px-3 py-2" placeholder="1.0.0">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kleur</label>
+                        <input type="color" name="color" value="#4CAF50" class="w-full h-10 border rounded-lg">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Beschrijving</label>
+                    <textarea name="description" rows="2" class="w-full border rounded-lg px-3 py-2" placeholder="Beschrijf de release..."></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Start Datum</label>
+                        <input type="date" name="start_date" class="w-full border rounded-lg px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Target Datum</label>
+                        <input type="date" name="target_date" class="w-full border rounded-lg px-3 py-2">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeModal('release-modal')" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Annuleren</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Aanmaken</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add to Roadmap Modal -->
+    <div id="add-roadmap-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="font-semibold text-lg">Toevoegen aan Roadmap</h3>
+                <button onclick="closeModal('add-roadmap-modal')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="add-roadmap-form" onsubmit="addToRoadmap(event)" class="p-4 space-y-4">
+                <input type="hidden" name="item_id" id="add-roadmap-item-id">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Item</label>
+                    <div id="add-roadmap-item-title" class="p-3 bg-gray-50 rounded-lg font-medium"></div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Release</label>
+                    <select name="release_id" id="add-roadmap-release" class="w-full border rounded-lg px-3 py-2">
+                        <option value="">Geen release (backlog)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Geschatte Dagen</label>
+                    <input type="number" name="estimated_days" min="0" class="w-full border rounded-lg px-3 py-2" placeholder="5">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Notities</label>
+                    <textarea name="notes" rows="2" class="w-full border rounded-lg px-3 py-2" placeholder="Eventuele notities..."></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeModal('add-roadmap-modal')" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Annuleren</button>
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Toevoegen</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Public Roadmap Modal -->
+    <div id="public-roadmap-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="font-semibold text-lg">Nieuwe Publieke Roadmap</h3>
+                <button onclick="closeModal('public-roadmap-modal')" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="public-roadmap-form" onsubmit="createPublicRoadmap(event)" class="p-4 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Titel</label>
+                    <input type="text" name="title" required class="w-full border rounded-lg px-3 py-2" placeholder="Product Roadmap 2025">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Slug (URL)</label>
+                    <input type="text" name="slug" required pattern="[a-z0-9-]+" class="w-full border rounded-lg px-3 py-2" placeholder="product-roadmap-2025">
+                    <p class="text-xs text-gray-500 mt-1">Alleen kleine letters, cijfers en streepjes</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Beschrijving</label>
+                    <textarea name="description" rows="2" class="w-full border rounded-lg px-3 py-2" placeholder="Publieke roadmap voor stakeholders..."></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Thema</label>
+                        <select name="theme" class="w-full border rounded-lg px-3 py-2">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="auto">Auto</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Header Kleur</label>
+                        <input type="color" name="header_color" value="#1976D2" class="w-full h-10 border rounded-lg">
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" name="show_dates" checked class="rounded">
+                        <span class="text-sm">Toon datums</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" name="show_progress" checked class="rounded">
+                        <span class="text-sm">Toon voortgang</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" name="show_votes" checked class="rounded">
+                        <span class="text-sm">Toon stemmen</span>
+                    </label>
+                </div>
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeModal('public-roadmap-modal')" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Annuleren</button>
+                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Aanmaken</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/portal/roadmap';
+        let currentTab = 'analysis';
+        let releases = [];
+
+        // Tab Management
+        function showTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('nav button').forEach(el => el.classList.remove('tab-active'));
+            document.getElementById(`content-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('tab-active');
+
+            switch(tab) {
+                case 'analysis': loadAnalysisTab(); break;
+                case 'releases': loadReleasesTab(); break;
+                case 'roadmap': loadRoadmapView(); break;
+                case 'public': loadPublicRoadmaps(); break;
+            }
+        }
+
+        // Modal Management
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function showCreateReleaseModal() {
+            document.getElementById('release-form').reset();
+            document.getElementById('release-modal').classList.remove('hidden');
+        }
+
+        function showCreatePublicRoadmapModal() {
+            document.getElementById('public-roadmap-form').reset();
+            document.getElementById('public-roadmap-modal').classList.remove('hidden');
+        }
+
+        // Load Stats
+        async function loadStats() {
+            try {
+                const [queueStats, available, roadmapOverview] = await Promise.all([
+                    fetch(`${API_BASE}/analysis-queue/stats`).then(r => r.json()),
+                    fetch(`${API_BASE}/backlog/available`).then(r => r.json()),
+                    fetch(`${API_BASE}/overview`).then(r => r.json())
+                ]);
+
+                document.getElementById('stat-available').textContent = available.total_available || 0;
+                document.getElementById('stat-pending').textContent = queueStats.pending_analysis || 0;
+                document.getElementById('stat-ready').textContent = queueStats.ready_for_roadmap || 0;
+                document.getElementById('stat-roadmap').textContent = roadmapOverview.items?.total || 0;
+                document.getElementById('stat-releases').textContent = roadmapOverview.releases?.total || 0;
+            } catch (e) {
+                console.error('Error loading stats:', e);
+            }
+        }
+
+        // Analysis Tab
+        async function loadAnalysisTab() {
+            await Promise.all([
+                loadAvailableItems(),
+                loadAnalysisQueue(),
+                loadReadyItems()
+            ]);
+        }
+
+        async function loadAvailableItems() {
+            const container = document.getElementById('available-items');
+            const type = document.getElementById('item-type-filter').value;
+
+            try {
+                const url = type ? `${API_BASE}/backlog/available?item_type=${type}` : `${API_BASE}/backlog/available`;
+                const data = await fetch(url).then(r => r.json());
+
+                if (data.available.length === 0) {
+                    container.innerHTML = '<div class="text-gray-400 text-center py-4">Geen beschikbare items</div>';
+                    return;
+                }
+
+                container.innerHTML = data.available.map(item => `
+                    <div class="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer" onclick="submitForAnalysis('${item.id}', '${item.title.replace(/'/g, "\\'")}')">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-xs px-2 py-0.5 rounded ${getTypeColor(item.type)}">${item.type || 'item'}</span>
+                                <div class="font-medium text-sm mt-1">${item.title}</div>
+                            </div>
+                            <i class="fas fa-arrow-right text-gray-400"></i>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<div class="text-red-500 text-center py-4">Fout bij laden</div>';
+            }
+        }
+
+        async function loadAnalysisQueue() {
+            const container = document.getElementById('analysis-queue');
+
+            try {
+                const data = await fetch(`${API_BASE}/analysis-queue`).then(r => r.json());
+
+                if (data.length === 0) {
+                    container.innerHTML = '<div class="text-gray-400 text-center py-4">Queue is leeg</div>';
+                    return;
+                }
+
+                container.innerHTML = data.map(entry => `
+                    <div class="p-3 border rounded-lg">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-xs px-2 py-0.5 rounded status-${entry.status}">${entry.status}</span>
+                                <div class="font-medium text-sm mt-1">${entry.item?.title || entry.item_id}</div>
+                            </div>
+                            ${entry.status === 'pending' ? `
+                                <button onclick="startAnalysis('${entry.id}')" class="text-blue-600 hover:text-blue-800">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                        ${entry.analyzed_by ? `<div class="text-xs text-gray-500 mt-1">Agent: ${entry.analyzed_by}</div>` : ''}
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<div class="text-red-500 text-center py-4">Fout bij laden</div>';
+            }
+        }
+
+        async function loadReadyItems() {
+            const container = document.getElementById('ready-items');
+
+            try {
+                const data = await fetch(`${API_BASE}/analysis-queue/completed?not_on_roadmap=true`).then(r => r.json());
+
+                if (data.length === 0) {
+                    container.innerHTML = '<div class="text-gray-400 text-center py-4">Geen items klaar</div>';
+                    return;
+                }
+
+                container.innerHTML = data.map(entry => `
+                    <div class="p-3 border rounded-lg hover:bg-gray-50">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <div class="font-medium text-sm">${entry.item?.title || entry.item_id}</div>
+                                <div class="text-xs text-gray-500 mt-1">Geanalyseerd door: ${entry.analyzed_by || 'Agent'}</div>
+                            </div>
+                            <button onclick="showAddToRoadmapModal('${entry.item_id}', '${(entry.item?.title || entry.item_id).replace(/'/g, "\\'")}')"
+                                    class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200">
+                                <i class="fas fa-plus mr-1"></i>Roadmap
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<div class="text-red-500 text-center py-4">Fout bij laden</div>';
+            }
+        }
+
+        async function submitForAnalysis(itemId, title) {
+            if (!confirm(`Item "${title}" aanmelden voor analyse?`)) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/analysis-queue`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ item_id: itemId, priority: 5 })
+                });
+
+                if (response.ok) {
+                    loadAnalysisTab();
+                    loadStats();
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Fout bij aanmelden');
+                }
+            } catch (e) {
+                alert('Fout bij aanmelden: ' + e.message);
+            }
+        }
+
+        async function startAnalysis(queueId) {
+            try {
+                const response = await fetch(`${API_BASE}/analysis-queue/${queueId}/start?agent_name=Peter`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    loadAnalysisQueue();
+                }
+            } catch (e) {
+                alert('Fout: ' + e.message);
+            }
+        }
+
+        // Releases Tab
+        async function loadReleasesTab() {
+            const container = document.getElementById('releases-grid');
+
+            try {
+                releases = await fetch(`${API_BASE}/releases?include_items=true`).then(r => r.json());
+
+                if (releases.length === 0) {
+                    container.innerHTML = '<div class="col-span-3 text-gray-400 text-center py-8">Geen releases. Maak een nieuwe release aan.</div>';
+                    return;
+                }
+
+                container.innerHTML = releases.map(release => `
+                    <div class="release-card bg-white rounded-lg shadow-sm overflow-hidden" style="border-top: 4px solid ${release.color || '#4CAF50'}">
+                        <div class="p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-semibold text-lg">${release.name}</h4>
+                                    ${release.version ? `<span class="text-sm text-gray-500">v${release.version}</span>` : ''}
+                                </div>
+                                <span class="text-xs px-2 py-1 rounded status-${release.status === 'released' ? 'completed' : release.status === 'in_progress' ? 'analyzing' : 'pending'}">
+                                    ${release.status}
+                                </span>
+                            </div>
+                            ${release.description ? `<p class="text-sm text-gray-600 mt-2">${release.description}</p>` : ''}
+                            <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
+                                <div>
+                                    <span class="text-gray-500">Start:</span>
+                                    <span class="font-medium">${release.start_date || '-'}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-500">Target:</span>
+                                    <span class="font-medium">${release.target_date || '-'}</span>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex justify-between items-center">
+                                <span class="text-sm text-gray-500">${release.item_count || 0} items</span>
+                                <div class="flex gap-2">
+                                    <button onclick="viewReleaseTimeline('${release.id}')" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-chart-gantt"></i>
+                                    </button>
+                                    <button onclick="deleteRelease('${release.id}')" class="text-red-600 hover:text-red-800">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Update release dropdown in add-to-roadmap modal
+                const select = document.getElementById('add-roadmap-release');
+                select.innerHTML = '<option value="">Geen release (backlog)</option>' +
+                    releases.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+
+                // Update release filter in roadmap view
+                const filter = document.getElementById('roadmap-release-filter');
+                filter.innerHTML = '<option value="">Alle Releases</option>' +
+                    releases.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+
+            } catch (e) {
+                container.innerHTML = '<div class="col-span-3 text-red-500 text-center py-8">Fout bij laden releases</div>';
+            }
+        }
+
+        async function createRelease(event) {
+            event.preventDefault();
+            const form = event.target;
+            const data = Object.fromEntries(new FormData(form));
+
+            try {
+                const response = await fetch(`${API_BASE}/releases`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('release-modal');
+                    loadReleasesTab();
+                    loadStats();
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Fout bij aanmaken');
+                }
+            } catch (e) {
+                alert('Fout: ' + e.message);
+            }
+        }
+
+        async function deleteRelease(id) {
+            if (!confirm('Weet je zeker dat je deze release wilt verwijderen?')) return;
+
+            try {
+                await fetch(`${API_BASE}/releases/${id}`, { method: 'DELETE' });
+                loadReleasesTab();
+                loadStats();
+            } catch (e) {
+                alert('Fout: ' + e.message);
+            }
+        }
+
+        // Roadmap View
+        async function loadRoadmapView() {
+            const container = document.getElementById('roadmap-kanban');
+            const releaseId = document.getElementById('roadmap-release-filter').value;
+
+            try {
+                const url = releaseId ? `${API_BASE}/kanban?release_id=${releaseId}` : `${API_BASE}/kanban`;
+                const data = await fetch(url).then(r => r.json());
+
+                container.innerHTML = data.lane_order.map(lane => `
+                    <div class="flex-shrink-0 w-72 bg-gray-50 rounded-lg">
+                        <div class="p-3 border-b bg-gray-100 rounded-t-lg">
+                            <h4 class="font-semibold text-gray-700 capitalize">${lane.replace('_', ' ')}</h4>
+                            <span class="text-xs text-gray-500">${data.lanes[lane]?.length || 0} items</span>
+                        </div>
+                        <div class="p-3 space-y-2 min-h-32">
+                            ${(data.lanes[lane] || []).map(item => `
+                                <div class="p-3 bg-white rounded border shadow-sm">
+                                    <div class="font-medium text-sm">${item.item_id}</div>
+                                    ${item.estimated_days ? `<div class="text-xs text-gray-500 mt-1">${item.estimated_days} dagen</div>` : ''}
+                                    ${item.progress_percent > 0 ? `
+                                        <div class="mt-2 h-1 bg-gray-200 rounded">
+                                            <div class="h-1 bg-blue-500 rounded" style="width: ${item.progress_percent}%"></div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('') || '<div class="text-gray-400 text-sm text-center py-4">Geen items</div>'}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<div class="text-red-500 text-center py-8 w-full">Fout bij laden roadmap</div>';
+            }
+        }
+
+        // Add to Roadmap
+        function showAddToRoadmapModal(itemId, title) {
+            document.getElementById('add-roadmap-item-id').value = itemId;
+            document.getElementById('add-roadmap-item-title').textContent = title;
+            document.getElementById('add-roadmap-modal').classList.remove('hidden');
+        }
+
+        async function addToRoadmap(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = {
+                item_id: formData.get('item_id'),
+                release_id: formData.get('release_id') || null,
+                estimated_days: formData.get('estimated_days') ? parseInt(formData.get('estimated_days')) : null,
+                notes: formData.get('notes') || null
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/items`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('add-roadmap-modal');
+                    loadAnalysisTab();
+                    loadStats();
+                    if (currentTab === 'roadmap') loadRoadmapView();
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Fout bij toevoegen');
+                }
+            } catch (e) {
+                alert('Fout: ' + e.message);
+            }
+        }
+
+        // Public Roadmaps
+        async function loadPublicRoadmaps() {
+            const container = document.getElementById('public-roadmaps');
+
+            try {
+                const data = await fetch(`${API_BASE}/public`).then(r => r.json());
+
+                if (data.length === 0) {
+                    container.innerHTML = '<div class="col-span-2 text-gray-400 text-center py-8">Geen publieke roadmaps. Maak er een aan.</div>';
+                    return;
+                }
+
+                container.innerHTML = data.map(roadmap => `
+                    <div class="bg-white rounded-lg shadow-sm p-6" style="border-left: 4px solid ${roadmap.header_color || '#1976D2'}">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-semibold text-lg">${roadmap.title}</h4>
+                                <p class="text-sm text-gray-500 mt-1">${roadmap.description || 'Geen beschrijving'}</p>
+                            </div>
+                            <span class="px-2 py-1 rounded text-xs ${roadmap.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">
+                                ${roadmap.is_active ? 'Actief' : 'Inactief'}
+                            </span>
+                        </div>
+                        <div class="mt-4 p-3 bg-gray-50 rounded">
+                            <div class="text-xs text-gray-500 mb-1">Publieke URL:</div>
+                            <a href="${roadmap.public_url}" target="_blank" class="text-blue-600 hover:underline text-sm">
+                                ${window.location.origin}${roadmap.public_url}
+                            </a>
+                        </div>
+                        <div class="mt-4 flex justify-between items-center text-sm text-gray-500">
+                            <span><i class="fas fa-eye mr-1"></i>${roadmap.view_count || 0} views</span>
+                            <div class="flex gap-2">
+                                <button onclick="copyPublicUrl('${roadmap.public_url}')" class="text-blue-600 hover:text-blue-800">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                                <button onclick="deletePublicRoadmap('${roadmap.id}')" class="text-red-600 hover:text-red-800">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<div class="col-span-2 text-red-500 text-center py-8">Fout bij laden publieke roadmaps</div>';
+            }
+        }
+
+        async function createPublicRoadmap(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = {
+                title: formData.get('title'),
+                slug: formData.get('slug'),
+                description: formData.get('description'),
+                theme: formData.get('theme'),
+                header_color: formData.get('header_color'),
+                show_dates: formData.has('show_dates'),
+                show_progress: formData.has('show_progress'),
+                show_votes: formData.has('show_votes')
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/public`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('public-roadmap-modal');
+                    loadPublicRoadmaps();
+                } else {
+                    const error = await response.json();
+                    alert(error.detail || 'Fout bij aanmaken');
+                }
+            } catch (e) {
+                alert('Fout: ' + e.message);
+            }
+        }
+
+        async function deletePublicRoadmap(id) {
+            if (!confirm('Weet je zeker dat je deze publieke roadmap wilt verwijderen?')) return;
+
+            try {
+                await fetch(`${API_BASE}/public/${id}`, { method: 'DELETE' });
+                loadPublicRoadmaps();
+            } catch (e) {
+                alert('Fout: ' + e.message);
+            }
+        }
+
+        function copyPublicUrl(url) {
+            navigator.clipboard.writeText(window.location.origin + url);
+            alert('URL gekopieerd!');
+        }
+
+        // Helpers
+        function getTypeColor(type) {
+            const colors = {
+                'epic': 'bg-purple-100 text-purple-700',
+                'feature': 'bg-blue-100 text-blue-700',
+                'story': 'bg-green-100 text-green-700',
+                'task': 'bg-gray-100 text-gray-700'
+            };
+            return colors[type] || 'bg-gray-100 text-gray-700';
+        }
+
+        async function viewReleaseTimeline(id) {
+            try {
+                const data = await fetch(`${API_BASE}/releases/${id}/timeline`).then(r => r.json());
+                alert(`Release: ${data.release.name}\nTotale dagen: ${data.total_estimated_days}\nVoortgang: ${data.overall_progress}%\nItems: ${data.items.length}`);
+            } catch (e) {
+                alert('Fout: ' + e.message);
+            }
+        }
+
+        function refreshAll() {
+            loadStats();
+            showTab(currentTab);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            showTab('analysis');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+{
+  "examples": [
+    {
+      "name": "Full Codebase Security Audit",
+      "description": "Comprehensive security and dependency audit of the entire codebase",
+      "request": {
+        "description": "Perform security audit and update vulnerable dependencies across the entire codebase",
+        "context": {
+          "scope": "full_codebase",
+          "focusAreas": ["dependencies", "security", "code_quality"],
+          "thresholds": {
+            "maxComplexity": 15,
+            "minTestCoverage": 80,
+            "maxTechnicalDebtRatio": 10
+          },
+          "urgency": "high"
+        }
+      }
+    },
+    {
+      "name": "Module Performance Optimization",
+      "description": "Optimize performance issues in the authentication module",
+      "request": {
+        "description": "Analyze and optimize performance issues in the authentication module",
+        "context": {
+          "scope": "module",
+          "modulePath": "src/auth",
+          "focusAreas": ["performance", "code_quality"],
+          "thresholds": {
+            "maxComplexity": 12,
+            "minTestCoverage": 85
+          },
+          "urgency": "medium"
+        }
+      }
+    },
+    {
+      "name": "Specific Files Test Coverage",
+      "description": "Improve test coverage for payment processing files",
+      "request": {
+        "description": "Add comprehensive tests for payment processing components",
+        "context": {
+          "scope": "specific_files",
+          "targetFiles": [
+            "src/payment/processor.ts",
+            "src/payment/validator.ts",
+            "src/payment/stripe-integration.ts"
+          ],
+          "focusAreas": ["tests", "code_quality"],
+          "thresholds": {
+            "minTestCoverage": 90
+          },
+          "urgency": "high"
+        }
+      }
+    },
+    {
+      "name": "Critical Security Patch",
+      "description": "Emergency security vulnerability fix",
+      "request": {
+        "description": "Fix critical XSS vulnerability in user input validation",
+        "context": {
+          "scope": "specific_files",
+          "targetFiles": [
+            "src/validation/user-input.ts",
+            "src/sanitization/html-cleaner.ts"
+          ],
+          "focusAreas": ["security"],
+          "urgency": "critical"
+        }
+      }
+    },
+    {
+      "name": "Documentation Update",
+      "description": "Update outdated documentation across the project",
+      "request": {
+        "description": "Review and update all project documentation to reflect current codebase",
+        "context": {
+          "scope": "full_codebase",
+          "focusAreas": ["documentation"],
+          "urgency": "low"
+        }
+      }
+    },
+    {
+      "name": "Code Quality Improvement",
+      "description": "Reduce technical debt in core business logic",
+      "request": {
+        "description": "Refactor complex functions and reduce code duplication in business logic",
+        "context": {
+          "scope": "module",
+          "modulePath": "src/business-logic",
+          "focusAreas": ["code_quality"],
+          "thresholds": {
+            "maxComplexity": 10,
+            "maxTechnicalDebtRatio": 5
+          },
+          "urgency": "medium"
+        }
+      }
+    },
+    {
+      "name": "Dependency Update Sprint",
+      "description": "Update all outdated dependencies",
+      "request": {
+        "description": "Update all npm packages to latest secure versions",
+        "context": {
+          "scope": "full_codebase",
+          "focusAreas": ["dependencies"],
+          "urgency": "high"
+        }
+      }
+    },
+    {
+      "name": "Performance Baseline",
+      "description": "Establish performance baselines for API endpoints",
+      "request": {
+        "description": "Analyze performance and create benchmarks for all API endpoints",
+        "context": {
+          "scope": "module",
+          "modulePath": "src/api",
+          "focusAreas": ["performance"],
+          "thresholds": {
+            "maxComplexity": 15
+          },
+          "urgency": "medium"
+        }
+      }
+    }
+  ],
+  "testScenarios": [
+    {
+      "scenario": "Invalid scope",
+      "shouldFail": true,
+      "request": {
+        "description": "Test invalid scope handling",
+        "context": {
+          "scope": "invalid_scope",
+          "urgency": "high"
+        }
+      },
+      "expectedError": "Invalid scope. Must be one of: full_codebase, module, specific_files"
+    },
+    {
+      "scenario": "Missing modulePath for module scope",
+      "shouldFail": true,
+      "request": {
+        "description": "Test module scope without path",
+        "context": {
+          "scope": "module",
+          "urgency": "medium"
+        }
+      },
+      "expectedError": "modulePath required when scope is \"module\""
+    },
+    {
+      "scenario": "Missing targetFiles for specific_files scope",
+      "shouldFail": true,
+      "request": {
+        "description": "Test specific_files scope without files",
+        "context": {
+          "scope": "specific_files",
+          "urgency": "low"
+        }
+      },
+      "expectedError": "targetFiles required when scope is \"specific_files\""
+    },
+    {
+      "scenario": "Invalid threshold values",
+      "shouldFail": true,
+      "request": {
+        "description": "Test invalid thresholds",
+        "context": {
+          "scope": "full_codebase",
+          "thresholds": {
+            "minTestCoverage": 150
+          }
+        }
+      },
+      "expectedError": "minTestCoverage must be between 0 and 100"
+    }
+  ],
+  "deploymentStrategyExamples": [
+    {
+      "name": "Immediate Deployment (Critical Security)",
+      "context": {
+        "scope": "specific_files",
+        "targetFiles": ["src/auth/password-validator.ts"],
+        "focusAreas": ["security"],
+        "urgency": "critical"
+      },
+      "expectedStrategy": "immediate",
+      "reason": "Critical security fix with P0 priority triggers immediate deployment"
+    },
+    {
+      "name": "Canary Deployment (High Risk)",
+      "context": {
+        "scope": "module",
+        "modulePath": "src/core",
+        "focusAreas": ["code_quality", "performance"],
+        "urgency": "high"
+      },
+      "expectedStrategy": "canary",
+      "reason": "High-risk changes to core module use canary deployment (10% → 50% → 100%)"
+    },
+    {
+      "name": "Blue-Green Deployment (Moderate Risk)",
+      "context": {
+        "scope": "module",
+        "modulePath": "src/features",
+        "focusAreas": ["tests"],
+        "urgency": "medium"
+      },
+      "expectedStrategy": "blue_green",
+      "reason": "Moderate changes with medium urgency use blue-green deployment"
+    },
+    {
+      "name": "Rolling Deployment (Low Risk)",
+      "context": {
+        "scope": "specific_files",
+        "targetFiles": ["README.md", "docs/setup.md"],
+        "focusAreas": ["documentation"],
+        "urgency": "low"
+      },
+      "expectedStrategy": "rolling",
+      "reason": "Low-risk documentation updates use gradual rolling deployment"
+    }
+  ]
+}

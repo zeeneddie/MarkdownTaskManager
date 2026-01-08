@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attribution Dashboard - Self-Attributing Agents</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .impact-critical { background-color: #10b981; }
+        .impact-important { background-color: #3b82f6; }
+        .impact-minor { background-color: #6b7280; }
+        .impact-neutral { background-color: #9ca3af; }
+        .impact-negative { background-color: #ef4444; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen" x-data="attributionDashboard()">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold">Attribution Dashboard</h1>
+                    <p class="text-purple-200 text-sm">Self-Attributing Agents - Week 21-22</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="../index.html" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition">
+                        🏠 Hub
+                    </a>
+                    <a href="agent-dashboard.html" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition">
+                        🤖 Agents
+                    </a>
+                    <a href="self-improvement-dashboard.html" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition">
+                        🎓 Self-Improve
+                    </a>
+                    <a href="evolution-dashboard.html" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition">
+                        🧬 Evolution
+                    </a>
+                    <button @click="refreshData()" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition">
+                        Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8">
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm p-6 card-hover transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Total Attributions</p>
+                        <p class="text-3xl font-bold text-gray-800" x-text="summary.total_attributions">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <span class="text-2xl">📊</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 card-hover transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Success Rate</p>
+                        <p class="text-3xl font-bold text-green-600" x-text="successRate + '%'">0%</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <span class="text-2xl">✅</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 card-hover transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Avg Confidence</p>
+                        <p class="text-3xl font-bold text-blue-600" x-text="(summary.average_confidence * 100).toFixed(1) + '%'">0%</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <span class="text-2xl">🎯</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 card-hover transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Pending Feedback</p>
+                        <p class="text-3xl font-bold text-orange-600" x-text="pendingFeedback.length">0</p>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <span class="text-2xl">📨</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Agent Performance Grid -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Agent Performance</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <template x-for="agent in agentSummaries" :key="agent.agent_id">
+                    <div class="border rounded-lg p-4 hover:border-purple-400 cursor-pointer transition"
+                         @click="selectAgent(agent.agent_id)">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-semibold text-gray-800" x-text="agent.agent_name"></span>
+                            <span class="text-xs px-2 py-1 rounded-full"
+                                  :class="{
+                                      'bg-green-100 text-green-700': agent.recent_trend === 'improving',
+                                      'bg-gray-100 text-gray-700': agent.recent_trend === 'stable',
+                                      'bg-red-100 text-red-700': agent.recent_trend === 'declining'
+                                  }"
+                                  x-text="agent.recent_trend">
+                            </span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-500">Tasks</span>
+                                <span class="font-medium" x-text="agent.total_tasks"></span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-500">Success</span>
+                                <span class="font-medium text-green-600" x-text="(agent.success_rate * 100).toFixed(0) + '%'"></span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-green-500 h-2 rounded-full" :style="'width: ' + (agent.success_rate * 100) + '%'"></div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Two Column Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Recent Attributions -->
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Recent Attributions</h2>
+                <div class="space-y-4 max-h-96 overflow-y-auto">
+                    <template x-for="attr in attributions.items" :key="attr.id">
+                        <div class="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer"
+                             @click="viewAttribution(attr.id)">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="font-medium text-gray-800" x-text="attr.agent_name"></span>
+                                <span class="text-xs px-2 py-1 rounded-full"
+                                      :class="{
+                                          'bg-green-100 text-green-700': attr.outcome === 'SUCCESS',
+                                          'bg-red-100 text-red-700': attr.outcome === 'FAILURE',
+                                          'bg-yellow-100 text-yellow-700': attr.outcome === 'PARTIAL'
+                                      }"
+                                      x-text="attr.outcome">
+                                </span>
+                            </div>
+                            <div class="text-sm text-gray-500 mb-2">
+                                Task: <span x-text="attr.task_id"></span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-gray-400">
+                                <span x-text="new Date(attr.created_at).toLocaleString()"></span>
+                                <span>Confidence: <span x-text="(attr.confidence * 100).toFixed(0) + '%'"></span></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Causal Factors Chart -->
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Top Causal Factors</h2>
+                <canvas id="factorsChart" class="w-full h-64"></canvas>
+            </div>
+        </div>
+
+        <!-- Attribution Detail Modal -->
+        <div x-show="selectedAttribution" x-cloak
+             class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+             @click.self="selectedAttribution = null">
+            <div class="bg-white rounded-xl shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div class="p-6 border-b sticky top-0 bg-white">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-bold text-gray-800">Attribution Details</h3>
+                        <button @click="selectedAttribution = null" class="text-gray-400 hover:text-gray-600">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6" x-show="selectedAttribution">
+                    <!-- Header Info -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div>
+                            <p class="text-sm text-gray-500">Agent</p>
+                            <p class="font-semibold" x-text="selectedAttribution?.agent_name"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Task</p>
+                            <p class="font-semibold" x-text="selectedAttribution?.task_id"></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Outcome</p>
+                            <span class="px-2 py-1 rounded-full text-sm"
+                                  :class="{
+                                      'bg-green-100 text-green-700': selectedAttribution?.outcome === 'SUCCESS',
+                                      'bg-red-100 text-red-700': selectedAttribution?.outcome === 'FAILURE',
+                                      'bg-yellow-100 text-yellow-700': selectedAttribution?.outcome === 'PARTIAL'
+                                  }"
+                                  x-text="selectedAttribution?.outcome">
+                            </span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Confidence</p>
+                            <p class="font-semibold" x-text="((selectedAttribution?.confidence || 0) * 100).toFixed(0) + '%'"></p>
+                        </div>
+                    </div>
+
+                    <!-- Key Steps -->
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-gray-800 mb-3">Key Steps</h4>
+                        <div class="space-y-2">
+                            <template x-for="step in selectedAttribution?.key_steps || []" :key="step.step_id">
+                                <div class="border rounded-lg p-3">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-medium" x-text="step.step_name"></span>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-xs px-2 py-1 rounded text-white"
+                                                  :class="'impact-' + step.impact.toLowerCase()"
+                                                  x-text="step.impact">
+                                            </span>
+                                            <span class="text-sm" x-text="(step.impact_score * 100).toFixed(0) + '%'"></span>
+                                        </div>
+                                    </div>
+                                    <p class="text-sm text-gray-600" x-text="step.reasoning"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Causal Factors -->
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-gray-800 mb-3">Causal Factors</h4>
+                        <div class="space-y-2">
+                            <template x-for="factor in selectedAttribution?.causal_factors || []" :key="factor.factor_id">
+                                <div class="border rounded-lg p-3">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-medium" x-text="factor.factor_type.replace(/_/g, ' ')"></span>
+                                        <span class="text-sm"
+                                              :class="factor.contribution > 0 ? 'text-green-600' : 'text-red-600'"
+                                              x-text="(factor.contribution > 0 ? '+' : '') + (factor.contribution * 100).toFixed(0) + '%'">
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-600" x-text="factor.description"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex justify-end space-x-3">
+                        <button @click="generateFeedback(selectedAttribution?.id)"
+                                class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition">
+                            Generate Feedback
+                        </button>
+                        <button @click="selectedAttribution = null"
+                                class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Feedback Section -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mt-8" x-show="pendingFeedback.length > 0">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Pending Feedback</h2>
+                <button @click="deliverAllFeedback()"
+                        class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                    Deliver All
+                </button>
+            </div>
+            <div class="space-y-3">
+                <template x-for="fb in pendingFeedback" :key="fb.feedback_id">
+                    <div class="border rounded-lg p-4 flex items-center justify-between">
+                        <div>
+                            <span class="font-medium" x-text="fb.agent_id"></span>
+                            <span class="text-sm text-gray-500 ml-2" x-text="fb.feedback_type"></span>
+                        </div>
+                        <button @click="deliverFeedback(fb.feedback_id)"
+                                class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm">
+                            Deliver
+                        </button>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api/attribution';
+
+        function attributionDashboard() {
+            return {
+                summary: { total_attributions: 0, success_count: 0, failure_count: 0, average_confidence: 0 },
+                attributions: { items: [], total: 0 },
+                agentSummaries: [],
+                pendingFeedback: [],
+                selectedAttribution: null,
+                factorsChart: null,
+
+                get successRate() {
+                    if (this.summary.total_attributions === 0) return 0;
+                    return ((this.summary.success_count / this.summary.total_attributions) * 100).toFixed(1);
+                },
+
+                async init() {
+                    await this.refreshData();
+                    this.initChart();
+                },
+
+                async refreshData() {
+                    try {
+                        const [summaryRes, attrRes, agentsRes, feedbackRes] = await Promise.all([
+                            fetch(`${API_BASE}/summary`),
+                            fetch(`${API_BASE}/?page_size=10`),
+                            fetch(`${API_BASE}/agents/summary`),
+                            fetch(`${API_BASE}/feedback/pending`)
+                        ]);
+
+                        this.summary = await summaryRes.json();
+                        this.attributions = await attrRes.json();
+                        this.agentSummaries = await agentsRes.json();
+                        this.pendingFeedback = await feedbackRes.json();
+
+                        this.updateChart();
+                    } catch (error) {
+                        console.error('Failed to fetch data:', error);
+                    }
+                },
+
+                initChart() {
+                    const ctx = document.getElementById('factorsChart').getContext('2d');
+                    this.factorsChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: [],
+                            datasets: [{
+                                label: 'Contribution',
+                                data: [],
+                                backgroundColor: [],
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            scales: {
+                                x: {
+                                    min: -1,
+                                    max: 1
+                                }
+                            }
+                        }
+                    });
+                },
+
+                updateChart() {
+                    // Aggregate factors from recent attributions
+                    const factorMap = {};
+                    for (const attr of this.attributions.items) {
+                        for (const factor of attr.causal_factors || []) {
+                            if (!factorMap[factor.factor_type]) {
+                                factorMap[factor.factor_type] = { total: 0, count: 0 };
+                            }
+                            factorMap[factor.factor_type].total += factor.contribution;
+                            factorMap[factor.factor_type].count += 1;
+                        }
+                    }
+
+                    const factors = Object.entries(factorMap)
+                        .map(([type, data]) => ({
+                            type: type.replace(/_/g, ' '),
+                            avg: data.total / data.count
+                        }))
+                        .sort((a, b) => Math.abs(b.avg) - Math.abs(a.avg))
+                        .slice(0, 8);
+
+                    if (this.factorsChart) {
+                        this.factorsChart.data.labels = factors.map(f => f.type);
+                        this.factorsChart.data.datasets[0].data = factors.map(f => f.avg);
+                        this.factorsChart.data.datasets[0].backgroundColor = factors.map(f =>
+                            f.avg > 0 ? '#10b981' : '#ef4444'
+                        );
+                        this.factorsChart.update();
+                    }
+                },
+
+                async selectAgent(agentId) {
+                    try {
+                        const response = await fetch(`${API_BASE}/?agent_id=${agentId}&page_size=20`);
+                        this.attributions = await response.json();
+                    } catch (error) {
+                        console.error('Failed to fetch agent attributions:', error);
+                    }
+                },
+
+                async viewAttribution(id) {
+                    try {
+                        const response = await fetch(`${API_BASE}/${id}`);
+                        this.selectedAttribution = await response.json();
+                    } catch (error) {
+                        console.error('Failed to fetch attribution:', error);
+                    }
+                },
+
+                async generateFeedback(attributionId) {
+                    try {
+                        const response = await fetch(`${API_BASE}/${attributionId}/feedback`, {
+                            method: 'POST'
+                        });
+                        const result = await response.json();
+                        alert(`Feedback generated: ${result.feedback_id}`);
+                        await this.refreshData();
+                    } catch (error) {
+                        console.error('Failed to generate feedback:', error);
+                    }
+                },
+
+                async deliverFeedback(feedbackId) {
+                    try {
+                        const response = await fetch(`${API_BASE}/feedback/${feedbackId}/deliver`, {
+                            method: 'POST'
+                        });
+                        await this.refreshData();
+                    } catch (error) {
+                        console.error('Failed to deliver feedback:', error);
+                    }
+                },
+
+                async deliverAllFeedback() {
+                    try {
+                        const response = await fetch(`${API_BASE}/batch/deliver-feedback`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({})
+                        });
+                        const result = await response.json();
+                        alert(`Delivered: ${result.delivered}, Failed: ${result.failed}`);
+                        await this.refreshData();
+                    } catch (error) {
+                        console.error('Failed to deliver all feedback:', error);
+                    }
+                }
+            };
+        }
+    </script>
+</body>
+</html>

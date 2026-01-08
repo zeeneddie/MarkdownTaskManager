@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban Dashboard - Multi-Stack AI Agent Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1800px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+
+        .header .nav {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .header .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .header .nav a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .controls {
+            background: white;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .controls select, .controls input {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            min-width: 180px;
+        }
+
+        .controls select:focus, .controls input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .controls label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-right: 0.5rem;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stats-bar {
+            margin-left: auto;
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .ws-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .ws-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #e53e3e;
+        }
+
+        .ws-indicator.connected {
+            background: #48bb78;
+        }
+
+        /* Kanban Board */
+        .kanban-container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            overflow-x: auto;
+        }
+
+        .kanban-board {
+            display: grid;
+            grid-template-columns: repeat(9, minmax(160px, 1fr));
+            gap: 0.75rem;
+            min-height: calc(100vh - 200px);
+            overflow-x: auto;
+        }
+
+        .kanban-lane {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .lane-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .lane-backlog .lane-header { background: #edf2f7; color: #4a5568; }
+        .lane-analysis .lane-header { background: #faf5ff; color: #805ad5; }  /* Purple - estimation/analysis */
+        .lane-planned .lane-header { background: #c3dafe; color: #3c366b; }  /* Indigo - scheduled work */
+        .lane-build .lane-header { background: #bee3f8; color: #2b6cb0; }    /* Blue - code development */
+        .lane-test .lane-header { background: #e6fffa; color: #285e61; }     /* Teal - testing phase */
+        .lane-in_review .lane-header { background: #fefcbf; color: #975a16; }
+        .lane-blocked .lane-header { background: #fed7d7; color: #c53030; }
+        .lane-human_needed .lane-header { background: #e9d8fd; color: #6b46c1; }
+        .lane-done .lane-header { background: #c6f6d5; color: #276749; }
+
+        .lane-count {
+            background: rgba(0,0,0,0.1);
+            padding: 0.25rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.75rem;
+        }
+
+        .lane-content {
+            flex: 1;
+            min-height: 200px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .lane-content.drag-over {
+            background: rgba(102, 126, 234, 0.1);
+            border: 2px dashed #667eea;
+            border-radius: 6px;
+        }
+
+        /* Kanban Card */
+        .kanban-card {
+            background: white;
+            border-radius: 6px;
+            padding: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: grab;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .kanban-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .kanban-card.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .kanban-card.story {
+            border-left-color: #667eea;
+        }
+
+        .kanban-card.task {
+            border-left-color: #48bb78;
+        }
+
+        .kanban-card.bug {
+            border-left-color: #e53e3e;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-type {
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .card-type.story {
+            background: #e9d8fd;
+            color: #6b46c1;
+        }
+
+        .card-type.task {
+            background: #c6f6d5;
+            color: #276749;
+        }
+
+        .card-type.bug {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .card-priority {
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .priority-critical { background: #fed7d7; color: #c53030; }
+        .priority-high { background: #feebc8; color: #c05621; }
+        .priority-medium { background: #fefcbf; color: #975a16; }
+        .priority-low { background: #e2e8f0; color: #4a5568; }
+
+        .card-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #1a202c;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+        }
+
+        .card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            font-size: 0.7rem;
+            color: #718096;
+        }
+
+        .card-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .card-project {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #2d3748;
+            background: #e2e8f0;
+            padding: 0.1rem 0.4rem;
+            border-radius: 3px;
+            margin-bottom: 0.2rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: inline-block;
+        }
+
+        .card-epic {
+            font-size: 0.7rem;
+            color: #667eea;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .card-assignee {
+            background: #edf2f7;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+        }
+
+        .card-points {
+            background: #bee3f8;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .card-blocked-badge {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal h3 {
+            margin-bottom: 1rem;
+            color: #1a202c;
+        }
+
+        .modal-field {
+            margin-bottom: 1rem;
+        }
+
+        .modal-field label {
+            display: block;
+            font-size: 0.85rem;
+            color: #4a5568;
+            margin-bottom: 0.25rem;
+        }
+
+        .modal-field input,
+        .modal-field select,
+        .modal-field textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            color: white;
+            font-size: 0.9rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success { background: #48bb78; }
+        .toast.error { background: #e53e3e; }
+        .toast.info { background: #667eea; }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            color: #718096;
+        }
+
+        .loading::after {
+            content: '';
+            width: 24px;
+            height: 24px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* KaibanJS-Style: Card Movement Animation */
+        @keyframes cardFly {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            20% {
+                transform: scale(1.1) translateY(-10px);
+                box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            }
+            80% {
+                transform: scale(1.1) translateY(-10px);
+                box-shadow: 0 10px 30px rgba(72, 187, 120, 0.4);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+            }
+        }
+
+        @keyframes cardArrive {
+            0% {
+                transform: scale(0.8) translateY(-20px);
+                opacity: 0.5;
+                box-shadow: 0 20px 40px rgba(72, 187, 120, 0.5);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 15px 35px rgba(72, 187, 120, 0.4);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 5px rgba(102, 126, 234, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.8); }
+        }
+
+        .kanban-card.moving-out {
+            animation: cardFly 0.6s ease-out forwards;
+            z-index: 100;
+            position: relative;
+        }
+
+        .kanban-card.moving-in {
+            animation: cardArrive 0.5s ease-out forwards;
+        }
+
+        .kanban-card.agent-working {
+            animation: pulseGlow 1.5s ease-in-out infinite;
+            border: 2px solid #667eea;
+        }
+
+        /* Lane highlight when receiving */
+        .lane-content.receiving {
+            background: rgba(72, 187, 120, 0.15);
+            border: 2px solid #48bb78;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        /* Agent Activity Panel */
+        .agent-activity {
+            background: white;
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.85rem;
+            overflow-x: auto;
+        }
+
+        .agent-activity-label {
+            font-weight: 600;
+            color: #4a5568;
+            white-space: nowrap;
+        }
+
+        .active-agents {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: nowrap;
+        }
+
+        .agent-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            background: #e9d8fd;
+            color: #6b46c1;
+            font-size: 0.75rem;
+            font-weight: 500;
+            white-space: nowrap;
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+
+        .agent-badge .agent-icon {
+            font-size: 0.9rem;
+        }
+
+        .agent-badge.felix { background: #bee3f8; color: #2b6cb0; }
+        .agent-badge.quinn { background: #faf5ff; color: #805ad5; }
+        .agent-badge.tessa { background: #e6fffa; color: #285e61; }
+        .agent-badge.eliza { background: #fefcbf; color: #975a16; }
+        .agent-badge.diana { background: #fed7d7; color: #c53030; }
+        .agent-badge.marcus { background: #c6f6d5; color: #276749; }
+        .agent-badge.miguel { background: #feebc8; color: #c05621; }
+
+        .no-agents {
+            color: #a0aec0;
+            font-style: italic;
+        }
+
+        /* Progress Trail */
+        .progress-trail {
+            position: fixed;
+            bottom: 5rem;
+            right: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 0.75rem;
+            max-width: 300px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1500;
+            font-size: 0.8rem;
+        }
+
+        .progress-trail h4 {
+            margin: 0 0 0.5rem 0;
+            color: #4a5568;
+            font-size: 0.85rem;
+        }
+
+        .trail-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .trail-item:last-child {
+            border-bottom: none;
+        }
+
+        .trail-time {
+            color: #a0aec0;
+            font-size: 0.7rem;
+            min-width: 45px;
+        }
+
+        .trail-arrow {
+            color: #48bb78;
+            font-weight: bold;
+        }
+
+        .trail-lanes {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+        }
+
+        .trail-lane {
+            padding: 0.1rem 0.4rem;
+            border-radius: 3px;
+            background: #e2e8f0;
+        }
+
+        /* Empty lane */
+        .lane-empty {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #a0aec0;
+            font-size: 0.85rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1800px) {
+            .kanban-board {
+                grid-template-columns: repeat(9, minmax(140px, 1fr));
+            }
+        }
+
+        @media (max-width: 1400px) {
+            .kanban-board {
+                grid-template-columns: repeat(4, minmax(200px, 1fr));
+            }
+        }
+
+        @media (max-width: 1000px) {
+            .kanban-board {
+                grid-template-columns: repeat(2, minmax(280px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .kanban-board {
+                grid-template-columns: 1fr;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .stats-bar {
+                margin-left: 0;
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div>
+                <h1>Kanban Dashboard</h1>
+                <p>9-Lane Task Board: Backlog → Analysis → Planned → Build → Test → In Review → Done</p>
+            </div>
+            <nav class="nav">
+                <a href="index.html">Hub</a>
+                <a href="sprint-planning.html">Sprint Planning</a>
+                <a href="agent-dashboard.html">Agents</a>
+                <a href="quality-dashboard.html">Quality</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="controls">
+        <div class="filter-group">
+            <label for="projectFilter">Project:</label>
+            <select id="projectFilter">
+                <option value="">Selecteer project...</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="epicFilter">Epic:</label>
+            <select id="epicFilter" disabled>
+                <option value="">Alle Epics</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="featureFilter">Feature:</label>
+            <select id="featureFilter">
+                <option value="">Alle Features</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="assigneeFilter">Toegewezen aan:</label>
+            <select id="assigneeFilter">
+                <option value="">Iedereen</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>
+                <input type="checkbox" id="showStories" checked> Stories
+            </label>
+            <label>
+                <input type="checkbox" id="showTasks" checked> Tasks
+            </label>
+            <label>
+                <input type="checkbox" id="showBugs" checked> Bugs
+            </label>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span>Items:</span>
+                <span class="stat-value" id="totalItems">0</span>
+            </div>
+            <div class="stat-item">
+                <span>Story Points:</span>
+                <span class="stat-value" id="totalPoints">0</span>
+            </div>
+            <div class="stat-item">
+                <span>Blocked:</span>
+                <span class="stat-value" id="blockedCount">0</span>
+            </div>
+            <div class="ws-status">
+                <div class="ws-indicator" id="wsIndicator"></div>
+                <span id="wsStatusText">Disconnected</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- KaibanJS-Style: Agent Activity Panel -->
+    <div class="agent-activity" id="agentActivity">
+        <span class="agent-activity-label">Active Agents:</span>
+        <div class="active-agents" id="activeAgents">
+            <span class="no-agents">Geen actieve agents</span>
+        </div>
+    </div>
+
+    <div class="kanban-container">
+        <div class="kanban-board" id="kanbanBoard">
+            <div class="kanban-lane lane-backlog" data-lane="backlog">
+                <div class="lane-header">
+                    <span>Backlog</span>
+                    <span class="lane-count" id="count-backlog">0</span>
+                </div>
+                <div class="lane-content" id="lane-backlog"></div>
+            </div>
+            <div class="kanban-lane lane-analysis" data-lane="analysis">
+                <div class="lane-header">
+                    <span>Analysis</span>
+                    <span class="lane-count" id="count-analysis">0</span>
+                </div>
+                <div class="lane-content" id="lane-analysis"></div>
+            </div>
+            <div class="kanban-lane lane-planned" data-lane="planned">
+                <div class="lane-header">
+                    <span>Planned</span>
+                    <span class="lane-count" id="count-planned">0</span>
+                </div>
+                <div class="lane-content" id="lane-planned"></div>
+            </div>
+            <div class="kanban-lane lane-build" data-lane="build">
+                <div class="lane-header">
+                    <span>🔨 Build</span>
+                    <span class="lane-count" id="count-build">0</span>
+                </div>
+                <div class="lane-content" id="lane-build"></div>
+            </div>
+            <div class="kanban-lane lane-test" data-lane="test">
+                <div class="lane-header">
+                    <span>🧪 Test</span>
+                    <span class="lane-count" id="count-test">0</span>
+                </div>
+                <div class="lane-content" id="lane-test"></div>
+            </div>
+            <div class="kanban-lane lane-in_review" data-lane="in_review">
+                <div class="lane-header">
+                    <span>In Review</span>
+                    <span class="lane-count" id="count-in_review">0</span>
+                </div>
+                <div class="lane-content" id="lane-in_review"></div>
+            </div>
+            <div class="kanban-lane lane-blocked" data-lane="blocked">
+                <div class="lane-header">
+                    <span>Blocked</span>
+                    <span class="lane-count" id="count-blocked">0</span>
+                </div>
+                <div class="lane-content" id="lane-blocked"></div>
+            </div>
+            <div class="kanban-lane lane-human_needed" data-lane="human_needed">
+                <div class="lane-header">
+                    <span>Human Needed</span>
+                    <span class="lane-count" id="count-human_needed">0</span>
+                </div>
+                <div class="lane-content" id="lane-human_needed"></div>
+            </div>
+            <div class="kanban-lane lane-done" data-lane="done">
+                <div class="lane-header">
+                    <span>Done</span>
+                    <span class="lane-count" id="count-done">0</span>
+                </div>
+                <div class="lane-content" id="lane-done"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Item Details Modal -->
+    <div class="modal-overlay" id="itemModal">
+        <div class="modal">
+            <h3 id="modalTitle">Item Details</h3>
+            <div class="modal-field">
+                <label>Titel</label>
+                <input type="text" id="modalItemTitle" readonly>
+            </div>
+            <div class="modal-field">
+                <label>Type</label>
+                <input type="text" id="modalItemType" readonly>
+            </div>
+            <div class="modal-field">
+                <label>Toegewezen aan</label>
+                <input type="text" id="modalAssignee" placeholder="Naam invoeren...">
+            </div>
+            <div class="modal-field">
+                <label>Prioriteit</label>
+                <select id="modalPriority">
+                    <option value="critical">Critical</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                </select>
+            </div>
+            <div class="modal-field" id="storyPointsField">
+                <label>Story Points</label>
+                <select id="modalStoryPoints">
+                    <option value="">-</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="5">5</option>
+                    <option value="8">8</option>
+                    <option value="13">13</option>
+                </select>
+            </div>
+            <div class="modal-field">
+                <label>Geschatte uren</label>
+                <input type="number" id="modalEstimatedHours" min="0" step="0.5">
+            </div>
+            <div class="modal-field">
+                <label>Blocked reden</label>
+                <textarea id="modalBlockedReason" rows="2" placeholder="Waarom is dit item blocked?"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">Annuleren</button>
+                <button class="btn btn-primary" onclick="saveItemChanges()">Opslaan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blocked Reason Modal -->
+    <div class="modal-overlay" id="blockedModal">
+        <div class="modal">
+            <h3>Item Blokkeren</h3>
+            <div class="modal-field">
+                <label>Reden voor blokkade</label>
+                <textarea id="blockedReasonInput" rows="3" placeholder="Beschrijf waarom dit item geblokkeerd is..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeBlockedModal()">Annuleren</button>
+                <button class="btn btn-primary" onclick="confirmBlock()">Blokkeren</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- KaibanJS-Style: Progress Trail (live activity log) -->
+    <div class="progress-trail" id="progressTrail" style="display: none;">
+        <h4>Lane Progressie</h4>
+        <div id="trailItems"></div>
+    </div>
+
+    <script>
+        // State
+        let board = {};
+        let stats = {};
+        let currentItem = null;
+        let pendingMove = null;
+        let ws = null;
+
+        // KaibanJS-Style: Track active agents and progress trail
+        let activeAgents = new Map(); // agentName -> { itemId, lane, startTime }
+        let progressTrail = []; // Array of { time, itemId, itemTitle, fromLane, toLane, agent }
+        const MAX_TRAIL_ITEMS = 10;
+
+        const API_BASE = '/api/kanban';
+
+        // Agent configuration for display
+        const AGENT_CONFIG = {
+            'Felix': { icon: '🔧', role: 'Architect' },
+            'Quinn': { icon: '🔍', role: 'Quality' },
+            'Tessa': { icon: '🧪', role: 'Testing' },
+            'Eliza': { icon: '📊', role: 'Estimation' },
+            'Diana': { icon: '📝', role: 'Docs' },
+            'Marcus': { icon: '🔄', role: 'Maintenance' },
+            'Miguel': { icon: '🚀', role: 'Migration' },
+            'Betty': { icon: '🐛', role: 'Bugs' },
+            'Peter': { icon: '📋', role: 'Product' },
+            'Paul': { icon: '📅', role: 'Planning' }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProjects();
+            setupDragAndDrop();
+            setupWebSocket();
+            setupFilterListeners();
+        });
+
+        // Load projects for dropdown
+        async function loadProjects() {
+            try {
+                const res = await fetch(`${API_BASE}/projects`);
+                const projects = await res.json();
+                const projectSelect = document.getElementById('projectFilter');
+
+                projects.forEach(project => {
+                    const option = document.createElement('option');
+                    option.value = project.id;
+                    option.textContent = `${project.name} (${project.item_count} items)`;
+                    projectSelect.appendChild(option);
+                });
+
+                // If only one project, select it automatically
+                if (projects.length === 1) {
+                    projectSelect.value = projects[0].id;
+                    onProjectChange(projects[0].id);
+                } else if (projects.length > 0) {
+                    // Show empty board message until project is selected
+                    showNoProjectSelected();
+                }
+            } catch (err) {
+                console.error('Error loading projects:', err);
+                showToast('Fout bij laden projecten', 'error');
+            }
+        }
+
+        // Show message when no project selected
+        function showNoProjectSelected() {
+            const lanes = ['backlog', 'analysis', 'planned', 'build', 'test', 'in_review', 'blocked', 'human_needed', 'done'];
+            lanes.forEach(lane => {
+                const laneEl = document.getElementById(`lane-${lane}`);
+                const countEl = document.getElementById(`count-${lane}`);
+                countEl.textContent = '0';
+                laneEl.innerHTML = '<div class="lane-empty">Selecteer een project</div>';
+            });
+            document.getElementById('totalItems').textContent = '0';
+            document.getElementById('totalPoints').textContent = '0';
+            document.getElementById('blockedCount').textContent = '0';
+        }
+
+        // Handle project selection change
+        async function onProjectChange(projectId) {
+            const epicSelect = document.getElementById('epicFilter');
+            const featureSelect = document.getElementById('featureFilter');
+
+            if (!projectId) {
+                epicSelect.disabled = true;
+                epicSelect.innerHTML = '<option value="">Alle Epics</option>';
+                featureSelect.innerHTML = '<option value="">Alle Features</option>';
+                showNoProjectSelected();
+                return;
+            }
+
+            epicSelect.disabled = false;
+            await loadFilters(projectId);
+            await loadBoard();
+        }
+
+        // Load filter options for a specific project
+        async function loadFilters(projectId) {
+            try {
+                const epicSelect = document.getElementById('epicFilter');
+                epicSelect.innerHTML = '<option value="">Alle Epics</option>';
+
+                if (!projectId) return;
+
+                // Load epics for this project
+                const epicsRes = await fetch(`${API_BASE}/epics?project_id=${projectId}`);
+                const epics = await epicsRes.json();
+                epics.forEach(epic => {
+                    const option = document.createElement('option');
+                    option.value = epic.id;
+                    option.textContent = `${epic.title} (${epic.features_count} features)`;
+                    epicSelect.appendChild(option);
+                });
+
+                // Load assignees (no project filter needed)
+                const assigneeSelect = document.getElementById('assigneeFilter');
+                assigneeSelect.innerHTML = '<option value="">Iedereen</option>';
+                const assigneesRes = await fetch(`${API_BASE}/assignees`);
+                const {assignees} = await assigneesRes.json();
+                assignees.forEach(assignee => {
+                    const option = document.createElement('option');
+                    option.value = assignee;
+                    option.textContent = assignee;
+                    assigneeSelect.appendChild(option);
+                });
+            } catch (err) {
+                console.error('Error loading filters:', err);
+            }
+        }
+
+        // Load features based on selected epic
+        async function loadFeatures(epicId) {
+            const featureSelect = document.getElementById('featureFilter');
+            featureSelect.innerHTML = '<option value="">Alle Features</option>';
+
+            if (!epicId) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/features?epic_id=${epicId}`);
+                const features = await res.json();
+                features.forEach(feature => {
+                    const option = document.createElement('option');
+                    option.value = feature.id;
+                    option.textContent = `${feature.title} (${feature.stories_count} stories)`;
+                    featureSelect.appendChild(option);
+                });
+            } catch (err) {
+                console.error('Error loading features:', err);
+            }
+        }
+
+        // Setup filter listeners
+        function setupFilterListeners() {
+            document.getElementById('projectFilter').addEventListener('change', (e) => {
+                onProjectChange(e.target.value);
+            });
+            document.getElementById('epicFilter').addEventListener('change', (e) => {
+                loadFeatures(e.target.value);
+                loadBoard();
+            });
+            document.getElementById('featureFilter').addEventListener('change', loadBoard);
+            document.getElementById('assigneeFilter').addEventListener('change', loadBoard);
+            document.getElementById('showStories').addEventListener('change', loadBoard);
+            document.getElementById('showTasks').addEventListener('change', loadBoard);
+            document.getElementById('showBugs').addEventListener('change', loadBoard);
+        }
+
+        // Load Kanban board
+        async function loadBoard() {
+            const projectId = document.getElementById('projectFilter').value;
+
+            // Don't load if no project selected
+            if (!projectId) {
+                showNoProjectSelected();
+                return;
+            }
+
+            const epicId = document.getElementById('epicFilter').value;
+            const featureId = document.getElementById('featureFilter').value;
+            const assignee = document.getElementById('assigneeFilter').value;
+            const includeStories = document.getElementById('showStories').checked;
+            const includeTasks = document.getElementById('showTasks').checked;
+            const includeBugs = document.getElementById('showBugs').checked;
+
+            let url = `${API_BASE}/board?project_id=${projectId}&include_stories=${includeStories}&include_tasks=${includeTasks}&include_bugs=${includeBugs}`;
+            if (epicId) url += `&epic_id=${epicId}`;
+            if (featureId) url += `&feature_id=${featureId}`;
+            if (assignee) url += `&assigned_to=${encodeURIComponent(assignee)}`;
+
+            try {
+                const res = await fetch(url);
+                board = await res.json();
+                renderBoard();
+                loadStats();
+            } catch (err) {
+                console.error('Error loading board:', err);
+                showToast('Fout bij laden van board', 'error');
+            }
+        }
+
+        // Render the board
+        function renderBoard() {
+            const lanes = ['backlog', 'analysis', 'planned', 'build', 'test', 'in_review', 'blocked', 'human_needed', 'done'];
+
+            lanes.forEach(lane => {
+                const laneEl = document.getElementById(`lane-${lane}`);
+                const countEl = document.getElementById(`count-${lane}`);
+                const items = board[lane] || [];
+
+                countEl.textContent = items.length;
+
+                if (items.length === 0) {
+                    laneEl.innerHTML = '<div class="lane-empty">Geen items</div>';
+                } else {
+                    laneEl.innerHTML = items.map(item => createCardHTML(item)).join('');
+                }
+            });
+
+            // Re-setup drag handlers after render
+            setupDragAndDrop();
+        }
+
+        // Create card HTML
+        function createCardHTML(item) {
+            const truncatedTitle = item.title.length > 60
+                ? item.title.substring(0, 60) + '...'
+                : item.title;
+
+            // Bug-specific type label with bug number
+            const typeLabel = item.type === 'bug' && item.bug_number
+                ? `${item.bug_number}`
+                : item.type;
+
+            // For bugs, show severity instead of priority in header
+            const priorityOrSeverity = item.type === 'bug' && item.severity
+                ? `<span class="card-priority priority-${item.severity === 'critical' ? 'critical' : item.severity === 'high' ? 'high' : item.severity === 'low' ? 'low' : 'medium'}">${item.severity}</span>`
+                : `<span class="card-priority priority-${item.priority}">${item.priority}</span>`;
+
+            return `
+                <div class="kanban-card ${item.type}"
+                     draggable="true"
+                     data-id="${item.id}"
+                     data-type="${item.type}"
+                     onclick="openItemDetails('${item.id}', '${item.type}')">
+                    <div class="card-header">
+                        <span class="card-type ${item.type}">${typeLabel}</span>
+                        ${priorityOrSeverity}
+                    </div>
+                    ${item.project_name ? `<div class="card-project">${item.project_name}</div>` : ''}
+                    ${item.epic_title ? `<div class="card-epic">${item.epic_title}</div>` : ''}
+                    <div class="card-title">${truncatedTitle}</div>
+                    <div class="card-meta">
+                        ${item.story_points ? `<span class="card-points">${item.story_points} SP</span>` : ''}
+                        ${item.estimated_hours ? `<span>${item.estimated_hours}h</span>` : ''}
+                        ${item.assigned_to ? `<span class="card-assignee">${item.assigned_to}</span>` : ''}
+                        ${item.is_blocked ? `<span class="card-blocked-badge">BLOCKED</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                const projectId = document.getElementById('projectFilter').value;
+                const epicId = document.getElementById('epicFilter').value;
+
+                if (!projectId) return;
+
+                let url = `${API_BASE}/stats?project_id=${projectId}`;
+                if (epicId) url += `&epic_id=${epicId}`;
+
+                const res = await fetch(url);
+                stats = await res.json();
+
+                document.getElementById('totalItems').textContent = stats.total_items;
+                document.getElementById('totalPoints').textContent = stats.total_story_points;
+                document.getElementById('blockedCount').textContent = stats.blocked_count;
+            } catch (err) {
+                console.error('Error loading stats:', err);
+            }
+        }
+
+        // Drag and Drop
+        function setupDragAndDrop() {
+            const cards = document.querySelectorAll('.kanban-card');
+            const lanes = document.querySelectorAll('.lane-content');
+
+            cards.forEach(card => {
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragend', handleDragEnd);
+            });
+
+            lanes.forEach(lane => {
+                lane.addEventListener('dragover', handleDragOver);
+                lane.addEventListener('dragleave', handleDragLeave);
+                lane.addEventListener('drop', handleDrop);
+            });
+        }
+
+        let draggedItem = null;
+
+        function handleDragStart(e) {
+            draggedItem = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', JSON.stringify({
+                id: e.target.dataset.id,
+                type: e.target.dataset.type
+            }));
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            document.querySelectorAll('.lane-content').forEach(lane => {
+                lane.classList.remove('drag-over');
+            });
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        async function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+
+            const targetLane = e.currentTarget.id.replace('lane-', '');
+            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+
+            // If moving to blocked or human_needed, ask for reason
+            if (targetLane === 'blocked' || targetLane === 'human_needed') {
+                pendingMove = { ...data, targetLane };
+                document.getElementById('blockedModal').classList.add('active');
+                return;
+            }
+
+            await moveItem(data.id, data.type, targetLane);
+        }
+
+        // Move item to new lane
+        async function moveItem(itemId, itemType, targetLane, blockedReason = null) {
+            try {
+                const res = await fetch(`${API_BASE}/move`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        item_id: itemId,
+                        item_type: itemType,
+                        target_lane: targetLane,
+                        blocked_reason: blockedReason
+                    })
+                });
+
+                if (!res.ok) throw new Error('Move failed');
+
+                const result = await res.json();
+                showToast(`Item verplaatst naar ${targetLane}`, 'success');
+                loadBoard();
+            } catch (err) {
+                console.error('Error moving item:', err);
+                showToast('Fout bij verplaatsen item', 'error');
+            }
+        }
+
+        // Blocked modal handlers
+        function closeBlockedModal() {
+            document.getElementById('blockedModal').classList.remove('active');
+            document.getElementById('blockedReasonInput').value = '';
+            pendingMove = null;
+        }
+
+        async function confirmBlock() {
+            if (!pendingMove) return;
+
+            const reason = document.getElementById('blockedReasonInput').value;
+            if (!reason.trim()) {
+                showToast('Vul een reden in', 'error');
+                return;
+            }
+
+            await moveItem(pendingMove.id, pendingMove.type, pendingMove.targetLane, reason);
+            closeBlockedModal();
+        }
+
+        // Item details modal
+        async function openItemDetails(itemId, itemType) {
+            currentItem = { id: itemId, type: itemType };
+
+            // Find item in board
+            let item = null;
+            for (const lane of Object.values(board)) {
+                item = lane.find(i => i.id === itemId);
+                if (item) break;
+            }
+
+            if (!item) return;
+
+            // Set modal title based on type
+            let titleText = 'Task Details';
+            if (item.type === 'story') titleText = 'Story Details';
+            if (item.type === 'bug') titleText = item.bug_number ? `Bug ${item.bug_number}` : 'Bug Details';
+
+            document.getElementById('modalTitle').textContent = titleText;
+            document.getElementById('modalItemTitle').value = item.title;
+            document.getElementById('modalItemType').value = item.type === 'bug' ? `bug (${item.severity || 'medium'})` : item.type;
+            document.getElementById('modalAssignee').value = item.assigned_to || '';
+            document.getElementById('modalPriority').value = item.priority || 'medium';
+            document.getElementById('modalStoryPoints').value = item.story_points || '';
+            document.getElementById('modalEstimatedHours').value = item.estimated_hours || '';
+            document.getElementById('modalBlockedReason').value = item.blocked_reason || '';
+
+            // Show story points field for stories and bugs (bugs can have SP too)
+            document.getElementById('storyPointsField').style.display = (item.type === 'story' || item.type === 'bug') ? 'block' : 'none';
+
+            document.getElementById('itemModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('itemModal').classList.remove('active');
+            currentItem = null;
+        }
+
+        async function saveItemChanges() {
+            if (!currentItem) return;
+
+            const data = {
+                assigned_to: document.getElementById('modalAssignee').value || null,
+                priority: document.getElementById('modalPriority').value,
+                estimated_hours: parseFloat(document.getElementById('modalEstimatedHours').value) || null,
+                blocked_reason: document.getElementById('modalBlockedReason').value || null
+            };
+
+            if (currentItem.type === 'story') {
+                const sp = document.getElementById('modalStoryPoints').value;
+                data.story_points = sp ? parseInt(sp) : null;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/${currentItem.type}/${currentItem.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (!res.ok) throw new Error('Update failed');
+
+                showToast('Item bijgewerkt', 'success');
+                closeModal();
+                loadBoard();
+            } catch (err) {
+                console.error('Error updating item:', err);
+                showToast('Fout bij bijwerken item', 'error');
+            }
+        }
+
+        // WebSocket
+        function setupWebSocket() {
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${wsProtocol}//${window.location.host}/ws/all?client_id=kanban-${Date.now()}`;
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                document.getElementById('wsIndicator').classList.add('connected');
+                document.getElementById('wsStatusText').textContent = 'Connected';
+            };
+
+            ws.onclose = () => {
+                document.getElementById('wsIndicator').classList.remove('connected');
+                document.getElementById('wsStatusText').textContent = 'Disconnected';
+                // Reconnect after 5 seconds
+                setTimeout(setupWebSocket, 5000);
+            };
+
+            ws.onerror = (err) => {
+                console.error('WebSocket error:', err);
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const message = JSON.parse(event.data);
+                    handleWebSocketMessage(message);
+                } catch (err) {
+                    console.error('Error parsing WebSocket message:', err);
+                }
+            };
+
+            // Keepalive ping
+            setInterval(() => {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'ping' }));
+                }
+            }, 30000);
+        }
+
+        function handleWebSocketMessage(message) {
+            const data = message.data || message;
+            const event = data.event || data.type;
+
+            if (!event) return;
+
+            console.log('WebSocket event:', event, data);
+
+            // KaibanJS-Style: Handle specific kanban events with animations
+            switch(event) {
+                case 'KANBAN_ITEM_MOVED':
+                case 'kanban_item_moved':
+                    handleItemMoved(data);
+                    break;
+
+                case 'KANBAN_AGENT_STARTED':
+                case 'kanban_agent_started':
+                    handleAgentStarted(data);
+                    break;
+
+                case 'KANBAN_AGENT_COMPLETED':
+                case 'kanban_agent_completed':
+                    handleAgentCompleted(data);
+                    break;
+
+                case 'KANBAN_QUALITY_GATE_PASSED':
+                case 'kanban_quality_gate_passed':
+                    showToast(`✅ Quality Gate passed: ${data.gate || 'validation'}`, 'success');
+                    break;
+
+                case 'KANBAN_QUALITY_GATE_FAILED':
+                case 'kanban_quality_gate_failed':
+                    showToast(`❌ Quality Gate failed: ${data.reason || 'validation error'}`, 'error');
+                    break;
+
+                case 'KANBAN_RETRY_ESCALATION':
+                case 'kanban_retry_escalation':
+                    showToast(`⚠️ Max retries bereikt - escalatie naar Human Needed`, 'error');
+                    handleItemMoved(data);
+                    break;
+
+                default:
+                    if (event.startsWith('kanban_') || event.startsWith('KANBAN_')) {
+                        // Generic kanban event - just refresh
+                        loadBoard();
+                        showToast('Board bijgewerkt', 'info');
+                    }
+            }
+        }
+
+        // KaibanJS-Style: Animate item moving between lanes
+        function handleItemMoved(data) {
+            const { item_id, item_type, from_lane, to_lane, item_title, agent_name, triggered_by } = data;
+
+            // Add to progress trail
+            addToProgressTrail({
+                itemId: item_id,
+                itemTitle: item_title || 'Item',
+                fromLane: from_lane,
+                toLane: to_lane,
+                agent: agent_name || triggered_by || 'System'
+            });
+
+            // Find the card in DOM and animate it
+            const card = document.querySelector(`.kanban-card[data-id="${item_id}"]`);
+            const targetLane = document.getElementById(`lane-${to_lane}`);
+
+            if (card && from_lane !== to_lane) {
+                // Animate out from current lane
+                card.classList.add('moving-out');
+
+                // Highlight receiving lane
+                if (targetLane) {
+                    targetLane.classList.add('receiving');
+                }
+
+                // After animation, reload and animate in
+                setTimeout(() => {
+                    loadBoard().then(() => {
+                        // Find the card in new location and animate arrival
+                        const newCard = document.querySelector(`.kanban-card[data-id="${item_id}"]`);
+                        if (newCard) {
+                            newCard.classList.add('moving-in');
+                            setTimeout(() => {
+                                newCard.classList.remove('moving-in');
+                            }, 500);
+                        }
+                        if (targetLane) {
+                            targetLane.classList.remove('receiving');
+                        }
+                    });
+                }, 600);
+            } else {
+                // No animation needed, just reload
+                loadBoard();
+            }
+
+            // Show informative toast
+            const agentInfo = agent_name ? ` (${agent_name})` : '';
+            showToast(`📦 ${item_title || 'Item'}: ${from_lane} → ${to_lane}${agentInfo}`, 'success');
+        }
+
+        // KaibanJS-Style: Show agent started working
+        function handleAgentStarted(data) {
+            const { agent_name, item_id, item_type, lane } = data;
+
+            // Track active agent
+            activeAgents.set(agent_name, {
+                itemId: item_id,
+                lane: lane,
+                startTime: Date.now()
+            });
+
+            updateAgentActivityPanel();
+
+            // Find card and add working indicator
+            const card = document.querySelector(`.kanban-card[data-id="${item_id}"]`);
+            if (card) {
+                card.classList.add('agent-working');
+            }
+
+            const config = AGENT_CONFIG[agent_name] || { icon: '🤖', role: 'Agent' };
+            showToast(`${config.icon} ${agent_name} is aan het werk...`, 'info');
+        }
+
+        // KaibanJS-Style: Handle agent completed
+        function handleAgentCompleted(data) {
+            const { agent_name, item_id, success, result } = data;
+
+            // Remove from active agents
+            activeAgents.delete(agent_name);
+            updateAgentActivityPanel();
+
+            // Remove working indicator
+            const card = document.querySelector(`.kanban-card[data-id="${item_id}"]`);
+            if (card) {
+                card.classList.remove('agent-working');
+            }
+
+            const config = AGENT_CONFIG[agent_name] || { icon: '🤖', role: 'Agent' };
+            if (success) {
+                showToast(`${config.icon} ${agent_name} klaar! ✓`, 'success');
+            } else {
+                showToast(`${config.icon} ${agent_name} - actie vereist`, 'error');
+            }
+        }
+
+        // Update the agent activity panel
+        function updateAgentActivityPanel() {
+            const container = document.getElementById('activeAgents');
+
+            if (activeAgents.size === 0) {
+                container.innerHTML = '<span class="no-agents">Geen actieve agents</span>';
+                return;
+            }
+
+            let html = '';
+            activeAgents.forEach((info, agentName) => {
+                const config = AGENT_CONFIG[agentName] || { icon: '🤖', role: 'Agent' };
+                const lowerName = agentName.toLowerCase();
+                html += `
+                    <span class="agent-badge ${lowerName}">
+                        <span class="agent-icon">${config.icon}</span>
+                        ${agentName}
+                        <span style="opacity: 0.7; font-size: 0.65rem;">(${info.lane})</span>
+                    </span>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Add item to progress trail
+        function addToProgressTrail(item) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+
+            progressTrail.unshift({
+                time: timeStr,
+                ...item
+            });
+
+            // Keep only last N items
+            if (progressTrail.length > MAX_TRAIL_ITEMS) {
+                progressTrail = progressTrail.slice(0, MAX_TRAIL_ITEMS);
+            }
+
+            updateProgressTrailUI();
+        }
+
+        // Update progress trail UI
+        function updateProgressTrailUI() {
+            const container = document.getElementById('progressTrail');
+            const itemsContainer = document.getElementById('trailItems');
+
+            if (progressTrail.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+
+            let html = '';
+            progressTrail.forEach(item => {
+                html += `
+                    <div class="trail-item">
+                        <span class="trail-time">${item.time}</span>
+                        <div class="trail-lanes">
+                            <span class="trail-lane">${formatLaneName(item.fromLane)}</span>
+                            <span class="trail-arrow">→</span>
+                            <span class="trail-lane">${formatLaneName(item.toLane)}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            itemsContainer.innerHTML = html;
+        }
+
+        // Format lane name for display
+        function formatLaneName(lane) {
+            if (!lane) return '?';
+            const names = {
+                'backlog': 'BL',
+                'analysis': 'AN',
+                'planned': 'PL',
+                'build': 'BU',
+                'test': 'TE',
+                'in_review': 'RV',
+                'blocked': 'BK',
+                'human_needed': 'HN',
+                'done': 'DN'
+            };
+            return names[lane] || lane.substring(0, 2).toUpperCase();
+        }
+
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Close modal on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeBlockedModal();
+            }
+        });
+
+        // Close modal on click outside
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    closeModal();
+                    closeBlockedModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow Dashboard - Project Workflows</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background-attachment: fixed;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #00d4ff 0%, #00ff88 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header h1::before {
+            content: "🔄";
+            -webkit-text-fill-color: initial;
+        }
+
+        .back-link {
+            color: #00d4ff;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: #00d4ff;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .refresh-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            background: transparent;
+            color: #00d4ff;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .new-assessment-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: linear-gradient(135deg, #00d4ff 0%, #00ff88 100%);
+            color: #1a1a2e;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .new-assessment-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
+        }
+
+        .main-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Stats Overview */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 212, 255, 0.1);
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+
+        .stat-card h3 {
+            font-size: 0.85rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d4ff 0%, #00ff88 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card .label {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 0.5rem;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .panel-badge {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Assessment Cards */
+        .assessment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .assessment-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.2s;
+        }
+
+        .assessment-card:hover {
+            border-color: rgba(0, 212, 255, 0.3);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .assessment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .assessment-name {
+            font-weight: 600;
+            color: #fff;
+            font-size: 0.95rem;
+        }
+
+        .assessment-status {
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-running {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+        }
+
+        .status-completed {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .status-failed {
+            background: rgba(255, 85, 85, 0.2);
+            color: #ff5555;
+        }
+
+        .status-draft {
+            background: rgba(136, 136, 136, 0.2);
+            color: #888;
+        }
+
+        .status-in_review {
+            background: rgba(255, 170, 0, 0.2);
+            color: #ffaa00;
+        }
+
+        .status-approved {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .assessment-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 0.75rem;
+        }
+
+        .progress-bar-container {
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #00d4ff 0%, #00ff88 100%);
+            border-radius: 8px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 0.5rem;
+        }
+
+        /* Phase Timeline */
+        .phase-timeline {
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .phase-timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .phase-item {
+            position: relative;
+            padding: 0.75rem 0;
+            padding-left: 1rem;
+        }
+
+        .phase-item::before {
+            content: '';
+            position: absolute;
+            left: -1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .phase-item.completed::before {
+            background: #00ff88;
+            border-color: #00ff88;
+        }
+
+        .phase-item.active::before {
+            background: #00d4ff;
+            border-color: #00d4ff;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(0, 212, 255, 0); }
+        }
+
+        .phase-name {
+            font-weight: 500;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .phase-agent {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .phase-duration {
+            font-size: 0.75rem;
+            color: #00d4ff;
+        }
+
+        /* Agent Activity */
+        .agent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .agent-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.2s;
+        }
+
+        .agent-card:hover {
+            border-color: rgba(0, 212, 255, 0.3);
+        }
+
+        .agent-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff 0%, #00ff88 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.75rem;
+            font-size: 1.5rem;
+        }
+
+        .agent-name {
+            font-weight: 600;
+            color: #fff;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .agent-role {
+            font-size: 0.75rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+        }
+
+        .agent-tasks {
+            font-size: 0.85rem;
+            color: #00d4ff;
+        }
+
+        /* Recent Events */
+        .events-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .event-item {
+            display: flex;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .event-item:last-child {
+            border-bottom: none;
+        }
+
+        .event-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .event-icon.success { background: rgba(0, 255, 136, 0.2); }
+        .event-icon.info { background: rgba(0, 212, 255, 0.2); }
+        .event-icon.warning { background: rgba(255, 170, 0, 0.2); }
+        .event-icon.error { background: rgba(255, 85, 85, 0.2); }
+
+        .event-content {
+            flex: 1;
+        }
+
+        .event-title {
+            font-size: 0.9rem;
+            color: #fff;
+            margin-bottom: 0.25rem;
+        }
+
+        .event-time {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        /* Full Width Sections */
+        .full-width-section {
+            margin-bottom: 2rem;
+        }
+
+        /* Migration Plans Table */
+        .plans-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .plans-table th,
+        .plans-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .plans-table th {
+            color: #888;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .plans-table td {
+            color: #e0e0e0;
+            font-size: 0.9rem;
+        }
+
+        .plans-table tr:hover td {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .target-tech {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .action-btn {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            background: transparent;
+            color: #00d4ff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #888;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 212, 255, 0.3);
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>Workflow Dashboard</h1>
+            <div class="header-meta">
+                <a href="index.html" class="back-link">
+                    <span>←</span> Hub Portal
+                </a>
+                <button class="refresh-btn" onclick="refreshData()">
+                    <span>🔄</span> Refresh
+                </button>
+                <button class="new-assessment-btn" onclick="openNewAssessment()">
+                    + New Assessment
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Stats Overview -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <h3>Active Assessments</h3>
+                <div class="value" id="active-assessments">-</div>
+                <div class="label">Running now</div>
+            </div>
+            <div class="stat-card">
+                <h3>Completed Today</h3>
+                <div class="value" id="completed-today">-</div>
+                <div class="label">Assessments</div>
+            </div>
+            <div class="stat-card">
+                <h3>Migration Plans</h3>
+                <div class="value" id="total-plans">-</div>
+                <div class="label">In review</div>
+            </div>
+            <div class="stat-card">
+                <h3>Approved Plans</h3>
+                <div class="value" id="approved-plans">-</div>
+                <div class="label">Ready to execute</div>
+            </div>
+            <div class="stat-card">
+                <h3>Avg Assessment Time</h3>
+                <div class="value" id="avg-time">-</div>
+                <div class="label">Minutes</div>
+            </div>
+            <div class="stat-card">
+                <h3>Success Rate</h3>
+                <div class="value" id="success-rate">-</div>
+                <div class="label">Completed</div>
+            </div>
+        </section>
+
+        <!-- Active Workflows Grid -->
+        <section class="dashboard-grid">
+            <!-- Active Assessments -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Active Assessments</h2>
+                    <span class="panel-badge">Workflow 1</span>
+                </div>
+                <div id="active-assessments-list" class="assessment-list">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+
+            <!-- Phase Timeline -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Phase Timeline</h2>
+                    <span class="panel-badge">Current</span>
+                </div>
+                <div id="phase-timeline" class="phase-timeline">
+                    <!-- Assessment Phases -->
+                    <div class="phase-item completed">
+                        <div class="phase-name">1. Registration</div>
+                        <div class="phase-agent">Agent: System</div>
+                    </div>
+                    <div class="phase-item completed">
+                        <div class="phase-name">2. AS-IS Architecture</div>
+                        <div class="phase-agent">Agent: Miguel</div>
+                    </div>
+                    <div class="phase-item completed">
+                        <div class="phase-name">3. Code Analysis</div>
+                        <div class="phase-agent">Agent: CodeRAG</div>
+                    </div>
+                    <div class="phase-item active">
+                        <div class="phase-name">4. Security Analysis</div>
+                        <div class="phase-agent">Agent: Quinn</div>
+                        <div class="phase-duration">Running for 2m 15s</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="phase-name">5. Quality Analysis</div>
+                        <div class="phase-agent">Agent: Quinn</div>
+                    </div>
+                    <div class="phase-item">
+                        <div class="phase-name">6. Report Generation</div>
+                        <div class="phase-agent">Agent: Diana</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Agent Activity -->
+        <section class="full-width-section">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Agent Activity</h2>
+                    <span class="panel-badge">10 Agents</span>
+                </div>
+                <div class="agent-grid">
+                    <div class="agent-card">
+                        <div class="agent-avatar">🏗️</div>
+                        <div class="agent-name">Felix</div>
+                        <div class="agent-role">Architect</div>
+                        <div class="agent-tasks">3 tasks</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-avatar">🔍</div>
+                        <div class="agent-name">Quinn</div>
+                        <div class="agent-role">Quality</div>
+                        <div class="agent-tasks">5 tasks</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-avatar">🐛</div>
+                        <div class="agent-name">Betty</div>
+                        <div class="agent-role">Bug Hunter</div>
+                        <div class="agent-tasks">2 tasks</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-avatar">📊</div>
+                        <div class="agent-name">Eliza</div>
+                        <div class="agent-role">Estimation</div>
+                        <div class="agent-tasks">4 tasks</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-avatar">📝</div>
+                        <div class="agent-name">Diana</div>
+                        <div class="agent-role">Docs</div>
+                        <div class="agent-tasks">1 task</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-avatar">🔧</div>
+                        <div class="agent-name">Marcus</div>
+                        <div class="agent-role">Maintenance</div>
+                        <div class="agent-tasks">0 tasks</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-avatar">🧪</div>
+                        <div class="agent-name">Tessa</div>
+                        <div class="agent-role">Testing</div>
+                        <div class="agent-tasks">2 tasks</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-avatar">🚀</div>
+                        <div class="agent-name">Miguel</div>
+                        <div class="agent-role">Migration</div>
+                        <div class="agent-tasks">3 tasks</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-avatar">📦</div>
+                        <div class="agent-name">Peter</div>
+                        <div class="agent-role">Product</div>
+                        <div class="agent-tasks">1 task</div>
+                    </div>
+                    <div class="agent-card">
+                        <div class="agent-avatar">📋</div>
+                        <div class="agent-name">Paul</div>
+                        <div class="agent-role">Planning</div>
+                        <div class="agent-tasks">0 tasks</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Migration Plans -->
+        <section class="full-width-section">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Migration Plans</h2>
+                    <span class="panel-badge">Workflow 2</span>
+                </div>
+                <table class="plans-table">
+                    <thead>
+                        <tr>
+                            <th>Project</th>
+                            <th>Target Stack</th>
+                            <th>FP Estimate</th>
+                            <th>Timeline</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="plans-table-body">
+                        <tr>
+                            <td colspan="6">
+                                <div class="loading"><div class="spinner"></div></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Recent Events & Activity -->
+        <section class="dashboard-grid">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Recent Events</h2>
+                    <span class="panel-badge">Live</span>
+                </div>
+                <div id="events-list" class="events-list">
+                    <div class="event-item">
+                        <div class="event-icon success">✓</div>
+                        <div class="event-content">
+                            <div class="event-title">Assessment completed: LegacyApp</div>
+                            <div class="event-time">2 minutes ago</div>
+                        </div>
+                    </div>
+                    <div class="event-item">
+                        <div class="event-icon info">🔄</div>
+                        <div class="event-content">
+                            <div class="event-title">Security phase started: ModernApp</div>
+                            <div class="event-time">5 minutes ago</div>
+                        </div>
+                    </div>
+                    <div class="event-item">
+                        <div class="event-icon warning">⚠️</div>
+                        <div class="event-content">
+                            <div class="event-title">Migration plan needs review</div>
+                            <div class="event-time">10 minutes ago</div>
+                        </div>
+                    </div>
+                    <div class="event-item">
+                        <div class="event-icon success">✓</div>
+                        <div class="event-content">
+                            <div class="event-title">Plan approved: E-Commerce</div>
+                            <div class="event-time">15 minutes ago</div>
+                        </div>
+                    </div>
+                    <div class="event-item">
+                        <div class="event-icon info">📊</div>
+                        <div class="event-content">
+                            <div class="event-title">FP Estimation: 245 FP calculated</div>
+                            <div class="event-time">20 minutes ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats Chart -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Workflow Completion (7 Days)</h2>
+                    <span class="panel-badge">Chart</span>
+                </div>
+                <canvas id="completionChart"></canvas>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboardData();
+            initChart();
+            startAutoRefresh();
+        });
+
+        async function loadDashboardData() {
+            try {
+                // Load stats
+                await loadStats();
+                // Load active assessments
+                await loadActiveAssessments();
+                // Load migration plans
+                await loadMigrationPlans();
+            } catch (error) {
+                console.error('Failed to load dashboard data:', error);
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/workflows/statistics`);
+                if (response.ok) {
+                    const stats = await response.json();
+                    document.getElementById('active-assessments').textContent = stats.active_assessments || 0;
+                    document.getElementById('completed-today').textContent = stats.completed_today || 0;
+                    document.getElementById('total-plans').textContent = stats.plans_in_review || 0;
+                    document.getElementById('approved-plans').textContent = stats.approved_plans || 0;
+                    document.getElementById('avg-time').textContent = stats.avg_assessment_minutes || '-';
+                    document.getElementById('success-rate').textContent =
+                        stats.success_rate ? `${stats.success_rate}%` : '-';
+                }
+            } catch (error) {
+                console.log('Statistics API not available, using demo data');
+                // Demo data
+                document.getElementById('active-assessments').textContent = '3';
+                document.getElementById('completed-today').textContent = '7';
+                document.getElementById('total-plans').textContent = '4';
+                document.getElementById('approved-plans').textContent = '2';
+                document.getElementById('avg-time').textContent = '12';
+                document.getElementById('success-rate').textContent = '94%';
+            }
+        }
+
+        async function loadActiveAssessments() {
+            const container = document.getElementById('active-assessments-list');
+
+            try {
+                const response = await fetch(`${API_BASE}/workflows/assessments?status=running`);
+                if (response.ok) {
+                    const assessments = await response.json();
+                    renderAssessments(container, assessments);
+                    return;
+                }
+            } catch (error) {
+                console.log('Assessments API not available, using demo data');
+            }
+
+            // Demo data
+            renderAssessments(container, [
+                {
+                    project_name: 'LegacyERP System',
+                    status: 'running',
+                    current_phase: 'security',
+                    progress_percent: 66,
+                    primary_stack: 'PHP',
+                    started_at: new Date(Date.now() - 600000).toISOString()
+                },
+                {
+                    project_name: 'E-Commerce Platform',
+                    status: 'running',
+                    current_phase: 'code',
+                    progress_percent: 50,
+                    primary_stack: 'Python',
+                    started_at: new Date(Date.now() - 900000).toISOString()
+                },
+                {
+                    project_name: 'Mobile Backend API',
+                    status: 'completed',
+                    current_phase: 'completed',
+                    progress_percent: 100,
+                    primary_stack: 'Node.js',
+                    overall_grade: 'B'
+                }
+            ]);
+        }
+
+        function renderAssessments(container, assessments) {
+            if (assessments.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>No active assessments</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = assessments.map(a => `
+                <div class="assessment-card">
+                    <div class="assessment-header">
+                        <span class="assessment-name">${a.project_name}</span>
+                        <span class="assessment-status status-${a.status}">${a.status}</span>
+                    </div>
+                    <div class="assessment-meta">
+                        <span>Stack: ${a.primary_stack || 'Detecting...'}</span>
+                        <span>Phase: ${a.current_phase}</span>
+                        ${a.overall_grade ? `<span>Grade: ${a.overall_grade}</span>` : ''}
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: ${a.progress_percent}%"></div>
+                    </div>
+                    <div class="progress-label">
+                        <span>${a.current_phase}</span>
+                        <span>${a.progress_percent}%</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadMigrationPlans() {
+            const container = document.getElementById('plans-table-body');
+
+            try {
+                const response = await fetch(`${API_BASE}/workflows/plans`);
+                if (response.ok) {
+                    const plans = await response.json();
+                    renderPlans(container, plans);
+                    return;
+                }
+            } catch (error) {
+                console.log('Plans API not available, using demo data');
+            }
+
+            // Demo data
+            renderPlans(container, [
+                {
+                    project_name: 'LegacyERP System',
+                    target_technology: 'python_fastapi',
+                    adjusted_fp: 245,
+                    timeline_weeks: 24,
+                    status: 'in_review'
+                },
+                {
+                    project_name: 'E-Commerce Platform',
+                    target_technology: 'nodejs_nestjs',
+                    adjusted_fp: 180,
+                    timeline_weeks: 18,
+                    status: 'approved'
+                },
+                {
+                    project_name: 'HR Management',
+                    target_technology: 'dotnet8',
+                    adjusted_fp: 320,
+                    timeline_weeks: 32,
+                    status: 'draft'
+                }
+            ]);
+        }
+
+        function renderPlans(container, plans) {
+            if (plans.length === 0) {
+                container.innerHTML = `
+                    <tr>
+                        <td colspan="6">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📊</div>
+                                <p>No migration plans</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const techLabels = {
+                'python_fastapi': 'Python FastAPI',
+                'nodejs_nestjs': 'Node.js NestJS',
+                'dotnet8': '.NET 8',
+                'java_spring': 'Java Spring',
+                'go_fiber': 'Go Fiber'
+            };
+
+            container.innerHTML = plans.map(p => `
+                <tr>
+                    <td>${p.project_name}</td>
+                    <td><span class="target-tech">🎯 ${techLabels[p.target_technology] || p.target_technology}</span></td>
+                    <td>${p.adjusted_fp} FP</td>
+                    <td>${p.timeline_weeks} weeks</td>
+                    <td><span class="assessment-status status-${p.status}">${p.status.replace('_', ' ')}</span></td>
+                    <td>
+                        <button class="action-btn" onclick="viewPlan('${p.id}')">View</button>
+                        ${p.status === 'in_review' ? `
+                            <button class="action-btn" onclick="approvePlan('${p.id}')">Approve</button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('completionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [
+                        {
+                            label: 'Assessments',
+                            data: [5, 8, 6, 9, 7, 3, 4],
+                            backgroundColor: 'rgba(0, 212, 255, 0.5)',
+                            borderColor: '#00d4ff',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Plans',
+                            data: [2, 3, 2, 4, 3, 1, 2],
+                            backgroundColor: 'rgba(0, 255, 136, 0.5)',
+                            borderColor: '#00ff88',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#888'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255,255,255,0.05)'
+                            },
+                            ticks: {
+                                color: '#888'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#888'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function refreshData() {
+            const btn = document.querySelector('.refresh-btn');
+            btn.classList.add('loading');
+            btn.innerHTML = '<span>⏳</span> Loading...';
+
+            loadDashboardData().finally(() => {
+                btn.classList.remove('loading');
+                btn.innerHTML = '<span>🔄</span> Refresh';
+            });
+        }
+
+        function startAutoRefresh() {
+            // Auto refresh every 30 seconds
+            setInterval(() => {
+                loadDashboardData();
+            }, 30000);
+        }
+
+        function openNewAssessment() {
+            // Could open a modal or redirect to project-intake
+            window.location.href = 'project-intake.html';
+        }
+
+        function viewPlan(planId) {
+            alert(`View plan: ${planId}\n\nThis would open the migration plan details.`);
+        }
+
+        function approvePlan(planId) {
+            if (confirm('Approve this migration plan?')) {
+                fetch(`${API_BASE}/workflows/plans/${planId}/approve`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reviewer: 'dashboard_user' })
+                }).then(() => {
+                    loadMigrationPlans();
+                }).catch(err => {
+                    alert('Plan approved (demo mode)');
+                    loadMigrationPlans();
+                });
+            }
+        }
+    </script>
+</body>
+</html>

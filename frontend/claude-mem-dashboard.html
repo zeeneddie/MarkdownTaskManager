@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude-Mem Dashboard - Session Memory Management</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background-attachment: fixed;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(138, 43, 226, 0.3);
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #8a2be2 0%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header h1::before {
+            content: "🧠";
+            -webkit-text-fill-color: initial;
+        }
+
+        .back-link {
+            color: #8a2be2;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .back-link:hover {
+            background: rgba(138, 43, 226, 0.1);
+            border-color: #8a2be2;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(138, 43, 226, 0.2);
+        }
+
+        .stat-card h3 {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #8a2be2 0%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: rgba(255,255,255,0.05);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-header h2 {
+            font-size: 1.1rem;
+            color: #fff;
+        }
+
+        .panel-body {
+            padding: 1.5rem;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .session-list {
+            list-style: none;
+        }
+
+        .session-item {
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .session-item:hover, .session-item.active {
+            background: rgba(138, 43, 226, 0.1);
+            border-color: rgba(138, 43, 226, 0.3);
+        }
+
+        .session-item.endless {
+            border-left: 3px solid #00ff88;
+        }
+
+        .session-item h4 {
+            color: #fff;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .session-meta {
+            font-size: 0.8rem;
+            color: #888;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-endless {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+        }
+
+        .badge-priority-critical {
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+        }
+
+        .badge-priority-high {
+            background: rgba(255, 165, 0, 0.2);
+            color: #ffa500;
+        }
+
+        .badge-priority-normal {
+            background: rgba(0, 212, 255, 0.2);
+            color: #00d4ff;
+        }
+
+        .badge-priority-low {
+            background: rgba(136, 136, 136, 0.2);
+            color: #888;
+        }
+
+        .observation-list {
+            list-style: none;
+        }
+
+        .observation-item {
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            border-left: 3px solid #8a2be2;
+        }
+
+        .observation-item.priority-critical {
+            border-left-color: #ff4444;
+        }
+
+        .observation-item.priority-high {
+            border-left-color: #ffa500;
+        }
+
+        .observation-content {
+            color: #e0e0e0;
+            margin-bottom: 0.75rem;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+
+        .observation-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 0.5rem;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            background: rgba(138, 43, 226, 0.2);
+            color: #8a2be2;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        .observation-meta {
+            font-size: 0.75rem;
+            color: #888;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #8a2be2;
+        }
+
+        .btn {
+            padding: 0.75rem 1.25rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #8a2be2 0%, #6a1b9a 100%);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #e0e0e0;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .context-window {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            color: #c0c0c0;
+        }
+
+        .context-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .token-usage {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .token-bar {
+            width: 200px;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .token-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8a2be2, #00d4ff);
+            transition: width 0.3s;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 200px;
+            margin-top: 1rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #888;
+        }
+
+        .empty-state p {
+            margin-bottom: 1rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tab {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 6px;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: rgba(138, 43, 226, 0.2);
+            border-color: #8a2be2;
+            color: #fff;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1a2e;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(138, 43, 226, 0.2);
+            border-top-color: #8a2be2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>Claude-Mem Dashboard</h1>
+            <div>
+                <a href="index.html" class="back-link">
+                    <span>←</span> Back to Hub
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Active Sessions</h3>
+                <div class="value" id="stat-sessions">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Endless Mode</h3>
+                <div class="value" id="stat-endless">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Observations</h3>
+                <div class="value" id="stat-observations">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Token Savings</h3>
+                <div class="value" id="stat-savings">0%</div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Sessions Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Sessions</h2>
+                    <button class="btn btn-primary" onclick="showNewSessionModal()">+ New</button>
+                </div>
+                <div class="panel-body">
+                    <ul class="session-list" id="session-list">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Detail Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Session Details</h2>
+                    <div class="tabs">
+                        <button class="tab active" data-tab="observations">Observations</button>
+                        <button class="tab" data-tab="context">Context Window</button>
+                        <button class="tab" data-tab="search">Search</button>
+                    </div>
+                </div>
+                <div class="panel-body" id="detail-panel">
+                    <div class="empty-state">
+                        <p>Select a session to view details</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribution Charts -->
+        <div style="margin-top: 2rem;">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Observation Distribution</h2>
+                </div>
+                <div class="panel-body">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                        <div>
+                            <h3 style="color: #888; font-size: 0.9rem; margin-bottom: 1rem;">By Priority</h3>
+                            <div class="chart-container">
+                                <canvas id="priority-chart"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 style="color: #888; font-size: 0.9rem; margin-bottom: 1rem;">By Type</h3>
+                            <div class="chart-container">
+                                <canvas id="type-chart"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 style="color: #888; font-size: 0.9rem; margin-bottom: 1rem;">Top Tags</h3>
+                            <div class="chart-container">
+                                <canvas id="tags-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Session Modal -->
+    <div class="modal" id="new-session-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Session</h2>
+                <button class="close-btn" onclick="closeModal('new-session-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Session ID</label>
+                    <input type="text" id="new-session-id" placeholder="e.g., feature-auth-2024">
+                </div>
+                <div class="form-group">
+                    <label>Title (optional)</label>
+                    <input type="text" id="new-session-title" placeholder="e.g., User Authentication Implementation">
+                </div>
+                <div class="form-group">
+                    <label>Token Budget</label>
+                    <input type="number" id="new-session-budget" value="4000" min="500" max="32000">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="new-session-autotag" checked> Enable Auto-tagging
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('new-session-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createSession()">Create Session</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Observation Modal -->
+    <div class="modal" id="new-observation-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Capture Observation</h2>
+                <button class="close-btn" onclick="closeModal('new-observation-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Content</label>
+                    <textarea id="new-obs-content" placeholder="Enter your observation..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="new-obs-type">
+                        <option value="insight">Insight</option>
+                        <option value="decision">Decision</option>
+                        <option value="error">Error</option>
+                        <option value="progress">Progress</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select id="new-obs-priority">
+                        <option value="normal">Normal</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tags (comma-separated)</label>
+                    <input type="text" id="new-obs-tags" placeholder="e.g., architecture, bugfix, security">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('new-observation-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="captureObservation()">Capture</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/claude-mem';
+        let currentSession = null;
+        let priorityChart = null;
+        let typeChart = null;
+        let tagsChart = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboard();
+            setupTabs();
+        });
+
+        // Tab switching
+        function setupTabs() {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    if (currentSession) {
+                        loadTabContent(tab.dataset.tab);
+                    }
+                });
+            });
+        }
+
+        // Load dashboard data
+        async function loadDashboard() {
+            try {
+                const response = await fetch(`${API_BASE}/dashboard?limit=20`);
+                const data = await response.json();
+
+                document.getElementById('stat-sessions').textContent = data.total_sessions;
+                document.getElementById('stat-endless').textContent = data.endless_sessions;
+                document.getElementById('stat-observations').textContent = data.total_observations;
+
+                // Calculate token savings estimate
+                const savings = data.total_observations > 0 ? Math.min(95, Math.round(data.total_observations * 0.8)) : 0;
+                document.getElementById('stat-savings').textContent = `~${savings}%`;
+
+                renderSessionList(data.sessions);
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                document.getElementById('session-list').innerHTML = `
+                    <div class="empty-state">
+                        <p>Error loading sessions</p>
+                        <button class="btn btn-secondary" onclick="loadDashboard()">Retry</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Render session list
+        function renderSessionList(sessions) {
+            const list = document.getElementById('session-list');
+
+            if (!sessions || sessions.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <p>No sessions yet</p>
+                        <button class="btn btn-primary" onclick="showNewSessionModal()">Create First Session</button>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = sessions.map(session => `
+                <li class="session-item ${session.endless_mode ? 'endless' : ''} ${currentSession?.session_id === session.session_id ? 'active' : ''}"
+                    onclick="selectSession('${session.session_id}')">
+                    <h4>${session.title || session.session_id}</h4>
+                    <div class="session-meta">
+                        <span>${session.observation_count || 0} observations</span>
+                        <span>${session.token_budget} tokens</span>
+                        ${session.endless_mode ? '<span class="badge badge-endless">Endless</span>' : ''}
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        // Select session
+        async function selectSession(sessionId) {
+            try {
+                const response = await fetch(`${API_BASE}/sessions/${sessionId}/statistics`);
+                if (!response.ok) throw new Error('Session not found');
+
+                currentSession = await response.json();
+
+                // Update active state
+                document.querySelectorAll('.session-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                event.currentTarget?.classList.add('active');
+
+                // Load active tab content
+                const activeTab = document.querySelector('.tab.active');
+                loadTabContent(activeTab.dataset.tab);
+
+                // Update charts
+                updateCharts();
+            } catch (error) {
+                console.error('Error loading session:', error);
+            }
+        }
+
+        // Load tab content
+        async function loadTabContent(tab) {
+            const panel = document.getElementById('detail-panel');
+
+            if (!currentSession) {
+                panel.innerHTML = '<div class="empty-state"><p>Select a session to view details</p></div>';
+                return;
+            }
+
+            switch (tab) {
+                case 'observations':
+                    await loadObservations();
+                    break;
+                case 'context':
+                    await loadContextWindow();
+                    break;
+                case 'search':
+                    showSearchInterface();
+                    break;
+            }
+        }
+
+        // Load observations
+        async function loadObservations() {
+            const panel = document.getElementById('detail-panel');
+            panel.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/sessions/${currentSession.session_id}/observations`);
+                const observations = await response.json();
+
+                if (!observations || observations.length === 0) {
+                    panel.innerHTML = `
+                        <div class="empty-state">
+                            <p>No observations captured yet</p>
+                            <button class="btn btn-primary" onclick="showNewObservationModal()">Capture First Observation</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                panel.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                        <span>${observations.length} observations</span>
+                        <button class="btn btn-primary" onclick="showNewObservationModal()">+ Capture</button>
+                    </div>
+                    <ul class="observation-list">
+                        ${observations.map(obs => `
+                            <li class="observation-item priority-${obs.priority}">
+                                <div class="observation-tags">
+                                    ${(obs.tags || []).map(tag => `<span class="tag">${tag}</span>`).join('')}
+                                    <span class="badge badge-priority-${obs.priority}">${obs.priority}</span>
+                                </div>
+                                <div class="observation-content">${escapeHtml(obs.content)}</div>
+                                <div class="observation-meta">
+                                    <span>${obs.observation_type || 'insight'}</span>
+                                    <span>${formatDate(obs.created_at)}</span>
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                `;
+            } catch (error) {
+                console.error('Error loading observations:', error);
+                panel.innerHTML = '<div class="empty-state"><p>Error loading observations</p></div>';
+            }
+        }
+
+        // Load context window
+        async function loadContextWindow() {
+            const panel = document.getElementById('detail-panel');
+            panel.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/sessions/${currentSession.session_id}/context`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ strategy: 'recent', include_summaries: true })
+                });
+
+                const context = await response.json();
+                const usagePercent = Math.round((context.token_count / context.token_budget) * 100);
+
+                panel.innerHTML = `
+                    <div class="context-header">
+                        <div class="token-usage">
+                            <span>Token Usage</span>
+                            <div class="token-bar">
+                                <div class="token-bar-fill" style="width: ${usagePercent}%"></div>
+                            </div>
+                            <span>${context.token_count} / ${context.token_budget}</span>
+                        </div>
+                        <div>
+                            <span>${context.observations_included} obs, ${context.summaries_included} summaries</span>
+                        </div>
+                    </div>
+                    <div class="context-window">${escapeHtml(context.context_text)}</div>
+                    <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
+                        <button class="btn btn-secondary" onclick="compressMemories()">Compress Memories</button>
+                        <button class="btn btn-secondary" onclick="toggleEndlessMode()">
+                            ${currentSession.endless_mode ? 'Disable' : 'Enable'} Endless Mode
+                        </button>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading context:', error);
+                panel.innerHTML = '<div class="empty-state"><p>Error loading context window</p></div>';
+            }
+        }
+
+        // Show search interface
+        function showSearchInterface() {
+            const panel = document.getElementById('detail-panel');
+            panel.innerHTML = `
+                <div class="search-box">
+                    <input type="text" id="search-query" placeholder="Search observations...">
+                    <button class="btn btn-primary" onclick="searchMemories()">Search</button>
+                </div>
+                <div id="search-results"></div>
+            `;
+        }
+
+        // Search memories
+        async function searchMemories() {
+            const query = document.getElementById('search-query').value;
+            if (!query) return;
+
+            const resultsDiv = document.getElementById('search-results');
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/sessions/${currentSession.session_id}/search`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query, use_fts: true, limit: 20 })
+                });
+
+                const data = await response.json();
+
+                if (!data.results || data.results.length === 0) {
+                    resultsDiv.innerHTML = '<div class="empty-state"><p>No results found</p></div>';
+                    return;
+                }
+
+                resultsDiv.innerHTML = `
+                    <p style="margin-bottom: 1rem;">${data.results_count} results found</p>
+                    <ul class="observation-list">
+                        ${data.results.map(obs => `
+                            <li class="observation-item priority-${obs.priority}">
+                                <div class="observation-tags">
+                                    ${(obs.tags || []).map(tag => `<span class="tag">${tag}</span>`).join('')}
+                                </div>
+                                <div class="observation-content">${escapeHtml(obs.content)}</div>
+                                <div class="observation-meta">
+                                    <span>${formatDate(obs.created_at)}</span>
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                `;
+            } catch (error) {
+                console.error('Error searching:', error);
+                resultsDiv.innerHTML = '<div class="empty-state"><p>Error searching memories</p></div>';
+            }
+        }
+
+        // Update charts
+        function updateCharts() {
+            if (!currentSession) return;
+
+            const priorityData = currentSession.priority_distribution || {};
+            const typeData = currentSession.type_distribution || {};
+            const tagData = currentSession.tag_distribution || {};
+
+            // Priority chart
+            const priorityCtx = document.getElementById('priority-chart').getContext('2d');
+            if (priorityChart) priorityChart.destroy();
+            priorityChart = new Chart(priorityCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(priorityData),
+                    datasets: [{
+                        data: Object.values(priorityData),
+                        backgroundColor: ['#ff4444', '#ffa500', '#00d4ff', '#888888']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { color: '#888' } } }
+                }
+            });
+
+            // Type chart
+            const typeCtx = document.getElementById('type-chart').getContext('2d');
+            if (typeChart) typeChart.destroy();
+            typeChart = new Chart(typeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(typeData),
+                    datasets: [{
+                        data: Object.values(typeData),
+                        backgroundColor: ['#8a2be2', '#00d4ff', '#00ff88', '#ffa500']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { color: '#888' } } }
+                }
+            });
+
+            // Tags chart
+            const topTags = Object.entries(tagData).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            const tagsCtx = document.getElementById('tags-chart').getContext('2d');
+            if (tagsChart) tagsChart.destroy();
+            tagsChart = new Chart(tagsCtx, {
+                type: 'bar',
+                data: {
+                    labels: topTags.map(t => t[0]),
+                    datasets: [{
+                        data: topTags.map(t => t[1]),
+                        backgroundColor: '#8a2be2'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y: { ticks: { color: '#888' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    }
+                }
+            });
+        }
+
+        // Modal functions
+        function showNewSessionModal() {
+            document.getElementById('new-session-modal').classList.add('active');
+        }
+
+        function showNewObservationModal() {
+            document.getElementById('new-observation-modal').classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // Create session
+        async function createSession() {
+            const sessionId = document.getElementById('new-session-id').value;
+            const title = document.getElementById('new-session-title').value;
+            const budget = parseInt(document.getElementById('new-session-budget').value);
+            const autoTag = document.getElementById('new-session-autotag').checked;
+
+            if (!sessionId) {
+                alert('Session ID is required');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/sessions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        title: title || null,
+                        token_budget: budget,
+                        auto_tag: autoTag
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail);
+                }
+
+                closeModal('new-session-modal');
+                loadDashboard();
+            } catch (error) {
+                alert('Error creating session: ' + error.message);
+            }
+        }
+
+        // Capture observation
+        async function captureObservation() {
+            const content = document.getElementById('new-obs-content').value;
+            const type = document.getElementById('new-obs-type').value;
+            const priority = document.getElementById('new-obs-priority').value;
+            const tagsInput = document.getElementById('new-obs-tags').value;
+            const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : null;
+
+            if (!content) {
+                alert('Content is required');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/observe`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: currentSession.session_id,
+                        content,
+                        observation_type: type,
+                        priority,
+                        tags
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail);
+                }
+
+                closeModal('new-observation-modal');
+                // Clear form
+                document.getElementById('new-obs-content').value = '';
+                document.getElementById('new-obs-tags').value = '';
+                // Reload
+                selectSession(currentSession.session_id);
+            } catch (error) {
+                alert('Error capturing observation: ' + error.message);
+            }
+        }
+
+        // Compress memories
+        async function compressMemories() {
+            try {
+                const response = await fetch(`${API_BASE}/sessions/${currentSession.session_id}/compress`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ older_than_hours: 24 })
+                });
+
+                const result = await response.json();
+                alert(`Compressed ${result.observations_compressed} observations into ${result.summaries_created} summaries`);
+                loadContextWindow();
+            } catch (error) {
+                alert('Error compressing memories: ' + error.message);
+            }
+        }
+
+        // Toggle endless mode
+        async function toggleEndlessMode() {
+            const action = currentSession.endless_mode ? 'disable' : 'enable';
+
+            try {
+                const response = await fetch(`${API_BASE}/sessions/${currentSession.session_id}/endless/${action}`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) throw new Error('Failed to toggle endless mode');
+
+                selectSession(currentSession.session_id);
+            } catch (error) {
+                alert('Error toggling endless mode: ' + error.message);
+            }
+        }
+
+        // Utility functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+{
+  "name": "markdown-task-manager-agents",
+  "version": "1.0.0",
+  "description": "KaibanJS agent orchestration for Multi-Stack AI Agent Platform",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node-dev --respawn --transpile-only index.ts",
+    "start": "node dist/index.js",
+    "test": "jest",
+    "kaiban": "npm run kaiban:board",
+    "prepare": "husky install",
+    "quality:check": "ts-node scripts/pre-commit-quality-check.ts",
+    "quality:check:verbose": "ts-node scripts/pre-commit-quality-check.ts --verbose",
+    "quality:check:strict": "ts-node scripts/pre-commit-quality-check.ts --strict",
+    "quality:check:skip-tests": "ts-node scripts/pre-commit-quality-check.ts --skip-tests",
+    "dashboard:generate": "ts-node scripts/generate-dashboard-data.ts",
+    "dashboard:serve": "ts-node scripts/generate-dashboard-data.ts --serve",
+    "dashboard:export:csv": "ts-node scripts/generate-dashboard-data.ts --format csv"
+  },
+  "keywords": [
+    "kaibanjs",
+    "agents",
+    "ai",
+    "task-management"
+  ],
+  "author": "Eddie",
+  "license": "MIT",
+  "dependencies": {
+    "kaibanjs": "latest"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.0.0",
+    "husky": "^8.0.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.5",
+    "ts-node": "^10.9.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.0.0"
+  }
+}

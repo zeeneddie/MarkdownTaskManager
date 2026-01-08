@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Human Review - Static vs LLM Conflicts | MarQed AI</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-yellow: #eab308;
+            --accent-red: #ef4444;
+            --accent-purple: #a855f7;
+            --border-color: #475569;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .badge-pending { background: var(--accent-yellow); color: #000; }
+        .badge-resolved { background: var(--accent-green); color: #000; }
+        .badge-high { background: var(--accent-red); color: #fff; }
+        .badge-medium { background: var(--accent-yellow); color: #000; }
+        .badge-low { background: var(--accent-blue); color: #fff; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .threshold-indicator {
+            background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);
+            padding: 1rem 1.5rem;
+            border-radius: 0.75rem;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .threshold-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .threshold-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .conflicts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .conflict-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        .conflict-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .conflict-type {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .conflict-type-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            font-size: 1.25rem;
+        }
+
+        .conflict-type-icon.threshold { background: var(--accent-yellow); }
+        .conflict-type-icon.disagreement { background: var(--accent-red); }
+        .conflict-type-icon.classification { background: var(--accent-purple); }
+        .conflict-type-icon.removal { background: var(--accent-blue); }
+
+        .conflict-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            padding: 1.5rem;
+        }
+
+        .analysis-panel {
+            background: var(--bg-primary);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .panel-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .panel-title.static { color: var(--accent-green); }
+        .panel-title.llm { color: var(--accent-blue); }
+
+        .confidence-bar {
+            height: 0.5rem;
+            background: var(--bg-tertiary);
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.3s ease;
+        }
+
+        .confidence-fill.high { background: var(--accent-green); }
+        .confidence-fill.medium { background: var(--accent-yellow); }
+        .confidence-fill.low { background: var(--accent-red); }
+
+        .data-preview {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.75rem;
+            background: var(--bg-tertiary);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+
+        .conflict-footer {
+            padding: 1rem 1.5rem;
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .recommendations {
+            margin-bottom: 1rem;
+        }
+
+        .recommendations h4 {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .recommendations ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .recommendations li {
+            background: var(--bg-primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .resolution-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-static {
+            background: var(--accent-green);
+            color: #000;
+        }
+
+        .btn-llm {
+            background: var(--accent-blue);
+            color: #fff;
+        }
+
+        .btn-merge {
+            background: var(--accent-purple);
+            color: #fff;
+        }
+
+        .btn-reject {
+            background: var(--accent-red);
+            color: #fff;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-bar select {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+        }
+
+        .progress-bar {
+            height: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-green) 0%, var(--accent-blue) 100%);
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .conflict-body {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>Human Review - Static vs LLM Conflicts</h1>
+                <p style="color: var(--text-secondary); margin-top: 0.25rem;">Week 100 - Fase 15b Pipeline Integration</p>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <select id="sessionSelect" onchange="loadSession(this.value)">
+                    <option value="">Select Session...</option>
+                </select>
+                <button class="btn btn-secondary" onclick="refreshData()">Refresh</button>
+            </div>
+        </header>
+
+        <div class="threshold-indicator">
+            <div>
+                <div class="threshold-value">72.5%</div>
+                <div class="threshold-label">Confidence Threshold</div>
+            </div>
+            <div style="flex: 1; padding-left: 2rem; border-left: 1px solid rgba(255,255,255,0.2);">
+                <p>Items below this threshold require human review. Static analysis provides an 80% deterministic baseline.</p>
+            </div>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalConflicts">0</div>
+                <div class="stat-label">Total Conflicts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="pendingReview">0</div>
+                <div class="stat-label">Pending Review</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="autoResolved">0</div>
+                <div class="stat-label">Auto-Resolved</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="humanResolved">0</div>
+                <div class="stat-label">Human-Resolved</div>
+            </div>
+            <div class="stat-card" style="grid-column: span 2;">
+                <div class="stat-label" style="margin-bottom: 0.5rem;">Resolution Progress</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <div class="stat-value" id="progressPercent" style="font-size: 1.5rem; margin-top: 0.5rem;">0%</div>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <select id="statusFilter" onchange="applyFilters()">
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="auto_resolved">Auto-Resolved</option>
+                <option value="human_review">Human Review</option>
+                <option value="resolved">Resolved</option>
+            </select>
+            <select id="severityFilter" onchange="applyFilters()">
+                <option value="">All Severities</option>
+                <option value="critical">Critical</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+            </select>
+            <select id="typeFilter" onchange="applyFilters()">
+                <option value="">All Types</option>
+                <option value="confidence_threshold">Confidence Threshold</option>
+                <option value="explicit_disagreement">Explicit Disagreement</option>
+                <option value="classification_change">Classification Change</option>
+                <option value="item_removal">Item Removal</option>
+            </select>
+        </div>
+
+        <div class="conflicts-list" id="conflictsList">
+            <div class="empty-state">
+                <div class="empty-state-icon">&#x1F50D;</div>
+                <h3>No conflicts to display</h3>
+                <p>Select a session to view conflicts</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/deep-extraction';
+        let currentSessionId = null;
+        let conflictsData = [];
+
+        async function loadSessions() {
+            try {
+                const response = await fetch(`${API_BASE}/sessions?limit=20`);
+                const sessions = await response.json();
+
+                const select = document.getElementById('sessionSelect');
+                sessions.forEach(session => {
+                    const option = document.createElement('option');
+                    option.value = session.id;
+                    option.textContent = `${session.workflow_type} - ${session.tier} (${session.status})`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+            }
+        }
+
+        async function loadSession(sessionId) {
+            if (!sessionId) return;
+            currentSessionId = sessionId;
+            await Promise.all([loadSummary(), loadConflicts()]);
+        }
+
+        async function loadSummary() {
+            try {
+                const response = await fetch(`${API_BASE}/sessions/${currentSessionId}/static-llm-conflicts/summary`);
+                const summary = await response.json();
+
+                document.getElementById('totalConflicts').textContent = summary.total_conflicts;
+                document.getElementById('pendingReview').textContent = summary.progress?.pending || 0;
+                document.getElementById('autoResolved').textContent = summary.progress?.auto_resolved || 0;
+                document.getElementById('humanResolved').textContent = summary.progress?.human_resolved || 0;
+
+                const progress = summary.progress?.completion_percentage || 0;
+                document.getElementById('progressFill').style.width = `${progress}%`;
+                document.getElementById('progressPercent').textContent = `${progress}%`;
+            } catch (error) {
+                console.error('Error loading summary:', error);
+            }
+        }
+
+        async function loadConflicts() {
+            const status = document.getElementById('statusFilter').value;
+            const severity = document.getElementById('severityFilter').value;
+            const type = document.getElementById('typeFilter').value;
+
+            let url = `${API_BASE}/sessions/${currentSessionId}/static-llm-conflicts?limit=50`;
+            if (status) url += `&status=${status}`;
+            if (severity) url += `&severity=${severity}`;
+            if (type) url += `&conflict_type=${type}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                conflictsData = data.conflicts || [];
+                renderConflicts();
+            } catch (error) {
+                console.error('Error loading conflicts:', error);
+            }
+        }
+
+        function renderConflicts() {
+            const container = document.getElementById('conflictsList');
+
+            if (conflictsData.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">&#x2705;</div>
+                        <h3>No conflicts found</h3>
+                        <p>All conflicts have been resolved or none exist for this session</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = conflictsData.map(conflict => renderConflictCard(conflict)).join('');
+        }
+
+        function renderConflictCard(conflict) {
+            const typeIcons = {
+                'confidence_threshold': { icon: '&#x26A0;', class: 'threshold' },
+                'explicit_disagreement': { icon: '&#x2194;', class: 'disagreement' },
+                'classification_change': { icon: '&#x1F504;', class: 'classification' },
+                'item_removal': { icon: '&#x274C;', class: 'removal' }
+            };
+
+            const typeInfo = typeIcons[conflict.conflict_type] || { icon: '?', class: 'threshold' };
+            const staticConfPercent = (conflict.static?.confidence || 0) * 100;
+            const llmConfPercent = (conflict.llm?.confidence || 0) * 100;
+
+            const getConfidenceClass = (percent) => {
+                if (percent >= 72.5) return 'high';
+                if (percent >= 50) return 'medium';
+                return 'low';
+            };
+
+            return `
+                <div class="conflict-card" data-id="${conflict.id}">
+                    <div class="conflict-header">
+                        <div class="conflict-type">
+                            <div class="conflict-type-icon ${typeInfo.class}">${typeInfo.icon}</div>
+                            <div>
+                                <div style="font-weight: 600;">${formatConflictType(conflict.conflict_type)}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary);">${conflict.item_type || 'Unknown'} - ${conflict.item_id}</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <span class="badge badge-${conflict.severity}">${conflict.severity.toUpperCase()}</span>
+                            <span class="badge badge-${conflict.status === 'pending' ? 'pending' : 'resolved'}">${conflict.status.toUpperCase()}</span>
+                        </div>
+                    </div>
+
+                    <div class="conflict-body">
+                        <div class="analysis-panel">
+                            <div class="panel-header">
+                                <div class="panel-title static">&#x1F4CA; Static Analysis</div>
+                                <div>${staticConfPercent.toFixed(1)}%</div>
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill ${getConfidenceClass(staticConfPercent)}" style="width: ${staticConfPercent}%"></div>
+                            </div>
+                            <div style="margin-top: 1rem;">
+                                <strong>Classification:</strong> ${conflict.static?.classification || 'N/A'}<br>
+                                <strong>Source:</strong> ${conflict.static?.source_file || 'N/A'}:${conflict.static?.source_line || '?'}
+                            </div>
+                            ${conflict.static?.data ? `<div class="data-preview">${JSON.stringify(conflict.static.data, null, 2)}</div>` : ''}
+                        </div>
+
+                        <div class="analysis-panel">
+                            <div class="panel-header">
+                                <div class="panel-title llm">&#x1F916; LLM Analysis</div>
+                                <div>${llmConfPercent.toFixed(1)}%</div>
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill ${getConfidenceClass(llmConfPercent)}" style="width: ${llmConfPercent}%"></div>
+                            </div>
+                            <div style="margin-top: 1rem;">
+                                <strong>Classification:</strong> ${conflict.llm?.classification || 'N/A'}<br>
+                                <strong>Provider:</strong> ${conflict.llm?.provider || 'N/A'} / ${conflict.llm?.model || 'N/A'}
+                            </div>
+                            ${conflict.llm?.data ? `<div class="data-preview">${JSON.stringify(conflict.llm.data, null, 2)}</div>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="conflict-footer">
+                        ${conflict.recommendations ? `
+                        <div class="recommendations">
+                            <h4>Recommendations</h4>
+                            <ul>
+                                ${conflict.recommendations.map(r => `<li>${r}</li>`).join('')}
+                            </ul>
+                        </div>
+                        ` : ''}
+
+                        ${conflict.status === 'pending' || conflict.status === 'human_review' ? `
+                        <div class="resolution-actions">
+                            <button class="btn btn-static" onclick="resolveConflict('${conflict.id}', 'human_selected_static')">
+                                &#x2705; Accept Static
+                            </button>
+                            <button class="btn btn-llm" onclick="resolveConflict('${conflict.id}', 'human_selected_llm')">
+                                &#x1F916; Accept LLM
+                            </button>
+                            <button class="btn btn-merge" onclick="showMergeDialog('${conflict.id}')">
+                                &#x1F500; Merge
+                            </button>
+                            <button class="btn btn-reject" onclick="resolveConflict('${conflict.id}', 'human_rejected_both')">
+                                &#x274C; Reject Both
+                            </button>
+                        </div>
+                        ` : `
+                        <div style="color: var(--accent-green);">
+                            &#x2705; Resolved: ${conflict.resolution} by ${conflict.resolved_by}
+                        </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatConflictType(type) {
+            const types = {
+                'confidence_threshold': 'Confidence Below 72.5%',
+                'explicit_disagreement': 'Explicit Disagreement',
+                'classification_change': 'Classification Changed',
+                'item_removal': 'Item Removed by LLM',
+                'priority_mismatch': 'Priority Mismatch',
+                'scope_expansion': 'Scope Expanded',
+                'scope_reduction': 'Scope Reduced'
+            };
+            return types[type] || type;
+        }
+
+        async function resolveConflict(conflictId, resolution) {
+            const notes = prompt('Resolution notes (optional):') || '';
+
+            try {
+                const response = await fetch(`${API_BASE}/static-llm-conflicts/${conflictId}/resolve?resolution=${resolution}&notes=${encodeURIComponent(notes)}&resolved_by=human`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    await Promise.all([loadSummary(), loadConflicts()]);
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + (error.detail || 'Failed to resolve conflict'));
+                }
+            } catch (error) {
+                console.error('Error resolving conflict:', error);
+                alert('Error resolving conflict');
+            }
+        }
+
+        function showMergeDialog(conflictId) {
+            const mergedValue = prompt('Enter merged JSON value:');
+            if (mergedValue) {
+                try {
+                    const parsed = JSON.parse(mergedValue);
+                    resolveConflictWithValue(conflictId, 'human_merged', parsed);
+                } catch (e) {
+                    alert('Invalid JSON');
+                }
+            }
+        }
+
+        async function resolveConflictWithValue(conflictId, resolution, finalValue) {
+            try {
+                const response = await fetch(`${API_BASE}/static-llm-conflicts/${conflictId}/resolve?resolution=${resolution}&resolved_by=human`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(finalValue)
+                });
+
+                if (response.ok) {
+                    await Promise.all([loadSummary(), loadConflicts()]);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function applyFilters() {
+            if (currentSessionId) {
+                loadConflicts();
+            }
+        }
+
+        function refreshData() {
+            if (currentSessionId) {
+                loadSession(currentSessionId);
+            }
+        }
+
+        // Initialize
+        loadSessions();
+    </script>
+</body>
+</html>

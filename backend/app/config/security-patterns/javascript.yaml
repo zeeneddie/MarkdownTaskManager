@@ -1,0 +1,380 @@
+# JavaScript / TypeScript Security Patterns
+language: javascript
+version: "1.0"
+file_extensions:
+  - ".js"
+  - ".jsx"
+  - ".ts"
+  - ".tsx"
+  - ".mjs"
+  - ".cjs"
+
+patterns:
+  injection:
+    - id: JS-INJ-001
+      pattern: "eval\\s*\\("
+      title: Use of eval()
+      description: eval() executes arbitrary code
+      severity: critical
+      owasp: A03
+      cwe: CWE-94
+      remediation: Avoid eval(). Use JSON.parse() for data, or safer alternatives.
+
+    - id: JS-INJ-002
+      pattern: "new\\s+Function\\s*\\("
+      title: Function constructor
+      description: new Function() is equivalent to eval()
+      severity: high
+      owasp: A03
+      cwe: CWE-94
+      remediation: Define functions directly instead of using Function constructor
+
+    - id: JS-INJ-003
+      pattern: "setTimeout\\s*\\(\\s*[\"']"
+      title: setTimeout with string argument
+      description: setTimeout with string is like eval()
+      severity: high
+      owasp: A03
+      cwe: CWE-94
+      remediation: "Use function reference: setTimeout(fn, delay)"
+
+    - id: JS-INJ-004
+      pattern: "setInterval\\s*\\(\\s*[\"']"
+      title: setInterval with string argument
+      description: setInterval with string is like eval()
+      severity: high
+      owasp: A03
+      cwe: CWE-94
+      remediation: "Use function reference: setInterval(fn, delay)"
+
+    - id: JS-INJ-005
+      pattern: "`.*\\$\\{.*\\}.*`.*(?:SELECT|INSERT|UPDATE|DELETE)"
+      title: SQL Injection via template literal
+      description: SQL query with template string interpolation
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use parameterized queries with prepared statements
+
+    - id: JS-INJ-006
+      pattern: "child_process\\.exec\\s*\\("
+      title: Command injection via exec()
+      description: exec() runs commands through shell
+      severity: high
+      owasp: A03
+      cwe: CWE-78
+      remediation: Use execFile() with array arguments or spawn() without shell
+
+    - id: JS-INJ-007
+      pattern: "child_process\\.spawn\\s*\\([^)]*shell\\s*:\\s*true"
+      title: spawn with shell option
+      description: spawn with shell=true enables injection
+      severity: high
+      owasp: A03
+      cwe: CWE-78
+      remediation: Remove shell true and pass arguments as array
+
+  xss:
+    - id: JS-XSS-001
+      pattern: "\\.innerHTML\\s*="
+      title: innerHTML assignment
+      description: innerHTML can execute scripts
+      severity: high
+      owasp: A03
+      cwe: CWE-79
+      remediation: Use textContent or sanitize HTML with DOMPurify
+
+    - id: JS-XSS-002
+      pattern: "document\\.write\\s*\\("
+      title: document.write usage
+      description: document.write can inject malicious content
+      severity: high
+      owasp: A03
+      cwe: CWE-79
+      remediation: Use DOM manipulation methods instead
+
+    - id: JS-XSS-003
+      pattern: "\\.outerHTML\\s*="
+      title: outerHTML assignment
+      description: outerHTML can inject scripts
+      severity: high
+      owasp: A03
+      cwe: CWE-79
+      remediation: Use textContent or sanitize with DOMPurify
+
+    - id: JS-XSS-004
+      pattern: "dangerouslySetInnerHTML"
+      title: React dangerouslySetInnerHTML
+      description: Bypasses React XSS protection
+      severity: high
+      owasp: A03
+      cwe: CWE-79
+      remediation: Sanitize HTML with DOMPurify before using
+
+    - id: JS-XSS-005
+      pattern: "\\.insertAdjacentHTML\\s*\\("
+      title: insertAdjacentHTML usage
+      description: Can inject unsanitized HTML
+      severity: medium
+      owasp: A03
+      cwe: CWE-79
+      remediation: Sanitize HTML content before insertion
+
+    - id: JS-XSS-006
+      pattern: "v-html\\s*="
+      title: Vue v-html directive
+      description: v-html renders raw HTML
+      severity: high
+      owasp: A03
+      cwe: CWE-79
+      remediation: Sanitize content or use text interpolation
+
+    - id: JS-XSS-007
+      pattern: "\\[innerHTML\\]\\s*="
+      title: Angular innerHTML binding
+      description: Angular innerHTML can be dangerous
+      severity: medium
+      owasp: A03
+      cwe: CWE-79
+      remediation: Use Angular DomSanitizer or avoid innerHTML
+
+  crypto:
+    - id: JS-CRYPTO-001
+      pattern: "(?:password|passwd|pwd)\\s*[=:]\\s*[\"'][^\"']{4,}[\"']"
+      title: Hardcoded password
+      description: Password in source code
+      severity: critical
+      owasp: A02
+      cwe: CWE-798
+      remediation: "Use environment variables: process.env.PASSWORD"
+
+    - id: JS-CRYPTO-002
+      pattern: "(?:api_key|apiKey|API_KEY)\\s*[=:]\\s*[\"'][^\"']{10,}[\"']"
+      title: Hardcoded API key
+      description: API key in source code
+      severity: critical
+      owasp: A02
+      cwe: CWE-798
+      remediation: Use environment variables or secrets manager
+
+    - id: JS-CRYPTO-003
+      pattern: "(?:secret|SECRET|secretKey)\\s*[=:]\\s*[\"'][^\"']{10,}[\"']"
+      title: Hardcoded secret
+      description: Secret value in source code
+      severity: critical
+      owasp: A02
+      cwe: CWE-798
+      remediation: Store secrets in environment variables
+
+    - id: JS-CRYPTO-004
+      pattern: "Math\\.random\\s*\\(\\s*\\)"
+      title: Math.random for security
+      description: Math.random() is not cryptographically secure
+      severity: medium
+      owasp: A02
+      cwe: CWE-330
+      remediation: Use crypto.getRandomValues() or crypto.randomBytes()
+
+    - id: JS-CRYPTO-005
+      pattern: "createHash\\s*\\(\\s*[\"']md5[\"']\\s*\\)"
+      title: MD5 hash usage
+      description: MD5 is cryptographically broken
+      severity: medium
+      owasp: A02
+      cwe: CWE-328
+      remediation: "Use SHA-256: crypto.createHash('sha256')"
+
+    - id: JS-CRYPTO-006
+      pattern: "createHash\\s*\\(\\s*[\"']sha1[\"']\\s*\\)"
+      title: SHA1 hash usage
+      description: SHA1 is deprecated for security
+      severity: medium
+      owasp: A02
+      cwe: CWE-328
+      remediation: Use SHA-256 or SHA-512
+
+  auth:
+    - id: JS-AUTH-001
+      pattern: "rejectUnauthorized\\s*:\\s*false"
+      title: SSL certificate validation disabled
+      description: Disabling certificate validation
+      severity: high
+      owasp: A07
+      cwe: CWE-295
+      remediation: Never disable certificate validation in production
+
+    - id: JS-AUTH-002
+      pattern: "process\\.env\\.NODE_TLS_REJECT_UNAUTHORIZED\\s*=\\s*[\"']?0"
+      title: TLS validation globally disabled
+      description: All TLS validation disabled
+      severity: critical
+      owasp: A07
+      cwe: CWE-295
+      remediation: Remove this line; fix certificate issues properly
+
+    - id: JS-AUTH-003
+      pattern: "jwt\\.(?:sign|verify)\\s*\\([^)]*algorithm\\s*:\\s*[\"']none[\"']"
+      title: JWT with none algorithm
+      description: JWT none algorithm bypasses signature
+      severity: critical
+      owasp: A07
+      cwe: CWE-347
+      remediation: Use RS256 or ES256 algorithms
+
+    - id: JS-AUTH-004
+      pattern: "expiresIn\\s*:\\s*[\"']?\\d{5,}"
+      title: Very long JWT expiration
+      description: JWT with very long expiration (>1 day)
+      severity: low
+      owasp: A07
+      cwe: CWE-613
+      remediation: Use shorter expiration with refresh tokens
+
+  config:
+    - id: JS-CFG-001
+      pattern: "cors\\s*\\(\\s*\\{\\s*origin\\s*:\\s*[\"']?\\*[\"']?"
+      title: CORS allows all origins
+      description: Wildcard CORS is insecure
+      severity: medium
+      owasp: A05
+      cwe: CWE-942
+      remediation: Specify allowed origins explicitly
+
+    - id: JS-CFG-002
+      pattern: "Access-Control-Allow-Origin.*\\*"
+      title: CORS header allows all
+      description: CORS header with wildcard
+      severity: medium
+      owasp: A05
+      cwe: CWE-942
+      remediation: Set specific allowed origins
+
+    - id: JS-CFG-003
+      pattern: "helmet\\s*\\(\\s*\\)"
+      title: Helmet security headers (good)
+      description: Helmet middleware for security headers
+      severity: info
+      owasp: A05
+      cwe: CWE-693
+      remediation: Good practice - consider customizing options
+
+    - id: JS-CFG-004
+      pattern: "httpOnly\\s*:\\s*false"
+      title: Cookie httpOnly disabled
+      description: Cookies accessible to JavaScript
+      severity: medium
+      owasp: A05
+      cwe: CWE-1004
+      remediation: "Set httpOnly: true for sensitive cookies"
+
+    - id: JS-CFG-005
+      pattern: "secure\\s*:\\s*false"
+      title: Cookie secure flag disabled
+      description: Cookie sent over HTTP
+      severity: medium
+      owasp: A05
+      cwe: CWE-614
+      remediation: "Set secure: true in production"
+
+  integrity:
+    - id: JS-INT-001
+      pattern: "JSON\\.parse\\s*\\([^)]*(?:req\\.|request\\.)"
+      title: JSON.parse with untrusted input
+      description: Parsing untrusted JSON without validation
+      severity: medium
+      owasp: A08
+      cwe: CWE-502
+      remediation: Validate JSON structure after parsing
+
+    - id: JS-INT-002
+      pattern: "require\\s*\\([^)]*\\+\\s*"
+      title: Dynamic require with concatenation
+      description: Dynamic require can load arbitrary modules
+      severity: high
+      owasp: A08
+      cwe: CWE-94
+      remediation: Use a whitelist of allowed modules
+
+    - id: JS-INT-003
+      pattern: "import\\s*\\([^)]*\\+"
+      title: Dynamic import with concatenation
+      description: Dynamic import can load arbitrary modules
+      severity: high
+      owasp: A08
+      cwe: CWE-94
+      remediation: Validate and whitelist import paths
+
+  ssrf:
+    - id: JS-SSRF-001
+      pattern: "fetch\\s*\\([^)]*\\+"
+      title: SSRF via fetch with concatenation
+      description: fetch() URL built from concatenation
+      severity: high
+      owasp: A10
+      cwe: CWE-918
+      remediation: Validate URLs against allowlist
+
+    - id: JS-SSRF-002
+      pattern: "axios\\.(?:get|post|put|delete)\\s*\\([^)]*\\+"
+      title: SSRF via axios
+      description: axios request with concatenated URL
+      severity: high
+      owasp: A10
+      cwe: CWE-918
+      remediation: Validate and whitelist URLs before requesting
+
+    - id: JS-SSRF-003
+      pattern: "http\\.(?:get|request)\\s*\\([^)]*\\+"
+      title: SSRF via http module
+      description: Node http request with concatenated URL
+      severity: high
+      owasp: A10
+      cwe: CWE-918
+      remediation: Validate URLs and block internal addresses
+
+  logging:
+    - id: JS-LOG-001
+      pattern: "console\\.log\\s*\\([^)]*(?:password|secret|token|key)"
+      title: Sensitive data in console.log
+      description: Logging potentially sensitive data
+      severity: medium
+      owasp: A09
+      cwe: CWE-532
+      remediation: Remove or mask sensitive data in logs
+
+    - id: JS-LOG-002
+      pattern: "(?:winston|pino|bunyan).*(?:password|secret|token)"
+      title: Sensitive data in logger
+      description: Logging library with sensitive data
+      severity: medium
+      owasp: A09
+      cwe: CWE-532
+      remediation: Implement log sanitization
+
+  path:
+    - id: JS-PATH-001
+      pattern: "path\\.join\\s*\\([^)]*(?:req\\.|request\\.)"
+      title: Path traversal via path.join
+      description: File path built from user input
+      severity: high
+      owasp: A01
+      cwe: CWE-22
+      remediation: Validate path does not escape base directory
+
+    - id: JS-PATH-002
+      pattern: "fs\\.(?:read|write|unlink|rmdir).*(?:req\\.|request\\.)"
+      title: File operation with user input
+      description: File system operation with request data
+      severity: high
+      owasp: A01
+      cwe: CWE-22
+      remediation: Sanitize paths; use path.basename()
+
+    - id: JS-PATH-003
+      pattern: "__dirname\\s*\\+\\s*(?:req\\.|request\\.)"
+      title: Path concatenation with user input
+      description: Building file path from request
+      severity: high
+      owasp: A01
+      cwe: CWE-22
+      remediation: Use path.resolve() with validation

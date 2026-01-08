@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Observability Dashboard - Agent Monitoring</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background-attachment: fixed;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header h1::before {
+            content: "👁️";
+            -webkit-text-fill-color: initial;
+        }
+
+        .back-link {
+            color: #00ff88;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .back-link:hover {
+            background: rgba(0, 255, 136, 0.1);
+            border-color: #00ff88;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .time-range-selector {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.05);
+            padding: 0.25rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .time-range-selector button {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            color: #888;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .time-range-selector button:hover {
+            color: #00ff88;
+        }
+
+        .time-range-selector button.active {
+            background: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%);
+            color: #1a1a2e;
+            box-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
+        }
+
+        .refresh-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            background: transparent;
+            color: #00ff88;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(0, 255, 136, 0.1);
+        }
+
+        .refresh-btn.loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .main-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Stats Overview */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 255, 136, 0.1);
+            border-color: rgba(0, 255, 136, 0.3);
+        }
+
+        .stat-card h3 {
+            font-size: 0.85rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-card .trend {
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .stat-card .trend.positive { color: #00ff88; }
+        .stat-card .trend.negative { color: #ff5555; }
+        .stat-card .trend.neutral { color: #888; }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .panel-header h2 {
+            font-size: 1.2rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Provider Status */
+        .provider-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .provider-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .provider-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .provider-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .provider-status.active { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
+        .provider-status.inactive { background: #ff5555; box-shadow: 0 0 10px #ff5555; }
+
+        .provider-name {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .provider-tier {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+        }
+
+        .provider-cost {
+            text-align: right;
+        }
+
+        .provider-cost .rate {
+            font-size: 0.85rem;
+            color: #00d4ff;
+        }
+
+        /* Actions Table */
+        .actions-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .actions-table th {
+            text-align: left;
+            padding: 0.75rem;
+            color: #888;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .actions-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9rem;
+        }
+
+        .actions-table tr:hover {
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .agent-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .agent-badge.felix { background: rgba(255, 99, 132, 0.2); color: #ff6384; }
+        .agent-badge.quinn { background: rgba(54, 162, 235, 0.2); color: #36a2eb; }
+        .agent-badge.betty { background: rgba(255, 206, 86, 0.2); color: #ffce56; }
+        .agent-badge.eliza { background: rgba(75, 192, 192, 0.2); color: #4bc0c0; }
+        .agent-badge.marcus { background: rgba(153, 102, 255, 0.2); color: #9966ff; }
+        .agent-badge.tessa { background: rgba(255, 159, 64, 0.2); color: #ff9f40; }
+        .agent-badge.diana { background: rgba(199, 199, 199, 0.2); color: #c7c7c7; }
+        .agent-badge.miguel { background: rgba(83, 102, 255, 0.2); color: #5366ff; }
+        .agent-badge.peter { background: rgba(255, 99, 255, 0.2); color: #ff63ff; }
+        .agent-badge.paul { background: rgba(99, 255, 132, 0.2); color: #63ff84; }
+
+        .success-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .success-badge.success { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
+        .success-badge.failure { background: rgba(255, 85, 85, 0.2); color: #ff5555; }
+
+        /* Charts */
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Decision Trace */
+        .decision-trace {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .decision-item {
+            padding: 1rem;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            border-left: 3px solid #00d4ff;
+        }
+
+        .decision-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .decision-point {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .decision-agent {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .decision-options {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+        }
+
+        .decision-selected {
+            color: #00ff88;
+            font-weight: 500;
+        }
+
+        .decision-rationale {
+            font-size: 0.85rem;
+            color: #aaa;
+            font-style: italic;
+        }
+
+        /* Performance Metrics */
+        .performance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .perf-metric {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+        }
+
+        .perf-metric .label {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+        }
+
+        .perf-metric .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #00ff88;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #888;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 255, 136, 0.2);
+            border-top: 3px solid #00ff88;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 136, 0.3);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 136, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div style="display: flex; align-items: center; gap: 2rem;">
+                <a href="index.html" class="back-link">← Hub</a>
+                <h1>Observability Dashboard</h1>
+            </div>
+            <div class="header-meta">
+                <div class="time-range-selector">
+                    <button class="active" data-days="1">24h</button>
+                    <button data-days="7">7d</button>
+                    <button data-days="30">30d</button>
+                </div>
+                <button class="refresh-btn" onclick="refreshAll()">
+                    <span>Refresh</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Stats Overview -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <h3>Total Actions</h3>
+                <div class="value" id="totalActions">-</div>
+                <div class="trend neutral" id="actionsTrend">Loading...</div>
+            </div>
+            <div class="stat-card">
+                <h3>Success Rate</h3>
+                <div class="value" id="successRate">-</div>
+                <div class="trend neutral" id="successTrend">Loading...</div>
+            </div>
+            <div class="stat-card">
+                <h3>Avg Duration</h3>
+                <div class="value" id="avgDuration">-</div>
+                <div class="trend neutral" id="durationTrend">Loading...</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Tokens</h3>
+                <div class="value" id="totalTokens">-</div>
+                <div class="trend neutral" id="tokensTrend">Loading...</div>
+            </div>
+            <div class="stat-card">
+                <h3>Active Agents</h3>
+                <div class="value" id="activeAgents">-</div>
+                <div class="trend neutral" id="agentsTrend">Loading...</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Cost</h3>
+                <div class="value" id="totalCost">-</div>
+                <div class="trend neutral" id="costTrend">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Performance Chart -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>📊 Daily Performance</h2>
+                </div>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Provider Status -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>🔌 LLM Providers</h2>
+                </div>
+                <div class="provider-list" id="providerList">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        Loading providers...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Second Row -->
+        <div class="dashboard-grid">
+            <!-- Recent Actions -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>📋 Recent Agent Actions</h2>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="actions-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Agent</th>
+                                <th>Action</th>
+                                <th>Model</th>
+                                <th>Tokens</th>
+                                <th>Duration</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="actionsTable">
+                            <tr>
+                                <td colspan="7" class="loading">Loading actions...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Decision Traces -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>🧠 Decision Traces</h2>
+                </div>
+                <div class="decision-trace" id="decisionTrace">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        Loading decisions...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Agent Performance Grid -->
+        <div class="panel" style="margin-top: 1.5rem;">
+            <div class="panel-header">
+                <h2>🤖 Agent Performance (Today)</h2>
+            </div>
+            <div class="performance-grid" id="agentPerformance">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    Loading agent metrics...
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = '/api/observability';
+        let performanceChart = null;
+        let currentDays = 1;
+
+        // Agent colors for charts
+        const AGENT_COLORS = {
+            felix: '#ff6384',
+            quinn: '#36a2eb',
+            betty: '#ffce56',
+            eliza: '#4bc0c0',
+            marcus: '#9966ff',
+            tessa: '#ff9f40',
+            diana: '#c7c7c7',
+            miguel: '#5366ff',
+            peter: '#ff63ff',
+            paul: '#63ff84'
+        };
+
+        // Time range selector
+        document.querySelectorAll('.time-range-selector button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.time-range-selector button').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentDays = parseInt(btn.dataset.days);
+                refreshAll();
+            });
+        });
+
+        async function fetchAPI(endpoint) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error(`API Error (${endpoint}):`, error);
+                return null;
+            }
+        }
+
+        async function loadProviders() {
+            const providers = await fetchAPI('/providers');
+            const container = document.getElementById('providerList');
+
+            if (!providers || providers.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🔌</div>
+                        <p>No providers configured</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = providers.map(p => `
+                <div class="provider-item">
+                    <div class="provider-info">
+                        <div class="provider-status ${p.is_active ? 'active' : 'inactive'}"></div>
+                        <div>
+                            <div class="provider-name">${p.name}</div>
+                            <div class="provider-tier">${p.tier} tier</div>
+                        </div>
+                    </div>
+                    <div class="provider-cost">
+                        <div class="rate">$${p.cost_input_per_m || 0}/${p.cost_output_per_m || 0}</div>
+                        <div style="font-size: 0.75rem; color: #666;">per M tokens</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadPlatformStats() {
+            const stats = await fetchAPI(`/stats/platform?days=${currentDays}`);
+
+            if (stats) {
+                document.getElementById('totalActions').textContent = stats.total_actions?.toLocaleString() || '0';
+                document.getElementById('successRate').textContent =
+                    stats.success_rate ? `${stats.success_rate.toFixed(1)}%` : '0%';
+                document.getElementById('avgDuration').textContent =
+                    stats.avg_duration_ms ? `${Math.round(stats.avg_duration_ms)}ms` : '-';
+                document.getElementById('totalTokens').textContent =
+                    stats.total_tokens ? formatTokens(stats.total_tokens) : '0';
+                document.getElementById('activeAgents').textContent = stats.active_agents || '0';
+                document.getElementById('totalCost').textContent =
+                    stats.total_cost_cents ? `$${(stats.total_cost_cents / 100).toFixed(2)}` : '$0.00';
+
+                // Update trends
+                updateTrend('actionsTrend', stats.actions_trend || 0);
+                updateTrend('successTrend', stats.success_trend || 0);
+                updateTrend('durationTrend', -(stats.duration_trend || 0)); // Lower is better
+                updateTrend('tokensTrend', 0);
+                updateTrend('agentsTrend', 0);
+                updateTrend('costTrend', -(stats.cost_trend || 0)); // Lower is better
+            }
+        }
+
+        function updateTrend(elementId, value) {
+            const element = document.getElementById(elementId);
+            if (value > 0) {
+                element.textContent = `+${value.toFixed(1)}%`;
+                element.className = 'trend positive';
+            } else if (value < 0) {
+                element.textContent = `${value.toFixed(1)}%`;
+                element.className = 'trend negative';
+            } else {
+                element.textContent = 'No change';
+                element.className = 'trend neutral';
+            }
+        }
+
+        function formatTokens(tokens) {
+            if (tokens >= 1000000) return `${(tokens / 1000000).toFixed(1)}M`;
+            if (tokens >= 1000) return `${(tokens / 1000).toFixed(1)}K`;
+            return tokens.toString();
+        }
+
+        async function loadRecentActions() {
+            const hours = currentDays * 24;
+            const actions = await fetchAPI(`/actions?limit=20&hours=${hours}`);
+            const tbody = document.getElementById('actionsTable');
+
+            if (!actions || actions.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <div class="icon">📋</div>
+                            <p>No recent actions</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = actions.map(a => `
+                <tr>
+                    <td>${formatTime(a.created_at)}</td>
+                    <td><span class="agent-badge ${a.agent_id.toLowerCase()}">${a.agent_id}</span></td>
+                    <td>${a.action_type}</td>
+                    <td>${a.model_used || '-'}</td>
+                    <td>${a.token_input || 0} / ${a.token_output || 0}</td>
+                    <td>${a.duration_ms ? `${a.duration_ms}ms` : '-'}</td>
+                    <td><span class="success-badge ${a.success ? 'success' : 'failure'}">${a.success ? 'OK' : 'FAIL'}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function formatTime(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        async function loadDecisionTraces() {
+            // Get decisions from recent tasks
+            const actions = await fetchAPI(`/actions?limit=5&hours=${currentDays * 24}`);
+            const container = document.getElementById('decisionTrace');
+
+            if (!actions || actions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🧠</div>
+                        <p>No decision traces available</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Get decisions for the first few tasks
+            const decisions = [];
+            for (const action of actions.slice(0, 3)) {
+                if (action.task_id) {
+                    const taskDecisions = await fetchAPI(`/decisions/task/${action.task_id}`);
+                    if (taskDecisions && taskDecisions.length > 0) {
+                        decisions.push(...taskDecisions.slice(0, 2));
+                    }
+                }
+            }
+
+            if (decisions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🧠</div>
+                        <p>No decision traces recorded yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = decisions.map(d => `
+                <div class="decision-item">
+                    <div class="decision-header">
+                        <span class="decision-point">${d.decision_point}</span>
+                        <span class="decision-agent">${d.agent_id}</span>
+                    </div>
+                    ${d.options ? `<div class="decision-options">Options: ${JSON.stringify(d.options)}</div>` : ''}
+                    <div class="decision-selected">Selected: ${d.selected_option || 'N/A'}</div>
+                    ${d.selection_rationale ? `<div class="decision-rationale">"${d.selection_rationale}"</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        async function loadDailyPerformance() {
+            const data = await fetchAPI(`/performance/daily?days=${currentDays}`);
+
+            if (!data || data.length === 0) {
+                // Show empty chart
+                if (performanceChart) {
+                    performanceChart.destroy();
+                }
+                return;
+            }
+
+            // Group by agent
+            const agentData = {};
+            data.forEach(d => {
+                if (!agentData[d.agent_id]) {
+                    agentData[d.agent_id] = [];
+                }
+                agentData[d.agent_id].push({
+                    x: new Date(d.date),
+                    y: d.success_rate || (d.successful_actions / d.total_actions * 100)
+                });
+            });
+
+            const datasets = Object.entries(agentData).map(([agent, points]) => ({
+                label: agent,
+                data: points,
+                borderColor: AGENT_COLORS[agent.toLowerCase()] || '#888',
+                backgroundColor: (AGENT_COLORS[agent.toLowerCase()] || '#888') + '20',
+                fill: true,
+                tension: 0.4
+            }));
+
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+
+            if (performanceChart) {
+                performanceChart.destroy();
+            }
+
+            performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: currentDays <= 1 ? 'hour' : 'day'
+                            },
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#888' }
+                        },
+                        y: {
+                            min: 0,
+                            max: 100,
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: {
+                                color: '#888',
+                                callback: v => v + '%'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#888' }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadAgentPerformance() {
+            const container = document.getElementById('agentPerformance');
+            const agents = ['felix', 'quinn', 'betty', 'eliza', 'marcus', 'tessa', 'diana', 'miguel', 'peter', 'paul'];
+
+            const metrics = await Promise.all(
+                agents.map(async agent => {
+                    const stats = await fetchAPI(`/stats/agent/${agent}?days=${currentDays}`);
+                    return { agent, stats };
+                })
+            );
+
+            const activeMetrics = metrics.filter(m => m.stats && m.stats.total_actions > 0);
+
+            if (activeMetrics.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <div class="icon">🤖</div>
+                        <p>No agent activity in selected period</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = activeMetrics.map(({ agent, stats }) => `
+                <div class="perf-metric">
+                    <div class="label">
+                        <span class="agent-badge ${agent}">${agent}</span>
+                    </div>
+                    <div class="value">${stats.success_rate?.toFixed(0) || 0}%</div>
+                    <div style="font-size: 0.75rem; color: #666;">
+                        ${stats.total_actions} actions
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function refreshAll() {
+            const btn = document.querySelector('.refresh-btn');
+            btn.classList.add('loading');
+            btn.innerHTML = '<span>Loading...</span>';
+
+            try {
+                await Promise.all([
+                    loadProviders(),
+                    loadPlatformStats(),
+                    loadRecentActions(),
+                    loadDecisionTraces(),
+                    loadDailyPerformance(),
+                    loadAgentPerformance()
+                ]);
+            } finally {
+                btn.classList.remove('loading');
+                btn.innerHTML = '<span>Refresh</span>';
+            }
+        }
+
+        // Initial load
+        refreshAll();
+
+        // Auto-refresh every 30 seconds
+        setInterval(refreshAll, 30000);
+    </script>
+</body>
+</html>
