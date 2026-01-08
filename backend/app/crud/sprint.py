@@ -70,13 +70,13 @@ async def delete_sprint(db: AsyncSession, sprint_id: int) -> bool:
     # Unassign all stories from this sprint
     result = await db.execute(
         select(Item).where(
-            and_(Item.type == ItemType.STORY, Item.sprint == sprint.name)
+            and_(Item.type == ItemType.STORY, Item.sprint_id == sprint.id)
         )
     )
     stories = result.scalars().all()
 
     for story in stories:
-        story.sprint = None
+        story.sprint_id = None
         story.updated_at = datetime.utcnow()
 
     await db.delete(sprint)
@@ -93,7 +93,7 @@ async def calculate_sprint_points(db: AsyncSession, sprint_name: str):
     # Get all stories in this sprint
     result = await db.execute(
         select(Item).where(
-            and_(Item.type == ItemType.STORY, Item.sprint == sprint_name)
+            and_(Item.type == ItemType.STORY, Item.sprint_id == sprint.id)
         )
     )
     stories = result.scalars().all()
@@ -113,9 +113,12 @@ async def calculate_sprint_points(db: AsyncSession, sprint_name: str):
 
 async def get_sprint_stories(db: AsyncSession, sprint_name: str) -> List[Item]:
     """Get all stories in a sprint"""
+    sprint = await get_sprint_by_name(db, sprint_name)
+    if not sprint:
+        return []
     result = await db.execute(
         select(Item).where(
-            and_(Item.type == ItemType.STORY, Item.sprint == sprint_name)
+            and_(Item.type == ItemType.STORY, Item.sprint_id == sprint.id)
         ).order_by(Item.id)
     )
     return result.scalars().all()
@@ -135,8 +138,8 @@ async def assign_story_to_sprint(db: AsyncSession, story_id: str, sprint_name: s
     if not story:
         return None
 
-    old_sprint = story.sprint
-    story.sprint = sprint_name
+    old_sprint_id = story.sprint_id
+    story.sprint_id = sprint.id
     story.updated_at = datetime.utcnow()
 
     await db.commit()
@@ -144,8 +147,10 @@ async def assign_story_to_sprint(db: AsyncSession, story_id: str, sprint_name: s
 
     # Recalculate points for both sprints
     await calculate_sprint_points(db, sprint_name)
-    if old_sprint:
-        await calculate_sprint_points(db, old_sprint)
+    if old_sprint_id:
+        old_sprint = await get_sprint_by_id(db, old_sprint_id)
+        if old_sprint:
+            await calculate_sprint_points(db, old_sprint.name)
 
     return story
 
@@ -155,18 +160,20 @@ async def unassign_story_from_sprint(db: AsyncSession, story_id: str) -> Optiona
         select(Item).where(and_(Item.id == story_id, Item.type == ItemType.STORY))
     )
     story = result.scalar_one_or_none()
-    if not story or not story.sprint:
+    if not story or not story.sprint_id:
         return None
 
-    old_sprint = story.sprint
-    story.sprint = None
+    old_sprint_id = story.sprint_id
+    story.sprint_id = None
     story.updated_at = datetime.utcnow()
 
     await db.commit()
     await db.refresh(story)
 
     # Recalculate points for old sprint
-    await calculate_sprint_points(db, old_sprint)
+    old_sprint = await get_sprint_by_id(db, old_sprint_id)
+    if old_sprint:
+        await calculate_sprint_points(db, old_sprint.name)
 
     return story
 

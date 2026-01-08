@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Council Human Review - Human-in-the-Loop Validation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background-attachment: fixed;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .back-link {
+            color: #1e3c72;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(30, 60, 114, 0.3);
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .back-link:hover {
+            background: rgba(30, 60, 114, 0.1);
+        }
+
+        .main-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Phase Indicator */
+        .phase-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .phase-step {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .phase-step.active {
+            background: #fff;
+            color: #1e3c72;
+            font-weight: 600;
+        }
+
+        .phase-step.completed {
+            background: rgba(40, 167, 69, 0.3);
+            color: #28a745;
+        }
+
+        .phase-step .number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: currentColor;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+        }
+
+        .phase-step.active .number {
+            background: #1e3c72;
+        }
+
+        .phase-step.completed .number {
+            background: #28a745;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1e3c72;
+        }
+
+        /* Main Layout */
+        .review-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 1200px) {
+            .review-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Panel */
+        .panel {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+        }
+
+        .panel-header h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .panel-body {
+            padding: 1.5rem;
+        }
+
+        /* Session List */
+        .session-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .session-item {
+            padding: 1rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .session-item:hover {
+            border-color: #1e3c72;
+            box-shadow: 0 2px 8px rgba(30, 60, 114, 0.15);
+        }
+
+        .session-item.active {
+            border-color: #1e3c72;
+            background: rgba(30, 60, 114, 0.05);
+        }
+
+        .session-item .doc-type {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .session-item .status {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status.draft { background: #e0e0e0; color: #666; }
+        .status.generating { background: #fff3cd; color: #856404; }
+        .status.peer_review { background: #cce5ff; color: #004085; }
+        .status.orchestrating { background: #d4edda; color: #155724; }
+        .status.human_review { background: #f8d7da; color: #721c24; }
+        .status.finalizing { background: #d1ecf1; color: #0c5460; }
+        .status.approved { background: #28a745; color: white; }
+        .status.rejected { background: #dc3545; color: white; }
+
+        .session-item .meta {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 0.5rem;
+        }
+
+        /* Review Content */
+        .review-content {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Provider Responses */
+        .provider-responses {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .provider-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .provider-card-header {
+            padding: 0.75rem 1rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .provider-name {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .provider-badge {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .provider-badge.ollama { background: #28a745; }
+        .provider-badge.claude { background: #6f42c1; }
+        .provider-badge.codex { background: #fd7e14; }
+
+        .provider-card-body {
+            padding: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            font-family: 'Monaco', 'Menlo', monospace;
+            background: #fafafa;
+        }
+
+        .provider-card-footer {
+            padding: 0.75rem 1rem;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        /* Checkboxes */
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            background: #e9ecef;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .checkbox-item:hover {
+            background: #dee2e6;
+        }
+
+        .checkbox-item.checked {
+            background: #28a745;
+            color: white;
+        }
+
+        .checkbox-item input {
+            display: none;
+        }
+
+        /* Consensus Section */
+        .consensus-section {
+            border: 2px solid #1e3c72;
+            border-radius: 8px;
+        }
+
+        .consensus-header {
+            padding: 1rem;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .consensus-body {
+            padding: 1.5rem;
+        }
+
+        .consensus-content {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'Georgia', serif;
+            line-height: 1.8;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        /* Human Feedback Form */
+        .feedback-form {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+        }
+
+        /* Conflict Resolution */
+        .conflict-item {
+            padding: 1rem;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .conflict-item h4 {
+            color: #856404;
+            margin-bottom: 0.5rem;
+        }
+
+        .conflict-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .conflict-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .conflict-option:hover {
+            background: #fffdf5;
+        }
+
+        .conflict-option.selected {
+            background: #d4edda;
+            border: 1px solid #28a745;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #888;
+        }
+
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e0e0e0;
+            border-top: 3px solid #1e3c72;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            background: #333;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success { background: #28a745; }
+        .toast.error { background: #dc3545; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* New Session Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1500;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal h3 {
+            margin-bottom: 1.5rem;
+            color: #1e3c72;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div style="display: flex; align-items: center; gap: 2rem;">
+                <a href="index.html" class="back-link">← Hub</a>
+                <h1>Council Human Review</h1>
+            </div>
+            <button class="btn btn-primary" onclick="showNewSessionModal()">
+                + New Session
+            </button>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Phase Indicator -->
+        <div class="phase-indicator" id="phaseIndicator">
+            <div class="phase-step" data-phase="generating">
+                <span class="number">1</span>
+                <span>Generation</span>
+            </div>
+            <div class="phase-step" data-phase="peer_review">
+                <span class="number">2</span>
+                <span>Peer Review</span>
+            </div>
+            <div class="phase-step" data-phase="orchestrating">
+                <span class="number">3</span>
+                <span>Consensus</span>
+            </div>
+            <div class="phase-step" data-phase="human_review">
+                <span class="number">4</span>
+                <span>Human Review</span>
+            </div>
+            <div class="phase-step" data-phase="finalizing">
+                <span class="number">5</span>
+                <span>Finalize</span>
+            </div>
+            <div class="phase-step" data-phase="approved">
+                <span class="number">6</span>
+                <span>Approved</span>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <h3>Total Sessions</h3>
+                <div class="value" id="totalSessions">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Pending Review</h3>
+                <div class="value" id="pendingReview">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Approved</h3>
+                <div class="value" id="approvedCount">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Approval Rate</h3>
+                <div class="value" id="approvalRate">-</div>
+            </div>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="review-layout">
+            <!-- Session List -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Sessions</h2>
+                </div>
+                <div class="panel-body">
+                    <div class="session-list" id="sessionList">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Loading sessions...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Review Content -->
+            <div class="review-content" id="reviewContent">
+                <div class="panel">
+                    <div class="panel-body">
+                        <div class="empty-state">
+                            <div class="icon">📋</div>
+                            <h3>Select a session to review</h3>
+                            <p>Choose a session from the list to view details and provide feedback</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- New Session Modal -->
+    <div class="modal-overlay" id="newSessionModal" style="display: none;">
+        <div class="modal">
+            <h3>Start New Council Session</h3>
+            <div class="form-group">
+                <label>Document Type</label>
+                <select id="newDocType" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px;">
+                    <option value="onboarding">Onboarding</option>
+                    <option value="architecture">Architecture</option>
+                    <option value="adr">ADR (Architecture Decision Record)</option>
+                    <option value="specification">Specification</option>
+                    <option value="readme">README</option>
+                    <option value="api_docs">API Documentation</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Document Name (optional)</label>
+                <input type="text" id="newDocName" placeholder="e.g., Developer Onboarding Guide" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px;">
+            </div>
+            <div class="form-group">
+                <label>Generation Prompt</label>
+                <textarea id="newPrompt" placeholder="Describe what you want the council to generate..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="hideNewSessionModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="createAndStartSession()">Create & Start</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/council-human-review';
+        let currentSession = null;
+        let sessions = [];
+
+        // Load initial data
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStatistics();
+            loadSessions();
+        });
+
+        async function fetchAPI(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    headers: { 'Content-Type': 'application/json' },
+                    ...options
+                });
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || `HTTP ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error(`API Error:`, error);
+                showToast(error.message, 'error');
+                return null;
+            }
+        }
+
+        async function loadStatistics() {
+            const stats = await fetchAPI('/statistics');
+            if (stats) {
+                document.getElementById('totalSessions').textContent = stats.total_sessions || 0;
+                document.getElementById('pendingReview').textContent =
+                    (stats.by_status?.human_review || 0) + (stats.by_status?.orchestrating || 0);
+                document.getElementById('approvedCount').textContent = stats.by_status?.approved || 0;
+                document.getElementById('approvalRate').textContent =
+                    stats.approval_rate ? `${stats.approval_rate.toFixed(0)}%` : '0%';
+            }
+        }
+
+        async function loadSessions() {
+            const data = await fetchAPI('/sessions?limit=50');
+            const container = document.getElementById('sessionList');
+
+            if (!data || !data.sessions || data.sessions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <p>No sessions yet</p>
+                        <button class="btn btn-primary" onclick="showNewSessionModal()" style="margin-top: 1rem;">
+                            Create First Session
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            sessions = data.sessions;
+            container.innerHTML = sessions.map(s => `
+                <div class="session-item ${currentSession?.id === s.id ? 'active' : ''}"
+                     onclick="selectSession('${s.id}')">
+                    <div class="doc-type">${s.document_name || formatDocType(s.document_type)}</div>
+                    <span class="status ${s.status}">${formatStatus(s.status)}</span>
+                    <div class="meta">
+                        ${new Date(s.created_at).toLocaleDateString()}
+                        ${s.project_id ? ` · Project ${s.project_id}` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatDocType(type) {
+            const types = {
+                onboarding: 'Onboarding',
+                architecture: 'Architecture',
+                adr: 'ADR',
+                specification: 'Specification',
+                readme: 'README',
+                api_docs: 'API Docs',
+                other: 'Other'
+            };
+            return types[type] || type;
+        }
+
+        function formatStatus(status) {
+            const statuses = {
+                draft: 'Draft',
+                generating: 'Generating...',
+                peer_review: 'Peer Review',
+                orchestrating: 'Creating Consensus',
+                human_review: 'Awaiting Review',
+                finalizing: 'Finalizing',
+                approved: 'Approved',
+                rejected: 'Rejected'
+            };
+            return statuses[status] || status;
+        }
+
+        async function selectSession(sessionId) {
+            const details = await fetchAPI(`/sessions/${sessionId}`);
+            if (!details) return;
+
+            // Normalize API response structure
+            const sessionData = {
+                ...details.session,
+                responses: details.provider_responses || [],
+                reviews: details.peer_reviews || [],
+                consensus: details.consensus_versions?.[0] || null
+            };
+
+            currentSession = sessionData;
+            updatePhaseIndicator(sessionData.status);
+            renderSessionDetails(sessionData);
+
+            // Update active state in list
+            document.querySelectorAll('.session-item').forEach(el => {
+                el.classList.toggle('active', el.onclick.toString().includes(sessionId));
+            });
+        }
+
+        function updatePhaseIndicator(status) {
+            const phases = ['generating', 'peer_review', 'orchestrating', 'human_review', 'finalizing', 'approved'];
+            const currentIndex = phases.indexOf(status);
+
+            document.querySelectorAll('.phase-step').forEach((el, index) => {
+                el.classList.remove('active', 'completed');
+                if (index < currentIndex) {
+                    el.classList.add('completed');
+                } else if (index === currentIndex) {
+                    el.classList.add('active');
+                }
+            });
+        }
+
+        function renderSessionDetails(session) {
+            const container = document.getElementById('reviewContent');
+            const hasResponses = session.responses && session.responses.length > 0;
+            const hasReviews = session.reviews && session.reviews.length > 0;
+            const hasConsensus = session.consensus;
+
+            let html = '';
+
+            // Provider Responses
+            if (hasResponses) {
+                html += `
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h2>Provider Responses (${session.responses.length})</h2>
+                        </div>
+                        <div class="panel-body">
+                            <div class="provider-responses">
+                                ${session.responses.map(r => renderProviderCard(r)).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Consensus Section
+            if (hasConsensus) {
+                html += `
+                    <div class="consensus-section">
+                        <div class="consensus-header">
+                            <h2>Consensus Document (v${session.consensus.version})</h2>
+                            <span>Created by: ${session.consensus.created_by || 'Orchestrator'}</span>
+                        </div>
+                        <div class="consensus-body">
+                            <div class="consensus-content">${escapeHtml(session.consensus.consensus_content || 'No content yet')}</div>
+
+                            ${session.status === 'human_review' || session.status === 'orchestrating' ? `
+                                <div class="feedback-form">
+                                    <h3 style="margin-bottom: 1rem;">Your Feedback</h3>
+
+                                    <div class="form-group">
+                                        <label>General Feedback & Corrections</label>
+                                        <textarea id="feedbackGeneral" placeholder="What needs to be corrected or improved?"></textarea>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>What's Missing? (LLMs missed these)</label>
+                                        <textarea id="feedbackAdditions" placeholder="Information that all LLMs failed to include..."></textarea>
+                                    </div>
+
+                                    <div class="action-buttons">
+                                        <button class="btn btn-primary" onclick="submitFeedback()">
+                                            Submit Feedback
+                                        </button>
+                                        <button class="btn btn-secondary" onclick="advancePhase('finalize')">
+                                            Skip to Finalize
+                                        </button>
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            ${session.status === 'finalizing' ? `
+                                <div class="action-buttons" style="margin-top: 1.5rem;">
+                                    <button class="btn btn-success" onclick="approveSession()">
+                                        ✓ Approve & Save
+                                    </button>
+                                    <button class="btn btn-danger" onclick="showRejectModal()">
+                                        ✗ Reject
+                                    </button>
+                                </div>
+                            ` : ''}
+
+                            ${session.status === 'approved' ? `
+                                <div style="margin-top: 1.5rem; padding: 1rem; background: #d4edda; border-radius: 8px; color: #155724;">
+                                    <strong>✓ Approved</strong> by ${session.approved_by || 'Unknown'}
+                                    on ${session.approved_at ? new Date(session.approved_at).toLocaleString() : 'Unknown'}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            } else if (session.status === 'draft') {
+                // Draft - needs generation
+                html += `
+                    <div class="panel">
+                        <div class="panel-body">
+                            <div class="empty-state">
+                                <div class="icon">🚀</div>
+                                <h3>Ready to Generate</h3>
+                                <p>Start the council generation process</p>
+                                <div class="form-group" style="margin-top: 1.5rem; text-align: left;">
+                                    <label>Generation Prompt</label>
+                                    <textarea id="generationPrompt" placeholder="Describe what you want the council to generate..."></textarea>
+                                </div>
+                                <button class="btn btn-primary" onclick="startGeneration()">
+                                    Start Generation
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (session.status === 'generating') {
+                html += `
+                    <div class="panel">
+                        <div class="panel-body">
+                            <div class="loading">
+                                <div class="spinner"></div>
+                                <p>Generating responses from providers...</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (session.status === 'peer_review') {
+                html += `
+                    <div class="panel">
+                        <div class="panel-body">
+                            ${hasResponses ? `
+                                <div class="provider-responses" style="margin-bottom: 1.5rem;">
+                                    ${session.responses.map(r => renderProviderCard(r)).join('')}
+                                </div>
+                            ` : ''}
+                            <div style="text-align: center;">
+                                <p style="margin-bottom: 1rem;">Ready for peer review</p>
+                                <button class="btn btn-primary" onclick="advancePhase('peer-review')">
+                                    Start Peer Review
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html || `
+                <div class="panel">
+                    <div class="panel-body">
+                        <div class="empty-state">
+                            <div class="icon">📋</div>
+                            <h3>Session Details</h3>
+                            <p>Status: ${formatStatus(session.status)}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderProviderCard(response) {
+            const providerType = response.provider_name.split('/')[0] || 'unknown';
+            return `
+                <div class="provider-card">
+                    <div class="provider-card-header">
+                        <span class="provider-name">
+                            <span class="provider-badge ${providerType}"></span>
+                            ${response.provider_name}
+                        </span>
+                        <span style="font-size: 0.8rem; color: #888;">
+                            ${response.tokens_used || 0} tokens
+                        </span>
+                    </div>
+                    <div class="provider-card-body">${escapeHtml(response.content || 'No content')}</div>
+                </div>
+            `;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function startGeneration() {
+            const prompt = document.getElementById('generationPrompt')?.value;
+            if (!prompt) {
+                showToast('Please enter a generation prompt', 'error');
+                return;
+            }
+
+            const result = await fetchAPI(`/sessions/${currentSession.id}/generate`, {
+                method: 'POST',
+                body: JSON.stringify({ prompt, context: {} })
+            });
+
+            if (result) {
+                showToast('Generation started!', 'success');
+                selectSession(currentSession.id);
+                loadSessions();
+            }
+        }
+
+        async function advancePhase(phase) {
+            let endpoint = '';
+            switch (phase) {
+                case 'peer-review': endpoint = '/peer-review'; break;
+                case 'consensus': endpoint = '/consensus'; break;
+                case 'finalize': endpoint = '/finalize'; break;
+                default: return;
+            }
+
+            const result = await fetchAPI(`/sessions/${currentSession.id}${endpoint}`, {
+                method: 'POST'
+            });
+
+            if (result) {
+                showToast(`Phase completed!`, 'success');
+                selectSession(currentSession.id);
+                loadSessions();
+            }
+        }
+
+        async function submitFeedback() {
+            const feedback = {
+                overall: document.getElementById('feedbackGeneral')?.value || ''
+            };
+            const additions = document.getElementById('feedbackAdditions')?.value;
+
+            const result = await fetchAPI(`/sessions/${currentSession.id}/human-review`, {
+                method: 'POST',
+                body: JSON.stringify({ feedback, additions })
+            });
+
+            if (result) {
+                showToast('Feedback submitted!', 'success');
+                selectSession(currentSession.id);
+                loadSessions();
+            }
+        }
+
+        async function approveSession() {
+            const result = await fetchAPI(`/sessions/${currentSession.id}/approve`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    approved_by: 'Human Reviewer',
+                    write_to_file: true,
+                    git_commit: false
+                })
+            });
+
+            if (result) {
+                showToast('Session approved and saved!', 'success');
+                selectSession(currentSession.id);
+                loadSessions();
+                loadStatistics();
+            }
+        }
+
+        function showNewSessionModal() {
+            document.getElementById('newSessionModal').style.display = 'flex';
+        }
+
+        function hideNewSessionModal() {
+            document.getElementById('newSessionModal').style.display = 'none';
+        }
+
+        async function createAndStartSession() {
+            const docType = document.getElementById('newDocType').value;
+            const docName = document.getElementById('newDocName').value;
+            const prompt = document.getElementById('newPrompt').value;
+
+            // Create session
+            const session = await fetchAPI('/sessions', {
+                method: 'POST',
+                body: JSON.stringify({
+                    document_type: docType,
+                    document_name: docName || null
+                })
+            });
+
+            if (!session) return;
+
+            hideNewSessionModal();
+            showToast('Session created!', 'success');
+
+            // Start generation if prompt provided
+            if (prompt) {
+                await fetchAPI(`/sessions/${session.id}/generate`, {
+                    method: 'POST',
+                    body: JSON.stringify({ prompt, context: {} })
+                });
+            }
+
+            loadSessions();
+            loadStatistics();
+            selectSession(session.id);
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            if (currentSession) {
+                selectSession(currentSession.id);
+            }
+            loadSessions();
+        }, 30000);
+    </script>
+</body>
+</html>

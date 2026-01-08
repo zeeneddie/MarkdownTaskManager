@@ -14,7 +14,7 @@ Felix agent performs intelligent breakdown with estimation.
 from typing import Optional, Dict, Any, List
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -77,8 +77,7 @@ class EpicResponse(BaseModel):
     generated_by: str
     created_at: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FeatureResponse(BaseModel):
@@ -97,8 +96,7 @@ class FeatureResponse(BaseModel):
     sequence_number: int
     generated_by: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class StoryResponse(BaseModel):
@@ -119,8 +117,7 @@ class StoryResponse(BaseModel):
     sequence_number: int
     is_blocked: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TaskResponse(BaseModel):
@@ -140,8 +137,7 @@ class TaskResponse(BaseModel):
     is_blocked: bool
     branch_name: Optional[str]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ========== Dependency Injection ==========
@@ -619,11 +615,125 @@ async def health_check():
         "service": "task_generation",
         "version": "1.0",
         "endpoints": {
-            "total": 10,
+            "total": 12,  # Week 143: +2 Vector DB endpoints
             "generation": 5,
             "retrieval": 4,
+            "vector_db": 2,
             "health": 1
         },
         "hierarchy_levels": ["Epic", "Feature", "Story", "Task"],
         "felix_agent": "ready"
     }
+
+
+# ========== Week 143: Vector DB Context Endpoints ==========
+
+@router.get(
+    "/vector-context/{context_type}",
+    summary="Get Vector DB context for task generation",
+    response_description="Context from Vector DB for specified generation type"
+)
+async def get_vector_context(
+    context_type: str,
+    project_id: int = 1000,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get Vector DB context for task generation.
+
+    **Context Types**:
+    - `epic`: Patterns for breaking down specs into epics
+    - `feature`: API design, database patterns for features
+    - `story`: User story examples, acceptance criteria
+    - `task`: Implementation details, technical tasks
+
+    **Returns**:
+    - Implementation patterns
+    - Technical details
+    - Similar work items
+    - Estimation guidance
+    """
+    valid_types = ["epic", "feature", "story", "task"]
+    if context_type not in valid_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid context_type. Must be one of: {valid_types}"
+        )
+
+    try:
+        agent_service = AgentService(ollama_base_url="http://localhost:11434")
+        service = TaskGenerationService(db, agent_service, project_id=project_id)
+
+        context = service.get_vector_context_for_type(context_type)
+
+        if not context:
+            return {
+                "status": "no_context",
+                "message": "No relevant context found in Vector DB",
+                "context_type": context_type,
+                "context": None
+            }
+
+        return {
+            "status": "success",
+            "context_type": context_type,
+            "project_id": project_id,
+            "context": context,
+            "total_items": sum(len(v) for v in context.values() if isinstance(v, list))
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch vector context: {str(e)}"
+        )
+
+
+@router.post(
+    "/generate/epics/{specification_id}/with-context",
+    summary="Generate epics with Vector DB context",
+    response_description="Generated epics with context enhancement"
+)
+async def generate_epics_with_context(
+    specification_id: UUID,
+    request: GenerateEpicsRequest,
+    project_id: int = 1000,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Generate epics from specification with Vector DB context.
+
+    Same as regular epic generation, but with:
+    - Pre-fetched architecture patterns
+    - Similar epic examples
+    - Estimation guidance from knowledge base
+
+    Returns generation result with context usage info.
+    """
+    try:
+        agent_service = AgentService(ollama_base_url="http://localhost:11434")
+        service = TaskGenerationService(db, agent_service, project_id=project_id)
+
+        # Fetch context first for reporting
+        context = service.get_vector_context_for_type("epic")
+
+        # Generate epics (context will be used internally if available)
+        result = await service.generate_epics_from_specification(
+            specification_id=specification_id,
+            options=request.options
+        )
+
+        # Add context info to result
+        result["vector_context_used"] = context is not None
+        result["context_items"] = sum(len(v) for v in context.values() if isinstance(v, list)) if context else 0
+
+        return result
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Epic generation failed: {str(e)}"
+        )

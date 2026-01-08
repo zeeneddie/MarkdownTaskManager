@@ -32,7 +32,7 @@ class Rollout(Base):
     completed_at = Column(DateTime, nullable=True)
     rolled_back_at = Column(DateTime, nullable=True)
     rollback_reason = Column(Text, nullable=True)
-    metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column(JSONB, nullable=True)
 
     # Relationships
     stages = relationship("RolloutStage", back_populates="rollout", cascade="all, delete-orphan")
@@ -69,7 +69,7 @@ class RolloutStage(Base):
     health_check_passed = Column(Boolean, nullable=False, default=False)
     rollback_triggered = Column(Boolean, nullable=False, default=False)
     rollback_reason = Column(Text, nullable=True)
-    metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column(JSONB, nullable=True)
 
     # Relationships
     rollout = relationship("Rollout", back_populates="stages")
@@ -103,7 +103,7 @@ class RolloutMetric(Base):
     metric_unit = Column(String(50), nullable=True)
     threshold_value = Column(Float, nullable=True)
     threshold_breached = Column(Boolean, nullable=False, default=False)
-    metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column(JSONB, nullable=True)
 
     # Relationships
     stage = relationship("RolloutStage", back_populates="metrics")

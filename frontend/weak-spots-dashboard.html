@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weak Spots Dashboard - Issues per Epic/Feature/Story</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .nav {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .nav a:hover { background: rgba(255,255,255,0.3); }
+        .nav a.active { background: rgba(255,255,255,0.4); }
+
+        .container {
+            max-width: 1600px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .project-selector {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .project-selector select {
+            padding: 0.75rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            min-width: 300px;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover { background: #38a169; }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+
+        .summary-card .value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .summary-card .label {
+            font-size: 0.875rem;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .value.excellent { color: #48bb78; }
+        .value.good { color: #4299e1; }
+        .value.warning { color: #ed8936; }
+        .value.critical { color: #e53e3e; }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab:hover { border-color: #667eea; }
+        .tab.active { background: #667eea; color: white; border-color: #667eea; }
+
+        .section {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 2rem;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #2d3748;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+        }
+
+        .backlog-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .backlog-table th,
+        .backlog-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .backlog-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        .backlog-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .health-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .health-excellent { background: #c6f6d5; color: #22543d; }
+        .health-good { background: #bee3f8; color: #2a4365; }
+        .health-warning { background: #feebc8; color: #744210; }
+        .health-critical { background: #fed7d7; color: #742a2a; }
+
+        .severity-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .severity-critical { background: #e53e3e; color: white; }
+        .severity-high { background: #ed8936; color: white; }
+        .severity-medium { background: #ecc94b; color: #744210; }
+        .severity-low { background: #48bb78; color: white; }
+
+        .issue-counts {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .issue-count {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .issue-count.critical { background: #fed7d7; color: #742a2a; }
+        .issue-count.high { background: #feebc8; color: #744210; }
+        .issue-count.medium { background: #fefcbf; color: #744210; }
+        .issue-count.low { background: #c6f6d5; color: #22543d; }
+
+        .mapping-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .mapping-form input,
+        .mapping-form select {
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .mapping-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .mapping-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .mapping-item code {
+            background: #f7fafc;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.875rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #718096;
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #718096;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #667eea;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar .fill {
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        .progress-bar .fill.excellent { background: #48bb78; }
+        .progress-bar .fill.good { background: #4299e1; }
+        .progress-bar .fill.warning { background: #ed8936; }
+        .progress-bar .fill.critical { background: #e53e3e; }
+
+        .issue-detail-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .issue-detail-modal.active { display: flex; }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #718096;
+        }
+
+        .issue-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .issue-item {
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+        }
+
+        .issue-item h4 {
+            margin-bottom: 0.5rem;
+        }
+
+        .issue-item .location {
+            font-family: monospace;
+            font-size: 0.875rem;
+            color: #718096;
+            margin-bottom: 0.5rem;
+        }
+
+        .issue-item .metrics {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: #4a5568;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Weak Spots Dashboard</h1>
+        <p>Identificeer zwakke plekken door issues per Epic, Feature en User Story te analyseren</p>
+        <nav class="nav">
+            <a href="index.html">Hub</a>
+            <a href="quality-dashboard.html">Quality Dashboard</a>
+            <a href="technical-debt-dashboard.html">Technical Debt</a>
+            <a href="weak-spots-dashboard.html" class="active">Weak Spots</a>
+            <a href="kanban-dashboard.html">Kanban</a>
+        </nav>
+    </div>
+
+    <div class="container">
+        <!-- Project Selector -->
+        <div class="project-selector">
+            <label for="projectSelect"><strong>Project:</strong></label>
+            <select id="projectSelect" onchange="onProjectChange()">
+                <option value="">-- Selecteer project --</option>
+            </select>
+            <span id="projectStatus"></span>
+            <button class="btn btn-primary" onclick="loadDashboard()">Vernieuwen</button>
+            <button class="btn btn-success" onclick="autoCategorize()">Auto-Categoriseren</button>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-grid" id="summaryGrid">
+            <div class="summary-card">
+                <div class="value" id="totalIssues">-</div>
+                <div class="label">Totaal Issues</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" id="categorizedIssues">-</div>
+                <div class="label">Gecategoriseerd</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" id="uncategorizedIssues">-</div>
+                <div class="label">Ongecategoriseerd</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" id="categorizationRate">-</div>
+                <div class="label">Categorisatie %</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" id="totalMappings">-</div>
+                <div class="label">File Mappings</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('epics')">Per Epic</button>
+            <button class="tab" onclick="showTab('features')">Per Feature</button>
+            <button class="tab" onclick="showTab('stories')">Per Story</button>
+            <button class="tab" onclick="showTab('weakspots')">Weak Spots</button>
+            <button class="tab" onclick="showTab('mappings')">File Mappings</button>
+        </div>
+
+        <!-- Tab Content: Epics -->
+        <div class="section tab-content" id="tabEpics">
+            <h2>Issues per Epic</h2>
+            <div id="epicStats" class="loading">Laden...</div>
+        </div>
+
+        <!-- Tab Content: Features -->
+        <div class="section tab-content" id="tabFeatures" style="display:none;">
+            <h2>Issues per Feature</h2>
+            <div id="featureStats" class="loading">Laden...</div>
+        </div>
+
+        <!-- Tab Content: Stories -->
+        <div class="section tab-content" id="tabStories" style="display:none;">
+            <h2>Issues per User Story</h2>
+            <div id="storyStats" class="loading">Laden...</div>
+        </div>
+
+        <!-- Tab Content: Weak Spots -->
+        <div class="section tab-content" id="tabWeakspots" style="display:none;">
+            <h2>Weak Spots Analyse</h2>
+            <p style="margin-bottom:1rem;color:#718096;">De backlog items met de laagste health scores - gebieden die de meeste aandacht nodig hebben.</p>
+            <div id="weakSpotsContent" class="loading">Laden...</div>
+        </div>
+
+        <!-- Tab Content: Mappings -->
+        <div class="section tab-content" id="tabMappings" style="display:none;">
+            <h2>File-to-Backlog Mappings</h2>
+            <p style="margin-bottom:1rem;color:#718096;">Configureer welke file patterns naar welke epics/features/stories mappen.</p>
+
+            <div class="mapping-form">
+                <input type="text" id="mappingPattern" placeholder="File pattern (bijv. src/auth/**/*.php)">
+                <select id="mappingEpic">
+                    <option value="">-- Epic --</option>
+                </select>
+                <select id="mappingFeature">
+                    <option value="">-- Feature --</option>
+                </select>
+                <button class="btn btn-primary" onclick="createMapping()">Toevoegen</button>
+            </div>
+
+            <div id="mappingsList" class="mapping-list loading">Laden...</div>
+        </div>
+    </div>
+
+    <!-- Issue Detail Modal -->
+    <div class="issue-detail-modal" id="issueModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Issues</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalIssueList" class="issue-list"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let currentProjectId = null;
+        let dashboardData = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProjects();
+            // Check URL for project_id
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project_id');
+            if (projectId) {
+                currentProjectId = parseInt(projectId);
+            }
+        });
+
+        async function loadProjects() {
+            const select = document.getElementById('projectSelect');
+            try {
+                const response = await fetch(`${API_BASE}/applications/`);
+                if (response.ok) {
+                    const apps = await response.json();
+                    select.innerHTML = '<option value="">-- Selecteer project --</option>';
+                    apps.forEach(app => {
+                        const option = document.createElement('option');
+                        option.value = app.id;
+                        option.textContent = `${app.name} (${app.root_path || 'N/A'})`;
+                        select.appendChild(option);
+                    });
+                    if (currentProjectId) {
+                        select.value = currentProjectId;
+                        loadDashboard();
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading projects:', error);
+            }
+        }
+
+        function onProjectChange() {
+            const select = document.getElementById('projectSelect');
+            currentProjectId = select.value ? parseInt(select.value) : null;
+            if (currentProjectId) {
+                const url = new URL(window.location);
+                url.searchParams.set('project_id', currentProjectId);
+                window.history.pushState({}, '', url);
+                loadDashboard();
+            }
+        }
+
+        async function loadDashboard() {
+            if (!currentProjectId) {
+                document.getElementById('projectStatus').textContent = 'Selecteer eerst een project';
+                return;
+            }
+
+            document.getElementById('projectStatus').textContent = 'Laden...';
+
+            try {
+                const response = await fetch(`${API_BASE}/debt-categorization/dashboard/${currentProjectId}`);
+                if (response.ok) {
+                    dashboardData = await response.json();
+                    renderDashboard(dashboardData);
+                    document.getElementById('projectStatus').textContent = 'Geladen';
+                } else {
+                    document.getElementById('projectStatus').textContent = 'Fout bij laden';
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                document.getElementById('projectStatus').textContent = 'Fout: ' + error.message;
+            }
+        }
+
+        function renderDashboard(data) {
+            // Summary
+            document.getElementById('totalIssues').textContent = data.summary.total_issues.toLocaleString();
+            document.getElementById('categorizedIssues').textContent = data.summary.categorized_issues.toLocaleString();
+            document.getElementById('uncategorizedIssues').textContent = data.summary.uncategorized_issues.toLocaleString();
+            document.getElementById('categorizationRate').textContent = data.summary.categorization_rate + '%';
+            document.getElementById('totalMappings').textContent = data.summary.total_mappings;
+
+            // Style summary values
+            const catRate = data.summary.categorization_rate;
+            const rateEl = document.getElementById('categorizationRate');
+            rateEl.className = 'value ' + (catRate >= 80 ? 'excellent' : catRate >= 50 ? 'good' : catRate >= 20 ? 'warning' : 'critical');
+
+            // Render tabs
+            renderEpicStats(data.stats_by_epic);
+            renderFeatureStats(data.stats_by_feature);
+            renderWeakSpots(data.weak_spots);
+            renderMappings(data.mappings);
+        }
+
+        function renderEpicStats(stats) {
+            const container = document.getElementById('epicStats');
+            if (!stats || stats.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>Geen epics met issues gevonden. Configureer eerst file mappings of voer auto-categorisatie uit.</p></div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="backlog-table">
+                    <thead>
+                        <tr>
+                            <th>Epic</th>
+                            <th>Health</th>
+                            <th>Issues</th>
+                            <th>Severity Breakdown</th>
+                            <th>Principal (uren)</th>
+                            <th>Acties</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${stats.map(s => `
+                            <tr>
+                                <td><strong>${s.backlog_title}</strong></td>
+                                <td>${renderHealthBadge(s.health_score)}</td>
+                                <td>${s.total_issues.toLocaleString()}</td>
+                                <td>${renderSeverityCounts(s)}</td>
+                                <td>${s.total_principal.toFixed(1)}</td>
+                                <td>
+                                    <button class="btn btn-primary" style="padding:0.5rem 1rem;font-size:0.8rem;"
+                                            onclick="showIssues('epic', '${s.backlog_id}', '${s.backlog_title}')">
+                                        Bekijk Issues
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderFeatureStats(stats) {
+            const container = document.getElementById('featureStats');
+            if (!stats || stats.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>Geen features met issues gevonden.</p></div>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="backlog-table">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Health</th>
+                            <th>Issues</th>
+                            <th>Severity Breakdown</th>
+                            <th>Principal (uren)</th>
+                            <th>Acties</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${stats.map(s => `
+                            <tr>
+                                <td><strong>${s.backlog_title}</strong></td>
+                                <td>${renderHealthBadge(s.health_score)}</td>
+                                <td>${s.total_issues.toLocaleString()}</td>
+                                <td>${renderSeverityCounts(s)}</td>
+                                <td>${s.total_principal.toFixed(1)}</td>
+                                <td>
+                                    <button class="btn btn-primary" style="padding:0.5rem 1rem;font-size:0.8rem;"
+                                            onclick="showIssues('feature', '${s.backlog_id}', '${s.backlog_title}')">
+                                        Bekijk Issues
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderWeakSpots(weakSpots) {
+            const container = document.getElementById('weakSpotsContent');
+            if (!weakSpots) {
+                container.innerHTML = '<div class="empty-state"><p>Geen weak spots data beschikbaar.</p></div>';
+                return;
+            }
+
+            let html = '';
+
+            // Weak Epics
+            if (weakSpots.weak_epics && weakSpots.weak_epics.length > 0) {
+                html += `
+                    <h3 style="margin:1.5rem 0 1rem;">Zwakste Epics</h3>
+                    <table class="backlog-table">
+                        <thead>
+                            <tr>
+                                <th>Epic</th>
+                                <th>Health Score</th>
+                                <th>Kritiek/Hoog</th>
+                                <th>Totaal Issues</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${weakSpots.weak_epics.map(s => `
+                                <tr>
+                                    <td>${s.backlog_title}</td>
+                                    <td>${renderHealthBadge(s.health_score)}</td>
+                                    <td><span class="issue-count critical">${s.critical_count}</span> / <span class="issue-count high">${s.high_count}</span></td>
+                                    <td>${s.total_issues}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+
+            // Weak Features
+            if (weakSpots.weak_features && weakSpots.weak_features.length > 0) {
+                html += `
+                    <h3 style="margin:1.5rem 0 1rem;">Zwakste Features</h3>
+                    <table class="backlog-table">
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th>Health Score</th>
+                                <th>Kritiek/Hoog</th>
+                                <th>Totaal Issues</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${weakSpots.weak_features.map(s => `
+                                <tr>
+                                    <td>${s.backlog_title}</td>
+                                    <td>${renderHealthBadge(s.health_score)}</td>
+                                    <td><span class="issue-count critical">${s.critical_count}</span> / <span class="issue-count high">${s.high_count}</span></td>
+                                    <td>${s.total_issues}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            }
+
+            // Uncategorized
+            if (weakSpots.uncategorized) {
+                const u = weakSpots.uncategorized;
+                html += `
+                    <h3 style="margin:1.5rem 0 1rem;">Ongecategoriseerde Issues</h3>
+                    <div style="background:#fff5f5;padding:1rem;border-radius:8px;border:1px solid #fed7d7;">
+                        <p><strong>${u.total_issues.toLocaleString()}</strong> issues hebben nog geen koppeling naar epics/features/stories.</p>
+                        <p style="margin-top:0.5rem;color:#718096;">
+                            Kritiek: ${u.critical_count} | Hoog: ${u.high_count} | Medium: ${u.medium_count} | Laag: ${u.low_count}
+                        </p>
+                        <button class="btn btn-success" style="margin-top:1rem;" onclick="autoCategorize()">
+                            Auto-Categoriseren
+                        </button>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html || '<div class="empty-state"><p>Geen weak spots geidentificeerd.</p></div>';
+        }
+
+        function renderMappings(mappings) {
+            const container = document.getElementById('mappingsList');
+            if (!mappings || mappings.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>Nog geen file mappings geconfigureerd. Voeg mappings toe om issues automatisch te categoriseren.</p></div>';
+                return;
+            }
+
+            container.innerHTML = mappings.map(m => `
+                <div class="mapping-item">
+                    <div>
+                        <code>${m.file_pattern}</code>
+                        <span style="color:#718096;margin-left:1rem;">
+                            ${m.epic_id ? 'Epic: ' + m.epic_id.substring(0,8) + '...' : ''}
+                            ${m.feature_id ? 'Feature: ' + m.feature_id.substring(0,8) + '...' : ''}
+                        </span>
+                    </div>
+                    <button class="btn" style="background:#e53e3e;color:white;padding:0.5rem 1rem;"
+                            onclick="deleteMapping(${m.id})">Verwijderen</button>
+                </div>
+            `).join('');
+        }
+
+        function renderHealthBadge(score) {
+            let cls = 'health-critical';
+            if (score >= 80) cls = 'health-excellent';
+            else if (score >= 60) cls = 'health-good';
+            else if (score >= 40) cls = 'health-warning';
+
+            return `<span class="health-badge ${cls}">${score.toFixed(0)}%</span>`;
+        }
+
+        function renderSeverityCounts(stats) {
+            return `
+                <div class="issue-counts">
+                    ${stats.critical_count > 0 ? `<span class="issue-count critical">${stats.critical_count} kritiek</span>` : ''}
+                    ${stats.high_count > 0 ? `<span class="issue-count high">${stats.high_count} hoog</span>` : ''}
+                    ${stats.medium_count > 0 ? `<span class="issue-count medium">${stats.medium_count} medium</span>` : ''}
+                    ${stats.low_count > 0 ? `<span class="issue-count low">${stats.low_count} laag</span>` : ''}
+                </div>
+            `;
+        }
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+
+            // Show selected tab
+            const tabMap = {
+                'epics': 'tabEpics',
+                'features': 'tabFeatures',
+                'stories': 'tabStories',
+                'weakspots': 'tabWeakspots',
+                'mappings': 'tabMappings'
+            };
+
+            document.getElementById(tabMap[tabName]).style.display = 'block';
+            event.target.classList.add('active');
+
+            // Load story stats if needed
+            if (tabName === 'stories' && dashboardData) {
+                loadStoryStats();
+            }
+        }
+
+        async function loadStoryStats() {
+            if (!currentProjectId) return;
+
+            const container = document.getElementById('storyStats');
+            container.innerHTML = '<div class="loading">Laden...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/debt-categorization/stats/by-story?project_id=${currentProjectId}`);
+                if (response.ok) {
+                    const stats = await response.json();
+                    if (!stats || stats.length === 0) {
+                        container.innerHTML = '<div class="empty-state"><p>Geen stories met issues gevonden.</p></div>';
+                        return;
+                    }
+
+                    container.innerHTML = `
+                        <table class="backlog-table">
+                            <thead>
+                                <tr>
+                                    <th>User Story</th>
+                                    <th>Health</th>
+                                    <th>Issues</th>
+                                    <th>Severity Breakdown</th>
+                                    <th>Principal</th>
+                                    <th>Acties</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${stats.map(s => `
+                                    <tr>
+                                        <td><strong>${s.backlog_title}</strong></td>
+                                        <td>${renderHealthBadge(s.health_score)}</td>
+                                        <td>${s.total_issues.toLocaleString()}</td>
+                                        <td>${renderSeverityCounts(s)}</td>
+                                        <td>${s.total_principal.toFixed(1)}h</td>
+                                        <td>
+                                            <button class="btn btn-primary" style="padding:0.5rem 1rem;font-size:0.8rem;"
+                                                    onclick="showIssues('story', '${s.backlog_id}', '${s.backlog_title}')">
+                                                Bekijk
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
+            } catch (error) {
+                container.innerHTML = '<div class="empty-state"><p>Fout bij laden story stats.</p></div>';
+            }
+        }
+
+        async function showIssues(backlogType, backlogId, backlogTitle) {
+            if (!currentProjectId || !backlogId) return;
+
+            const modal = document.getElementById('issueModal');
+            const listContainer = document.getElementById('modalIssueList');
+            document.getElementById('modalTitle').textContent = `Issues in: ${backlogTitle}`;
+            modal.classList.add('active');
+            listContainer.innerHTML = '<div class="loading">Laden...</div>';
+
+            try {
+                const response = await fetch(
+                    `${API_BASE}/debt-categorization/issues/${backlogType}/${backlogId}?project_id=${currentProjectId}&limit=50`
+                );
+                if (response.ok) {
+                    const data = await response.json();
+                    if (!data.items || data.items.length === 0) {
+                        listContainer.innerHTML = '<div class="empty-state"><p>Geen issues gevonden.</p></div>';
+                        return;
+                    }
+
+                    listContainer.innerHTML = data.items.map(issue => `
+                        <div class="issue-item">
+                            <h4>
+                                <span class="severity-badge severity-${issue.severity}">${issue.severity}</span>
+                                ${issue.title}
+                            </h4>
+                            <div class="location">${issue.file_path}:${issue.line_start || '?'}</div>
+                            <div class="metrics">
+                                <span>Type: ${issue.debt_type}</span>
+                                <span>Principal: ${issue.principal}h</span>
+                                <span>ROI: ${issue.roi.toFixed(1)}</span>
+                                ${issue.detection_rule ? `<span>Rule: ${issue.detection_rule}</span>` : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                listContainer.innerHTML = '<div class="empty-state"><p>Fout bij laden issues.</p></div>';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('issueModal').classList.remove('active');
+        }
+
+        async function autoCategorize() {
+            if (!currentProjectId) {
+                alert('Selecteer eerst een project');
+                return;
+            }
+
+            const btn = event.target;
+            btn.textContent = 'Bezig...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(
+                    `${API_BASE}/debt-categorization/categorize?project_id=${currentProjectId}`,
+                    { method: 'POST' }
+                );
+                if (response.ok) {
+                    const result = await response.json();
+                    alert(`Categorisatie voltooid!\n\nVerwerkt: ${result.total_processed}\nGecategoriseerd: ${result.categorized}\nOvergeslagen: ${result.skipped}`);
+                    loadDashboard();
+                } else {
+                    alert('Fout bij auto-categorisatie');
+                }
+            } catch (error) {
+                alert('Fout: ' + error.message);
+            } finally {
+                btn.textContent = 'Auto-Categoriseren';
+                btn.disabled = false;
+            }
+        }
+
+        async function createMapping() {
+            if (!currentProjectId) {
+                alert('Selecteer eerst een project');
+                return;
+            }
+
+            const pattern = document.getElementById('mappingPattern').value;
+            const epicId = document.getElementById('mappingEpic').value;
+            const featureId = document.getElementById('mappingFeature').value;
+
+            if (!pattern) {
+                alert('Vul een file pattern in');
+                return;
+            }
+
+            if (!epicId && !featureId) {
+                alert('Selecteer een epic of feature');
+                return;
+            }
+
+            try {
+                const response = await fetch(
+                    `${API_BASE}/debt-categorization/mappings?project_id=${currentProjectId}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            file_pattern: pattern,
+                            epic_id: epicId || null,
+                            feature_id: featureId || null,
+                            priority: 0
+                        })
+                    }
+                );
+                if (response.ok) {
+                    document.getElementById('mappingPattern').value = '';
+                    loadDashboard();
+                } else {
+                    alert('Fout bij aanmaken mapping');
+                }
+            } catch (error) {
+                alert('Fout: ' + error.message);
+            }
+        }
+
+        async function deleteMapping(mappingId) {
+            if (!confirm('Weet je zeker dat je deze mapping wilt verwijderen?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/debt-categorization/mappings/${mappingId}`, { method: 'DELETE' });
+                if (response.ok) {
+                    loadDashboard();
+                } else {
+                    alert('Fout bij verwijderen mapping');
+                }
+            } catch (error) {
+                alert('Fout: ' + error.message);
+            }
+        }
+
+        // Close modal on outside click
+        document.getElementById('issueModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // Close modal on Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
+</body>
+</html>

@@ -19,139 +19,247 @@
         }
 
         .header {
-            background: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             padding: 1.5rem 2rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1800px;
+            margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        h1 {
-            font-size: 1.5rem;
+        .header h1 {
+            font-size: 1.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+
+        .header .nav {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .header .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .header .nav a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Summary Bar */
+        .summary-bar {
+            background: white;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .summary-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            background: #f7fafc;
+        }
+
+        .summary-stat.warning {
+            background: #fef3c7;
+        }
+
+        .summary-stat.success {
+            background: #d1fae5;
+        }
+
+        .summary-stat .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
             color: #667eea;
         }
 
-        .nav-buttons {
+        .summary-stat.warning .stat-value {
+            color: #d97706;
+        }
+
+        .summary-stat.success .stat-value {
+            color: #059669;
+        }
+
+        .summary-stat .stat-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .capacity-overview {
+            margin-left: auto;
             display: flex;
+            align-items: center;
             gap: 1rem;
         }
 
-        .nav {
-            display: flex;
-            gap: 0.75rem;
-            padding: 0.75rem 2rem;
-            background: #667eea;
-        }
-
-        .nav a {
-            color: white;
-            text-decoration: none;
-            padding: 0.4rem 0.8rem;
-            background: rgba(255,255,255,0.2);
-            border-radius: 4px;
-            font-size: 0.85rem;
-            transition: background 0.2s;
-        }
-
-        .nav a:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        .nav a.active {
-            background: rgba(255,255,255,0.4);
-        }
-
-        .btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #5568d3;
-        }
-
-        .btn-secondary {
+        .capacity-bar-large {
+            width: 200px;
+            height: 12px;
             background: #e5e7eb;
-            color: #4b5563;
+            border-radius: 6px;
+            overflow: hidden;
         }
 
-        .btn-secondary:hover {
-            background: #d1d5db;
+        .capacity-fill-large {
+            height: 100%;
+            background: #667eea;
+            transition: width 0.3s, background 0.3s;
         }
 
+        .capacity-fill-large.warning {
+            background: #f59e0b;
+        }
+
+        .capacity-fill-large.danger {
+            background: #ef4444;
+        }
+
+        /* Main Container */
         .container {
-            padding: 2rem;
             max-width: 1800px;
             margin: 0 auto;
+            padding: 1.5rem;
         }
 
-        .planning-board {
+        /* Three Column Layout */
+        .planning-grid {
             display: grid;
-            grid-template-columns: 300px 1fr;
-            gap: 2rem;
-            height: calc(100vh - 120px);
+            grid-template-columns: 280px 320px 1fr;
+            gap: 1rem;
+            min-height: calc(100vh - 220px);
         }
 
-        .backlog {
+        .column {
             background: white;
             border-radius: 8px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .column-header {
+            padding: 1rem;
+            border-bottom: 2px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .column-header h2 {
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .column-header .count {
+            background: #e5e7eb;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .column-needs-estimation .column-header {
+            background: #fef3c7;
+            border-color: #fcd34d;
+        }
+
+        .column-needs-estimation .column-header h2 {
+            color: #92400e;
+        }
+
+        .column-ready .column-header {
+            background: #d1fae5;
+            border-color: #6ee7b7;
+        }
+
+        .column-ready .column-header h2 {
+            color: #065f46;
+        }
+
+        .column-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .column-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.75rem;
+        }
+
+        /* Sprints Container */
+        .sprints-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 0.75rem;
+            padding: 0.75rem;
+            flex: 1;
             overflow-y: auto;
         }
 
-        .backlog h2 {
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-            color: #4b5563;
-        }
-
-        .sprints-container {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            overflow-x: auto;
-        }
-
         .sprint-column {
-            background: white;
+            background: #f7fafc;
             border-radius: 8px;
-            padding: 1rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            min-height: 400px;
+            padding: 0.75rem;
+            min-height: 300px;
             display: flex;
             flex-direction: column;
         }
 
         .sprint-header {
-            margin-bottom: 1rem;
-            padding-bottom: 1rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
             border-bottom: 2px solid #e5e7eb;
         }
 
         .sprint-header h3 {
-            font-size: 1rem;
+            font-size: 0.95rem;
             color: #667eea;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
         }
 
         .sprint-meta {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: #9ca3af;
         }
 
-        .capacity-bar {
+        .sprint-capacity {
             margin-top: 0.5rem;
+        }
+
+        .capacity-bar {
             height: 6px;
             background: #e5e7eb;
             border-radius: 3px;
@@ -173,58 +281,71 @@
         }
 
         .capacity-text {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: #6b7280;
             margin-top: 0.25rem;
+            display: flex;
+            justify-content: space-between;
         }
 
         .sprint-items {
             flex: 1;
-            overflow-y: auto;
-            padding: 0.5rem 0;
+            min-height: 150px;
         }
 
-        .task-card {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
+        /* Item Cards */
+        .item-card {
+            background: white;
             border-radius: 6px;
             padding: 0.75rem;
             margin-bottom: 0.5rem;
-            cursor: move;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            border-left: 3px solid #667eea;
+            cursor: grab;
             transition: all 0.2s;
         }
 
-        .task-card:hover {
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        .item-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             transform: translateY(-2px);
         }
 
-        .task-card.dragging {
+        .item-card.dragging {
             opacity: 0.5;
+            cursor: grabbing;
         }
 
-        .task-card .task-id {
-            font-size: 0.7rem;
-            color: #9ca3af;
-            font-weight: 600;
+        .item-card.needs-estimation {
+            border-left-color: #f59e0b;
         }
 
-        .task-card .task-title {
+        .item-card.high-priority {
+            border-left-color: #ef4444;
+        }
+
+        .item-card.critical {
+            border-left-color: #dc2626;
+            background: #fef2f2;
+        }
+
+        .item-title {
             font-size: 0.85rem;
-            margin: 0.25rem 0;
+            font-weight: 500;
             color: #1f2937;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
         }
 
-        .task-card .task-meta {
+        .item-meta {
             display: flex;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
+            flex-wrap: wrap;
+            gap: 0.4rem;
         }
 
         .badge {
-            font-size: 0.7rem;
-            padding: 0.2rem 0.5rem;
-            border-radius: 12px;
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
             font-weight: 500;
         }
 
@@ -233,9 +354,9 @@
             color: #1e40af;
         }
 
-        .badge-status {
-            background: #e0e7ff;
-            color: #4c51bf;
+        .badge-no-sp {
+            background: #fef3c7;
+            color: #92400e;
         }
 
         .badge-priority {
@@ -243,291 +364,599 @@
             color: #92400e;
         }
 
+        .badge-priority.critical {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .badge-priority.high {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .item-actions {
+            margin-top: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.4rem 0.8rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.7rem;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #4b5563;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        /* Drop Zone */
         .drop-zone {
-            min-height: 100px;
+            min-height: 80px;
             border: 2px dashed #d1d5db;
             border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #9ca3af;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
+            transition: all 0.2s;
         }
 
         .drop-zone.drag-over {
             border-color: #667eea;
-            background: #f3f4f6;
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
         }
 
-        .status {
-            padding: 0.75rem 1.5rem;
-            border-radius: 6px;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-        }
-
-        .status.success {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .status.error {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .status.loading {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
+        /* Empty State */
         .empty-state {
             text-align: center;
-            padding: 2rem;
+            padding: 2rem 1rem;
             color: #9ca3af;
+        }
+
+        .empty-state-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast {
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            color: white;
+            font-size: 0.9rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success { background: #10b981; }
+        .toast.error { background: #ef4444; }
+        .toast.info { background: #667eea; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .planning-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .column:nth-child(3) {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .planning-grid {
+                grid-template-columns: 1fr;
+            }
+            .summary-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .capacity-overview {
+                margin-left: 0;
+                justify-content: center;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="nav">
-        <a href="../index.html">🏠 Hub</a>
-        <a href="agent-dashboard.html">🤖 Agents</a>
-        <a href="estimation-dashboard.html">📊 Estimation</a>
-        <a href="quality-dashboard.html">✅ Quality</a>
-        <a href="spec-kit-wizard.html">📝 Spec-Kit</a>
-        <a href="sprint-planning.html" class="active">🎯 Sprint</a>
-    </div>
-    <div class="header">
-        <h1>🎯 Sprint Planning</h1>
-        <div class="nav-buttons">
-            <button class="btn btn-secondary" onclick="window.location.href='../index.html'">← Hub</button>
-            <button class="btn btn-primary" onclick="createInitialSprints()">🚀 Create Sprints 1-4</button>
-            <button class="btn btn-primary" onclick="autoFillSprints()">⚡ Auto-Fill Sprints</button>
+    <header class="header">
+        <div class="header-content">
+            <div>
+                <h1>Sprint Planning</h1>
+                <p>Estimate backlog items and plan sprints</p>
+            </div>
+            <nav class="nav">
+                <a href="index.html">Hub</a>
+                <a href="kanban-dashboard.html">Kanban</a>
+                <a href="agent-dashboard.html">Agents</a>
+                <a href="estimation-dashboard.html">Estimation</a>
+            </nav>
         </div>
+    </header>
+
+    <!-- Summary Bar -->
+    <div class="summary-bar">
+        <div class="summary-stat warning" id="stat-needs-estimation">
+            <span class="stat-value">0</span>
+            <span class="stat-label">Needs Estimation</span>
+        </div>
+        <div class="summary-stat success" id="stat-ready">
+            <span class="stat-value">0</span>
+            <span class="stat-label">Ready for Sprint</span>
+        </div>
+        <div class="summary-stat" id="stat-ready-sp">
+            <span class="stat-value">0</span>
+            <span class="stat-label">Available SP</span>
+        </div>
+
+        <div class="capacity-overview">
+            <span style="font-size: 0.85rem; color: #6b7280;">Sprint Capacity:</span>
+            <div class="capacity-bar-large">
+                <div class="capacity-fill-large" id="total-capacity-fill" style="width: 0%"></div>
+            </div>
+            <span id="capacity-text" style="font-size: 0.85rem; font-weight: 600;">0/0 SP</span>
+        </div>
+
+        <button class="btn btn-primary" onclick="createSprints()">Create Sprints</button>
+        <button class="btn btn-success" onclick="autoFillSprints()">Auto-Fill Sprints</button>
     </div>
 
     <div class="container">
-        <div id="status" class="status" style="display: none;"></div>
-
-        <div class="planning-board">
-            <!-- Backlog -->
-            <div class="backlog">
-                <h2>📋 Backlog</h2>
-                <div id="backlog" class="sprint-items">
-                    <div class="empty-state">Loading...</div>
+        <div class="planning-grid">
+            <!-- Column 1: Needs Estimation -->
+            <div class="column column-needs-estimation">
+                <div class="column-header">
+                    <h2>Needs Estimation <span class="count" id="needs-estimation-count">0</span></h2>
+                    <div class="column-actions">
+                        <button class="btn btn-sm btn-warning" onclick="estimateAll()">Estimate All</button>
+                    </div>
+                </div>
+                <div class="column-content" id="needs-estimation-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">Loading...</div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Sprints -->
-            <div class="sprints-container" id="sprints">
-                <!-- Sprint columns will be rendered here -->
+            <!-- Column 2: Ready for Sprint -->
+            <div class="column column-ready">
+                <div class="column-header">
+                    <h2>Ready for Sprint <span class="count" id="ready-count">0</span></h2>
+                    <div class="column-actions">
+                        <span id="ready-total-sp" style="font-size: 0.8rem; color: #065f46;">0 SP</span>
+                    </div>
+                </div>
+                <div class="column-content" id="ready-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column 3: Sprints -->
+            <div class="column">
+                <div class="column-header">
+                    <h2>Sprints <span class="count" id="sprint-count">0</span></h2>
+                    <div class="column-actions">
+                        <button class="btn btn-sm btn-secondary" onclick="loadSprints()">Refresh</button>
+                    </div>
+                </div>
+                <div class="sprints-grid" id="sprints-container">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">Loading...</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
+    <div class="toast-container" id="toastContainer"></div>
+
     <script>
-        const API_BASE = 'http://localhost:8000/api';
+        const API_BASE = 'http://localhost:8000/api/sprints';
+
+        // State
+        let needsEstimation = [];
+        let readyForSprint = [];
         let sprints = [];
-        let backlogItems = [];
+        let summary = {};
         let draggedItem = null;
 
         // Initialize
+        document.addEventListener('DOMContentLoaded', init);
+
         async function init() {
-            await loadSprints();
-            await loadBacklog();
-            renderSprints();
-            renderBacklog();
+            await Promise.all([
+                loadNeedsEstimation(),
+                loadReadyForSprint(),
+                loadSprints(),
+                loadSummary()
+            ]);
         }
 
-        // Load sprints from API
+        // Load items needing estimation
+        async function loadNeedsEstimation() {
+            try {
+                const res = await fetch(`${API_BASE}/backlog/needs-estimation`);
+                needsEstimation = await res.json();
+                renderNeedsEstimation();
+            } catch (err) {
+                console.error('Error loading needs estimation:', err);
+                showToast('Failed to load backlog', 'error');
+            }
+        }
+
+        // Load items ready for sprint
+        async function loadReadyForSprint() {
+            try {
+                const res = await fetch(`${API_BASE}/backlog/ready-for-sprint`);
+                readyForSprint = await res.json();
+                renderReadyForSprint();
+            } catch (err) {
+                console.error('Error loading ready items:', err);
+                showToast('Failed to load ready items', 'error');
+            }
+        }
+
+        // Load sprints
         async function loadSprints() {
             try {
-                const response = await fetch(`${API_BASE}/sprints/`);
-                const data = await response.json();
-                sprints = data.sort((a, b) => a.id - b.id);
-            } catch (error) {
-                showStatus('error', 'Failed to load sprints: ' + error.message);
-                sprints = [];
+                const res = await fetch(`${API_BASE}/`);
+                sprints = await res.json();
+                sprints = sprints.filter(s => s.status !== 'COMPLETED').sort((a, b) => a.id - b.id);
+                renderSprints();
+            } catch (err) {
+                console.error('Error loading sprints:', err);
             }
         }
 
-        // Load backlog items
-        async function loadBacklog() {
+        // Load summary statistics
+        async function loadSummary() {
             try {
-                const response = await fetch(`${API_BASE}/sprints/backlog/items`);
-                backlogItems = await response.json();
-            } catch (error) {
-                showStatus('error', 'Failed to load backlog: ' + error.message);
-                backlogItems = [];
+                const res = await fetch(`${API_BASE}/backlog/summary`);
+                summary = await res.json();
+                renderSummary();
+            } catch (err) {
+                console.error('Error loading summary:', err);
             }
         }
 
-        // Render sprint columns
-        function renderSprints() {
-            const container = document.getElementById('sprints');
-            container.innerHTML = '';
+        // Render needs estimation column
+        function renderNeedsEstimation() {
+            const container = document.getElementById('needs-estimation-list');
+            const countEl = document.getElementById('needs-estimation-count');
 
-            if (sprints.length === 0) {
+            countEl.textContent = needsEstimation.length;
+
+            if (needsEstimation.length === 0) {
                 container.innerHTML = `
-                    <div class="empty-state" style="grid-column: 1 / -1;">
-                        <p>No sprints yet. Click "Create Sprints 1-4" to get started.</p>
+                    <div class="empty-state">
+                        <div class="empty-state-icon">All items are estimated!</div>
                     </div>
                 `;
                 return;
             }
 
-            sprints.forEach(sprint => {
-                const col = document.createElement('div');
-                col.className = 'sprint-column';
-                col.dataset.sprintId = sprint.id;
+            container.innerHTML = needsEstimation.map(item => `
+                <div class="item-card needs-estimation ${item.priority === 'CRITICAL' ? 'critical' : item.priority === 'HIGH' ? 'high-priority' : ''}">
+                    <div class="item-title">${truncate(item.title, 60)}</div>
+                    <div class="item-meta">
+                        <span class="badge badge-no-sp">? SP</span>
+                        ${item.priority ? `<span class="badge badge-priority ${item.priority.toLowerCase()}">${item.priority}</span>` : ''}
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn btn-sm btn-warning" onclick="requestEstimation('${item.id}')">
+                            Estimate
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
 
+        // Render ready for sprint column
+        function renderReadyForSprint() {
+            const container = document.getElementById('ready-list');
+            const countEl = document.getElementById('ready-count');
+            const totalSpEl = document.getElementById('ready-total-sp');
+
+            countEl.textContent = readyForSprint.length;
+            const totalSp = readyForSprint.reduce((sum, item) => sum + (item.story_points || 0), 0);
+            totalSpEl.textContent = `${totalSp} SP`;
+
+            if (readyForSprint.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">No items ready</div>
+                        <p style="font-size: 0.8rem;">Estimate items first</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = readyForSprint.map(item => `
+                <div class="item-card ${item.priority === 'CRITICAL' ? 'critical' : item.priority === 'HIGH' ? 'high-priority' : ''}"
+                     draggable="true"
+                     ondragstart="handleDragStart(event, '${item.id}', 'ready')"
+                     ondragend="handleDragEnd(event)"
+                     data-id="${item.id}"
+                     data-sp="${item.story_points || 0}">
+                    <div class="item-title">${truncate(item.title, 60)}</div>
+                    <div class="item-meta">
+                        <span class="badge badge-sp">${item.story_points || 0} SP</span>
+                        ${item.priority ? `<span class="badge badge-priority ${item.priority.toLowerCase()}">${item.priority}</span>` : ''}
+                        ${item.estimated_hours ? `<span class="badge">${item.estimated_hours}h</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Render sprints
+        function renderSprints() {
+            const container = document.getElementById('sprints-container');
+            const countEl = document.getElementById('sprint-count');
+
+            countEl.textContent = sprints.length;
+
+            if (sprints.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-state-icon">No sprints</div>
+                        <p style="font-size: 0.8rem;">Click "Create Sprints" to get started</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = sprints.map(sprint => {
                 const capacityPercent = (sprint.total_sp / sprint.capacity) * 100;
                 let fillClass = '';
                 if (capacityPercent > 100) fillClass = 'danger';
                 else if (capacityPercent > 80) fillClass = 'warning';
 
-                col.innerHTML = `
-                    <div class="sprint-header">
-                        <h3>${sprint.name}</h3>
-                        <div class="sprint-meta">
-                            ${formatDate(sprint.start_date)} - ${formatDate(sprint.end_date)}
+                return `
+                    <div class="sprint-column" data-sprint-id="${sprint.id}">
+                        <div class="sprint-header">
+                            <h3>${sprint.name}</h3>
+                            <div class="sprint-meta">
+                                ${formatDate(sprint.start_date)} - ${formatDate(sprint.end_date)}
+                            </div>
+                            <div class="sprint-capacity">
+                                <div class="capacity-bar">
+                                    <div class="capacity-fill ${fillClass}" style="width: ${Math.min(capacityPercent, 100)}%"></div>
+                                </div>
+                                <div class="capacity-text">
+                                    <span>${sprint.total_sp || 0} / ${sprint.capacity} SP</span>
+                                    <span>${Math.round(capacityPercent)}%</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="capacity-bar">
-                            <div class="capacity-fill ${fillClass}" style="width: ${Math.min(capacityPercent, 100)}%"></div>
+                        <div class="sprint-items drop-zone"
+                             id="sprint-${sprint.id}-items"
+                             ondrop="handleDrop(event, ${sprint.id})"
+                             ondragover="handleDragOver(event)"
+                             ondragleave="handleDragLeave(event)">
+                            Drop items here
                         </div>
-                        <div class="capacity-text">
-                            ${sprint.total_sp} / ${sprint.capacity} SP
-                        </div>
-                    </div>
-                    <div class="sprint-items" id="sprint-${sprint.id}-items"
-                         ondrop="drop(event, ${sprint.id})"
-                         ondragover="allowDrop(event)"
-                         ondragleave="dragLeave(event)">
-                        <div class="drop-zone">Drop items here</div>
                     </div>
                 `;
+            }).join('');
 
-                container.appendChild(col);
-
-                // Load sprint items
-                loadSprintItems(sprint.id);
-            });
+            // Load items for each sprint
+            sprints.forEach(sprint => loadSprintItems(sprint.id));
         }
 
         // Load items for a specific sprint
         async function loadSprintItems(sprintId) {
             try {
-                const response = await fetch(`${API_BASE}/sprints/${sprintId}/items`);
-                const items = await response.json();
-                renderSprintItems(sprintId, items);
-            } catch (error) {
-                console.error(`Failed to load items for sprint ${sprintId}:`, error);
+                const res = await fetch(`${API_BASE}/${sprintId}/items`);
+                const items = await res.json();
+
+                const container = document.getElementById(`sprint-${sprintId}-items`);
+                if (items.length === 0) {
+                    container.innerHTML = '<span style="color: #9ca3af; font-size: 0.8rem;">Drop items here</span>';
+                    container.classList.add('drop-zone');
+                } else {
+                    container.classList.remove('drop-zone');
+                    container.innerHTML = items.map(item => `
+                        <div class="item-card" data-id="${item.id}">
+                            <div class="item-title">${truncate(item.title, 50)}</div>
+                            <div class="item-meta">
+                                <span class="badge badge-sp">${item.sp || 0} SP</span>
+                                <button class="btn btn-sm btn-secondary" onclick="unassignItem('${item.id}', ${sprintId})">Remove</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                console.error(`Error loading sprint ${sprintId} items:`, err);
             }
         }
 
-        // Render items in sprint column
-        function renderSprintItems(sprintId, items) {
-            const container = document.getElementById(`sprint-${sprintId}-items`);
+        // Render summary statistics
+        function renderSummary() {
+            document.querySelector('#stat-needs-estimation .stat-value').textContent = summary.needs_estimation?.count || 0;
+            document.querySelector('#stat-ready .stat-value').textContent = summary.ready_for_sprint?.count || 0;
+            document.querySelector('#stat-ready-sp .stat-value').textContent = summary.ready_for_sprint?.total_story_points || 0;
 
-            if (items.length === 0) {
-                container.innerHTML = '<div class="drop-zone">Drop items here</div>';
+            const cap = summary.sprint_capacity || {};
+            const percent = cap.utilization_percent || 0;
+            const fillEl = document.getElementById('total-capacity-fill');
+            fillEl.style.width = `${Math.min(percent, 100)}%`;
+            fillEl.className = 'capacity-fill-large';
+            if (percent > 100) fillEl.classList.add('danger');
+            else if (percent > 80) fillEl.classList.add('warning');
+
+            document.getElementById('capacity-text').textContent = `${cap.used || 0}/${cap.total || 0} SP`;
+        }
+
+        // Request estimation for an item
+        async function requestEstimation(itemId) {
+            try {
+                showToast('Requesting estimation...', 'info');
+                const res = await fetch(`${API_BASE}/backlog/${itemId}/request-estimation`, {
+                    method: 'POST'
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Failed');
+                }
+
+                showToast('Eliza agent triggered for estimation', 'success');
+                await loadNeedsEstimation();
+                await loadSummary();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Estimate all items
+        async function estimateAll() {
+            if (needsEstimation.length === 0) {
+                showToast('No items to estimate', 'info');
                 return;
             }
 
-            container.innerHTML = items.map(item => createTaskCard(item)).join('');
-        }
+            const ids = needsEstimation.map(i => i.id);
+            showToast(`Requesting estimation for ${ids.length} items...`, 'info');
 
-        // Render backlog
-        function renderBacklog() {
-            const container = document.getElementById('backlog');
+            try {
+                const res = await fetch(`${API_BASE}/backlog/bulk-request-estimation`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(ids)
+                });
 
-            if (backlogItems.length === 0) {
-                container.innerHTML = '<div class="empty-state">No items in backlog</div>';
-                return;
+                const result = await res.json();
+                showToast(`Estimation requested: ${result.successful}/${result.total} successful`, 'success');
+                await init();
+            } catch (err) {
+                showToast('Bulk estimation failed', 'error');
             }
-
-            container.innerHTML = backlogItems.map(item => createTaskCard(item)).join('');
         }
 
-        // Create task card HTML
-        function createTaskCard(item) {
-            return `
-                <div class="task-card" draggable="true"
-                     ondragstart="dragStart(event, '${item.id}')"
-                     ondragend="dragEnd(event)">
-                    <div class="task-id">${item.id}</div>
-                    <div class="task-title">${item.title}</div>
-                    <div class="task-meta">
-                        <span class="badge badge-sp">${item.sp || 0} SP</span>
-                        <span class="badge badge-status">${item.status || 'N/A'}</span>
-                        ${item.priority ? `<span class="badge badge-priority">${item.priority}</span>` : ''}
-                    </div>
-                </div>
-            `;
-        }
-
-        // Drag and drop functions
-        function dragStart(event, itemId) {
-            draggedItem = itemId;
+        // Drag and drop handlers
+        function handleDragStart(event, itemId, source) {
+            draggedItem = { id: itemId, source };
             event.target.classList.add('dragging');
+            event.dataTransfer.effectAllowed = 'move';
         }
 
-        function dragEnd(event) {
+        function handleDragEnd(event) {
             event.target.classList.remove('dragging');
             draggedItem = null;
         }
 
-        function allowDrop(event) {
+        function handleDragOver(event) {
             event.preventDefault();
-            if (event.target.classList.contains('sprint-items')) {
-                event.target.classList.add('drag-over');
-            }
+            event.dataTransfer.dropEffect = 'move';
+            event.currentTarget.classList.add('drag-over');
         }
 
-        function dragLeave(event) {
-            if (event.target.classList.contains('sprint-items')) {
-                event.target.classList.remove('drag-over');
-            }
+        function handleDragLeave(event) {
+            event.currentTarget.classList.remove('drag-over');
         }
 
-        async function drop(event, sprintId) {
+        async function handleDrop(event, sprintId) {
             event.preventDefault();
-            event.target.classList.remove('drag-over');
+            event.currentTarget.classList.remove('drag-over');
 
             if (!draggedItem) return;
 
-            showStatus('loading', 'Assigning item to sprint...');
-
             try {
-                const response = await fetch(`${API_BASE}/sprints/${sprintId}/assign?item_id=${draggedItem}`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'}
+                const res = await fetch(`${API_BASE}/${sprintId}/assign-story?story_id=${draggedItem.id}`, {
+                    method: 'POST'
                 });
 
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.detail || 'Failed to assign item');
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Assignment failed');
                 }
 
-                showStatus('success', 'Item assigned successfully!');
-
-                // Reload data
-                await loadSprints();
-                await loadBacklog();
-                renderSprints();
-                renderBacklog();
-
-            } catch (error) {
-                showStatus('error', error.message);
+                showToast('Item assigned to sprint', 'success');
+                await Promise.all([loadReadyForSprint(), loadSprints(), loadSummary()]);
+            } catch (err) {
+                showToast(err.message, 'error');
             }
         }
 
-        // Create initial sprints
-        async function createInitialSprints() {
-            showStatus('loading', 'Creating sprints...');
+        // Unassign item from sprint
+        async function unassignItem(itemId, sprintId) {
+            try {
+                await fetch(`${API_BASE}/${sprintId}/unassign?item_id=${itemId}`, {
+                    method: 'POST'
+                });
+                showToast('Item removed from sprint', 'success');
+                await Promise.all([loadReadyForSprint(), loadSprints(), loadSummary()]);
+            } catch (err) {
+                showToast('Failed to remove item', 'error');
+            }
+        }
 
+        // Create sprints
+        async function createSprints() {
             const today = new Date();
-            const sprintDuration = 14; // days
+            const sprintDuration = 14;
+
+            showToast('Creating sprints...', 'info');
 
             try {
                 for (let i = 1; i <= 4; i++) {
@@ -537,175 +966,97 @@
                     const endDate = new Date(startDate);
                     endDate.setDate(startDate.getDate() + sprintDuration);
 
-                    const sprint = {
-                        name: `Sprint ${i}`,
-                        start_date: startDate.toISOString(),
-                        end_date: endDate.toISOString(),
-                        goal: `Sprint ${i} goal`,
-                        status: 'PLANNED',
-                        capacity: 50
-                    };
-
-                    await fetch(`${API_BASE}/sprints/`, {
+                    await fetch(`${API_BASE}/`, {
                         method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(sprint)
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: `Sprint ${i}`,
+                            start_date: startDate.toISOString().slice(0, 19),
+                            end_date: endDate.toISOString().slice(0, 19),
+                            goal: `Sprint ${i} goals`,
+                            status: 'PLANNED',
+                            capacity: 40
+                        })
                     });
                 }
 
-                showStatus('success', 'Sprints 1-4 created successfully!');
-                await init();
-
-            } catch (error) {
-                showStatus('error', 'Failed to create sprints: ' + error.message);
+                showToast('Sprints 1-4 created!', 'success');
+                await Promise.all([loadSprints(), loadSummary()]);
+            } catch (err) {
+                showToast('Failed to create sprints', 'error');
             }
         }
 
-        // Auto-fill sprints with tasks (balanced approach)
+        // Auto-fill sprints
         async function autoFillSprints() {
-            showStatus('loading', 'Auto-filling sprints with balanced distribution...');
+            if (readyForSprint.length === 0) {
+                showToast('No items ready for sprint', 'error');
+                return;
+            }
+
+            if (sprints.length === 0) {
+                showToast('Create sprints first', 'error');
+                return;
+            }
+
+            showToast('Auto-filling sprints...', 'info');
 
             try {
-                await loadBacklog();
+                // Sort by priority then SP (highest first for better bin-packing)
+                const priorityOrder = { 'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3 };
+                const sortedItems = [...readyForSprint].sort((a, b) => {
+                    const pa = priorityOrder[a.priority] ?? 4;
+                    const pb = priorityOrder[b.priority] ?? 4;
+                    if (pa !== pb) return pa - pb;
+                    return (b.story_points || 0) - (a.story_points || 0);
+                });
 
-                if (backlogItems.length === 0) {
-                    showStatus('error', 'No items in backlog to assign');
-                    return;
-                }
+                let assigned = 0;
+                for (const item of sortedItems) {
+                    // Find sprint with capacity
+                    const sprint = sprints.find(s =>
+                        (s.total_sp || 0) + (item.story_points || 0) <= s.capacity
+                    );
 
-                if (sprints.length === 0) {
-                    showStatus('error', 'No sprints available. Create sprints first.');
-                    return;
-                }
+                    if (sprint) {
+                        const res = await fetch(`${API_BASE}/${sprint.id}/assign-story?story_id=${item.id}`, {
+                            method: 'POST'
+                        });
 
-                // Group items by priority
-                const itemsByPriority = {
-                    CRITICAL: backlogItems.filter(i => i.priority === 'CRITICAL'),
-                    HIGH: backlogItems.filter(i => i.priority === 'HIGH'),
-                    MEDIUM: backlogItems.filter(i => i.priority === 'MEDIUM'),
-                    LOW: backlogItems.filter(i => i.priority === 'LOW' || !i.priority)
-                };
-
-                // Balanced distribution percentages per sprint
-                // Each sprint gets a mix: 30% high, 40% medium, 20% low, 10% critical
-                const distribution = {
-                    CRITICAL: 0.10,
-                    HIGH: 0.30,
-                    MEDIUM: 0.40,
-                    LOW: 0.20
-                };
-
-                for (let i = 0; i < sprints.length; i++) {
-                    const sprint = sprints[i];
-                    let sprintCapacityUsed = sprint.total_sp || 0;
-                    const targetCapacity = sprint.capacity;
-
-                    // Calculate target SP per priority for this sprint
-                    const targets = {
-                        CRITICAL: Math.floor(targetCapacity * distribution.CRITICAL),
-                        HIGH: Math.floor(targetCapacity * distribution.HIGH),
-                        MEDIUM: Math.floor(targetCapacity * distribution.MEDIUM),
-                        LOW: Math.floor(targetCapacity * distribution.LOW)
-                    };
-
-                    // Assign items per priority level to achieve balance
-                    for (const priority of ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']) {
-                        let prioritySpUsed = 0;
-                        const targetSp = targets[priority];
-                        const items = itemsByPriority[priority];
-
-                        for (let j = 0; j < items.length; j++) {
-                            const item = items[j];
-                            const itemSp = item.sp || 0;
-
-                            // Check if we can add this item without exceeding limits
-                            if (prioritySpUsed + itemSp <= targetSp &&
-                                sprintCapacityUsed + itemSp <= targetCapacity) {
-
-                                try {
-                                    const response = await fetch(`${API_BASE}/sprints/${sprint.id}/assign?item_id=${item.id}`, {
-                                        method: 'POST',
-                                        headers: {'Content-Type': 'application/json'}
-                                    });
-
-                                    if (response.ok) {
-                                        prioritySpUsed += itemSp;
-                                        sprintCapacityUsed += itemSp;
-                                        sprint.total_sp = sprintCapacityUsed;
-
-                                        // Remove from list
-                                        items.splice(j, 1);
-                                        j--;
-                                    }
-                                } catch (err) {
-                                    console.error('Failed to assign item:', err);
-                                }
-                            }
-                        }
-                    }
-
-                    // Fill remaining capacity with any leftover items (round-robin)
-                    const remainingCapacity = targetCapacity - sprintCapacityUsed;
-                    if (remainingCapacity > 0) {
-                        const allRemaining = [
-                            ...itemsByPriority.CRITICAL,
-                            ...itemsByPriority.HIGH,
-                            ...itemsByPriority.MEDIUM,
-                            ...itemsByPriority.LOW
-                        ];
-
-                        for (const item of allRemaining) {
-                            const itemSp = item.sp || 0;
-                            if (sprintCapacityUsed + itemSp <= targetCapacity) {
-                                try {
-                                    await fetch(`${API_BASE}/sprints/${sprint.id}/assign?item_id=${item.id}`, {
-                                        method: 'POST',
-                                        headers: {'Content-Type': 'application/json'}
-                                    });
-                                    sprintCapacityUsed += itemSp;
-
-                                    // Remove from priority list
-                                    Object.values(itemsByPriority).forEach(list => {
-                                        const idx = list.findIndex(i => i.id === item.id);
-                                        if (idx !== -1) list.splice(idx, 1);
-                                    });
-                                } catch (err) {
-                                    console.error('Failed to assign item:', err);
-                                }
-                            }
+                        if (res.ok) {
+                            sprint.total_sp = (sprint.total_sp || 0) + (item.story_points || 0);
+                            assigned++;
                         }
                     }
                 }
 
-                showStatus('success', 'Sprints auto-filled with balanced distribution! Each sprint has a mix of priorities.');
+                showToast(`Assigned ${assigned} items to sprints`, 'success');
                 await init();
-
-            } catch (error) {
-                showStatus('error', 'Failed to auto-fill sprints: ' + error.message);
+            } catch (err) {
+                showToast('Auto-fill failed', 'error');
             }
         }
 
-        // Helper functions
+        // Helpers
+        function truncate(str, len) {
+            if (!str) return '';
+            return str.length > len ? str.substring(0, len) + '...' : str;
+        }
+
         function formatDate(dateString) {
+            if (!dateString) return '';
             const date = new Date(dateString);
             return date.toLocaleDateString('nl-NL', { month: 'short', day: 'numeric' });
         }
 
-        function showStatus(type, message) {
-            const status = document.getElementById('status');
-            status.className = `status ${type}`;
-            status.textContent = message;
-            status.style.display = 'block';
-
-            if (type !== 'loading') {
-                setTimeout(() => {
-                    status.style.display = 'none';
-                }, 5000);
-            }
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
         }
-
-        // Initialize on load
-        window.addEventListener('load', init);
     </script>
 </body>
 </html>

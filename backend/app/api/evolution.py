@@ -685,12 +685,9 @@ async def get_guidance(request: GetGuidanceRequest):
 
         context = TaskContext(
             work_type=WorkType(request.work_type),
-            task_description=request.task_description,
+            description=request.task_description,
+            complexity=Complexity.MEDIUM,  # Default complexity
             constraints=request.constraints,
-            goals=request.goals,
-            available_resources=request.available_resources,
-            deadline=None,
-            priority="medium"
         )
 
         guidance = await evolution_service.consult_experience(
@@ -700,20 +697,20 @@ async def get_guidance(request: GetGuidanceRequest):
         )
 
         return GuidanceResponse(
-            confidence=guidance.confidence,
-            recommended_approach=guidance.recommended_approach,
+            confidence=guidance.confidence_score,
+            recommended_approach=guidance.suggested_approach,
             relevant_patterns=[
                 {
-                    "name": p.pattern_name if hasattr(p, 'pattern_name') else str(p),
-                    "description": p.description if hasattr(p, 'description') else "",
-                    "success_rate": p.success_rate if hasattr(p, 'success_rate') else 0.0
+                    "name": p[0].pattern_name if hasattr(p[0], 'pattern_name') else str(p[0]),
+                    "description": p[0].description if hasattr(p[0], 'description') else "",
+                    "success_rate": p[1] if len(p) > 1 else 0.0
                 }
-                for p in guidance.relevant_patterns
+                for p in guidance.pattern_matches
             ],
-            warnings=guidance.warnings,
-            estimated_duration=guidance.estimated_duration,
-            success_probability=guidance.success_probability,
-            similar_experiences_count=guidance.similar_experiences_count
+            warnings=guidance.warnings_from_past,
+            estimated_duration=0,  # Not available in Guidance class
+            success_probability=guidance.confidence_score,
+            similar_experiences_count=len(guidance.relevant_experiences)
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -744,13 +741,13 @@ async def generate_learning_tasks(request: GenerateLearningTasksRequest):
 
         return [
             LearningTaskResponse(
-                task_id=t.task_id,
-                task_type=t.task_type,
+                task_id=t.id,
+                task_type=t.work_type.value if hasattr(t.work_type, 'value') else str(t.work_type),
                 description=t.description,
-                expected_outcome=t.expected_outcome,
-                priority=t.priority,
-                estimated_effort=t.estimated_effort,
-                related_gap=t.related_gap
+                expected_outcome=t.learning_goal,
+                priority=t.expected_difficulty.value if hasattr(t.expected_difficulty, 'value') else str(t.expected_difficulty),
+                estimated_effort=1,  # Default effort
+                related_gap=t.knowledge_gap
             )
             for t in tasks
         ]
@@ -787,11 +784,18 @@ async def analyze_outcome(request: AnalyzeOutcomeRequest):
 
         return AttributionResponse(
             task_id=attribution.task_id,
-            critical_steps=attribution.critical_steps,
-            success_factors=attribution.success_factors,
-            improvement_areas=attribution.improvement_areas,
-            pattern_matches=attribution.pattern_matches,
-            overall_score=attribution.overall_score,
+            critical_steps=[
+                {
+                    "step_name": a.step_name,
+                    "contribution": a.contribution,
+                    "reasoning": a.reasoning
+                }
+                for a in attribution.attributions
+            ],
+            success_factors=attribution.key_success_factors,
+            improvement_areas=attribution.key_failure_factors,
+            pattern_matches=[],  # Not available in Attribution class
+            overall_score=attribution.total_score,
             recommendations=attribution.recommendations
         )
     except ValueError as e:
@@ -821,18 +825,21 @@ async def get_performance_metrics(
             days=days
         )
 
+        # Calculate period_days from period_start and period_end
+        period_days = (metrics.period_end - metrics.period_start).days if metrics.period_end and metrics.period_start else days
+
         return PerformanceMetricsResponse(
             agent_id=metrics.agent_id,
-            agent_role=metrics.agent_role.value,
-            period_days=metrics.period_days,
+            agent_role=metrics.agent_role.value if hasattr(metrics.agent_role, 'value') else str(metrics.agent_role),
+            period_days=period_days,
             total_tasks=metrics.total_tasks,
             success_rate=metrics.success_rate,
-            average_quality=metrics.average_quality,
-            average_duration=metrics.average_duration,
-            improvement_trend=metrics.improvement_trend,
-            top_strengths=metrics.top_strengths,
-            improvement_areas=metrics.improvement_areas,
-            estimation_accuracy=metrics.estimation_accuracy
+            average_quality=metrics.average_quality_score,
+            average_duration=int(metrics.average_duration),
+            improvement_trend=0.0,  # Calculate from quality_trend if needed
+            top_strengths=[],  # Not available in PerformanceMetrics class
+            improvement_areas=[],  # Not available in PerformanceMetrics class
+            estimation_accuracy=0.0  # Not available in PerformanceMetrics class
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -897,20 +904,21 @@ async def add_estimation_accuracy(
         estimation = EstimationAccuracy(
             id="",
             agent_id=agent_id,
-            agent_role=AgentRole(agent_role),
-            work_type=WorkType(work_type),
             task_id=task_id,
+            work_type=WorkType(work_type),
             estimated_hours=estimated_hours,
             actual_hours=actual_hours,
-            accuracy_ratio=actual_hours / estimated_hours if estimated_hours > 0 else 0,
-            estimation_method=estimation_method,
-            factors=factors,
+            estimated_complexity=Complexity.MEDIUM,  # Default
+            actual_complexity=Complexity.MEDIUM,  # Default
+            factors=list(factors.keys()) if factors else [],
+            underestimated_aspects=[],
+            overestimated_aspects=[],
             timestamp=datetime.utcnow()
         )
 
         estimation_id = await store.add_estimation_accuracy(estimation)
 
-        return {"id": estimation_id, "accuracy_ratio": estimation.accuracy_ratio}
+        return {"id": estimation_id, "accuracy_percent": estimation.accuracy_percent}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -932,8 +940,7 @@ async def get_estimation_stats(
 
         stats = await store.get_agent_estimation_stats(
             agent_id=agent_id,
-            work_type=wtype,
-            days=days
+            work_type=wtype
         )
 
         return stats
@@ -970,18 +977,16 @@ async def add_quality_metrics(
         metrics = QualityMetricsRecord(
             id="",
             agent_id=agent_id,
-            agent_role=AgentRole(agent_role),
-            work_type=WorkType(work_type),
             task_id=task_id,
+            work_type=WorkType(work_type),
             code_quality_score=code_quality_score,
             test_coverage=test_coverage,
-            security_score=security_score,
+            linting_errors=issues_found,  # Map issues_found to linting_errors
+            type_errors=0,
+            security_issues=int(100 - security_score) if security_score else 0,  # Convert score to issues count
+            performance_score=maintainability_score,  # Map maintainability to performance
             documentation_score=documentation_score,
-            maintainability_score=maintainability_score,
-            issues_found=issues_found,
-            issues_fixed=issues_fixed,
-            timestamp=datetime.utcnow(),
-            metadata=metadata
+            timestamp=datetime.utcnow()
         )
 
         metrics_id = await store.add_quality_metrics(metrics)
@@ -1082,8 +1087,8 @@ async def quick_lint(code: str, language: str):
         return {
             "phase": result.phase.value,
             "passed": result.passed,
-            "errors": [{"message": e.message, "line": e.line, "column": e.column} for e in result.errors],
-            "warnings": [{"message": w.message, "line": w.line, "column": w.column} for w in result.warnings]
+            "errors": [{"message": e.message, "line": e.line, "column": getattr(e, 'column', None)} for e in result.errors],
+            "warnings": [{"message": w.message, "line": w.line, "column": None} for w in result.warnings]
         }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -1102,8 +1107,8 @@ async def quick_type_check(code: str, language: str):
         return {
             "phase": result.phase.value,
             "passed": result.passed,
-            "errors": [{"message": e.message, "line": e.line, "column": e.column} for e in result.errors],
-            "warnings": [{"message": w.message, "line": w.line, "column": w.column} for w in result.warnings]
+            "errors": [{"message": e.message, "line": e.line, "column": getattr(e, 'column', None)} for e in result.errors],
+            "warnings": [{"message": w.message, "line": w.line, "column": None} for w in result.warnings]
         }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -1154,24 +1159,24 @@ async def iterate_until_valid(request: IterateUntilValidRequest):
 def _convert_validation_result(result: ValidationResult) -> ValidationResultResponse:
     """Convert internal ValidationResult to API response"""
     phase_results = []
-    for pr in result.phase_results:
+    for pr in result.phases:
         phase_results.append(ValidationPhaseResultResponse(
             phase=pr.phase.value,
             passed=pr.passed,
-            errors=[{"message": e.message, "line": e.line, "column": e.column, "code": e.code} for e in pr.errors],
-            warnings=[{"message": w.message, "line": w.line, "column": w.column, "code": w.code} for w in pr.warnings],
+            errors=[{"message": e.message, "line": e.line, "column": getattr(e, 'column', None), "code": e.code} for e in pr.errors],
+            warnings=[{"message": w.message, "line": w.line, "column": None, "code": w.code} for w in pr.warnings],
             duration=pr.duration,
-            tool_used=pr.tool_used,
-            output=pr.output
+            tool_used=pr.phase.value,  # Use phase name as tool
+            output=pr.raw_output if hasattr(pr, 'raw_output') else None
         ))
 
     return ValidationResultResponse(
-        overall_passed=result.overall_passed,
-        phases_run=[p.value for p in result.phases_run],
+        overall_passed=result.success,
+        phases_run=[p.phase.value for p in result.phases],
         phase_results=phase_results,
         total_errors=result.total_errors,
         total_warnings=result.total_warnings,
-        coverage=result.coverage,
+        coverage=result.coverage_percent,
         total_duration=result.total_duration,
         iterations=result.iterations
     )

@@ -18,6 +18,9 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False
 )
 
+# Alias for background task use
+async_session_maker = AsyncSessionLocal
+
 # Create base class for models
 Base = declarative_base()
 
@@ -26,6 +29,27 @@ async def get_db() -> AsyncSession:
     """
     Dependency function that yields database sessions.
     Use with FastAPI's Depends().
+    """
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
+
+
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def get_async_db():
+    """
+    Async context manager for database sessions.
+    Use with `async with get_async_db() as db:`.
+
+    Week 84: Added for use in extraction integration service.
     """
     async with AsyncSessionLocal() as session:
         try:

@@ -9,7 +9,7 @@ Date: 2025-11-25
 """
 
 import statistics
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict, Any, Tuple
 from enum import Enum
 from dataclasses import dataclass
@@ -43,6 +43,14 @@ class AnomalyType(str, Enum):
     SUDDEN_SPIKE = "sudden_spike"  # Unusual performance increase
     OSCILLATION = "oscillation"  # Unstable, swinging performance
     PLATEAU = "plateau"  # Performance stuck at same level
+
+
+class AnomalySeverity(str, Enum):
+    """Severity levels for anomalies."""
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"
 
 
 @dataclass

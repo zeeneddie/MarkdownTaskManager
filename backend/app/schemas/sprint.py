@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import Optional
 
@@ -28,11 +28,9 @@ class Sprint(SprintBase):
     total_sp: Optional[int] = 0
     completed_sp: Optional[int] = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class SprintWithStories(Sprint):
     stories: list = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

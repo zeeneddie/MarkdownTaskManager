@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Human Review Dashboard - Week 85</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+        .container { max-width: 1600px; margin: 0 auto; padding: 20px; }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 30px;
+        }
+        h1 { color: #fff; font-size: 1.8rem; }
+        .header-badge {
+            background: linear-gradient(135deg, #00d4aa, #00a3cc);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+        .tab {
+            padding: 10px 25px;
+            background: rgba(255,255,255,0.05);
+            border: none;
+            border-radius: 8px 8px 0 0;
+            color: #aaa;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tab:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+        }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 25px; }
+
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h2::before { content: attr(data-icon); font-size: 1.4rem; }
+
+        .story-list { max-height: 500px; overflow-y: auto; }
+        .story-item {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s;
+        }
+        .story-item:hover { transform: translateX(5px); background: rgba(0,0,0,0.3); }
+        .story-item.approved { border-left-color: #00d4aa; }
+        .story-item.rejected { border-left-color: #ff6b6b; }
+        .story-item.pending { border-left-color: #ffd43b; }
+
+        .story-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .story-title { font-weight: 600; color: #fff; }
+        .story-type {
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .story-type.epic { background: #764ba2; }
+        .story-type.feature { background: #667eea; }
+        .story-type.story { background: #00a3cc; }
+        .story-type.task { background: #00d4aa; }
+
+        .story-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        .story-meta span { display: flex; align-items: center; gap: 5px; }
+
+        .story-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+        .btn-approve { background: #00d4aa; color: #000; }
+        .btn-approve:hover { background: #00e5bb; }
+        .btn-reject { background: #ff6b6b; color: #fff; }
+        .btn-reject:hover { background: #ff5252; }
+        .btn-rerun { background: #667eea; color: #fff; }
+        .btn-rerun:hover { background: #7a8ff0; }
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.2); }
+
+        .confidence-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .confidence-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s;
+        }
+        .confidence-high { background: linear-gradient(90deg, #00d4aa, #00e5bb); }
+        .confidence-medium { background: linear-gradient(90deg, #ffd43b, #ffe066); }
+        .confidence-low { background: linear-gradient(90deg, #ff6b6b, #ff8787); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .stat-box {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .stat-label { font-size: 0.85rem; color: #888; }
+
+        .tier-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tier-option {
+            flex: 1;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .tier-option:hover { border-color: rgba(255,255,255,0.3); }
+        .tier-option.selected { border-color: #667eea; background: rgba(102,126,234,0.2); }
+        .tier-option.recommended::after {
+            content: 'Recommended';
+            display: block;
+            font-size: 0.7rem;
+            color: #00d4aa;
+            margin-top: 5px;
+        }
+        .tier-name { font-weight: 600; color: #fff; }
+        .tier-price { font-size: 1.2rem; color: #00d4aa; margin: 5px 0; }
+        .tier-confidence { font-size: 0.85rem; color: #888; }
+
+        .delta-list { max-height: 400px; overflow-y: auto; }
+        .delta-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .delta-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        .delta-icon.added { background: rgba(0,212,170,0.2); }
+        .delta-icon.removed { background: rgba(255,107,107,0.2); }
+        .delta-icon.modified { background: rgba(102,126,234,0.2); }
+
+        .trend-chart {
+            height: 200px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: flex-end;
+            padding: 20px;
+            gap: 10px;
+        }
+        .trend-bar {
+            flex: 1;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            border-radius: 4px 4px 0 0;
+            transition: height 0.5s;
+            position: relative;
+        }
+        .trend-bar::after {
+            content: attr(data-value);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .invest-scores {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+        }
+        .invest-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+        .invest-letter {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+        .invest-score { font-size: 0.85rem; color: #888; margin-top: 5px; }
+        .invest-label { font-size: 0.7rem; color: #666; margin-top: 3px; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: #1a1a2e;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #aaa;
+        }
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        textarea.form-control { min-height: 100px; resize: vertical; }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        .empty-state-icon { font-size: 4rem; margin-bottom: 20px; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .loading { animation: pulse 1.5s infinite; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Human Review Dashboard</h1>
+            <span class="header-badge">Week 85 - Validatie & Quality</span>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="review">Story Review</button>
+            <button class="tab" data-tab="delta">Delta Analysis</button>
+            <button class="tab" data-tab="upgrade">Tier Upgrade</button>
+            <button class="tab" data-tab="trends">Trends</button>
+            <button class="tab" data-tab="invest">INVEST Validation</button>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-value" id="totalStories">0</div>
+                <div class="stat-label">Total Stories</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="pendingReview">0</div>
+                <div class="stat-label">Pending Review</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="avgConfidence">0%</div>
+                <div class="stat-label">Avg Confidence</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="investScore">0.0</div>
+                <div class="stat-label">INVEST Score</div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Review -->
+        <div class="tab-content" id="tab-review">
+            <div class="grid">
+                <div class="card">
+                    <h2 data-icon="📋">Stories for Review</h2>
+                    <div class="story-list" id="storyList">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <p>No stories to review</p>
+                            <p>Select a project to load stories</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 data-icon="📊">Review Progress</h2>
+                    <div id="reviewProgress">
+                        <div style="margin-bottom: 20px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Approved</span>
+                                <span id="approvedCount">0</span>
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill confidence-high" id="approvedBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Rejected</span>
+                                <span id="rejectedCount">0</span>
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill confidence-low" id="rejectedBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Pending</span>
+                                <span id="pendingCount">0</span>
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill confidence-medium" id="pendingBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 30px;">
+                        <h3 style="margin-bottom: 15px;">Quick Actions</h3>
+                        <button class="btn btn-approve" style="width: 100%; margin-bottom: 10px;" onclick="approveAll()">
+                            Approve All High Confidence
+                        </button>
+                        <button class="btn btn-rerun" style="width: 100%;" onclick="requestRerun()">
+                            Request Re-extraction
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Delta -->
+        <div class="tab-content" id="tab-delta" style="display: none;">
+            <div class="grid">
+                <div class="card">
+                    <h2 data-icon="🔄">Recent Changes</h2>
+                    <div class="delta-list" id="deltaList">
+                        <div class="delta-item">
+                            <div class="delta-icon added">+</div>
+                            <div>
+                                <div style="color: #fff;">5 new stories discovered</div>
+                                <div style="font-size: 0.85rem; color: #888;">From tier upgrade FREE → STANDARD</div>
+                            </div>
+                        </div>
+                        <div class="delta-item">
+                            <div class="delta-icon modified">~</div>
+                            <div>
+                                <div style="color: #fff;">12 stories improved</div>
+                                <div style="font-size: 0.85rem; color: #888;">Confidence increased by avg 15%</div>
+                            </div>
+                        </div>
+                        <div class="delta-item">
+                            <div class="delta-icon removed">-</div>
+                            <div>
+                                <div style="color: #fff;">2 duplicate stories merged</div>
+                                <div style="font-size: 0.85rem; color: #888;">Reduced redundancy</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 data-icon="📈">Delta Metrics</h2>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="stat-box">
+                            <div class="stat-value" style="color: #00d4aa;">+5</div>
+                            <div class="stat-label">Stories Added</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" style="color: #ff6b6b;">-2</div>
+                            <div class="stat-label">Stories Removed</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" style="color: #667eea;">12</div>
+                            <div class="stat-label">Modified</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">+15%</div>
+                            <div class="stat-label">Confidence Gain</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <button class="btn btn-secondary" style="width: 100%;" onclick="compareSnapshots()">
+                            Compare Snapshots
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Upgrade -->
+        <div class="tab-content" id="tab-upgrade" style="display: none;">
+            <div class="card">
+                <h2 data-icon="⬆️">Tier Upgrade</h2>
+                <p style="color: #888; margin-bottom: 20px;">Upgrade your extraction tier for better accuracy and more stories</p>
+
+                <div class="tier-selector">
+                    <div class="tier-option" data-tier="FREE">
+                        <div class="tier-name">FREE</div>
+                        <div class="tier-price">$0</div>
+                        <div class="tier-confidence">60% confidence</div>
+                    </div>
+                    <div class="tier-option" data-tier="BASIC">
+                        <div class="tier-name">BASIC</div>
+                        <div class="tier-price">$5</div>
+                        <div class="tier-confidence">70% confidence</div>
+                    </div>
+                    <div class="tier-option selected recommended" data-tier="STANDARD">
+                        <div class="tier-name">STANDARD</div>
+                        <div class="tier-price">$25</div>
+                        <div class="tier-confidence">80% confidence</div>
+                    </div>
+                    <div class="tier-option" data-tier="PROFESSIONAL">
+                        <div class="tier-name">PROFESSIONAL</div>
+                        <div class="tier-price">$75</div>
+                        <div class="tier-confidence">90% confidence</div>
+                    </div>
+                    <div class="tier-option" data-tier="PREMIUM">
+                        <div class="tier-name">PREMIUM</div>
+                        <div class="tier-price">$150</div>
+                        <div class="tier-confidence">95% confidence</div>
+                    </div>
+                </div>
+
+                <div style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 20px; margin-top: 20px;">
+                    <h3 style="margin-bottom: 15px;">Upgrade Quote</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <div style="color: #888; font-size: 0.85rem;">Current Tier</div>
+                            <div style="color: #fff; font-size: 1.1rem;" id="currentTier">FREE</div>
+                        </div>
+                        <div>
+                            <div style="color: #888; font-size: 0.85rem;">Target Tier</div>
+                            <div style="color: #fff; font-size: 1.1rem;" id="targetTier">STANDARD</div>
+                        </div>
+                        <div>
+                            <div style="color: #888; font-size: 0.85rem;">Price Difference</div>
+                            <div style="color: #00d4aa; font-size: 1.1rem;" id="priceDiff">$25.00</div>
+                        </div>
+                        <div>
+                            <div style="color: #888; font-size: 0.85rem;">Expected Improvement</div>
+                            <div style="color: #fff; font-size: 1.1rem;" id="expectedImprovement">+20% confidence</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-approve" style="width: 100%; margin-top: 20px;" onclick="executeUpgrade()">
+                        Upgrade & Re-Extract
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Trends -->
+        <div class="tab-content" id="tab-trends" style="display: none;">
+            <div class="grid">
+                <div class="card">
+                    <h2 data-icon="📊">Confidence Trend</h2>
+                    <div class="trend-chart" id="confidenceChart">
+                        <div class="trend-bar" style="height: 60%;" data-value="60%"></div>
+                        <div class="trend-bar" style="height: 65%;" data-value="65%"></div>
+                        <div class="trend-bar" style="height: 70%;" data-value="70%"></div>
+                        <div class="trend-bar" style="height: 75%;" data-value="75%"></div>
+                        <div class="trend-bar" style="height: 80%;" data-value="80%"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 10px; color: #666; font-size: 0.85rem;">
+                        <span>Run 1</span>
+                        <span>Run 2</span>
+                        <span>Run 3</span>
+                        <span>Run 4</span>
+                        <span>Run 5</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 data-icon="📈">Story Count Trend</h2>
+                    <div class="trend-chart" id="storyChart">
+                        <div class="trend-bar" style="height: 40%; background: linear-gradient(180deg, #00d4aa, #00a3cc);" data-value="20"></div>
+                        <div class="trend-bar" style="height: 50%; background: linear-gradient(180deg, #00d4aa, #00a3cc);" data-value="25"></div>
+                        <div class="trend-bar" style="height: 60%; background: linear-gradient(180deg, #00d4aa, #00a3cc);" data-value="30"></div>
+                        <div class="trend-bar" style="height: 70%; background: linear-gradient(180deg, #00d4aa, #00a3cc);" data-value="35"></div>
+                        <div class="trend-bar" style="height: 80%; background: linear-gradient(180deg, #00d4aa, #00a3cc);" data-value="40"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: INVEST -->
+        <div class="tab-content" id="tab-invest" style="display: none;">
+            <div class="card">
+                <h2 data-icon="✅">INVEST Validation Scores</h2>
+                <div class="invest-scores">
+                    <div class="invest-item">
+                        <div class="invest-letter">I</div>
+                        <div class="invest-score" id="investI">85%</div>
+                        <div class="invest-label">Independent</div>
+                    </div>
+                    <div class="invest-item">
+                        <div class="invest-letter">N</div>
+                        <div class="invest-score" id="investN">72%</div>
+                        <div class="invest-label">Negotiable</div>
+                    </div>
+                    <div class="invest-item">
+                        <div class="invest-letter">V</div>
+                        <div class="invest-score" id="investV">90%</div>
+                        <div class="invest-label">Valuable</div>
+                    </div>
+                    <div class="invest-item">
+                        <div class="invest-letter">E</div>
+                        <div class="invest-score" id="investE">78%</div>
+                        <div class="invest-label">Estimable</div>
+                    </div>
+                    <div class="invest-item">
+                        <div class="invest-letter">S</div>
+                        <div class="invest-score" id="investS">65%</div>
+                        <div class="invest-label">Small</div>
+                    </div>
+                    <div class="invest-item">
+                        <div class="invest-letter">T</div>
+                        <div class="invest-score" id="investT">82%</div>
+                        <div class="invest-label">Testable</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <h3 style="margin-bottom: 15px;">Validation Issues</h3>
+                    <div class="story-list" id="validationIssues">
+                        <div class="story-item pending">
+                            <div class="story-header">
+                                <span class="story-title">Story needs to be smaller</span>
+                                <span class="story-type story">STORY</span>
+                            </div>
+                            <div style="color: #888; font-size: 0.9rem;">
+                                Story has 8 acceptance criteria - consider splitting into multiple stories
+                            </div>
+                            <div class="story-actions">
+                                <button class="btn btn-secondary">View Story</button>
+                                <button class="btn btn-rerun">Auto-Split</button>
+                            </div>
+                        </div>
+                        <div class="story-item pending">
+                            <div class="story-header">
+                                <span class="story-title">Missing testable criteria</span>
+                                <span class="story-type story">STORY</span>
+                            </div>
+                            <div style="color: #888; font-size: 0.9rem;">
+                                Acceptance criteria don't define measurable outcomes
+                            </div>
+                            <div class="story-actions">
+                                <button class="btn btn-secondary">View Story</button>
+                                <button class="btn btn-rerun">Suggest AC</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rerun Modal -->
+    <div class="modal" id="rerunModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Request Re-extraction</h2>
+                <button class="modal-close" onclick="closeModal('rerunModal')">&times;</button>
+            </div>
+            <form id="rerunForm">
+                <div class="form-group">
+                    <label>Reason for Re-run</label>
+                    <select class="form-control" id="rerunReason">
+                        <option value="low_confidence">Low Confidence Scores</option>
+                        <option value="quality_issue">Quality Issues</option>
+                        <option value="codebase_changed">Codebase Changed</option>
+                        <option value="human_request">Manual Request</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Target Tier</label>
+                    <select class="form-control" id="rerunTier">
+                        <option value="STANDARD">STANDARD ($25)</option>
+                        <option value="PROFESSIONAL">PROFESSIONAL ($75)</option>
+                        <option value="PREMIUM">PREMIUM ($150)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Focus Areas (optional)</label>
+                    <textarea class="form-control" id="focusAreas" placeholder="Enter specific areas to focus on..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-approve" style="width: 100%;">
+                    Submit Re-run Request
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        let currentProject = null;
+        let stories = [];
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+
+                tab.classList.add('active');
+                const tabId = 'tab-' + tab.dataset.tab;
+                document.getElementById(tabId).style.display = 'block';
+            });
+        });
+
+        // Tier selection
+        document.querySelectorAll('.tier-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.tier-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                updateQuote(option.dataset.tier);
+            });
+        });
+
+        function updateQuote(tier) {
+            document.getElementById('targetTier').textContent = tier;
+            const prices = { FREE: 0, BASIC: 5, STANDARD: 25, PROFESSIONAL: 75, PREMIUM: 150 };
+            const currentTier = document.getElementById('currentTier').textContent;
+            const diff = prices[tier] - prices[currentTier];
+            document.getElementById('priceDiff').textContent = '$' + diff.toFixed(2);
+
+            const improvements = {
+                FREE: '+0%', BASIC: '+10%', STANDARD: '+20%', PROFESSIONAL: '+30%', PREMIUM: '+35%'
+            };
+            document.getElementById('expectedImprovement').textContent = improvements[tier] + ' confidence';
+        }
+
+        function approveStory(storyId) {
+            const item = document.querySelector(`[data-story-id="${storyId}"]`);
+            if (item) {
+                item.classList.remove('pending', 'rejected');
+                item.classList.add('approved');
+            }
+            updateReviewProgress();
+        }
+
+        function rejectStory(storyId) {
+            const item = document.querySelector(`[data-story-id="${storyId}"]`);
+            if (item) {
+                item.classList.remove('pending', 'approved');
+                item.classList.add('rejected');
+            }
+            updateReviewProgress();
+        }
+
+        function approveAll() {
+            document.querySelectorAll('.story-item.pending').forEach(item => {
+                const confidence = parseFloat(item.dataset.confidence || 0);
+                if (confidence >= 0.8) {
+                    item.classList.remove('pending');
+                    item.classList.add('approved');
+                }
+            });
+            updateReviewProgress();
+        }
+
+        function requestRerun() {
+            document.getElementById('rerunModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function updateReviewProgress() {
+            const total = document.querySelectorAll('.story-item').length;
+            const approved = document.querySelectorAll('.story-item.approved').length;
+            const rejected = document.querySelectorAll('.story-item.rejected').length;
+            const pending = total - approved - rejected;
+
+            document.getElementById('approvedCount').textContent = approved;
+            document.getElementById('rejectedCount').textContent = rejected;
+            document.getElementById('pendingCount').textContent = pending;
+
+            if (total > 0) {
+                document.getElementById('approvedBar').style.width = (approved / total * 100) + '%';
+                document.getElementById('rejectedBar').style.width = (rejected / total * 100) + '%';
+                document.getElementById('pendingBar').style.width = (pending / total * 100) + '%';
+            }
+        }
+
+        function compareSnapshots() {
+            alert('Snapshot comparison feature - select two snapshots to compare');
+        }
+
+        async function executeUpgrade() {
+            const tier = document.querySelector('.tier-option.selected').dataset.tier;
+            alert(`Upgrading to ${tier} tier and re-extracting...`);
+            // TODO: Call API
+        }
+
+        // Form submission
+        document.getElementById('rerunForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const reason = document.getElementById('rerunReason').value;
+            const tier = document.getElementById('rerunTier').value;
+            const focusAreas = document.getElementById('focusAreas').value;
+
+            alert(`Re-run requested:\nReason: ${reason}\nTier: ${tier}\nFocus: ${focusAreas || 'None'}`);
+            closeModal('rerunModal');
+        });
+
+        // Load sample data
+        function loadSampleData() {
+            const sampleStories = [
+                { id: 'S001', title: 'User Authentication Flow', type: 'feature', confidence: 0.85, status: 'pending' },
+                { id: 'S002', title: 'Password Reset Functionality', type: 'story', confidence: 0.92, status: 'pending' },
+                { id: 'S003', title: 'OAuth Integration', type: 'story', confidence: 0.78, status: 'pending' },
+                { id: 'S004', title: 'Session Management', type: 'story', confidence: 0.88, status: 'pending' },
+                { id: 'S005', title: 'API Rate Limiting', type: 'task', confidence: 0.65, status: 'pending' },
+            ];
+
+            const storyList = document.getElementById('storyList');
+            storyList.innerHTML = sampleStories.map(story => `
+                <div class="story-item ${story.status}" data-story-id="${story.id}" data-confidence="${story.confidence}">
+                    <div class="story-header">
+                        <span class="story-title">${story.title}</span>
+                        <span class="story-type ${story.type}">${story.type}</span>
+                    </div>
+                    <div class="story-meta">
+                        <span>ID: ${story.id}</span>
+                        <span>Confidence: ${(story.confidence * 100).toFixed(0)}%</span>
+                    </div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill ${story.confidence >= 0.8 ? 'confidence-high' : story.confidence >= 0.6 ? 'confidence-medium' : 'confidence-low'}"
+                             style="width: ${story.confidence * 100}%"></div>
+                    </div>
+                    <div class="story-actions">
+                        <button class="btn btn-approve" onclick="approveStory('${story.id}')">Approve</button>
+                        <button class="btn btn-reject" onclick="rejectStory('${story.id}')">Reject</button>
+                        <button class="btn btn-secondary" onclick="viewDetails('${story.id}')">Details</button>
+                    </div>
+                </div>
+            `).join('');
+
+            // Update stats
+            document.getElementById('totalStories').textContent = sampleStories.length;
+            document.getElementById('pendingReview').textContent = sampleStories.length;
+            const avgConf = sampleStories.reduce((sum, s) => sum + s.confidence, 0) / sampleStories.length;
+            document.getElementById('avgConfidence').textContent = (avgConf * 100).toFixed(0) + '%';
+            document.getElementById('investScore').textContent = '7.8';
+
+            updateReviewProgress();
+        }
+
+        function viewDetails(storyId) {
+            alert(`Viewing details for story ${storyId}`);
+        }
+
+        // Initialize
+        loadSampleData();
+    </script>
+</body>
+</html>

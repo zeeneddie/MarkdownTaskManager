@@ -366,7 +366,7 @@ class ExportFormat(BaseModel):
 
 @router.get("/export/history")
 async def export_history(
-    format: str = Query("json", regex="^(json|csv)$", description="Export format"),
+    format: str = Query("json", pattern="^(json|csv)$", description="Export format"),
     status: Optional[str] = Query(None, description="Filter by status"),
     limit: int = Query(500, ge=1, le=5000, description="Max records")
 ):
@@ -580,3 +580,248 @@ async def run_maintenance_now(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# QUALITY SCAN SCHEDULING (Week 56 - Project Config Integration)
+# ============================================================================
+
+class ScheduleQualityScanRequest(BaseModel):
+    """Request to schedule periodic quality scans for a project"""
+    project_id: int = Field(..., description="Project ID to scan")
+    interval_hours: int = Field(24, ge=1, le=720, description="Scan interval in hours (1-720)")
+    enabled: bool = Field(True, description="Whether scanning is enabled")
+    scan_types: List[str] = Field(
+        default=["technical_debt", "code_quality", "security"],
+        description="Types of scans to perform"
+    )
+
+
+class QualityScanScheduleResponse(BaseModel):
+    """Response with quality scan schedule info"""
+    project_id: int
+    job_id: str
+    interval_hours: int
+    enabled: bool
+    scan_types: List[str]
+    next_run_time: Optional[str]
+    created_at: str
+
+
+@router.post("/quality-scan", response_model=QualityScanScheduleResponse)
+async def schedule_quality_scan(request: ScheduleQualityScanRequest):
+    """
+    Schedule periodic quality scans for a project.
+
+    **Example:**
+    ```json
+    {
+      "project_id": 1,
+      "interval_hours": 24,
+      "enabled": true,
+      "scan_types": ["technical_debt", "code_quality", "security"]
+    }
+    ```
+
+    **Returns:**
+    - Job ID and schedule info
+    """
+    try:
+        scheduler = get_scheduler()
+
+        job_id = f"quality_scan_project_{request.project_id}"
+
+        # Remove existing job if any
+        try:
+            scheduler.remove_job(job_id)
+        except:
+            pass
+
+        if request.enabled:
+            from apscheduler.triggers.interval import IntervalTrigger
+
+            # Schedule the quality scan job
+            scheduler.scheduler.add_job(
+                func=_run_quality_scan,
+                trigger=IntervalTrigger(hours=request.interval_hours),
+                id=job_id,
+                name=f"Quality Scan - Project {request.project_id}",
+                kwargs={
+                    "project_id": request.project_id,
+                    "scan_types": request.scan_types
+                },
+                replace_existing=True
+            )
+
+        # Get next run time
+        job = scheduler.scheduler.get_job(job_id)
+        next_run = job.next_run_time.isoformat() if job and job.next_run_time else None
+
+        return QualityScanScheduleResponse(
+            project_id=request.project_id,
+            job_id=job_id,
+            interval_hours=request.interval_hours,
+            enabled=request.enabled,
+            scan_types=request.scan_types,
+            next_run_time=next_run,
+            created_at=datetime.now().isoformat()
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/quality-scan/{project_id}", response_model=QualityScanScheduleResponse)
+async def get_quality_scan_schedule(project_id: int):
+    """
+    Get quality scan schedule for a project.
+    """
+    try:
+        scheduler = get_scheduler()
+        job_id = f"quality_scan_project_{project_id}"
+
+        job = scheduler.scheduler.get_job(job_id)
+
+        if not job:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No quality scan schedule found for project {project_id}"
+            )
+
+        # Extract interval from trigger
+        interval_hours = 24  # Default
+        if hasattr(job.trigger, 'interval'):
+            interval_hours = int(job.trigger.interval.total_seconds() / 3600)
+
+        return QualityScanScheduleResponse(
+            project_id=project_id,
+            job_id=job_id,
+            interval_hours=interval_hours,
+            enabled=True,
+            scan_types=job.kwargs.get('scan_types', []),
+            next_run_time=job.next_run_time.isoformat() if job.next_run_time else None,
+            created_at=datetime.now().isoformat()
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/quality-scan/{project_id}")
+async def remove_quality_scan_schedule(project_id: int):
+    """
+    Remove quality scan schedule for a project.
+    """
+    try:
+        scheduler = get_scheduler()
+        job_id = f"quality_scan_project_{project_id}"
+
+        success = scheduler.remove_job(job_id)
+
+        if not success:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No quality scan schedule found for project {project_id}"
+            )
+
+        return {
+            "success": True,
+            "message": f"Quality scan schedule removed for project {project_id}",
+            "job_id": job_id
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def _run_quality_scan(project_id: int, scan_types: List[str]):
+    """
+    Internal function to run a quality scan.
+    Called by the scheduler.
+
+    Results are stored in:
+    - technical_debt_items table
+    - technical_debt_snapshots table
+
+    View results at:
+    - /quality-dashboard.html
+    - GET /api/quality/summary
+    - GET /api/quality/items
+    - GET /api/quality/snapshots
+    """
+    import logging
+    from app.database import async_get_db
+    from app.services.technical_debt_service import get_technical_debt_service
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        logger.info(f"Running scheduled quality scan for project {project_id}")
+
+        # Get database session
+        async for db in async_get_db():
+            try:
+                service = get_technical_debt_service(db)
+
+                # Map scan types to scanners
+                scanners = []
+                if "technical_debt" in scan_types:
+                    scanners.extend(["ruff", "radon"])  # Code quality
+                if "code_quality" in scan_types:
+                    scanners.extend(["ruff", "eslint"])
+                if "security" in scan_types:
+                    scanners.extend(["bandit", "semgrep"])
+
+                # Remove duplicates
+                scanners = list(set(scanners))
+
+                # Run the scan
+                snapshot = await service.scan_codebase(
+                    scanners=scanners if scanners else None,
+                    project_id=project_id
+                )
+
+                logger.info(
+                    f"Quality scan completed for project {project_id}: "
+                    f"{snapshot.total_items} items found, "
+                    f"debt ratio: {snapshot.debt_ratio:.1f}%"
+                )
+
+                # Store execution record
+                scheduler = get_scheduler()
+                scheduler._record_execution(
+                    job_id=f"quality_scan_project_{project_id}",
+                    scope="project",
+                    focus_areas=scan_types,
+                    urgency="scheduled",
+                    status="completed",
+                    findings_count=snapshot.total_items,
+                    tasks_count=0
+                )
+
+            except Exception as e:
+                logger.error(f"Scan execution failed: {e}")
+                raise
+            finally:
+                await db.close()
+
+    except Exception as e:
+        logger.error(f"Quality scan failed for project {project_id}: {e}")
+        # Record failure
+        try:
+            scheduler = get_scheduler()
+            scheduler._record_execution(
+                job_id=f"quality_scan_project_{project_id}",
+                scope="project",
+                focus_areas=scan_types,
+                urgency="scheduled",
+                status="failed",
+                error=str(e)
+            )
+        except:
+            pass
+        raise

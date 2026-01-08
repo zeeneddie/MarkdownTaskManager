@@ -17,8 +17,8 @@ class Sprint(Base):
     completed_sp = Column(Integer, default=0)
     capacity = Column(Integer, default=50)  # Max story points per sprint
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
 
     def __repr__(self):
         return f"<Sprint(id={self.id}, name='{self.name}', status='{self.status}')>"

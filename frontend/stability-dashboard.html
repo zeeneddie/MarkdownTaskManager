@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stability Dashboard - Multi-Stack AI Agent Platform</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .nav {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+
+        .nav a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .nav a.active {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: #718096;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .metric-value.critical { color: #e53e3e; }
+        .metric-value.high { color: #ed8936; }
+        .metric-value.medium { color: #ecc94b; }
+        .metric-value.low { color: #48bb78; }
+        .metric-value.score { color: #4299e1; }
+
+        .metric-trend {
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .trend-up { color: #48bb78; }
+        .trend-down { color: #e53e3e; }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 1.5rem;
+        }
+
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2d3748;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        .severity-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .severity-critical {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .severity-high {
+            background: #feebc8;
+            color: #c05621;
+        }
+
+        .severity-medium {
+            background: #fefcbf;
+            color: #975a16;
+        }
+
+        .severity-low {
+            background: #c6f6d5;
+            color: #276749;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .risk-low {
+            background: #c6f6d5;
+            color: #276749;
+        }
+
+        .risk-medium {
+            background: #fefcbf;
+            color: #975a16;
+        }
+
+        .risk-high {
+            background: #feebc8;
+            color: #c05621;
+        }
+
+        .risk-critical {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background: #e53e3e;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #c53030;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .file-path {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.8rem;
+            color: #667eea;
+            max-width: 400px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .score-gauge {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .score-ring {
+            width: 120px;
+            height: 120px;
+        }
+
+        .score-details {
+            flex: 1;
+        }
+
+        .score-large {
+            font-size: 3rem;
+            font-weight: 700;
+        }
+
+        .score-good { color: #48bb78; }
+        .score-medium { color: #ecc94b; }
+        .score-poor { color: #e53e3e; }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #e53e3e;
+            box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #718096;
+        }
+
+        .empty-state h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #e53e3e;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .code-context {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.8rem;
+            overflow-x: auto;
+            margin-top: 0.5rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #718096;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Stability Dashboard</h1>
+        <p>Resource Leak Detection &amp; Legacy Code Analysis - Week 144-146</p>
+        <nav class="nav">
+            <a href="index.html">Home</a>
+            <a href="quality-dashboard.html">Quality</a>
+            <a href="technical-debt-dashboard.html">Tech Debt</a>
+            <a href="stability-dashboard.html" class="active">Stability</a>
+            <a href="security-dashboard.html">Security</a>
+            <a href="migration-analyzer.html">Migration</a>
+        </nav>
+    </div>
+
+    <div class="container">
+        <!-- Controls -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Analysis Controls</h2>
+            </div>
+            <div class="controls">
+                <div class="form-group">
+                    <label for="projectPath">Project Path</label>
+                    <input type="text" id="projectPath" placeholder="/path/to/legacy/project">
+                </div>
+                <div class="form-group">
+                    <label for="projectName">Project Name</label>
+                    <input type="text" id="projectName" placeholder="LegacyApp">
+                </div>
+                <div class="form-group">
+                    <label for="workflowType">Workflow Type</label>
+                    <select id="workflowType">
+                        <option value="MIGRATION">Migration</option>
+                        <option value="MAINTENANCE">Maintenance</option>
+                        <option value="REFACTORING">Refactoring</option>
+                        <option value="BUG">Bug Fix</option>
+                        <option value="NEW_FEATURE">New Feature</option>
+                    </select>
+                </div>
+                <div class="form-group" style="display: flex; align-items: flex-end;">
+                    <button class="btn btn-primary" onclick="runAnalysis()">
+                        <span>Run Stability Analysis</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Metrics -->
+        <div class="metrics-grid" id="metricsGrid">
+            <div class="metric-card">
+                <div class="metric-label">Stability Score</div>
+                <div class="metric-value score" id="stabilityScore">--</div>
+                <div class="metric-trend" id="scoreTrend"></div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Risk Level</div>
+                <div id="riskLevel">
+                    <span class="risk-badge risk-low">--</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Critical Issues</div>
+                <div class="metric-value critical" id="criticalCount">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">High Issues</div>
+                <div class="metric-value high" id="highCount">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Medium Issues</div>
+                <div class="metric-value medium" id="mediumCount">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Total Files Scanned</div>
+                <div class="metric-value score" id="filesScanned">0</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h3 class="chart-title">Findings by Category</h3>
+                <canvas id="categoryChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3 class="chart-title">Findings by Severity</h3>
+                <canvas id="severityChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Quality Gate Result -->
+        <div class="section" id="gateResultSection" style="display: none;">
+            <div class="section-header">
+                <h2 class="section-title">Quality Gate Result</h2>
+                <span id="gateStatus" class="risk-badge"></span>
+            </div>
+            <p id="gateMessage"></p>
+            <div id="blockingIssues" style="margin-top: 1rem;"></div>
+        </div>
+
+        <!-- Hotspot Files -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Hotspot Files</h2>
+                <button class="btn btn-secondary" onclick="exportHotspots()">Export CSV</button>
+            </div>
+            <table id="hotspotsTable">
+                <thead>
+                    <tr>
+                        <th>File Path</th>
+                        <th>Total Issues</th>
+                        <th>Critical</th>
+                        <th>Categories</th>
+                    </tr>
+                </thead>
+                <tbody id="hotspotsBody">
+                    <tr>
+                        <td colspan="4" class="empty-state">
+                            <h3>No analysis results yet</h3>
+                            <p>Run a stability analysis to see hotspot files</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Top Issues -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">Top Issues</h2>
+                <button class="btn btn-secondary" onclick="exportIssues()">Export CSV</button>
+            </div>
+            <table id="issuesTable">
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>Line</th>
+                        <th>Category</th>
+                        <th>Severity</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody id="issuesBody">
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <h3>No analysis results yet</h3>
+                            <p>Run a stability analysis to see issues</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal" id="loadingModal">
+        <div class="modal-content" style="text-align: center;">
+            <div class="spinner"></div>
+            <h3>Running Stability Analysis</h3>
+            <p id="loadingMessage">Scanning files for resource leaks...</p>
+        </div>
+    </div>
+
+    <!-- Issue Detail Modal -->
+    <div class="modal" id="issueModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Issue Details</h2>
+                <button class="modal-close" onclick="closeIssueModal()">&times;</button>
+            </div>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let analysisResult = null;
+        let categoryChart = null;
+        let severityChart = null;
+
+        // Initialize charts
+        function initCharts() {
+            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+            categoryChart = new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#e53e3e', '#ed8936', '#ecc94b', '#48bb78',
+                            '#4299e1', '#667eea', '#9f7aea', '#ed64a6'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'right' }
+                    }
+                }
+            });
+
+            const severityCtx = document.getElementById('severityChart').getContext('2d');
+            severityChart = new Chart(severityCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Critical', 'High', 'Medium', 'Low'],
+                    datasets: [{
+                        label: 'Findings',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['#e53e3e', '#ed8936', '#ecc94b', '#48bb78']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // Run analysis
+        async function runAnalysis() {
+            const projectPath = document.getElementById('projectPath').value;
+            const projectName = document.getElementById('projectName').value;
+            const workflowType = document.getElementById('workflowType').value;
+
+            if (!projectPath || !projectName) {
+                alert('Please enter project path and name');
+                return;
+            }
+
+            showLoading('Initializing stability analysis...');
+
+            try {
+                // Call stability API
+                const response = await fetch('/api/stability/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        project_path: projectPath,
+                        project_name: projectName,
+                        workflow_type: workflowType
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Analysis failed: ${response.statusText}`);
+                }
+
+                analysisResult = await response.json();
+                updateDashboard(analysisResult);
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                console.error('Analysis error:', error);
+                // Show demo data for development
+                showDemoData();
+            }
+        }
+
+        // Update dashboard with results
+        function updateDashboard(result) {
+            // Update metrics
+            document.getElementById('stabilityScore').textContent = result.stability_score || 0;
+            document.getElementById('criticalCount').textContent = result.severity_breakdown?.critical || 0;
+            document.getElementById('highCount').textContent = result.severity_breakdown?.high || 0;
+            document.getElementById('mediumCount').textContent = result.severity_breakdown?.medium || 0;
+            document.getElementById('filesScanned').textContent = result.total_files_scanned || 0;
+
+            // Update risk level badge
+            const riskLevel = result.risk_level || 'low';
+            const riskBadge = document.getElementById('riskLevel');
+            riskBadge.innerHTML = `<span class="risk-badge risk-${riskLevel}">${riskLevel.toUpperCase()}</span>`;
+
+            // Update score color
+            const scoreEl = document.getElementById('stabilityScore');
+            scoreEl.className = 'metric-value';
+            const score = result.stability_score || 0;
+            if (score >= 70) scoreEl.classList.add('score-good');
+            else if (score >= 50) scoreEl.classList.add('score-medium');
+            else scoreEl.classList.add('score-poor');
+
+            // Update charts
+            updateCategoryChart(result.category_breakdown || {});
+            updateSeverityChart(result.severity_breakdown || {});
+
+            // Update quality gate result if available
+            if (result.gate_result) {
+                updateGateResult(result.gate_result);
+            }
+
+            // Update hotspots table
+            updateHotspotsTable(result.hotspot_files || []);
+
+            // Update issues table
+            updateIssuesTable(result.top_issues || []);
+        }
+
+        function updateCategoryChart(breakdown) {
+            const labels = Object.keys(breakdown).map(formatCategoryName);
+            const data = Object.values(breakdown);
+
+            categoryChart.data.labels = labels;
+            categoryChart.data.datasets[0].data = data;
+            categoryChart.update();
+        }
+
+        function updateSeverityChart(breakdown) {
+            severityChart.data.datasets[0].data = [
+                breakdown.critical || 0,
+                breakdown.high || 0,
+                breakdown.medium || 0,
+                breakdown.low || 0
+            ];
+            severityChart.update();
+        }
+
+        function updateGateResult(gateResult) {
+            const section = document.getElementById('gateResultSection');
+            section.style.display = 'block';
+
+            const statusEl = document.getElementById('gateStatus');
+            const messageEl = document.getElementById('gateMessage');
+            const blockingEl = document.getElementById('blockingIssues');
+
+            const statusClass = gateResult.passed ? 'risk-low' : 'risk-critical';
+            const statusText = gateResult.passed ? 'PASSED' : 'FAILED';
+
+            statusEl.className = `risk-badge ${statusClass}`;
+            statusEl.textContent = statusText;
+            messageEl.textContent = gateResult.message || '';
+
+            if (gateResult.blocking_issues?.length > 0) {
+                blockingEl.innerHTML = `
+                    <h4>Blocking Issues (${gateResult.blocking_issues.length})</h4>
+                    <ul>
+                        ${gateResult.blocking_issues.map(i => `<li>${i.message}</li>`).join('')}
+                    </ul>
+                `;
+            } else {
+                blockingEl.innerHTML = '';
+            }
+        }
+
+        function updateHotspotsTable(hotspots) {
+            const tbody = document.getElementById('hotspotsBody');
+
+            if (!hotspots.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="empty-state">
+                            <h3>No hotspot files found</h3>
+                            <p>Your codebase looks stable!</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = hotspots.map(h => `
+                <tr>
+                    <td class="file-path" title="${h.file_path}">${h.file_path}</td>
+                    <td>${h.total_issues}</td>
+                    <td><span class="severity-badge severity-critical">${h.critical_issues}</span></td>
+                    <td>${(h.categories || []).map(c => `<span class="category-badge">${formatCategoryName(c)}</span>`).join(' ')}</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateIssuesTable(issues) {
+            const tbody = document.getElementById('issuesBody');
+
+            if (!issues.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <h3>No issues found</h3>
+                            <p>Your codebase looks stable!</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = issues.map((issue, idx) => `
+                <tr onclick="showIssueDetail(${idx})" style="cursor: pointer;">
+                    <td class="file-path" title="${issue.file_path}">${issue.file_path}</td>
+                    <td>${issue.line_number}</td>
+                    <td><span class="category-badge">${formatCategoryName(issue.category)}</span></td>
+                    <td><span class="severity-badge severity-${issue.severity}">${issue.severity}</span></td>
+                    <td>${truncate(issue.description, 60)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function showIssueDetail(idx) {
+            if (!analysisResult?.top_issues?.[idx]) return;
+
+            const issue = analysisResult.top_issues[idx];
+            const modal = document.getElementById('issueModal');
+            const content = document.getElementById('modalContent');
+            const title = document.getElementById('modalTitle');
+
+            title.textContent = `${formatCategoryName(issue.category)} Issue`;
+            content.innerHTML = `
+                <p><strong>File:</strong> ${issue.file_path}</p>
+                <p><strong>Line:</strong> ${issue.line_number}</p>
+                <p><strong>Severity:</strong> <span class="severity-badge severity-${issue.severity}">${issue.severity}</span></p>
+                <p><strong>Description:</strong> ${issue.description}</p>
+                <p><strong>Suggested Fix:</strong> ${issue.suggested_fix || 'No fix suggestion available'}</p>
+                ${issue.code_context ? `<div class="code-context"><pre>${issue.code_context.join('\n')}</pre></div>` : ''}
+            `;
+
+            modal.classList.add('active');
+        }
+
+        function closeIssueModal() {
+            document.getElementById('issueModal').classList.remove('active');
+        }
+
+        function formatCategoryName(category) {
+            if (!category) return 'Unknown';
+            return category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function truncate(str, len) {
+            if (!str) return '';
+            return str.length > len ? str.substring(0, len) + '...' : str;
+        }
+
+        function showLoading(message) {
+            document.getElementById('loadingMessage').textContent = message;
+            document.getElementById('loadingModal').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingModal').classList.remove('active');
+        }
+
+        function exportHotspots() {
+            if (!analysisResult?.hotspot_files?.length) {
+                alert('No data to export');
+                return;
+            }
+            exportToCsv(analysisResult.hotspot_files, 'stability_hotspots.csv');
+        }
+
+        function exportIssues() {
+            if (!analysisResult?.top_issues?.length) {
+                alert('No data to export');
+                return;
+            }
+            exportToCsv(analysisResult.top_issues, 'stability_issues.csv');
+        }
+
+        function exportToCsv(data, filename) {
+            const headers = Object.keys(data[0]);
+            const csv = [
+                headers.join(','),
+                ...data.map(row => headers.map(h => JSON.stringify(row[h] ?? '')).join(','))
+            ].join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+        }
+
+        // Demo data for development
+        function showDemoData() {
+            const demoResult = {
+                stability_score: 65,
+                risk_level: 'medium',
+                total_files_scanned: 142,
+                files_with_issues: 28,
+                total_findings: 87,
+                severity_breakdown: {
+                    critical: 3,
+                    high: 12,
+                    medium: 45,
+                    low: 27
+                },
+                category_breakdown: {
+                    'ado_leaks': 18,
+                    'com_objects': 15,
+                    'exception_handling': 22,
+                    'sql_performance': 14,
+                    'session_state': 8,
+                    'memory_intensive': 6,
+                    'file_handles': 4
+                },
+                hotspot_files: [
+                    { file_path: '/src/includes/database.inc', total_issues: 12, critical_issues: 2, categories: ['ado_leaks', 'sql_performance'] },
+                    { file_path: '/src/pages/checkout.asp', total_issues: 9, critical_issues: 1, categories: ['exception_handling', 'session_state'] },
+                    { file_path: '/src/includes/auth.inc', total_issues: 7, critical_issues: 0, categories: ['com_objects', 'exception_handling'] },
+                    { file_path: '/src/pages/admin/reports.asp', total_issues: 6, critical_issues: 0, categories: ['sql_performance', 'memory_intensive'] },
+                    { file_path: '/src/api/data.asp', total_issues: 5, critical_issues: 0, categories: ['ado_leaks'] }
+                ],
+                top_issues: [
+                    { file_path: '/src/includes/database.inc', line_number: 45, category: 'sql_performance', severity: 'critical', description: 'SQL query inside For loop - potential N+1 query pattern causing performance degradation', suggested_fix: 'Move query outside loop and use batch query or JOIN' },
+                    { file_path: '/src/includes/database.inc', line_number: 78, category: 'ado_leaks', severity: 'critical', description: 'Connection opened but never closed in error path', suggested_fix: 'Add conn.Close in error handling block' },
+                    { file_path: '/src/pages/checkout.asp', line_number: 120, category: 'exception_handling', severity: 'critical', description: 'Global On Error Resume Next at file start - all errors silently ignored', suggested_fix: 'Remove global error suppression, add targeted error handling' },
+                    { file_path: '/src/includes/database.inc', line_number: 156, category: 'sql_performance', severity: 'high', description: 'SQL injection vulnerability via string concatenation', suggested_fix: 'Use parameterized queries with ADODB.Command' },
+                    { file_path: '/src/pages/checkout.asp', line_number: 89, category: 'session_state', severity: 'high', description: 'COM object stored in Session - causes scalability issues', suggested_fix: 'Store only primitive values in Session' }
+                ],
+                gate_result: {
+                    passed: false,
+                    message: 'Quality gate FAILED: Critical findings exceeded: 3/0; High findings exceeded: 12/5',
+                    blocking_issues: [
+                        { message: 'Critical findings (3) exceed threshold (0)' },
+                        { message: 'High severity findings (12) exceed threshold (5)' }
+                    ]
+                }
+            };
+
+            analysisResult = demoResult;
+            updateDashboard(demoResult);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+        });
+
+        // Close modal on escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
+            }
+        });
+
+        // Close modal on background click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Standards Browser - Agent OS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .nav-bar {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-bar a {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+
+        .nav-bar a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .nav-bar a.active {
+            background: rgba(255,255,255,0.4);
+            font-weight: 600;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 1rem;
+            max-width: 1600px;
+            margin: 1rem auto;
+            padding: 0 1rem;
+            height: calc(100vh - 140px);
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 0.6rem 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .category {
+            margin-bottom: 0.5rem;
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 0.8rem;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 600;
+            color: #374151;
+            transition: background 0.2s;
+        }
+
+        .category-header:hover {
+            background: #f3f4f6;
+        }
+
+        .category-header.expanded {
+            background: #f3f4f6;
+        }
+
+        .category-header .icon {
+            font-size: 1.1rem;
+        }
+
+        .category-header .count {
+            margin-left: auto;
+            font-size: 0.75rem;
+            background: #e5e7eb;
+            color: #6b7280;
+            padding: 0.15rem 0.5rem;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .category-header .arrow {
+            transition: transform 0.2s;
+        }
+
+        .category-header.expanded .arrow {
+            transform: rotate(90deg);
+        }
+
+        .category-items {
+            display: none;
+            padding-left: 1.5rem;
+        }
+
+        .category-items.expanded {
+            display: block;
+        }
+
+        .standard-item {
+            padding: 0.5rem 0.8rem;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: #4b5563;
+            transition: all 0.2s;
+        }
+
+        .standard-item:hover {
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .standard-item.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .main {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .main-header h2 {
+            font-size: 1.3rem;
+            color: #1f2937;
+            flex: 1;
+        }
+
+        .main-header .meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+
+        .main-header .meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .toolbar {
+            padding: 0.75rem 1.5rem;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            border-color: #5568d3;
+            color: white;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .markdown-content {
+            line-height: 1.7;
+            color: #374151;
+        }
+
+        .markdown-content h1 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: #1f2937;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 0.5rem;
+        }
+
+        .markdown-content h2 {
+            font-size: 1.4rem;
+            margin: 2rem 0 1rem;
+            color: #1f2937;
+        }
+
+        .markdown-content h3 {
+            font-size: 1.15rem;
+            margin: 1.5rem 0 0.75rem;
+            color: #374151;
+        }
+
+        .markdown-content p {
+            margin-bottom: 1rem;
+        }
+
+        .markdown-content ul, .markdown-content ol {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .markdown-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .markdown-content code {
+            background: #f3f4f6;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Fira Code', 'SF Mono', Monaco, monospace;
+            font-size: 0.9em;
+        }
+
+        .markdown-content pre {
+            background: #1f2937;
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .markdown-content pre code {
+            background: none;
+            padding: 0;
+            color: #e5e7eb;
+            font-size: 0.85rem;
+        }
+
+        .markdown-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .markdown-content th, .markdown-content td {
+            border: 1px solid #e5e7eb;
+            padding: 0.75rem;
+            text-align: left;
+        }
+
+        .markdown-content th {
+            background: #f9fafb;
+            font-weight: 600;
+        }
+
+        .markdown-content tr:hover {
+            background: #f9fafb;
+        }
+
+        .markdown-content blockquote {
+            border-left: 4px solid #667eea;
+            margin: 1rem 0;
+            padding: 0.5rem 1rem;
+            background: #f9fafb;
+            color: #4b5563;
+        }
+
+        .markdown-content hr {
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            margin: 2rem 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #9ca3af;
+        }
+
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: #6b7280;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 2rem;
+            padding: 1rem 1.5rem;
+            background: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #6b7280;
+            text-transform: uppercase;
+        }
+
+        .workflow-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .workflow-badge.green_paper { background: #d1fae5; color: #065f46; }
+        .workflow-badge.brown_paper { background: #fef3c7; color: #92400e; }
+        .workflow-badge.new_feature { background: #dbeafe; color: #1e40af; }
+        .workflow-badge.maintenance { background: #e5e7eb; color: #374151; }
+        .workflow-badge.bug { background: #fee2e2; color: #991b1b; }
+        .workflow-badge.quality_audit { background: #fce7f3; color: #9d174d; }
+        .workflow-badge.migration { background: #ede9fe; color: #5b21b6; }
+        .workflow-badge.testing { background: #cffafe; color: #0e7490; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Standards Browser</h1>
+        <p>Agent OS Standards System - Coding standards loaded into agent context by workflow type</p>
+        <nav class="nav-bar">
+            <a href="index.html">Hub Portal</a>
+            <a href="project-intake.html">Project Intake</a>
+            <a href="agent-dashboard.html">Agents</a>
+            <a href="quality-dashboard.html">Quality</a>
+            <a href="observability-dashboard.html">Observability</a>
+            <a href="kanban-dashboard.html">Kanban</a>
+            <a href="standards-browser.html" class="active">Standards</a>
+        </nav>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat">
+            <div class="stat-value" id="totalStandards">-</div>
+            <div class="stat-label">Standards</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="totalCategories">-</div>
+            <div class="stat-label">Categories</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="totalSize">-</div>
+            <div class="stat-label">Total Size</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value" id="lastReload">-</div>
+            <div class="stat-label">Last Reload</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <input type="text" class="search-box" placeholder="Search standards..." id="searchInput">
+            </div>
+            <div class="sidebar-content" id="categoryList">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading standards...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="main">
+            <div class="main-header">
+                <h2 id="standardTitle">Select a Standard</h2>
+                <div class="meta" id="standardMeta"></div>
+            </div>
+            <div class="toolbar">
+                <button class="btn" onclick="copyToClipboard()">
+                    <span>Copy</span>
+                </button>
+                <button class="btn" onclick="downloadStandard()">
+                    <span>Download</span>
+                </button>
+                <button class="btn btn-primary" onclick="reloadStandards()">
+                    <span>Reload All</span>
+                </button>
+            </div>
+            <div class="main-content" id="standardContent">
+                <div class="empty-state">
+                    <div class="icon">📚</div>
+                    <h3>Welcome to Standards Browser</h3>
+                    <p>Select a standard from the sidebar to view its content.</p>
+                    <p style="margin-top: 1rem; font-size: 0.9rem;">Standards are automatically loaded into agent context based on workflow type.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/standards';
+        let standards = [];
+        let currentStandard = null;
+        let workflowMapping = {};
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadStats();
+            await loadCategories();
+            await loadWorkflowMapping();
+            setupSearch();
+        });
+
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/stats`);
+                const stats = await response.json();
+
+                document.getElementById('totalStandards').textContent = stats.total_standards;
+                document.getElementById('totalCategories').textContent = stats.categories ? stats.categories.length : 0;
+                document.getElementById('totalSize').textContent = formatBytes(stats.total_size_bytes);
+                document.getElementById('lastReload').textContent = new Date().toLocaleTimeString();
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        async function loadCategories() {
+            const container = document.getElementById('categoryList');
+
+            try {
+                const response = await fetch(`${API_BASE}/`);
+                standards = await response.json();
+
+                // Group by category
+                const categories = {};
+                standards.forEach(std => {
+                    if (!categories[std.category]) {
+                        categories[std.category] = [];
+                    }
+                    categories[std.category].push(std);
+                });
+
+                // Category icons
+                const icons = {
+                    global: '🌍',
+                    backend: '⚙️',
+                    frontend: '🎨',
+                    testing: '🧪',
+                    security: '🔒',
+                    database: '🗄️'
+                };
+
+                let html = '';
+                for (const [category, items] of Object.entries(categories)) {
+                    html += `
+                        <div class="category">
+                            <div class="category-header" onclick="toggleCategory(this)">
+                                <span class="arrow">▶</span>
+                                <span class="icon">${icons[category] || '📁'}</span>
+                                <span>${category}</span>
+                                <span class="count">${items.length}</span>
+                            </div>
+                            <div class="category-items">
+                                ${items.map(std => `
+                                    <div class="standard-item" data-category="${std.category}" data-name="${std.name}" onclick="selectStandard('${std.category}', '${std.name}')">
+                                        ${formatName(std.name)}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                container.innerHTML = html;
+
+                // Expand first category
+                const firstHeader = container.querySelector('.category-header');
+                if (firstHeader) {
+                    toggleCategory(firstHeader);
+                }
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>Failed to load standards.</p>
+                        <p style="font-size: 0.85rem; margin-top: 0.5rem;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadWorkflowMapping() {
+            try {
+                const response = await fetch(`${API_BASE}/mapping`);
+                const mappingList = await response.json();
+                // Convert array format to object format
+                workflowMapping = {};
+                mappingList.forEach(item => {
+                    workflowMapping[item.workflow] = item.categories;
+                });
+            } catch (error) {
+                console.error('Failed to load workflow mapping:', error);
+            }
+        }
+
+        function toggleCategory(header) {
+            const items = header.nextElementSibling;
+            const isExpanded = header.classList.contains('expanded');
+
+            header.classList.toggle('expanded');
+            items.classList.toggle('expanded');
+        }
+
+        async function selectStandard(category, name) {
+            // Update sidebar selection
+            document.querySelectorAll('.standard-item').forEach(el => el.classList.remove('active'));
+            const item = document.querySelector(`.standard-item[data-category="${category}"][data-name="${name}"]`);
+            if (item) item.classList.add('active');
+
+            // Load standard content
+            const content = document.getElementById('standardContent');
+            content.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading...</p></div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/${category}/${name}`);
+                const data = await response.json();
+                currentStandard = data;
+
+                // Update header
+                document.getElementById('standardTitle').textContent = formatName(name);
+
+                // Show which workflows use this standard
+                const workflows = getWorkflowsForCategory(category);
+                const metaHtml = workflows.map(wf =>
+                    `<span class="workflow-badge ${wf.toLowerCase()}">${wf}</span>`
+                ).join('');
+                document.getElementById('standardMeta').innerHTML = metaHtml;
+
+                // Render markdown
+                const html = marked.parse(data.content);
+                content.innerHTML = `<div class="markdown-content">${html}</div>`;
+
+                // Highlight code blocks
+                content.querySelectorAll('pre code').forEach(block => {
+                    hljs.highlightElement(block);
+                });
+            } catch (error) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <p>Failed to load standard.</p>
+                        <p style="font-size: 0.85rem; margin-top: 0.5rem;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function getWorkflowsForCategory(category) {
+            const workflows = [];
+            for (const [workflow, categories] of Object.entries(workflowMapping)) {
+                if (categories.includes(category)) {
+                    workflows.push(workflow);
+                }
+            }
+            return workflows;
+        }
+
+        function setupSearch() {
+            const input = document.getElementById('searchInput');
+            input.addEventListener('input', debounce(async (e) => {
+                const query = e.target.value.trim();
+
+                if (query.length < 2) {
+                    await loadCategories();
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE}/search?q=${encodeURIComponent(query)}`);
+                    const results = await response.json();
+
+                    const container = document.getElementById('categoryList');
+                    if (results.length === 0) {
+                        container.innerHTML = `
+                            <div class="empty-state" style="padding: 2rem;">
+                                <p>No standards found for "${query}"</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    let html = '<div class="category"><div class="category-items expanded">';
+                    results.forEach(std => {
+                        html += `
+                            <div class="standard-item" data-category="${std.category}" data-name="${std.name}" onclick="selectStandard('${std.category}', '${std.name}')">
+                                <strong>${std.category}/</strong>${formatName(std.name)}
+                            </div>
+                        `;
+                    });
+                    html += '</div></div>';
+                    container.innerHTML = html;
+                } catch (error) {
+                    console.error('Search failed:', error);
+                }
+            }, 300));
+        }
+
+        async function reloadStandards() {
+            try {
+                const response = await fetch(`${API_BASE}/reload`, { method: 'POST' });
+                const result = await response.json();
+
+                await loadStats();
+                await loadCategories();
+
+                alert(`Standards reloaded: ${result.loaded} standards`);
+            } catch (error) {
+                alert('Failed to reload standards: ' + error.message);
+            }
+        }
+
+        function copyToClipboard() {
+            if (!currentStandard) return;
+
+            navigator.clipboard.writeText(currentStandard.content)
+                .then(() => alert('Copied to clipboard!'))
+                .catch(err => alert('Failed to copy: ' + err));
+        }
+
+        function downloadStandard() {
+            if (!currentStandard) return;
+
+            const blob = new Blob([currentStandard.content], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentStandard.name}.md`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Utilities
+        function formatName(name) {
+            return name
+                .replace(/-/g, ' ')
+                .replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function formatBytes(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migration Analyzer - Legacy Code Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background-attachment: fixed;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 136, 0, 0.2);
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #ff8800 0%, #ff4444 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header h1::before {
+            content: "🔄";
+            -webkit-text-fill-color: initial;
+        }
+
+        .back-link {
+            color: #ff8800;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(255, 136, 0, 0.3);
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .back-link:hover {
+            background: rgba(255, 136, 0, 0.1);
+            border-color: #ff8800;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            background: rgba(255,255,255,0.05);
+            padding: 0.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: #888;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #ff8800 0%, #ff4444 100%);
+            color: #fff;
+        }
+
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #ff8800;
+            box-shadow: 0 0 0 3px rgba(255, 136, 0, 0.1);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff8800 0%, #ff4444 100%);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 136, 0, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .analysis-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .analysis-item {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .analysis-item:hover {
+            border-color: #ff8800;
+            transform: translateY(-2px);
+        }
+
+        .analysis-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .analysis-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+        }
+
+        .status-running {
+            background: rgba(33, 150, 243, 0.2);
+            color: #2196f3;
+        }
+
+        .status-completed {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+
+        .status-failed {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+
+        .analysis-meta {
+            display: flex;
+            gap: 1.5rem;
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .progress-bar-container {
+            margin-top: 0.75rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 6px;
+            height: 6px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ff8800 0%, #ff4444 100%);
+            border-radius: 6px;
+            transition: width 0.3s ease;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ff8800 0%, #ff4444 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+        }
+
+        .detail-section {
+            margin-bottom: 2rem;
+        }
+
+        .detail-section h3 {
+            font-size: 1rem;
+            color: #fff;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .pattern-list {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .pattern-item {
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            padding: 1rem;
+            border-left: 3px solid #ff8800;
+        }
+
+        .pattern-name {
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .pattern-file {
+            color: #888;
+            font-size: 0.85rem;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .pattern-severity {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .severity-high {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+
+        .severity-medium {
+            background: rgba(255, 152, 0, 0.2);
+            color: #ff9800;
+        }
+
+        .severity-low {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+
+        .recommendation-item {
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid #4caf50;
+        }
+
+        .recommendation-title {
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .recommendation-description {
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
+        .risk-item {
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid #f44336;
+        }
+
+        .risk-title {
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .risk-description {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .risk-mitigation {
+            color: #4caf50;
+            font-size: 0.85rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .chart-container {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #ff8800;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            background: #333;
+            color: #fff;
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success {
+            background: #4caf50;
+        }
+
+        .toast.error {
+            background: #f44336;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>Migration Analyzer</h1>
+            <a href="/index.html" class="back-link">← Back to Hub</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="showPanel('overview')">Overview</button>
+            <button class="tab" onclick="showPanel('new-analysis')">New Analysis</button>
+            <button class="tab" onclick="showPanel('details')">Analysis Details</button>
+            <button class="tab" onclick="showPanel('reports')">Reports</button>
+        </div>
+
+        <!-- Overview Panel -->
+        <div id="overview-panel" class="panel active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-analyses">0</div>
+                    <div class="stat-label">Total Analyses</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="completed-analyses">0</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="running-analyses">0</div>
+                    <div class="stat-label">Running</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="pending-analyses">0</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Recent Analyses</h2>
+                <div id="analyses-list" class="analysis-list">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Analysis Panel -->
+        <div id="new-analysis-panel" class="panel">
+            <div class="card">
+                <h2>Create New Migration Analysis</h2>
+                <form id="new-analysis-form">
+                    <div class="form-group">
+                        <label for="repo-path">Repository Path *</label>
+                        <input type="text" id="repo-path" placeholder="/path/to/legacy/project" required>
+                    </div>
+                    <div class="two-column">
+                        <div class="form-group">
+                            <label for="target-stack">Target Stack *</label>
+                            <select id="target-stack" required>
+                                <option value="">Select target stack...</option>
+                                <optgroup label=".NET">
+                                    <option value="dotnet8">.NET 8 (LTS)</option>
+                                    <option value="dotnet9">.NET 9</option>
+                                </optgroup>
+                                <optgroup label="Frontend">
+                                    <option value="react">React</option>
+                                    <option value="vue3">Vue 3</option>
+                                    <option value="angular">Angular</option>
+                                </optgroup>
+                                <optgroup label="Backend">
+                                    <option value="spring_boot">Spring Boot</option>
+                                    <option value="laravel">Laravel</option>
+                                    <option value="django">Django</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="target-db">Target Database</label>
+                            <select id="target-db">
+                                <option value="">No database migration</option>
+                                <option value="postgresql">PostgreSQL</option>
+                                <option value="mysql">MySQL</option>
+                                <option value="sqlite">SQLite</option>
+                                <option value="mongodb">MongoDB</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="project-id">Link to Project (Optional)</label>
+                        <input type="text" id="project-id" placeholder="project-uuid">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Analysis</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Supported Source Stacks</h2>
+                <div class="two-column">
+                    <div>
+                        <h3 style="color: #ff8800; margin-bottom: 0.5rem;">.NET Legacy</h3>
+                        <ul style="color: #aaa; padding-left: 1.5rem;">
+                            <li>ASP.NET WebForms (.aspx)</li>
+                            <li>ASP Classic (.asp)</li>
+                            <li>ASP.NET MVC (legacy)</li>
+                            <li>WCF Services</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 style="color: #ff8800; margin-bottom: 0.5rem;">Frontend Legacy</h3>
+                        <ul style="color: #aaa; padding-left: 1.5rem;">
+                            <li>jQuery</li>
+                            <li>AngularJS (1.x)</li>
+                            <li>Vue 2</li>
+                            <li>React Class Components</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 style="color: #ff8800; margin-bottom: 0.5rem;">PHP Legacy</h3>
+                        <ul style="color: #aaa; padding-left: 1.5rem;">
+                            <li>PHP 5.x</li>
+                            <li>Procedural PHP</li>
+                            <li>WordPress</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 style="color: #ff8800; margin-bottom: 0.5rem;">Java Legacy</h3>
+                        <ul style="color: #aaa; padding-left: 1.5rem;">
+                            <li>Java EE</li>
+                            <li>Struts</li>
+                            <li>JSP/Servlets</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Details Panel -->
+        <div id="details-panel" class="panel">
+            <div id="no-selection" class="card">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📊</div>
+                    <h3>No Analysis Selected</h3>
+                    <p>Select an analysis from the Overview tab to view details</p>
+                </div>
+            </div>
+
+            <div id="analysis-details" style="display: none;">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="detail-files">0</div>
+                        <div class="stat-label">Files Analyzed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="detail-loc">0</div>
+                        <div class="stat-label">Lines of Code</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="detail-patterns">0</div>
+                        <div class="stat-label">Patterns Found</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="detail-risks">0</div>
+                        <div class="stat-label">Risks Identified</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2 id="detail-title">Analysis: Loading...</h2>
+                    <div class="analysis-meta">
+                        <span id="detail-status"></span>
+                        <span id="detail-stack"></span>
+                        <span id="detail-db"></span>
+                    </div>
+                    <div class="progress-bar-container" style="margin-top: 1rem;">
+                        <div class="progress-bar" id="detail-progress" style="width: 0%"></div>
+                    </div>
+                    <p style="margin-top: 0.5rem; color: #888; font-size: 0.85rem;">
+                        Phase: <span id="detail-phase">PENDING</span>
+                    </p>
+                    <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                        <button class="btn btn-primary" id="run-analysis-btn" onclick="runAnalysis()">
+                            Run Analysis
+                        </button>
+                        <button class="btn btn-secondary" onclick="refreshDetails()">
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <div class="two-column">
+                    <div class="detail-section">
+                        <div class="card">
+                            <h2>Detected Patterns</h2>
+                            <div id="patterns-list" class="pattern-list">
+                                <div class="empty-state">No patterns detected yet</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="detail-section">
+                        <div class="card">
+                            <h2>Recommendations</h2>
+                            <div id="recommendations-list">
+                                <div class="empty-state">No recommendations yet</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Identified Risks</h2>
+                    <div id="risks-list">
+                        <div class="empty-state">No risks identified yet</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Panel -->
+        <div id="reports-panel" class="panel">
+            <div class="card">
+                <h2>Migration Reports</h2>
+                <p style="color: #aaa; margin-bottom: 1rem;">
+                    Generate comprehensive migration reports for completed analyses.
+                </p>
+                <div id="reports-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📄</div>
+                        <h3>No Reports Available</h3>
+                        <p>Complete an analysis to generate a migration report</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/migration';
+        let currentAnalysisId = null;
+        let analyses = [];
+
+        // Tab Navigation
+        function showPanel(panelName) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`${panelName}-panel`).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Toast Notifications
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Load Analyses List
+        async function loadAnalyses() {
+            try {
+                const response = await fetch(`${API_BASE}/analyses?limit=50`);
+                analyses = await response.json();
+                renderAnalysesList();
+                updateStats();
+            } catch (error) {
+                console.error('Error loading analyses:', error);
+                showToast('Failed to load analyses', 'error');
+            }
+        }
+
+        // Render Analyses List
+        function renderAnalysesList() {
+            const container = document.getElementById('analyses-list');
+
+            if (analyses.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <h3>No Analyses Yet</h3>
+                        <p>Create a new analysis to get started</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = analyses.map(a => `
+                <div class="analysis-item" onclick="selectAnalysis('${a.id}')">
+                    <div class="analysis-item-header">
+                        <span class="analysis-name">${a.repo_name || 'Unknown'}</span>
+                        <span class="status-badge status-${a.status}">${a.status}</span>
+                    </div>
+                    <div class="analysis-meta">
+                        <span>Target: ${a.target_stack || 'N/A'}</span>
+                        <span>DB: ${a.target_db || 'None'}</span>
+                        <span>Created: ${new Date(a.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: ${a.progress_percent || 0}%"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update Statistics
+        function updateStats() {
+            document.getElementById('total-analyses').textContent = analyses.length;
+            document.getElementById('completed-analyses').textContent =
+                analyses.filter(a => a.status === 'completed').length;
+            document.getElementById('running-analyses').textContent =
+                analyses.filter(a => a.status === 'running').length;
+            document.getElementById('pending-analyses').textContent =
+                analyses.filter(a => a.status === 'pending').length;
+        }
+
+        // Select Analysis
+        async function selectAnalysis(id) {
+            currentAnalysisId = id;
+            showPanel('details');
+            document.querySelector('[onclick*="details"]').classList.add('active');
+
+            document.getElementById('no-selection').style.display = 'none';
+            document.getElementById('analysis-details').style.display = 'block';
+
+            await loadAnalysisDetails(id);
+        }
+
+        // Load Analysis Details
+        async function loadAnalysisDetails(id) {
+            try {
+                const [analysis, modules, patterns, recommendations, risks] = await Promise.all([
+                    fetch(`${API_BASE}/analyses/${id}`).then(r => r.json()),
+                    fetch(`${API_BASE}/analyses/${id}/modules`).then(r => r.json()),
+                    fetch(`${API_BASE}/analyses/${id}/patterns`).then(r => r.json()),
+                    fetch(`${API_BASE}/analyses/${id}/recommendations`).then(r => r.json()),
+                    fetch(`${API_BASE}/analyses/${id}/risks`).then(r => r.json())
+                ]);
+
+                // Update header
+                document.getElementById('detail-title').textContent = `Analysis: ${analysis.repo_name}`;
+                document.getElementById('detail-status').innerHTML =
+                    `<span class="status-badge status-${analysis.status}">${analysis.status}</span>`;
+                document.getElementById('detail-stack').textContent = `Target: ${analysis.target_stack}`;
+                document.getElementById('detail-db').textContent = `DB: ${analysis.target_db || 'None'}`;
+                document.getElementById('detail-progress').style.width = `${analysis.progress_percent}%`;
+                document.getElementById('detail-phase').textContent = analysis.current_phase;
+
+                // Update stats
+                document.getElementById('detail-files').textContent = analysis.total_files || 0;
+                document.getElementById('detail-loc').textContent = analysis.total_loc || 0;
+                document.getElementById('detail-patterns').textContent = patterns.length;
+                document.getElementById('detail-risks').textContent = risks.length;
+
+                // Render patterns
+                renderPatterns(patterns);
+                renderRecommendations(recommendations);
+                renderRisks(risks);
+
+                // Update run button state
+                const runBtn = document.getElementById('run-analysis-btn');
+                runBtn.disabled = analysis.status === 'running';
+                runBtn.textContent = analysis.status === 'running' ? 'Running...' : 'Run Analysis';
+
+            } catch (error) {
+                console.error('Error loading analysis details:', error);
+                showToast('Failed to load analysis details', 'error');
+            }
+        }
+
+        // Render Patterns
+        function renderPatterns(patterns) {
+            const container = document.getElementById('patterns-list');
+            if (patterns.length === 0) {
+                container.innerHTML = '<div class="empty-state">No patterns detected yet</div>';
+                return;
+            }
+
+            container.innerHTML = patterns.map(p => `
+                <div class="pattern-item">
+                    <div class="pattern-name">${p.pattern_name || p.pattern_type}</div>
+                    <div class="pattern-file">${p.file_path}:${p.line_number || 1}</div>
+                    <span class="pattern-severity severity-${p.severity || 'medium'}">${p.severity || 'medium'}</span>
+                </div>
+            `).join('');
+        }
+
+        // Render Recommendations
+        function renderRecommendations(recommendations) {
+            const container = document.getElementById('recommendations-list');
+            if (recommendations.length === 0) {
+                container.innerHTML = '<div class="empty-state">No recommendations yet</div>';
+                return;
+            }
+
+            container.innerHTML = recommendations.map(r => `
+                <div class="recommendation-item">
+                    <div class="recommendation-title">${r.title}</div>
+                    <div class="recommendation-description">${r.description}</div>
+                </div>
+            `).join('');
+        }
+
+        // Render Risks
+        function renderRisks(risks) {
+            const container = document.getElementById('risks-list');
+            if (risks.length === 0) {
+                container.innerHTML = '<div class="empty-state">No risks identified yet</div>';
+                return;
+            }
+
+            container.innerHTML = risks.map(r => `
+                <div class="risk-item">
+                    <div class="risk-title">${r.title}</div>
+                    <div class="risk-description">${r.description}</div>
+                    ${r.mitigation ? `<div class="risk-mitigation">Mitigation: ${r.mitigation}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Refresh Details
+        function refreshDetails() {
+            if (currentAnalysisId) {
+                loadAnalysisDetails(currentAnalysisId);
+            }
+        }
+
+        // Run Analysis
+        async function runAnalysis() {
+            if (!currentAnalysisId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/analyses/${currentAnalysisId}/run`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    showToast('Analysis started', 'success');
+                    loadAnalysisDetails(currentAnalysisId);
+                } else {
+                    throw new Error('Failed to start analysis');
+                }
+            } catch (error) {
+                console.error('Error running analysis:', error);
+                showToast('Failed to start analysis', 'error');
+            }
+        }
+
+        // Create New Analysis
+        document.getElementById('new-analysis-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const data = {
+                repo_path: document.getElementById('repo-path').value,
+                target_stack: document.getElementById('target-stack').value,
+                target_db: document.getElementById('target-db').value || null,
+                project_id: document.getElementById('project-id').value || null
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const analysis = await response.json();
+                    showToast('Analysis created successfully', 'success');
+                    loadAnalyses();
+                    selectAnalysis(analysis.id);
+                } else {
+                    throw new Error('Failed to create analysis');
+                }
+            } catch (error) {
+                console.error('Error creating analysis:', error);
+                showToast('Failed to create analysis', 'error');
+            }
+        });
+
+        // Initialize
+        loadAnalyses();
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                loadAnalyses();
+                if (currentAnalysisId) {
+                    loadAnalysisDetails(currentAnalysisId);
+                }
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

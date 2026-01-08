@@ -484,6 +484,18 @@
     </div>
 
     <div class="container">
+        <!-- Project Selector -->
+        <div class="project-selector-bar" style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; background: white; padding: 1rem 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+            <label for="projectSelect" style="font-weight: 600; color: #4a5568;">📁 Project:</label>
+            <select id="projectSelect" onchange="onProjectChange()" style="padding: 0.6rem 1rem; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 1rem; min-width: 250px; cursor: pointer;">
+                <option value="">-- Selecteer project --</option>
+            </select>
+            <span id="projectStatus" style="color: #718096; font-size: 0.9rem;"></span>
+            <button class="btn btn-secondary" onclick="loadProjects()" style="margin-left: auto;">
+                🔄 Refresh Projects
+            </button>
+        </div>
+
         <!-- Toolbar -->
         <div class="toolbar">
             <button class="btn btn-primary" onclick="refreshData()">
@@ -588,6 +600,77 @@
     </div>
 
     <script>
+        const API_BASE = 'http://localhost:8000/api';
+        let currentProjectId = null;
+
+        // Load projects on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProjects();
+            // Check for project_id in URL params
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project_id');
+            if (projectId) {
+                currentProjectId = parseInt(projectId);
+            }
+        });
+
+        async function loadProjects() {
+            const select = document.getElementById('projectSelect');
+            const status = document.getElementById('projectStatus');
+
+            try {
+                status.textContent = 'Laden...';
+                const response = await fetch(`${API_BASE}/applications/`);
+
+                if (response.ok) {
+                    const apps = await response.json();
+                    // Clear existing options except first
+                    select.innerHTML = '<option value="">-- Selecteer project --</option>';
+
+                    apps.forEach(app => {
+                        const option = document.createElement('option');
+                        option.value = app.id;
+                        option.textContent = `${app.name} (${app.root_path || 'N/A'})`;
+                        select.appendChild(option);
+                    });
+
+                    status.textContent = `${apps.length} projecten geladen`;
+
+                    // Select current project if set
+                    if (currentProjectId) {
+                        select.value = currentProjectId;
+                        onProjectChange();
+                    }
+                } else {
+                    status.textContent = 'Kon projecten niet laden';
+                }
+            } catch (error) {
+                console.error('Error loading projects:', error);
+                status.textContent = 'Fout bij laden projecten';
+            }
+        }
+
+        function onProjectChange() {
+            const select = document.getElementById('projectSelect');
+            const status = document.getElementById('projectStatus');
+            currentProjectId = select.value ? parseInt(select.value) : null;
+
+            if (currentProjectId) {
+                status.textContent = `Project ${currentProjectId} geselecteerd`;
+                // Update URL without reload
+                const url = new URL(window.location);
+                url.searchParams.set('project_id', currentProjectId);
+                window.history.pushState({}, '', url);
+                // Refresh data for selected project
+                refreshData();
+            } else {
+                status.textContent = '';
+                const url = new URL(window.location);
+                url.searchParams.delete('project_id');
+                window.history.pushState({}, '', url);
+            }
+        }
+
         // Sample data (in production, this would come from QualityGateService API)
         const sampleData = {
             overallScore: 85,
@@ -893,37 +976,311 @@
                 `Last updated: ${new Date().toLocaleString()}`;
         }
 
-        function refreshData() {
+        // Real project data fetched from API
+        let projectData = null;
+
+        async function refreshData() {
             const badge = document.getElementById('statusBadge');
             badge.className = 'status-badge loading';
             badge.textContent = '⏳ Refreshing...';
 
-            // Simulate API call
-            setTimeout(() => {
-                updateMetrics();
-                renderComplianceGrid();
-                renderFindings();
+            if (!currentProjectId) {
+                badge.className = 'status-badge error';
+                badge.textContent = '⚠️ Selecteer eerst een project';
+                return;
+            }
+
+            try {
+                // Fetch all quality data in parallel
+                const [summaryRes, trendsRes, snapshotsRes, statsRes] = await Promise.all([
+                    fetch(`${API_BASE}/quality/summary?project_id=${currentProjectId}`),
+                    fetch(`${API_BASE}/quality/trends?project_id=${currentProjectId}&days=7`),
+                    fetch(`${API_BASE}/quality/snapshots?project_id=${currentProjectId}&limit=10`),
+                    fetch(`${API_BASE}/quality/stats/by-type?project_id=${currentProjectId}`)
+                ]);
+
+                const summary = summaryRes.ok ? await summaryRes.json() : null;
+                const trends = trendsRes.ok ? await trendsRes.json() : [];
+                const snapshots = snapshotsRes.ok ? await snapshotsRes.json() : [];
+                const stats = statsRes.ok ? await statsRes.json() : { stats: {} };
+
+                // Check if we have any data (snapshots indicate scans were run)
+                if (!snapshots || snapshots.length === 0) {
+                    const runScan = confirm(
+                        `Geen quality scan data gevonden voor dit project.\n\n` +
+                        `Wil je nu een quality scan uitvoeren?`
+                    );
+
+                    if (runScan) {
+                        await runQualityScan();
+                        return; // Will refresh after scan completes
+                    } else {
+                        badge.className = 'status-badge error';
+                        badge.textContent = '⚠️ Geen data beschikbaar';
+                        return;
+                    }
+                }
+
+                // Build project-specific data from API responses
+                projectData = buildProjectData(summary, trends, snapshots, stats);
+
+                // Update all UI elements with real data
+                updateMetricsFromProject();
+                updateChartsFromProject();
+                renderComplianceGridFromProject();
+                renderFindingsFromProject();
 
                 badge.className = 'status-badge success';
                 badge.textContent = '✅ Data Updated';
-            }, 1000);
+
+            } catch (error) {
+                console.error('Error fetching quality data:', error);
+                badge.className = 'status-badge error';
+                badge.textContent = '❌ Fout bij laden data';
+            }
+        }
+
+        function buildProjectData(summary, trends, snapshots, stats) {
+            // Calculate overall score from debt_ratio (inverted: 100 - debt_ratio)
+            const debtRatio = summary?.debt_ratio || 0;
+            const overallScore = Math.max(0, Math.min(100, Math.round(100 - debtRatio)));
+
+            // Count violations from stats
+            const statsData = stats?.stats || {};
+            let totalViolations = 0;
+            let criticalViolations = 0;
+            let highViolations = 0;
+            let mediumViolations = 0;
+            let lowViolations = 0;
+
+            Object.values(statsData).forEach(typeStat => {
+                totalViolations += typeStat.count || 0;
+                criticalViolations += typeStat.critical || 0;
+                highViolations += typeStat.high || 0;
+                mediumViolations += typeStat.medium || 0;
+                lowViolations += typeStat.low || 0;
+            });
+
+            // Build historical data from trends
+            const historicalData = trends.map(point => ({
+                date: point.date,
+                score: Math.round(100 - (point.debt_ratio || 0))
+            }));
+
+            // Calculate category scores from stats (map debt types to categories)
+            const categories = {};
+            const typeToCategory = {
+                'code_smell': 'Clean Code',
+                'complexity': 'SIG-TOP-10',
+                'duplication': 'Clean Code',
+                'security': 'Security',
+                'architecture': 'SOLID',
+                'testing': 'Testing Patterns',
+                'documentation': 'Documentation',
+                'dependency': 'Design Patterns'
+            };
+
+            // Initialize with defaults
+            ['SIG-TOP-10', 'SOLID', 'GRASP', 'TDD', 'Testing Patterns', 'Design Patterns', 'Clean Code', 'Security'].forEach(cat => {
+                categories[cat] = 90; // Default high score
+            });
+
+            // Adjust based on issues
+            Object.entries(statsData).forEach(([type, data]) => {
+                const category = typeToCategory[type] || 'Clean Code';
+                const penalty = (data.critical * 10) + (data.high * 5) + (data.medium * 2) + (data.low * 1);
+                categories[category] = Math.max(0, (categories[category] || 90) - penalty);
+            });
+
+            // Get findings from latest snapshot if available
+            const findings = [];
+            if (snapshots.length > 0) {
+                const latestSnapshot = snapshots[0];
+                // Note: Detailed items need separate API call - for now show summary
+                findings.push({
+                    severity: criticalViolations > 0 ? 'critical' : highViolations > 0 ? 'high' : 'low',
+                    title: `Quality Scan: ${latestSnapshot.snapshot_date || 'Recent'}`,
+                    location: `Snapshot #${latestSnapshot.id}`,
+                    description: `${totalViolations} totale issues gevonden`,
+                    recommendation: criticalViolations > 0
+                        ? 'Fix critical issues first before proceeding'
+                        : highViolations > 0
+                        ? 'Address high priority issues soon'
+                        : 'Good job! Keep maintaining quality',
+                    category: 'Overview'
+                });
+            }
+
+            return {
+                overallScore,
+                totalViolations,
+                criticalViolations,
+                highViolations,
+                mediumViolations,
+                lowViolations,
+                filesChecked: summary?.total_items || snapshots[0]?.item_count || 0,
+                categories,
+                historicalData,
+                findings,
+                summary,
+                snapshots
+            };
+        }
+
+        function updateMetricsFromProject() {
+            if (!projectData) return;
+
+            document.getElementById('overallScore').textContent = projectData.overallScore + '%';
+            document.getElementById('totalViolations').textContent = projectData.totalViolations;
+            document.getElementById('criticalIssues').textContent = projectData.criticalViolations;
+            document.getElementById('filesChecked').textContent = projectData.filesChecked;
+
+            // Update score color
+            const scoreElement = document.getElementById('overallScore');
+            scoreElement.className = 'metric-value';
+            if (projectData.overallScore >= 90) scoreElement.classList.add('excellent');
+            else if (projectData.overallScore >= 80) scoreElement.classList.add('good');
+            else if (projectData.overallScore >= 70) scoreElement.classList.add('warning');
+            else scoreElement.classList.add('critical');
+
+            document.getElementById('lastUpdated').textContent =
+                `Last updated: ${new Date().toLocaleString()}`;
+        }
+
+        function updateChartsFromProject() {
+            if (!projectData) return;
+
+            // Update Category Chart
+            if (categoryChart) {
+                categoryChart.data.labels = Object.keys(projectData.categories);
+                categoryChart.data.datasets[0].data = Object.values(projectData.categories);
+                categoryChart.update();
+            }
+
+            // Update Severity Chart
+            if (severityChart) {
+                severityChart.data.datasets[0].data = [
+                    projectData.criticalViolations,
+                    projectData.highViolations,
+                    projectData.mediumViolations,
+                    projectData.lowViolations
+                ];
+                severityChart.update();
+            }
+
+            // Update Trend Chart
+            if (trendChart && projectData.historicalData.length > 0) {
+                trendChart.data.labels = projectData.historicalData.map(d => d.date);
+                trendChart.data.datasets[0].data = projectData.historicalData.map(d => d.score);
+                trendChart.update();
+            }
+        }
+
+        function renderComplianceGridFromProject() {
+            if (!projectData) return;
+
+            const grid = document.getElementById('complianceGrid');
+            grid.innerHTML = '';
+
+            Object.entries(projectData.categories).forEach(([category, score]) => {
+                const item = document.createElement('div');
+                item.className = 'compliance-item';
+
+                let scoreClass = 'excellent';
+                if (score < 90) scoreClass = 'good';
+                if (score < 80) scoreClass = 'warning';
+                if (score < 70) scoreClass = 'critical';
+
+                item.innerHTML = `
+                    <div class="compliance-score ${scoreClass}">${Math.round(score)}%</div>
+                    <div class="compliance-label">${category}</div>
+                `;
+                grid.appendChild(item);
+            });
+        }
+
+        function renderFindingsFromProject() {
+            if (!projectData) return;
+
+            const list = document.getElementById('findingsList');
+            list.innerHTML = '';
+
+            if (projectData.findings.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: #a0aec0; padding: 2rem;">No violations found! 🎉</p>';
+                return;
+            }
+
+            projectData.findings.forEach(finding => {
+                const item = document.createElement('div');
+                item.className = `finding-item ${finding.severity}`;
+
+                const icon = finding.severity === 'critical' ? '🚨' :
+                            finding.severity === 'high' ? '❌' :
+                            finding.severity === 'medium' ? '⚠️' : 'ℹ️';
+
+                item.innerHTML = `
+                    <div class="finding-header">
+                        <span class="finding-icon">${icon}</span>
+                        <span class="finding-title">${finding.title}</span>
+                        <span class="finding-severity ${finding.severity}">${finding.severity}</span>
+                    </div>
+                    <div class="finding-location">${finding.location}</div>
+                    <div class="finding-description">${finding.description}</div>
+                    <div class="finding-recommendation">${finding.recommendation}</div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        async function runQualityScan() {
+            if (!currentProjectId) {
+                alert('Selecteer eerst een project');
+                return;
+            }
+
+            const badge = document.getElementById('statusBadge');
+            badge.className = 'status-badge loading';
+            badge.textContent = '⏳ Running quality scan...';
+
+            try {
+                const response = await fetch(`${API_BASE}/quality/scan`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        project_id: currentProjectId,
+                        scanners: ['ruff', 'bandit', 'coverage'],
+                        background: false
+                    })
+                });
+
+                if (response.ok) {
+                    badge.className = 'status-badge success';
+                    badge.textContent = '✅ Scan Complete';
+                    // Refresh to show new data
+                    await refreshData();
+                } else {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.detail || 'Scan failed');
+                }
+            } catch (error) {
+                console.error('Quality scan error:', error);
+                badge.className = 'status-badge error';
+                badge.textContent = '❌ Scan mislukt';
+                alert(`Quality scan mislukt: ${error.message}`);
+            }
         }
 
         function exportReport() {
+            if (!projectData) {
+                alert('Selecteer eerst een project en laad data om een rapport te exporteren.');
+                return;
+            }
             alert('📊 Exporting quality report as PDF...\n\nThis feature will generate a comprehensive PDF report with all metrics, charts, and findings.');
         }
 
         function runQualityCheck() {
-            const badge = document.getElementById('statusBadge');
-            badge.className = 'status-badge loading';
-            badge.textContent = '⏳ Running checks...';
-
-            alert('▶️ Running quality checks...\n\nThis will execute: npm run quality:check\n\nResults will be displayed when complete.');
-
-            setTimeout(() => {
-                badge.className = 'status-badge success';
-                badge.textContent = '✅ Check Complete';
-            }, 2000);
+            // Use the new runQualityScan function
+            runQualityScan();
         }
 
         // Workflow Gates Functions (Week 50)
@@ -1038,12 +1395,29 @@
         }
 
         // Initialize on load
-        window.addEventListener('load', () => {
+        window.addEventListener('load', async () => {
             initCharts();
-            updateMetrics();
-            renderComplianceGrid();
-            renderFindings();
             initWorkflowGates();
+
+            // Wait for projects to load, then check for URL param
+            await loadProjects();
+
+            // If a project is selected (via URL param), data will be loaded automatically
+            // Otherwise show a message indicating project selection is needed
+            if (!currentProjectId) {
+                // Show placeholder message instead of sample data
+                document.getElementById('overallScore').textContent = '--%';
+                document.getElementById('totalViolations').textContent = '--';
+                document.getElementById('criticalIssues').textContent = '--';
+                document.getElementById('filesChecked').textContent = '--';
+                document.getElementById('lastUpdated').textContent = 'Selecteer een project om data te laden';
+
+                const findingsList = document.getElementById('findingsList');
+                findingsList.innerHTML = '<p style="text-align: center; color: #a0aec0; padding: 2rem;">📁 Selecteer een project hierboven om quality data te bekijken</p>';
+
+                const complianceGrid = document.getElementById('complianceGrid');
+                complianceGrid.innerHTML = '<p style="text-align: center; color: #a0aec0; padding: 2rem; grid-column: 1 / -1;">Wachtend op project selectie...</p>';
+            }
         });
     </script>
 </body>

@@ -11,6 +11,7 @@ from typing import List, Optional
 import aiohttp
 
 from .base import LLMProvider, LLMRequest, LLMResponse, ProviderConfig
+from app.config import settings
 
 
 class OllamaProvider(LLMProvider):
@@ -45,10 +46,11 @@ class OllamaProvider(LLMProvider):
 
     def __init__(
         self,
-        base_url: str = "http://localhost:11434",
+        base_url: str = None,
         model: str = "qwen2.5-coder:7b"
     ):
-        self.base_url = base_url
+        # Use settings.OLLAMA_BASE_URL if no base_url provided
+        self.base_url = base_url or settings.OLLAMA_BASE_URL
         self.config = ProviderConfig(
             name="ollama",
             tier="free",

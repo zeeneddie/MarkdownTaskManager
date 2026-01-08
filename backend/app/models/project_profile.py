@@ -94,7 +94,7 @@ class ProjectProfile:
 
     # Project metadata
     project_id: Optional[str] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
 
     # Budget/resource constraints
     budget_type: str = "volunteer"  # volunteer, startup, corporate, enterprise

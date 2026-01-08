@@ -12,13 +12,21 @@ from sqlalchemy.dialects.postgresql import JSONB
 
 # revision identifiers, used by Alembic.
 revision = '014_add_projects_table'
-down_revision = '013_add_gradual_rollout_tables'
+down_revision = 'c3d8e9f7a123'
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
     """Create projects table for wizard-created projects."""
+    # Skip if table already exists (created in earlier migration)
+    conn = op.get_bind()
+    result = conn.execute(sa.text(
+        "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'projects')"
+    ))
+    if result.scalar():
+        return
+
     op.create_table(
         'projects',
         sa.Column('id', sa.Integer(), primary_key=True, autoincrement=True),

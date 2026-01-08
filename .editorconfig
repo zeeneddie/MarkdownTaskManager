@@ -1,0 +1,102 @@
+# EditorConfig - Week 101
+# https://editorconfig.org
+# Based on eShopOnWeb reference application standards
+
+# Top-most EditorConfig file
+root = true
+
+# Default settings for all files
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+max_line_length = 120
+
+# Python files
+[*.py]
+indent_size = 4
+max_line_length = 88
+
+# JavaScript/TypeScript files
+[*.{js,jsx,ts,tsx}]
+indent_size = 2
+
+# JSON files
+[*.json]
+indent_size = 2
+
+# YAML files
+[*.{yml,yaml}]
+indent_size = 2
+
+# Markdown files
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+# Makefile (requires tabs)
+[Makefile]
+indent_style = tab
+
+# Shell scripts
+[*.sh]
+indent_size = 2
+
+# HTML/CSS
+[*.{html,css,scss,less}]
+indent_size = 2
+
+# SQL files
+[*.sql]
+indent_size = 2
+
+# Configuration files
+[*.{toml,ini,cfg}]
+indent_size = 4
+
+# Alembic migration files
+[alembic/versions/*.py]
+max_line_length = 120
+
+# Test files
+[tests/**/*.py]
+max_line_length = 120
+
+# Docker files
+[Dockerfile*]
+indent_size = 2
+
+[docker-compose*.yml]
+indent_size = 2
+
+# Git files
+[.git*]
+indent_size = 2
+
+# EditorConfig itself
+[.editorconfig]
+indent_size = 4
+
+###############################
+# Python Code Style Guidelines
+###############################
+# Following PEP 8 and Black formatter standards
+#
+# Naming Conventions:
+# - Classes: PascalCase (e.g., UserService, OrderRepository)
+# - Functions: snake_case (e.g., get_user_by_id, create_order)
+# - Constants: SCREAMING_SNAKE_CASE (e.g., MAX_RETRY_COUNT)
+# - Private fields: _underscore_prefix (e.g., _internal_cache)
+# - Module files: snake_case (e.g., user_service.py)
+#
+# Import Order:
+# 1. Standard library imports
+# 2. Third-party imports
+# 3. Local application imports
+# (separated by blank lines)
+#
+# String Quotes: Double quotes for docstrings and user-facing strings
+#                Single or double for internal strings (be consistent)

@@ -13,7 +13,7 @@ Date: 2025-11-19
 """
 
 from typing import List, Optional, Dict, Any, Literal
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 # ============================================================================
@@ -34,13 +34,15 @@ class ComponentInput(BaseModel):
     # For EI/EO/EQ (transactional functions)
     ftrs: Optional[int] = Field(None, description="File Types Referenced (ILFs/EIFs accessed)")
 
-    @validator('rets')
+    @field_validator('rets')
+    @classmethod
     def validate_rets(cls, v):
         if v is not None and v < 1:
             raise ValueError("RETs must be >= 1 if provided")
         return v
 
-    @validator('ftrs')
+    @field_validator('ftrs')
+    @classmethod
     def validate_ftrs(cls, v):
         if v is not None and v < 0:
             raise ValueError("FTRs must be >= 0 if provided")
@@ -75,16 +77,16 @@ class FunctionPointRequest(BaseModel):
         description="14 General System Characteristics ratings (0-5 each)"
     )
 
-    @validator('gsc_ratings')
-    def validate_gsc_ratings(cls, v, values):
-        if values.get('use_vaf') and v is None:
+    @model_validator(mode='after')
+    def validate_gsc_ratings(self):
+        if self.use_vaf and self.gsc_ratings is None:
             raise ValueError("gsc_ratings required when use_vaf=True")
-        if v is not None:
-            if len(v) != 14:
+        if self.gsc_ratings is not None:
+            if len(self.gsc_ratings) != 14:
                 raise ValueError("gsc_ratings must contain exactly 14 values")
-            if any(rating < 0 or rating > 5 for rating in v):
+            if any(rating < 0 or rating > 5 for rating in self.gsc_ratings):
                 raise ValueError("Each GSC rating must be between 0 and 5")
-        return v
+        return self
 
 
 class FunctionPointResponse(BaseModel):

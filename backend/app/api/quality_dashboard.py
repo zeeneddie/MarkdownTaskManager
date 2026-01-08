@@ -40,10 +40,18 @@ router = APIRouter(prefix="/api/quality", tags=["Quality Dashboard"])
 class ScanRequest(BaseModel):
     """Request to scan codebase for technical debt"""
     scanners: Optional[List[str]] = Field(
-        default=["ruff", "bandit", "coverage"],
-        description="Scanners to run"
+        default=None,
+        description="Scanners to run (auto-detected based on stack if not specified)"
     )
     project_id: Optional[int] = None
+    project_path: Optional[str] = Field(
+        default=None,
+        description="Path to project codebase to scan"
+    )
+    tech_stack: Optional[List[str]] = Field(
+        default=None,
+        description="Tech stack for scanner selection (auto-detected if not provided)"
+    )
     background: bool = Field(
         default=False,
         description="Run scan in background"
@@ -315,7 +323,9 @@ async def scan_codebase(
             _run_scan_background,
             db,
             request.scanners,
-            request.project_id
+            request.project_id,
+            request.project_path,
+            request.tech_stack
         )
         return ScanResponse(
             snapshot_id=0,
@@ -332,7 +342,9 @@ async def scan_codebase(
 
     snapshot = await service.scan_codebase(
         scanners=request.scanners,
-        project_id=request.project_id
+        project_id=request.project_id,
+        project_path=request.project_path,
+        tech_stack=request.tech_stack
     )
 
     return ScanResponse(
@@ -352,11 +364,18 @@ async def scan_codebase(
 async def _run_scan_background(
     db: AsyncSession,
     scanners: List[str],
-    project_id: Optional[int]
+    project_id: Optional[int],
+    project_path: Optional[str] = None,
+    tech_stack: Optional[List[str]] = None
 ):
     """Background scan task"""
     service = get_technical_debt_service(db)
-    await service.scan_codebase(scanners=scanners, project_id=project_id)
+    await service.scan_codebase(
+        scanners=scanners,
+        project_id=project_id,
+        project_path=project_path,
+        tech_stack=tech_stack
+    )
 
 
 @router.get("/snapshots", response_model=List[SnapshotSummary])

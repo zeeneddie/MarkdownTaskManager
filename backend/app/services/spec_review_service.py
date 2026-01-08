@@ -15,7 +15,7 @@ import re
 import asyncio
 from uuid import UUID, uuid4
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from enum import Enum
 from dataclasses import dataclass
 import aiohttp
@@ -32,6 +32,17 @@ from app.models.project_profile import (
     get_preset_profile,
     KLAVERJAS_PROFILE
 )
+
+# Week 143: Vector DB Integration for context-aware reviews
+import logging
+logger = logging.getLogger(__name__)
+
+try:
+    from app.services.chroma_service import ChromaService
+    CHROMA_AVAILABLE = True
+except ImportError:
+    CHROMA_AVAILABLE = False
+    logger.warning("ChromaService not available - Vector DB context disabled")
 
 
 class SuggestionType(str, Enum):
@@ -106,10 +117,12 @@ class SpecReviewService:
         self,
         db_session: AsyncSession,
         ollama_base_url: str = "http://localhost:11434",
-        project_profile: Optional[ProjectProfile] = None
+        project_profile: Optional[ProjectProfile] = None,
+        project_id: int = 1000  # Week 143: Default to HCI-CRS project for Vector DB
     ):
         self.db = db_session
         self.ollama_url = ollama_base_url
+        self.project_id = project_id
 
         # Project profile determines agent behavior
         self.profile = project_profile or get_preset_profile("club_app")
@@ -125,6 +138,128 @@ class SpecReviewService:
         # Thresholds (now from profile!)
         self.critical_issue_threshold = self.quinn_config.critical_issue_threshold
         self.min_quality_score = self.quinn_config.min_quality_score
+
+        # Week 143: Vector DB service (lazy initialization)
+        self._chroma_service: Optional["ChromaService"] = None
+        self._vector_context: Optional[Dict[str, Any]] = None
+
+    def _get_chroma_service(self) -> Optional["ChromaService"]:
+        """Get or create ChromaDB service instance (lazy init)."""
+        if not CHROMA_AVAILABLE:
+            return None
+        if self._chroma_service is None:
+            try:
+                self._chroma_service = ChromaService()
+                logger.info("ChromaDB service initialized for SpecReviewService")
+            except Exception as e:
+                logger.warning(f"ChromaDB not available: {e}. Vector context disabled.")
+                return None
+        return self._chroma_service
+
+    def _fetch_review_context(
+        self,
+        spec_section: Optional[str] = None,
+        topics: Optional[List[str]] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Fetch relevant context from Vector DB for spec review.
+
+        Args:
+            spec_section: Specific section being reviewed (e.g., "architecture", "data_model")
+            topics: List of topics to search for (e.g., ["authentication", "database"])
+
+        Returns:
+            Dict with relevant docs, patterns, and code examples
+        """
+        chroma = self._get_chroma_service()
+        if not chroma:
+            return None
+
+        try:
+            context = {
+                "architecture_docs": [],
+                "code_patterns": [],
+                "best_practices": [],
+                "related_components": []
+            }
+
+            # Build search queries based on section and topics
+            queries = []
+            if spec_section:
+                queries.append(f"{spec_section} implementation patterns")
+                queries.append(f"{spec_section} best practices")
+            if topics:
+                for topic in topics[:3]:  # Limit to 3 topics
+                    queries.append(f"{topic} architecture")
+
+            # Default query if none specified
+            if not queries:
+                queries = ["system architecture overview", "design patterns"]
+
+            # Fetch from Vector DB
+            for query in queries[:5]:  # Max 5 queries
+                results = chroma.query_project_knowledge(
+                    project_id=self.project_id,
+                    query=query,
+                    n_results=3
+                )
+
+                if results and "documents" in results:
+                    for doc in results.get("documents", [[]])[0]:
+                        if doc and len(doc) > 50:
+                            # Categorize by content
+                            doc_lower = doc.lower()
+                            if any(x in doc_lower for x in ["architecture", "system", "design"]):
+                                if doc not in context["architecture_docs"]:
+                                    context["architecture_docs"].append(doc[:500])
+                            elif any(x in doc_lower for x in ["pattern", "practice", "standard"]):
+                                if doc not in context["best_practices"]:
+                                    context["best_practices"].append(doc[:500])
+                            elif any(x in doc_lower for x in ["class", "function", "method", "component"]):
+                                if doc not in context["code_patterns"]:
+                                    context["code_patterns"].append(doc[:500])
+
+            # Limit results
+            context["architecture_docs"] = context["architecture_docs"][:3]
+            context["best_practices"] = context["best_practices"][:3]
+            context["code_patterns"] = context["code_patterns"][:3]
+
+            # Only return if we found something
+            total_items = sum(len(v) for v in context.values())
+            if total_items > 0:
+                logger.info(f"Fetched {total_items} context items for spec review")
+                return context
+
+            return None
+
+        except Exception as e:
+            logger.warning(f"Error fetching review context: {e}")
+            return None
+
+    def _format_vector_context(self, context: Optional[Dict[str, Any]]) -> str:
+        """Format Vector DB context for inclusion in prompts."""
+        if not context:
+            return ""
+
+        lines = ["\nRELEVANT PROJECT CONTEXT (from knowledge base):"]
+
+        if context.get("architecture_docs"):
+            lines.append("\n📐 Architecture References:")
+            for i, doc in enumerate(context["architecture_docs"][:2], 1):
+                lines.append(f"  {i}. {doc[:300]}...")
+
+        if context.get("best_practices"):
+            lines.append("\n✅ Best Practices:")
+            for i, doc in enumerate(context["best_practices"][:2], 1):
+                lines.append(f"  {i}. {doc[:300]}...")
+
+        if context.get("code_patterns"):
+            lines.append("\n🔧 Code Patterns:")
+            for i, doc in enumerate(context["code_patterns"][:2], 1):
+                lines.append(f"  {i}. {doc[:300]}...")
+
+        lines.append("\n---")
+        return "\n".join(lines)
 
     # ========================================================================
     # STAGE 1: QUINN REVIEWS SPECIFICATION
@@ -195,16 +330,28 @@ class SpecReviewService:
         except Exception as e:
             raise Exception(f"Quinn review failed: {e}")
 
-    def _build_quinn_review_prompt(self, spec: Specification) -> str:
-        """Build Quinn's review prompt with project profile context."""
+    def _build_quinn_review_prompt(
+        self,
+        spec: Specification,
+        topics: Optional[List[str]] = None
+    ) -> str:
+        """Build Quinn's review prompt with project profile context and Vector DB knowledge."""
 
         # Build strictness guidance from profile
         strictness_guide = self._build_strictness_guidance()
+
+        # Week 143: Fetch relevant context from Vector DB
+        vector_context = self._fetch_review_context(
+            spec_section="specification",
+            topics=topics or ["architecture", "design patterns", "data model"]
+        )
+        context_section = self._format_vector_context(vector_context)
 
         return f"""You are Quinn, a QA specialist reviewing a High-Level Design specification.
 
 SPECIFICATION TO REVIEW:
 {spec.content_markdown}
+{context_section}
 
 {self.quinn_config.context_instructions}
 

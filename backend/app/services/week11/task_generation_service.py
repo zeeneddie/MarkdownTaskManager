@@ -6,8 +6,11 @@ Specification → Epic → Feature → Story → Task
 
 Felix agent (Feature Architect) performs the breakdown with intelligent
 estimation and dependency mapping.
+
+Week 143: Vector DB Integration for context-aware task generation.
 """
 
+import logging
 from typing import Dict, List, Optional, Any, Tuple
 from uuid import UUID
 from datetime import datetime
@@ -23,6 +26,16 @@ from app.models.task_hierarchy import (
 from app.services.agent_service import AgentService
 from app.services.week11.validation_service import HierarchyValidationService
 
+# Week 143: Vector DB Integration
+logger = logging.getLogger(__name__)
+
+try:
+    from app.services.chroma_service import ChromaService
+    CHROMA_AVAILABLE = True
+except ImportError:
+    CHROMA_AVAILABLE = False
+    logger.warning("ChromaService not available - Vector DB context disabled for task generation")
+
 
 class TaskGenerationService:
     """Service for generating task hierarchies from specifications."""
@@ -30,11 +43,113 @@ class TaskGenerationService:
     def __init__(
         self,
         db: AsyncSession,
-        agent_service: AgentService
+        agent_service: AgentService,
+        project_id: int = 1000  # Week 143: Default to HCI-CRS for Vector DB
     ):
         self.db = db
         self.agent_service = agent_service
         self.validation_service = HierarchyValidationService(db)
+        self.project_id = project_id
+
+        # Week 143: Vector DB service (lazy initialization)
+        self._chroma_service: Optional["ChromaService"] = None
+
+    def _get_chroma_service(self) -> Optional["ChromaService"]:
+        """Get or create ChromaDB service instance (lazy init)."""
+        if not CHROMA_AVAILABLE:
+            return None
+        if self._chroma_service is None:
+            try:
+                self._chroma_service = ChromaService()
+                logger.info("ChromaDB service initialized for TaskGenerationService")
+            except Exception as e:
+                logger.warning(f"ChromaDB not available: {e}. Vector context disabled.")
+                return None
+        return self._chroma_service
+
+    def _fetch_generation_context(
+        self,
+        context_type: str,  # "epic", "feature", "story", "task"
+        topics: Optional[List[str]] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Fetch relevant context from Vector DB for task generation.
+
+        Args:
+            context_type: Type of work item being generated
+            topics: Optional list of topics to search for
+
+        Returns:
+            Dict with implementation patterns, technical details, and examples
+        """
+        chroma = self._get_chroma_service()
+        if not chroma:
+            return None
+
+        try:
+            context = {
+                "implementation_patterns": [],
+                "technical_details": [],
+                "similar_work_items": [],
+                "estimation_guidance": []
+            }
+
+            # Build queries based on context type
+            queries = []
+            if context_type == "epic":
+                queries = ["epic breakdown patterns", "user value stories", "business requirements"]
+            elif context_type == "feature":
+                queries = ["feature implementation", "API design patterns", "database design"]
+            elif context_type == "story":
+                queries = ["user story examples", "acceptance criteria", "story points estimation"]
+            elif context_type == "task":
+                queries = ["task breakdown", "implementation details", "technical tasks"]
+
+            # Add topic-specific queries
+            if topics:
+                for topic in topics[:3]:
+                    queries.append(f"{topic} implementation")
+
+            # Fetch from Vector DB
+            for query in queries[:5]:
+                results = chroma.query_project_knowledge(
+                    project_id=self.project_id,
+                    query=query,
+                    n_results=3
+                )
+
+                if results and "documents" in results:
+                    for doc in results.get("documents", [[]])[0]:
+                        if doc and len(doc) > 50:
+                            doc_lower = doc.lower()
+                            if any(x in doc_lower for x in ["pattern", "implementation", "approach"]):
+                                if doc not in context["implementation_patterns"]:
+                                    context["implementation_patterns"].append(doc[:400])
+                            elif any(x in doc_lower for x in ["api", "database", "service", "technical"]):
+                                if doc not in context["technical_details"]:
+                                    context["technical_details"].append(doc[:400])
+                            elif any(x in doc_lower for x in ["estimate", "point", "hour"]):
+                                if doc not in context["estimation_guidance"]:
+                                    context["estimation_guidance"].append(doc[:400])
+
+            # Limit results
+            for key in context:
+                context[key] = context[key][:3]
+
+            total_items = sum(len(v) for v in context.values())
+            if total_items > 0:
+                logger.info(f"Fetched {total_items} context items for {context_type} generation")
+                return context
+
+            return None
+
+        except Exception as e:
+            logger.warning(f"Error fetching generation context: {e}")
+            return None
+
+    def get_vector_context_for_type(self, context_type: str) -> Optional[Dict[str, Any]]:
+        """Public method to get Vector DB context for a specific generation type."""
+        return self._fetch_generation_context(context_type)
 
     # ========== Epic Generation ==========
 

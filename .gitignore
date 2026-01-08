@@ -1,12 +1,11 @@
-# Node.js
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.npm
-.yarn
+# ============================================
+# MarQed AI Agent Platform - .gitignore
+# Version: 2.0.0 (Restructure Week 145)
+# ============================================
 
-# Python (covered in backend/.gitignore but also here for completeness)
+# ===========================================
+# PYTHON RUNTIME & CACHE
+# ===========================================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -15,43 +14,247 @@ __pycache__/
 .venv/
 venv/
 ENV/
+env/
 *.egg-info/
+*.egg
 dist/
 build/
+.eggs/
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
 
-# IDEs
+# Type checking & linting
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+.pytype/
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+.hypothesis/
+.nox/
+.tox/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# ===========================================
+# NODE.JS
+# ===========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn
+.pnp.*
+*.tsbuildinfo
+
+# TypeScript build output
+src/agents/dist/
+*.js.map
+*.d.ts
+!src/agents/types/*.d.ts
+
+# ===========================================
+# ENVIRONMENT & SECRETS
+# ===========================================
+.env
+.env.local
+.env.*.local
+.env.development
+.env.staging
+.env.production
+!config/environments/.env.example
+
+# Secrets & credentials
+*.pem
+*.key
+*.crt
+*.p12
+secrets/
+credentials/
+.secrets/
+
+# ===========================================
+# IDE & EDITORS
+# ===========================================
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+*.code-workspace
 
-# OS
+# ===========================================
+# OS SPECIFIC
+# ===========================================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
 
-# Environment
-.env
-.env.local
-.env.*.local
-
-# Logs
+# ===========================================
+# LOGS & TEMPORARY FILES
+# ===========================================
 *.log
 logs/
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-coverage.xml
-
-# Build artifacts
-*.bak
 *.tmp
+*.temp
+*.bak
+*.backup
+*.orig
+*.rej
 
-# Serena (local config)
-.serena/memories/
-
-# Database files (local dev)
+# ===========================================
+# DATABASE & DATA FILES
+# ===========================================
 *.db
+*.sqlite
 *.sqlite3
+chromadb_data/
+*.dump
+*.sql.gz
+*.sql.bz2
+
+# ===========================================
+# ML MODELS (Keep only latest/ symlinks)
+# ===========================================
+src/backend/ml_models/*/*/
+!src/backend/ml_models/*/latest/
+backend/ml_models/*/*/
+!backend/ml_models/*/latest/
+
+# ===========================================
+# MCP TOOL CACHES (Large, regenerable)
+# ===========================================
+# Serena
+.serena/cache/
+.serena/memories/
+.mcp/serena/cache/
+.mcp/serena/memories/
+
+# Playwright
+.playwright-mcp/screenshots/
+.playwright-mcp/*.png
+.mcp/playwright/screenshots/
+.mcp/playwright/*.png
+!.playwright-mcp/README.md
+
+# ChromaDB persistence
+.mcp/*/chromadb/
+
+# ===========================================
+# BUILD & RUNTIME ARTIFACTS
+# ===========================================
+*.pid
+.pids/
+*.sock
+*.socket
+.states/
+.hypotheses/
+.memory/
+.agent_memory/
+.mtm_transform_backups/
+screenshots/
+
+# Docker
+docker-compose.override.yml
+
+# ===========================================
+# DOCUMENTATION BUILD
+# ===========================================
+site/
+_build/
+.docusaurus/
+docs/_build/
+
+# ===========================================
+# TESTING ARTIFACTS
+# ===========================================
+test-results/
+playwright-report/
+allure-results/
+allure-report/
+*.test.log
+.test-output/
+
+# ===========================================
+# LARGE FILES (Prevent accidental commit)
+# ===========================================
+*.tar.gz
+*.tar.bz2
+*.zip
+*.7z
+*.rar
+*.iso
+*.dmg
+
+# Large media
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.mp3
+*.wav
+
+# ===========================================
+# PROJECT SPECIFIC
+# ===========================================
+# ChromaDB data
+chromadb_data/
+backend/chromadb_data/
+
+# ML training outputs
+training_output/
+model_checkpoints/
+
+# Export files
+exports/
+*.csv.gz
+*.jsonl.gz
+
+# Temporary test projects
+test-project/
+test-frontend-project/
+
+# ===========================================
+# AI/DEV TOOL CONFIGURATIONS (Local only)
+# ===========================================
+.claude/
+.bmad/
+.qwen/
+.codex/
+.crush/
+.clinerules/
+.standards/
+.project-config.json
+.application-config.json
+
+# External frameworks (submodules or copies)
+external-frameworks/
+
+# Backup folders
+_backup/
+
+# Legacy sample files
+CheckLogin.asp

@@ -1,9 +1,10 @@
 import pytest
 import asyncio
 from typing import AsyncGenerator
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import NullPool
+from fastapi.testclient import TestClient
 
 from app.main import app
 from app.database import get_db, Base
@@ -11,8 +12,22 @@ from app.models.item import Item
 from app.models.sprint import Sprint
 from app.models.user import User
 
-# Test database URL (use a separate test database)
-TEST_DATABASE_URL = "postgresql+asyncpg://user:password@localhost/project_manager_test"
+# Test database URL - use environment variable or default
+# When running in Docker: db:5432, when running locally: localhost:5433
+import os
+import socket
+
+def _get_default_test_db_url():
+    """Detect if running in Docker or locally and return appropriate URL."""
+    # Check if 'db' hostname resolves (we're in Docker)
+    try:
+        socket.gethostbyname('db')
+        return "postgresql+asyncpg://user:password@db:5432/project_manager_test"
+    except socket.gaierror:
+        # Running locally, use localhost with external port
+        return "postgresql+asyncpg://user:password@localhost:5433/project_manager_test"
+
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", _get_default_test_db_url())
 
 # Create test engine
 test_engine = create_async_engine(
@@ -28,10 +43,10 @@ TestSessionLocal = async_sessionmaker(
 )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def event_loop():
-    """Create an event loop for the test session"""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
+    """Create an event loop for each test function"""
+    loop = asyncio.new_event_loop()
     yield loop
     loop.close()
 
@@ -39,6 +54,33 @@ def event_loop():
 @pytest.fixture(scope="function")
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """Create a fresh database session for each test"""
+    from sqlalchemy import text
+
+    # Drop all objects with CASCADE to handle views and FK constraints
+    async with test_engine.begin() as conn:
+        # Drop all views first
+        await conn.execute(text("""
+            DO $$
+            DECLARE r RECORD;
+            BEGIN
+                FOR r IN (SELECT viewname FROM pg_views WHERE schemaname = 'public')
+                LOOP
+                    EXECUTE 'DROP VIEW IF EXISTS ' || quote_ident(r.viewname) || ' CASCADE';
+                END LOOP;
+            END $$;
+        """))
+        # Drop all tables with CASCADE
+        await conn.execute(text("""
+            DO $$
+            DECLARE r RECORD;
+            BEGIN
+                FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public')
+                LOOP
+                    EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
+                END LOOP;
+            END $$;
+        """))
+
     # Create all tables
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -47,9 +89,28 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
     async with TestSessionLocal() as session:
         yield session
 
-    # Drop all tables after test
+    # Cleanup after test - drop all with CASCADE
     async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        await conn.execute(text("""
+            DO $$
+            DECLARE r RECORD;
+            BEGIN
+                FOR r IN (SELECT viewname FROM pg_views WHERE schemaname = 'public')
+                LOOP
+                    EXECUTE 'DROP VIEW IF EXISTS ' || quote_ident(r.viewname) || ' CASCADE';
+                END LOOP;
+            END $$;
+        """))
+        await conn.execute(text("""
+            DO $$
+            DECLARE r RECORD;
+            BEGIN
+                FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public')
+                LOOP
+                    EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
+                END LOOP;
+            END $$;
+        """))
 
 
 @pytest.fixture(scope="function")
@@ -61,7 +122,8 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 
     app.dependency_overrides[get_db] = override_get_db
 
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
 
     app.dependency_overrides.clear()
@@ -157,15 +219,56 @@ async def test_story(db_session: AsyncSession, test_feature):
 async def test_sprint(db_session: AsyncSession):
     """Create a test sprint"""
     from app.crud import sprint as sprint_crud
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, timezone
 
     sprint_data = {
         "name": "Sprint 1",
-        "start_date": datetime.utcnow(),
-        "end_date": datetime.utcnow() + timedelta(days=14),
+        "start_date": datetime.now(timezone.utc),
+        "end_date": datetime.now(timezone.utc) + timedelta(days=14),
         "goal": "Test sprint goal",
         "status": "PLANNED"
     }
 
     sprint = await sprint_crud.create_sprint(db_session, sprint_data)
     return sprint
+
+
+@pytest.fixture
+def sync_test_client():
+    """Create a synchronous test client for simple tests.
+
+    This fixture is used for tests that mock service classes directly
+    and don't need actual database interactions.
+    """
+    return TestClient(app)
+
+
+@pytest.fixture
+async def test_client() -> AsyncGenerator[AsyncClient, None]:
+    """Create an async test client for mocked API tests.
+
+    This fixture is used for API tests that mock service classes
+    and don't need actual database interactions.
+    """
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
+
+
+@pytest.fixture
+def mock_db_session():
+    """Create a mock database session for unit tests.
+
+    This fixture is used for service unit tests that need to mock
+    database interactions without actual database connections.
+    """
+    from unittest.mock import AsyncMock, MagicMock
+
+    mock_session = MagicMock(spec=AsyncSession)
+    mock_session.add = MagicMock()
+    mock_session.commit = AsyncMock()
+    mock_session.refresh = AsyncMock()
+    mock_session.execute = AsyncMock()
+    mock_session.delete = MagicMock()
+
+    return mock_session

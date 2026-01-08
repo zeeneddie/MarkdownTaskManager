@@ -13,7 +13,7 @@ Date: 2025-11-22
 
 from fastapi import APIRouter, HTTPException, status, Depends, BackgroundTasks
 from typing import Optional, Dict, Any, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 import logging
 
@@ -52,6 +52,8 @@ class TrainModelRequest(BaseModel):
         description="Minimum samples required for training"
     )
 
+    model_config = ConfigDict(protected_namespaces=())
+
 
 class TrainAllModelsRequest(BaseModel):
     """Request to train all model types"""
@@ -77,6 +79,8 @@ class PredictRequest(BaseModel):
         description="Feature values for prediction"
     )
 
+    model_config = ConfigDict(protected_namespaces=())
+
 
 class PredictFromFPRequest(BaseModel):
     """Request for prediction from FP calculation result"""
@@ -86,6 +90,7 @@ class PredictFromFPRequest(BaseModel):
     )
     model_type: str = Field(default="random_forest")
 
+    model_config = ConfigDict(protected_namespaces=())
 
 class PredictFromSPRequest(BaseModel):
     """Request for prediction from SP estimation result"""
@@ -95,6 +100,7 @@ class PredictFromSPRequest(BaseModel):
     )
     model_type: str = Field(default="random_forest")
 
+    model_config = ConfigDict(protected_namespaces=())
 
 class TrainingResponse(BaseModel):
     """Response from model training"""
@@ -107,6 +113,7 @@ class TrainingResponse(BaseModel):
     model_path: Optional[str]
     message: str
 
+    model_config = ConfigDict(protected_namespaces=())
 
 class PredictionResponse(BaseModel):
     """Response from ML prediction"""
@@ -116,6 +123,7 @@ class PredictionResponse(BaseModel):
     model_version: str
     features_used: Dict[str, Any]
 
+    model_config = ConfigDict(protected_namespaces=())
 
 class ModelInfoResponse(BaseModel):
     """Information about a saved model"""
@@ -124,6 +132,7 @@ class ModelInfoResponse(BaseModel):
     saved_at: Optional[str]
     path: str
 
+    model_config = ConfigDict(protected_namespaces=())
 
 class TrainingStatusResponse(BaseModel):
     """Status of ML training system"""

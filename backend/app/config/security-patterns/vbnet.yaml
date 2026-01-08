@@ -1,0 +1,229 @@
+# VB.NET Security Patterns
+language: vbnet
+version: "1.0"
+file_extensions:
+  - ".vb"
+  - ".vbs"
+
+patterns:
+  injection:
+    - id: VB-INJ-001
+      pattern: "(?:CommandText|SqlCommand|OleDbCommand)\\s*=\\s*[\"'][^\"]*[\"']\\s*[&+]\\s*\\w+"
+      title: SQL Injection via string concatenation
+      description: SQL query constructed using string concatenation is vulnerable to injection
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use parameterized queries with SqlParameter objects
+
+    - id: VB-INJ-002
+      pattern: "[\"']\\s*SELECT\\s+.*\\s+FROM\\s+.*[\"']\\s*[&+]"
+      title: SQL Injection in SELECT query
+      description: SELECT query with string concatenation
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use SqlParameter
+
+    - id: VB-INJ-003
+      pattern: "[\"']\\s*INSERT\\s+INTO\\s+.*[\"']\\s*[&+]"
+      title: SQL Injection in INSERT query
+      description: INSERT query with string concatenation
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use parameterized queries for all INSERT statements
+
+    - id: VB-INJ-004
+      pattern: "[\"']\\s*UPDATE\\s+.*\\s+SET\\s+.*[\"']\\s*[&+]"
+      title: SQL Injection in UPDATE query
+      description: UPDATE query with string concatenation
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use parameterized queries for UPDATE statements
+
+    - id: VB-INJ-005
+      pattern: "[\"']\\s*DELETE\\s+FROM\\s+.*[\"']\\s*[&+]"
+      title: SQL Injection in DELETE query
+      description: DELETE query with string concatenation
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use parameterized queries for DELETE statements
+
+    - id: VB-INJ-006
+      pattern: "[\"']\\s*EXEC(?:UTE)?\\s+.*[\"']\\s*[&+]"
+      title: SQL Injection in EXEC/EXECUTE
+      description: Dynamic SQL execution with string concatenation
+      severity: critical
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use sp_executesql with parameters instead of EXEC with concatenation
+
+    - id: VB-INJ-007
+      pattern: "ExecuteReader\\s*\\([^)]*[&+]"
+      title: SQL Injection in ExecuteReader
+      description: ExecuteReader with concatenated query string
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use SqlCommand with Parameters collection
+
+    - id: VB-INJ-008
+      pattern: "ExecuteNonQuery\\s*\\([^)]*[&+]"
+      title: SQL Injection in ExecuteNonQuery
+      description: ExecuteNonQuery with concatenated query string
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use SqlCommand with Parameters collection
+
+    - id: VB-INJ-009
+      pattern: "Shell\\s*\\([^)]*[&+]\\s*\\w+"
+      title: Command Injection via Shell()
+      description: Shell command with string concatenation is vulnerable
+      severity: critical
+      owasp: A03
+      cwe: CWE-78
+      remediation: Validate and sanitize all input used in Shell commands
+
+    - id: VB-INJ-010
+      pattern: "Process\\.Start\\s*\\([^)]*[&+]"
+      title: Command Injection via Process.Start
+      description: Process.Start with concatenated arguments
+      severity: critical
+      owasp: A03
+      cwe: CWE-78
+      remediation: Use ProcessStartInfo with properly escaped arguments
+
+    - id: VB-INJ-011
+      pattern: "String\\.Format\\s*\\(\\s*[\"']\\s*(?:SELECT|INSERT|UPDATE|DELETE|EXEC)"
+      title: SQL Injection via String.Format
+      description: SQL query using String.Format is vulnerable
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use SqlParameter instead of String.Format for SQL queries
+
+  crypto:
+    - id: VB-CRYPTO-001
+      pattern: "(?:password|Password|wachtwoord|Wachtwoord)\\s*=\\s*[\"'][^\"']{4,}[\"']"
+      title: Hardcoded password
+      description: Password hardcoded in source code
+      severity: critical
+      owasp: A02
+      cwe: CWE-798
+      remediation: Use ConfigurationManager.AppSettings or Azure Key Vault
+
+    - id: VB-CRYPTO-002
+      pattern: "(?:ConnectionString|connString)\\s*=\\s*[\"'].*(?:Password|Pwd)\\s*="
+      title: Hardcoded connection string with password
+      description: Database credentials in connection string
+      severity: critical
+      owasp: A02
+      cwe: CWE-798
+      remediation: Store connection strings in Web.config with encryption
+
+    - id: VB-CRYPTO-003
+      pattern: "MD5\\.Create\\(\\)|MD5CryptoServiceProvider"
+      title: Use of weak MD5 hash
+      description: MD5 is cryptographically broken
+      severity: medium
+      owasp: A02
+      cwe: CWE-328
+      remediation: Use SHA256 or SHA512 for hashing
+
+    - id: VB-CRYPTO-004
+      pattern: "SHA1\\.Create\\(\\)|SHA1CryptoServiceProvider|SHA1Managed"
+      title: Use of weak SHA1 hash
+      description: SHA1 is deprecated for security purposes
+      severity: medium
+      owasp: A02
+      cwe: CWE-328
+      remediation: Use SHA256 or SHA512
+
+    - id: VB-CRYPTO-005
+      pattern: "New\\s+Random\\s*\\(\\)"
+      title: Non-cryptographic random
+      description: System.Random is not cryptographically secure
+      severity: medium
+      owasp: A02
+      cwe: CWE-330
+      remediation: Use RNGCryptoServiceProvider for security-sensitive randomness
+
+  auth:
+    - id: VB-AUTH-001
+      pattern: "ServicePointManager\\.ServerCertificateValidationCallback\\s*=.*True"
+      title: SSL certificate validation disabled
+      description: Bypassing SSL certificate validation
+      severity: high
+      owasp: A07
+      cwe: CWE-295
+      remediation: Never disable certificate validation in production
+
+  config:
+    - id: VB-CFG-001
+      pattern: "customErrors\\s+mode\\s*=\\s*[\"']Off[\"']"
+      title: Custom errors disabled
+      description: Detailed error messages exposed to users
+      severity: medium
+      owasp: A05
+      cwe: CWE-209
+      remediation: Set customErrors mode RemoteOnly or On in production
+
+    - id: VB-CFG-002
+      pattern: "debug\\s*=\\s*[\"']?true[\"']?"
+      title: Debug mode enabled
+      description: Debug mode should be disabled in production
+      severity: medium
+      owasp: A05
+      cwe: CWE-489
+      remediation: Set debug false in Web.config for production
+
+    - id: VB-CFG-003
+      pattern: "validateRequest\\s*=\\s*[\"']false[\"']"
+      title: Request validation disabled
+      description: Disabling request validation increases XSS risk
+      severity: high
+      owasp: A05
+      cwe: CWE-79
+      remediation: Keep request validation enabled
+
+  xss:
+    - id: VB-XSS-001
+      pattern: "Response\\.Write\\s*\\([^)]*Request\\s*"
+      title: Reflected XSS via Response.Write
+      description: Writing user input directly to response
+      severity: high
+      owasp: A03
+      cwe: CWE-79
+      remediation: Use HttpUtility.HtmlEncode() on all user input
+
+    - id: VB-XSS-002
+      pattern: "\\.Text\\s*=\\s*Request\\s*"
+      title: XSS via control text assignment
+      description: Setting control text from user input without encoding
+      severity: high
+      owasp: A03
+      cwe: CWE-79
+      remediation: Encode user input with HttpUtility.HtmlEncode()
+
+    - id: VB-XSS-003
+      pattern: "InnerHtml\\s*=\\s*[^S]*(?:Request|QueryString|Form)"
+      title: XSS via InnerHtml
+      description: Setting InnerHtml from user input
+      severity: high
+      owasp: A03
+      cwe: CWE-79
+      remediation: Use InnerText instead of InnerHtml
+
+  integrity:
+    - id: VB-INT-001
+      pattern: "BinaryFormatter\\.Deserialize"
+      title: Insecure deserialization
+      description: BinaryFormatter is vulnerable to deserialization attacks
+      severity: high
+      owasp: A08
+      cwe: CWE-502
+      remediation: Use DataContractSerializer or JSON serialization instead

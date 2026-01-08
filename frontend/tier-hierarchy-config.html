@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tier Configuration - MarQed AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .tier-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+        .tier-FREE { background: #E5E7EB; color: #374151; }
+        .tier-BASIC { background: #DBEAFE; color: #1E40AF; }
+        .tier-STANDARD { background: #D1FAE5; color: #065F46; border: 2px solid #10B981; }
+        .tier-PROFESSIONAL { background: #FEF3C7; color: #92400E; }
+        .tier-PREMIUM { background: #EDE9FE; color: #5B21B6; }
+
+        .tree-item { border-left: 2px solid #E5E7EB; margin-left: 16px; padding-left: 16px; }
+        .tree-item:hover { background: #F9FAFB; }
+
+        .confidence-bar { height: 6px; border-radius: 3px; background: #E5E7EB; }
+        .confidence-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
+        .confidence-low { background: #EF4444; }
+        .confidence-medium { background: #F59E0B; }
+        .confidence-high { background: #10B981; }
+
+        .outcome-card { transition: all 0.3s ease; }
+        .outcome-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+        .tier-select { min-width: 140px; }
+        .tier-select option[value=""] { font-style: italic; color: #9CA3AF; }
+
+        .icon-epic { color: #8B5CF6; }
+        .icon-feature { color: #3B82F6; }
+        .icon-story { color: #10B981; }
+        .icon-task { color: #6B7280; }
+
+        .locked { opacity: 0.6; pointer-events: none; }
+        .inherit-indicator { font-style: italic; color: #9CA3AF; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <a href="deep-extraction.html" class="text-gray-600 hover:text-gray-900">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                    </a>
+                    <h1 class="text-2xl font-bold text-gray-800">Tier Configuration</h1>
+                    <span id="session-badge" class="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                        Loading...
+                    </span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="resetAllTiers()" class="px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50">
+                        Reset All
+                    </button>
+                    <button onclick="applyChanges()" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Apply Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Session Settings -->
+        <section class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Session Settings</h2>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Default Tier</label>
+                    <select id="session-tier" onchange="updateSessionTier()" class="tier-select w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        <option value="FREE">FREE ($0)</option>
+                        <option value="BASIC">BASIC ($5)</option>
+                        <option value="STANDARD" selected>STANDARD ($25)</option>
+                        <option value="PROFESSIONAL">PROFESSIONAL ($75)</option>
+                        <option value="PREMIUM">PREMIUM ($150)</option>
+                    </select>
+                </div>
+                <div class="flex items-end space-x-4">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="allow-epic" checked onchange="updateSettings()" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                        <span class="text-sm text-gray-700">Epic Override</span>
+                    </label>
+                </div>
+                <div class="flex items-end space-x-4">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="allow-feature" checked onchange="updateSettings()" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                        <span class="text-sm text-gray-700">Feature Override</span>
+                    </label>
+                </div>
+                <div class="flex items-end space-x-4">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="allow-story" checked onchange="updateSettings()" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                        <span class="text-sm text-gray-700">Story Override</span>
+                    </label>
+                </div>
+                <div class="flex items-end space-x-4">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="checkbox" id="config-locked" onchange="updateSettings()" class="w-4 h-4 text-red-600 rounded focus:ring-red-500">
+                        <span class="text-sm text-gray-700">Lock Config</span>
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Hierarchy Tree -->
+            <div class="lg:col-span-2">
+                <section class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold text-gray-800">Extraction Hierarchy</h2>
+                        <div class="flex items-center space-x-2 text-sm text-gray-500">
+                            <span class="tier-badge tier-FREE">FREE</span>
+                            <span class="tier-badge tier-BASIC">BASIC</span>
+                            <span class="tier-badge tier-STANDARD">STANDARD</span>
+                            <span class="tier-badge tier-PROFESSIONAL">PRO</span>
+                            <span class="tier-badge tier-PREMIUM">PREMIUM</span>
+                        </div>
+                    </div>
+                    <div id="hierarchy-tree" class="space-y-2">
+                        <p class="text-gray-500 text-center py-8">Loading hierarchy...</p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Expected Outcomes Summary -->
+            <div>
+                <section class="bg-white rounded-lg shadow-md p-6 sticky top-4">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Expected Outcomes</h2>
+
+                    <!-- Totals -->
+                    <div class="space-y-4 mb-6">
+                        <div class="outcome-card bg-gray-50 rounded-lg p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-gray-600">Average Confidence</span>
+                                <span id="avg-confidence" class="text-lg font-bold text-green-600">--</span>
+                            </div>
+                            <div class="confidence-bar">
+                                <div id="confidence-fill" class="confidence-fill confidence-high" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="outcome-card bg-gray-50 rounded-lg p-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Total Estimated Cost</span>
+                                <span id="total-cost" class="text-lg font-bold text-blue-600">$--</span>
+                            </div>
+                        </div>
+
+                        <div class="outcome-card bg-gray-50 rounded-lg p-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Total Items</span>
+                                <span id="total-items" class="text-lg font-bold text-gray-700">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tier Distribution -->
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Tier Distribution</h3>
+                    <div id="tier-distribution" class="space-y-2">
+                        <!-- Populated dynamically -->
+                    </div>
+
+                    <!-- What You Get -->
+                    <div id="selected-item-outcomes" class="mt-6 hidden">
+                        <h3 class="text-sm font-medium text-gray-700 mb-3">Selected Item Details</h3>
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <div id="selected-item-info"></div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tier Comparison Modal -->
+    <div id="tier-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-800">Compare Tiers</h2>
+                    <button onclick="closeTierModal()" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <p id="modal-item-title" class="text-gray-600 mt-1"></p>
+            </div>
+            <div id="tier-comparison-content" class="p-6">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/deep-extraction';
+        let sessionId = null;
+        let hierarchyData = null;
+        let pendingChanges = {};
+
+        // Get session ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        sessionId = urlParams.get('session');
+
+        if (!sessionId) {
+            document.getElementById('hierarchy-tree').innerHTML =
+                '<p class="text-red-500 text-center py-8">No session ID provided. Use ?session=UUID</p>';
+        } else {
+            loadHierarchy();
+        }
+
+        async function loadHierarchy() {
+            try {
+                const response = await fetch(`${API_BASE}/sessions/${sessionId}/tier-config`);
+                if (!response.ok) throw new Error('Failed to load hierarchy');
+
+                hierarchyData = await response.json();
+                renderHierarchy();
+                updateSessionSettings();
+                loadPreview();
+            } catch (error) {
+                document.getElementById('hierarchy-tree').innerHTML =
+                    `<p class="text-red-500 text-center py-8">Error: ${error.message}</p>`;
+            }
+        }
+
+        function renderHierarchy() {
+            const container = document.getElementById('hierarchy-tree');
+            const settings = hierarchyData.settings;
+
+            document.getElementById('session-badge').textContent = `Session: ${sessionId.substring(0, 8)}...`;
+
+            if (!hierarchyData.hierarchy || hierarchyData.hierarchy.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">No items in hierarchy yet.</p>';
+                return;
+            }
+
+            container.innerHTML = hierarchyData.hierarchy.map(epic => renderItem(epic, 0, settings)).join('');
+        }
+
+        function renderItem(item, level, settings) {
+            const indent = level * 24;
+            const icon = getTypeIcon(item.type);
+            const tierBadge = getTierBadge(item.tier_effective, item.tier_override);
+            const isLocked = item.tier_locked || hierarchyData.settings.tier_config_locked;
+
+            const canOverride =
+                (item.type === 'epic' && settings.allow_epic_override) ||
+                (item.type === 'feature' && settings.allow_feature_override) ||
+                (item.type === 'story' && settings.allow_story_override) ||
+                item.type === 'task';
+
+            const childrenHtml = item.children && item.children.length > 0
+                ? item.children.map(child => renderItem(child, level + 1, settings)).join('')
+                : '';
+
+            return `
+                <div class="tree-item ${isLocked ? 'locked' : ''}" style="margin-left: ${indent}px" data-item-id="${item.id}">
+                    <div class="flex items-center justify-between py-2 px-3 rounded-md hover:bg-gray-50 cursor-pointer"
+                         onclick="selectItem('${item.id}')">
+                        <div class="flex items-center space-x-3">
+                            <span class="icon-${item.type}">${icon}</span>
+                            <span class="font-medium text-gray-800">${item.title}</span>
+                            ${tierBadge}
+                            ${item.tier_override ? '' : '<span class="inherit-indicator text-xs">(inherited)</span>'}
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            ${canOverride && !isLocked ? `
+                                <select class="tier-select text-sm border border-gray-300 rounded px-2 py-1"
+                                        onchange="setItemTier('${item.id}', this.value)"
+                                        onclick="event.stopPropagation()">
+                                    <option value="" ${!item.tier_override ? 'selected' : ''}>Inherit</option>
+                                    <option value="FREE" ${item.tier_override === 'FREE' ? 'selected' : ''}>FREE</option>
+                                    <option value="BASIC" ${item.tier_override === 'BASIC' ? 'selected' : ''}>BASIC</option>
+                                    <option value="STANDARD" ${item.tier_override === 'STANDARD' ? 'selected' : ''}>STANDARD</option>
+                                    <option value="PROFESSIONAL" ${item.tier_override === 'PROFESSIONAL' ? 'selected' : ''}>PRO</option>
+                                    <option value="PREMIUM" ${item.tier_override === 'PREMIUM' ? 'selected' : ''}>PREMIUM</option>
+                                </select>
+                            ` : ''}
+                            <button onclick="event.stopPropagation(); showTierComparison('${item.id}')"
+                                    class="text-blue-600 hover:text-blue-800 text-sm">
+                                Compare
+                            </button>
+                            <span class="text-sm text-gray-500">$${(item.expected_cost_usd || 0).toFixed(2)}</span>
+                        </div>
+                    </div>
+                    ${childrenHtml}
+                </div>
+            `;
+        }
+
+        function getTypeIcon(type) {
+            const icons = {
+                'epic': '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zm0 6a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"/></svg>',
+                'feature': '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm12 6H4v4h12v-4z"/></svg>',
+                'story': '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 01-1.581.814L10 13.197l-4.419 3.617A1 1 0 014 16V4z" clip-rule="evenodd"/></svg>',
+                'task': '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>'
+            };
+            return icons[type] || icons['task'];
+        }
+
+        function getTierBadge(effective, override) {
+            const tier = effective || 'FREE';
+            return `<span class="tier-badge tier-${tier}">${tier}</span>`;
+        }
+
+        async function setItemTier(itemId, tier) {
+            pendingChanges[itemId] = tier || null;
+
+            // Update preview immediately
+            await loadPreview();
+
+            // Visual feedback
+            const element = document.querySelector(`[data-item-id="${itemId}"]`);
+            if (element) {
+                element.classList.add('bg-yellow-50');
+                setTimeout(() => element.classList.remove('bg-yellow-50'), 1000);
+            }
+        }
+
+        async function loadPreview() {
+            try {
+                const response = await fetch(`${API_BASE}/sessions/${sessionId}/tier-config/preview`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(pendingChanges)
+                });
+
+                if (!response.ok) throw new Error('Failed to load preview');
+                const preview = await response.json();
+
+                updateOutcomesSummary(preview);
+            } catch (error) {
+                console.error('Preview error:', error);
+            }
+        }
+
+        function updateOutcomesSummary(preview) {
+            // Update totals
+            const confidence = (preview.average_confidence * 100).toFixed(0);
+            document.getElementById('avg-confidence').textContent = `${confidence}%`;
+            document.getElementById('confidence-fill').style.width = `${confidence}%`;
+            document.getElementById('confidence-fill').className =
+                `confidence-fill ${confidence >= 80 ? 'confidence-high' : confidence >= 60 ? 'confidence-medium' : 'confidence-low'}`;
+
+            document.getElementById('total-cost').textContent = `$${preview.total_cost_usd.toFixed(2)}`;
+            document.getElementById('total-items').textContent = preview.total_items;
+
+            // Update tier distribution
+            const distContainer = document.getElementById('tier-distribution');
+            distContainer.innerHTML = Object.entries(preview.tier_distribution)
+                .filter(([_, data]) => data.count > 0)
+                .map(([tier, data]) => `
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="tier-badge tier-${tier}">${tier}</span>
+                        <span class="text-gray-600">${data.count} items ($${data.cost.toFixed(2)})</span>
+                    </div>
+                `).join('');
+        }
+
+        function updateSessionSettings() {
+            const settings = hierarchyData.settings;
+            document.getElementById('session-tier').value = hierarchyData.session_tier;
+            document.getElementById('allow-epic').checked = settings.allow_epic_override;
+            document.getElementById('allow-feature').checked = settings.allow_feature_override;
+            document.getElementById('allow-story').checked = settings.allow_story_override;
+            document.getElementById('config-locked').checked = settings.tier_config_locked;
+        }
+
+        async function updateSettings() {
+            const settings = {
+                allow_epic_override: document.getElementById('allow-epic').checked ? 'Y' : 'N',
+                allow_feature_override: document.getElementById('allow-feature').checked ? 'Y' : 'N',
+                allow_story_override: document.getElementById('allow-story').checked ? 'Y' : 'N',
+                tier_config_locked: document.getElementById('config-locked').checked ? 'Y' : 'N'
+            };
+
+            try {
+                await fetch(`${API_BASE}/sessions/${sessionId}/tier-config`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                });
+                await loadHierarchy();
+            } catch (error) {
+                console.error('Settings update error:', error);
+            }
+        }
+
+        async function updateSessionTier() {
+            const tier = document.getElementById('session-tier').value;
+            try {
+                await fetch(`${API_BASE}/sessions/${sessionId}/tier-config`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tier })
+                });
+                await loadHierarchy();
+            } catch (error) {
+                console.error('Tier update error:', error);
+            }
+        }
+
+        async function applyChanges() {
+            if (Object.keys(pendingChanges).length === 0) {
+                alert('No changes to apply');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/sessions/${sessionId}/tier-config/bulk`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(pendingChanges)
+                });
+
+                if (!response.ok) throw new Error('Failed to apply changes');
+
+                pendingChanges = {};
+                await loadHierarchy();
+                alert('Changes applied successfully!');
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        async function resetAllTiers() {
+            if (!confirm('Reset all tier overrides to inherit from session default?')) return;
+
+            try {
+                await fetch(`${API_BASE}/sessions/${sessionId}/tier-config/reset`, {
+                    method: 'POST'
+                });
+                pendingChanges = {};
+                await loadHierarchy();
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        function selectItem(itemId) {
+            document.getElementById('selected-item-outcomes').classList.remove('hidden');
+
+            // Find item in hierarchy
+            const item = findItemById(hierarchyData.hierarchy, itemId);
+            if (!item) return;
+
+            document.getElementById('selected-item-info').innerHTML = `
+                <h4 class="font-medium text-gray-800 mb-2">${item.title}</h4>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Type:</span>
+                        <span class="font-medium">${item.type}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Effective Tier:</span>
+                        <span class="tier-badge tier-${item.tier_effective}">${item.tier_effective}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Expected Confidence:</span>
+                        <span class="font-medium">${((item.expected_confidence || 0) * 100).toFixed(0)}%</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Estimated Cost:</span>
+                        <span class="font-medium">$${(item.expected_cost_usd || 0).toFixed(2)}</span>
+                    </div>
+                    ${item.estimated_fp ? `
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Function Points:</span>
+                            <span class="font-medium">${item.estimated_fp}</span>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function findItemById(items, id) {
+            for (const item of items) {
+                if (item.id === id) return item;
+                if (item.children) {
+                    const found = findItemById(item.children, id);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+
+        async function showTierComparison(itemId) {
+            try {
+                const response = await fetch(`${API_BASE}/items/${itemId}/tier-comparison`);
+                if (!response.ok) throw new Error('Failed to load comparison');
+
+                const data = await response.json();
+
+                document.getElementById('modal-item-title').textContent = data.item_title;
+                document.getElementById('tier-comparison-content').innerHTML = `
+                    <div class="grid grid-cols-5 gap-4">
+                        ${Object.entries(data.comparisons).map(([tier, info]) => `
+                            <div class="border rounded-lg p-4 ${data.current_tier === tier ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}">
+                                <div class="text-center mb-4">
+                                    <span class="tier-badge tier-${tier}">${tier}</span>
+                                    ${tier === 'STANDARD' ? '<div class="text-xs text-green-600 mt-1">Recommended</div>' : ''}
+                                </div>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Confidence:</span>
+                                        <span class="font-medium">${(info.confidence_target * 100).toFixed(0)}%</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">LLMs:</span>
+                                        <span class="font-medium">${info.llm_count}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Cost:</span>
+                                        <span class="font-medium">$${info.estimated_cost.toFixed(2)}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Human Review:</span>
+                                        <span class="font-medium">${info.human_review ? 'Yes' : 'No'}</span>
+                                    </div>
+                                </div>
+                                <button onclick="selectTierFromModal('${itemId}', '${tier}')"
+                                        class="mt-4 w-full py-2 text-sm rounded ${data.current_tier === tier ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}">
+                                    ${data.current_tier === tier ? 'Current' : 'Select'}
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+                document.getElementById('tier-modal').classList.remove('hidden');
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        function closeTierModal() {
+            document.getElementById('tier-modal').classList.add('hidden');
+        }
+
+        async function selectTierFromModal(itemId, tier) {
+            await setItemTier(itemId, tier);
+            closeTierModal();
+            await loadHierarchy();
+        }
+    </script>
+</body>
+</html>

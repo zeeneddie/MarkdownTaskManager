@@ -58,6 +58,14 @@ class EventType(str, Enum):
     QUALITY_GATE_PASSED = "quality_gate_passed"
     QUALITY_GATE_FAILED = "quality_gate_failed"
 
+    # Kanban events (Week 58)
+    KANBAN_ITEM_MOVED = "kanban_item_moved"
+    KANBAN_ITEM_CREATED = "kanban_item_created"
+    KANBAN_ITEM_UPDATED = "kanban_item_updated"
+    ESCALATION_CREATED = "escalation_created"
+    ESCALATION_RESOLVED = "escalation_resolved"
+    AGENT_TRIGGERED = "agent_triggered"
+
 
 class Channel(str, Enum):
     """WebSocket subscription channels"""
@@ -65,6 +73,7 @@ class Channel(str, Enum):
     AGENTS = "agents"
     SCHEDULER = "scheduler"
     QUALITY = "quality"
+    KANBAN = "kanban"
     ALL = "all"
 
 
@@ -375,6 +384,57 @@ async def websocket_scheduler(
         manager.disconnect(websocket)
 
 
+@router.websocket("/ws/kanban")
+async def websocket_kanban(
+    websocket: WebSocket,
+    client_id: Optional[str] = Query(None)
+):
+    """
+    WebSocket endpoint for Kanban board updates.
+
+    **Events received:**
+    - `kanban_item_moved`: Item moved between lanes (auto-progression)
+    - `kanban_item_created`: New item created
+    - `kanban_item_updated`: Item data changed
+    - `agent_triggered`: Agent started working on item
+    - `escalation_created`: Item escalated to human_needed
+
+    **KaibanJS-Style Live Updates:**
+    Connect to receive real-time lane progression during migrations.
+
+    **Example connection:**
+    ```javascript
+    const ws = new WebSocket('ws://localhost:8000/ws/kanban?client_id=dashboard-1');
+    ws.onmessage = (event) => {
+        const { type, data } = JSON.parse(event.data);
+        if (type === 'kanban_item_moved') {
+            animateCardMove(data.item_id, data.from_lane, data.to_lane);
+        }
+    };
+    ```
+    """
+    await manager.connect(websocket, [Channel.KANBAN], client_id)
+
+    try:
+        while True:
+            data = await websocket.receive_text()
+
+            try:
+                message = json.loads(data)
+
+                if message.get("type") == "ping":
+                    await manager.send_personal(websocket, {"type": "pong"})
+
+            except json.JSONDecodeError:
+                await manager.send_personal(websocket, {
+                    "type": EventType.ERROR,
+                    "data": {"message": "Invalid JSON"}
+                })
+
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+
+
 @router.websocket("/ws/all")
 async def websocket_all(
     websocket: WebSocket,
@@ -383,14 +443,14 @@ async def websocket_all(
     """
     WebSocket endpoint for all updates.
 
-    Subscribes to all channels: maintenance, agents, scheduler, quality.
+    Subscribes to all channels: maintenance, agents, scheduler, quality, kanban.
 
     **Example connection:**
     ```javascript
     const ws = new WebSocket('ws://localhost:8000/ws/all?client_id=admin-1');
     ```
     """
-    all_channels = [Channel.MAINTENANCE, Channel.AGENTS, Channel.SCHEDULER, Channel.QUALITY]
+    all_channels = [Channel.MAINTENANCE, Channel.AGENTS, Channel.SCHEDULER, Channel.QUALITY, Channel.KANBAN]
     await manager.connect(websocket, all_channels, client_id)
 
     try:

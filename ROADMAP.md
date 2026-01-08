@@ -1,538 +1,140 @@
-# ROADMAP: Multi-Stack AI Agent Platform
+# MarQed Platform Roadmap
 
-**Project:** Multi-Stack AI Agent Platform
-**Start:** 2025-11-12 (Week 46)
-**Eind:** 2026-06-22 (40 weken)
-**Status:** Week 53 COMPLETE | Week 54 ACTIVE | Multi-Stack Platform Evolution
-
----
-
-## Quick Navigation
-
-| Status | Fase | Document |
-|--------|------|----------|
-| DONE | Fase 1-3 | [Completed Phases](#completed-phases) |
-| DONE | Week 46-53 | [Weekly Progress](#weekly-progress-history) |
-| **ACTIVE** | Week 54-58 | [Multi-Stack Platform](#-week-54-58-multi-stack-platform-foundation) |
-| PLANNED | Fase 5-9 | [Future Phases](#future-phases) |
-| PARALLEL | Evolution | [AgentEvolver](docs/roadmap/parallel/agentevolver-integration.md) |
-| NEW | Review | [2025-11-26 Platform Review](docs/reviews/2025-11-26_MULTI_STACK_PLATFORM_REVIEW.md) |
+**Project:** MarQed AI Agent Software Platform
+**Last Updated:** Week 144 (2026-01-08)
+**Total Phases:** 29 | **Timeline:** Week 144-232
 
 ---
 
 ## Executive Summary
 
-### Visie Update (2025-11-26)
+De MarQed roadmap combineert de bestaande geplande fases met een uitgebreide gap-analyse van 12 externe bronnen (6 Nederlandse consultancies, 5 GitHub repos, 1 gist).
 
-**Oude Visie:** Single-project AI platform met 10 agents.
-
-**Nieuwe Visie:** Multi-stack platform waar meerdere projecten met verschillende tech-stacks worden beheerd door gespecialiseerde, stack-aware agents.
-
-### Key Numbers (Updated)
-
-| Metric | Week 53 | Week 58 Target | Change |
-|--------|---------|----------------|--------|
-| Core Agents | 10 | 10 | - |
-| Stack Agent Templates | 0 | 5 per stack | NEW |
-| Platform Agents | 0 | 4 | NEW |
-| LLM Providers | 2 (Ollama + Codex) | 5 (+ Claude Haiku/Sonnet/Opus) | +400% |
-| Knowledge Layers | 1 | 2 | +100% |
-| Supported Stacks | 1 (Python) | 4 (Python, JS, Go, Rust) | +300% |
-
----
-
-## Timeline Overview
+### Roadmap Overview
 
 ```
-2025                                    2026
-Nov    Dec    Jan    Feb    Mar    Apr    May    Jun
-|------|------|------|------|------|------|------|------|
-[F1-3 DONE]
-       [F4 DONE]
-       [Week 54-58: MULTI-STACK PLATFORM]
-              [F5   ][F6   ][F7   ][F8         ][F9   ]
-       [=== AgentEvolver (parallel) ===]
-       [=== Validation (parallel) =====]
-       [Council DONE]
-              [Stack Support]
-                     [Multi-Project]
+WEEK 144-150: CRITICAL FOUNDATION (7 weken)
+├── Fase 21: Stability Analyzer (remaining detectors)
+├── Fase 22: FP Methodology Overhaul 🚨 CRITICAL
+├── Fase 23: Context Engineering & PIV Loop
+└── Quality-Functionality Impact Mapping
+
+WEEK 151-232: GAP ANALYSIS IMPLEMENTATION (82 weken)
+├── Fase 24: Quick Wins & Foundation (15 items)
+├── Fase 25: Core Platform Enhancement (18 items)
+├── Fase 26: AI & Automation (12 items)
+├── Fase 27: Testing Excellence (8 items)
+├── Fase 28: Advanced Integrations (10 items)
+└── Fase 29: Innovation & Scale (9 items)
 ```
 
 ---
 
-## 🚀 Week 54-58: Multi-Stack Platform Foundation
+## Current Focus (Week 144)
 
-### Overview
+| Area | Status | Details |
+|------|--------|---------|
+| **Stability Analyzers** | IN PROGRESS | SessionAnalyzer, MemoryAnalyzer, ExternalServiceAnalyzer |
+| **GAP Analysis** | COMPLETE | 75 items identified, 6 phases planned |
+| **Documentation** | COMPLETE | Roadmap synchronized |
 
-**Goal:** Transform single-project system into multi-stack agent platform.
-
-**Key Deliverables:**
-1. Claude model routing (Haiku/Sonnet/Opus)
-2. Agent Observability System
-3. Stack Agent Templates
-4. PromptEngineer + Meta-Prompting
-5. Enhanced Betty (+ ErrorDetective)
-6. Standards System (.standards/)
-
-### Architecture Overview
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    MULTI-STACK AGENT PLATFORM                                │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  LAAG 1: CORE AGENTS (Cross-Stack, 10)                                       │
-│  ┌─────────┬─────────┬─────────┬─────────┬─────────┐                        │
-│  │ Felix   │ Quinn   │ Betty   │ Eliza   │ Diana   │                        │
-│  │ Arch    │ Quality │ Debug   │ Estim   │ Docs    │                        │
-│  │         │ Orch    │ +ErrDet │         │         │                        │
-│  ├─────────┼─────────┼─────────┼─────────┼─────────┤                        │
-│  │ Marcus  │ Tessa   │ Miguel  │ Peter   │ Paul    │                        │
-│  │ Maint   │ Test    │ Migrate │ Product │ Plan    │                        │
-│  │ Orch    │ Orch    │         │         │         │                        │
-│  └─────────┴─────────┴─────────┴─────────┴─────────┘                        │
-│                                                                              │
-│  LAAG 2: STACK AGENTS (Per Project, Templates)                               │
-│  ┌─────────────────────────────────────────────────────────────────┐        │
-│  │ Template: BackendDev | FrontendDev | CodeReviewer | SecAudit    │        │
-│  │                                                                  │        │
-│  │ Instances per stack:                                             │        │
-│  │ • Python:     BackendDev_py,  CodeRev_py,  SecAudit_py          │        │
-│  │ • JavaScript: BackendDev_js,  FrontendDev_js, CodeRev_js        │        │
-│  │ • Go:         BackendDev_go,  CodeRev_go,  SecAudit_go          │        │
-│  │ • Rust:       BackendDev_rs,  CodeRev_rs,  SecAudit_rs          │        │
-│  └─────────────────────────────────────────────────────────────────┘        │
-│                                                                              │
-│  LAAG 3: PLATFORM AGENTS (Meta-niveau)                                       │
-│  ┌─────────────────┬─────────────────┬─────────────────┐                    │
-│  │ Observability   │ PromptEngineer  │ ContextManager  │                    │
-│  │ (Agent Monitor) │ (Meta-Prompting)│ (State Handoff) │                    │
-│  └─────────────────┴─────────────────┴─────────────────┘                    │
-│                                                                              │
-│  LAAG 4: PROVIDERS & KNOWLEDGE                                               │
-│  ┌───────────────────────────────┬─────────────────────────────────┐        │
-│  │ Providers:                    │ Knowledge:                       │        │
-│  │ • Ollama (free, local)        │ • ChromaDB (semantic search)    │        │
-│  │ • Claude Haiku ($1/$5)        │ • .standards/ (codified rules)  │        │
-│  │ • Claude Sonnet ($3/$15)      │                                 │        │
-│  │ • Claude Opus ($15/$75)       │                                 │        │
-│  └───────────────────────────────┴─────────────────────────────────┘        │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+See: [phases-current.md](docs/roadmap/phases-current.md)
 
 ---
 
-### Week 54: Provider & Observability Foundation
+## Critical Path (Week 146-150)
 
-**Focus:** Multi-LLM support + Agent behavior monitoring
+### Fase 22: FP Methodology Overhaul 🚨
 
-| Dag | Taak | Output | Lines Est. |
-|-----|------|--------|------------|
-| 1 | Provider Registry | `providers/` module, base interfaces | 400 |
-| 2 | Claude CLI Integration | `claude_provider.py`, auth flow | 350 |
-| 3 | Model Router | Task → Model mapping, cost awareness | 300 |
-| 4 | Database Migration 015 | `agent_actions`, `decision_traces`, `llm_providers` | 200 |
-| 5 | Observability Service | Action logging, performance tracking | 500 |
+**Priority:** CRITICAL
+**Problem:** Current IFPUG/NESMA implementation has serious methodology errors
+**Fix:** Enhancement FP calculator, work type classifier, component validators
 
-**Database Tables (4 new):**
-```sql
--- LLM Provider configuration
-CREATE TABLE llm_providers (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE,
-    tier VARCHAR(20) NOT NULL,
-    cost_input_per_m DECIMAL(10,4),
-    cost_output_per_m DECIMAL(10,4),
-    is_active BOOLEAN DEFAULT true,
-    config JSONB
-);
+| Issue | Impact | Fix |
+|-------|--------|-----|
+| EIF for source files | -17 FP overcounting | Validate EIF rules |
+| ILF for code patterns | -14 FP overcounting | Validate ILF rules |
+| Missing maintenance FP | Wrong methodology | Enhancement FP calculator |
 
--- Agent action logging (observability)
-CREATE TABLE agent_actions (
-    id SERIAL PRIMARY KEY,
-    task_id UUID NOT NULL,
-    agent_id VARCHAR(50) NOT NULL,
-    action_type VARCHAR(50) NOT NULL,
-    input_summary TEXT,
-    output_summary TEXT,
-    decision_rationale TEXT,
-    model_used VARCHAR(50),
-    token_input INTEGER,
-    token_output INTEGER,
-    duration_ms INTEGER,
-    success BOOLEAN,
-    confidence_score DECIMAL(3,2),
-    created_at TIMESTAMP DEFAULT NOW()
-);
+See: [phases-planned.md#fase-22](docs/roadmap/phases-planned.md#fase-22-fp-methodology-overhaul-week-146-147--critical)
 
--- Decision traces for debugging
-CREATE TABLE decision_traces (
-    id SERIAL PRIMARY KEY,
-    task_id UUID NOT NULL,
-    sequence_number INTEGER NOT NULL,
-    agent_id VARCHAR(50) NOT NULL,
-    decision_point VARCHAR(100),
-    options JSONB,
-    selected_option VARCHAR(100),
-    selection_rationale TEXT,
-    outcome VARCHAR(50),
-    created_at TIMESTAMP DEFAULT NOW()
-);
+### Fase 23: Context Engineering & PIV Loop
 
--- Agent performance daily aggregates
-CREATE TABLE agent_performance_daily (
-    id SERIAL PRIMARY KEY,
-    agent_id VARCHAR(50) NOT NULL,
-    date DATE NOT NULL,
-    total_actions INTEGER,
-    successful_actions INTEGER,
-    avg_duration_ms INTEGER,
-    total_tokens INTEGER,
-    total_cost_cents INTEGER,
-    UNIQUE(agent_id, date)
-);
-```
+**Goal:** Intelligent reference loading and quality gates for agent output
+**Benefit:** 60-80% token reduction, >85% first-pass quality
 
-**API Endpoints (6 new):**
-- `GET /api/providers` - List LLM providers
-- `POST /api/providers/{id}/test` - Test provider connection
-- `GET /api/providers/usage` - Usage statistics
-- `POST /api/routing/select-model` - Get recommended model
-- `GET /api/observability/actions` - Agent action history
-- `GET /api/observability/performance` - Performance metrics
+### Quality-Functionality Impact Mapping
+
+**Goal:** Link quality issues to Epic/Feature/Story level
+**Benefit:** Business impact visibility for all findings
 
 ---
 
-### Week 55: Agent Enhancements
+## GAP Analysis Phases (Week 151-232)
 
-**Focus:** Core agent upgrades + Observability Dashboard
+### Phase Summary
 
-| Dag | Taak | Output | Lines Est. |
-|-----|------|--------|------------|
-| 1 | Observability Dashboard | `observability-dashboard.html` | 800 |
-| 2 | Betty Enhancement | + ErrorDetective capabilities | 400 |
-| 3 | Quinn Enhancement | + 3-fase methodology, 6-dimensie review | 450 |
-| 4 | Standards System | `.standards/` structure, loader | 350 |
-| 5 | Integration Testing | E2E tests for new features | 400 |
+| Fase | Focus | Items | Weken | Key Deliverables |
+|------|-------|-------|-------|------------------|
+| **24** | Quick Wins | 15 | 12 | Legacy Quickscan, Secret Detection, Migration Patterns |
+| **25** | Core Enhancement | 18 | 16 | COBOL Analyzer, UI Wrapper, Knowledge Graph |
+| **26** | AI & Automation | 12 | 14 | LLM Collaboration, Natural Language Query |
+| **27** | Testing | 8 | 10 | Characterization Tests, Mutation Testing |
+| **28** | Integrations | 10 | 12 | Jira, GitLab, ServiceNow |
+| **29** | Innovation | 9 | 16 | Multi-language Translation, Microservices |
 
-**Betty Enhancement (ErrorDetective merge):**
-- Distributed system debugging
-- Cascading failure analysis
-- Temporal analysis (timeline reconstruction)
-- Cross-service correlation
-- Log aggregation patterns
+### Top 10 Highest ROI Items
 
-**Quinn Enhancement (Senior Code Reviewer methodology):**
-- 3-fase review: Context Analysis → Comprehensive Review → Documentation
-- 6-dimensie review: Functionality, Security, Performance, Quality, Architecture, Error Handling
-- Severity-based output format
-- OWASP Top 10 integration
+| Rank | Item | ROI | Description |
+|------|------|-----|-------------|
+| 1 | A1 | 8.0 | Legacy Quickscan (15-min assessment) |
+| 2 | K3 | 8.0 | Secret Detection |
+| 3 | D1 | 7.5 | Migration Pattern Library |
+| 4 | D2 | 7.5 | Strangler Fig Implementation |
+| 5 | K1 | 6.7 | OWASP Integration |
+| 6 | K2 | 6.0 | CVE Database Integration |
+| 7 | A4 | 6.0 | Risk Heat Map |
+| 8 | E1 | 5.3 | Visual Dependency Graph |
+| 9 | J1 | 5.3 | Context-Aware Documentation |
+| 10 | B12 | 5.0 | LLM Agent Collaboration Framework |
 
-**Standards System:**
-```
-.standards/
-├── python/
-│   ├── fastapi-patterns.md
-│   ├── sqlalchemy-best-practices.md
-│   └── security/
-│       └── sql-injection-prevention.md
-├── javascript/
-│   ├── typescript-strict.md
-│   └── react-patterns.md
-├── security/
-│   ├── owasp-top-10.md
-│   └── api-security.md
-└── testing/
-    ├── unit-test-patterns.md
-    └── e2e-strategies.md
-```
+See: [gap-analysis-complete-roadmap.md](docs/roadmap/gap-analysis-complete-roadmap.md)
 
 ---
 
-### Week 56: Stack Agent Templates
+## Design Principles
 
-**Focus:** Multi-stack support foundation
-
-| Dag | Taak | Output | Lines Est. |
-|-----|------|--------|------------|
-| 1 | Stack Agent Factory | Template instantiation system | 500 |
-| 2 | Python Stack Agents | BackendDev_py, CodeRev_py, SecAudit_py | 600 |
-| 3 | JavaScript Stack Agents | BackendDev_js, FrontendDev_js, CodeRev_js | 600 |
-| 4 | Stack Detection | Auto-detect project tech stack | 300 |
-| 5 | Project Registration | Onboarding flow with stack agents | 400 |
-
-**Stack Agent Template:**
-```python
-class StackAgentFactory:
-    STACK_CONFIGS = {
-        "python": {
-            "backend": {
-                "frameworks": ["FastAPI", "Django", "Flask"],
-                "tools": ["uv", "black", "isort", "mypy", "pytest"],
-                "standards": [".standards/python/"],
-                "model_preference": "sonnet"
-            },
-            "reviewer": {
-                "linters": ["ruff", "pylint", "bandit"],
-                "focus": ["PEP compliance", "Type hints", "SOLID"],
-                "model_preference": "opus"
-            },
-            "security": {
-                "tools": ["bandit", "safety", "pip-audit"],
-                "focus": ["OWASP Python", "Dependencies"],
-                "model_preference": "opus"
-            }
-        },
-        "javascript": { ... },
-        "go": { ... },
-        "rust": { ... }
-    }
-```
+1. **Small, Specialized Analyzers** - COBOL items (B2, B3, B4) blijven apart: kwaliteit boven snelheid
+2. **LLM Agent Collaboration** - Agents werken autonoom samen via B12 framework
+3. **Human-in-Loop** - Alleen voor review en escalatie, niet voor standaard werk
+4. **No Marketplace** - Templates lokaal, geen externe marketplace
+5. **Multi-format Export** - CSV, Excel, ODS, OpenProject, LibrePlan, MS Project
 
 ---
 
-### Week 57: PromptEngineer & Meta-Prompting
+## Documentation Links
 
-**Focus:** Continuous agent improvement
-
-| Dag | Taak | Output | Lines Est. |
-|-----|------|--------|------------|
-| 1 | PromptEngineer Agent | Core meta-prompting service | 600 |
-| 2 | Prompt Analysis | Performance-based prompt analysis | 400 |
-| 3 | Prompt A/B Testing | Experiment framework for prompts | 450 |
-| 4 | Meta-Prompting Pipeline | Real-time prompt enhancement | 400 |
-| 5 | Integration Testing | Full flow tests | 350 |
-
-**Meta-Prompting Flow:**
-```
-Task Arrival
-    │
-    ▼
-PromptEngineer Intercept
-    ├── Fetch base agent prompt
-    ├── Fetch relevant .standards/
-    ├── Fetch recent performance patterns
-    └── Generate enhanced prompt
-    │
-    ▼
-Enhanced Prompt
-    ├── Original agent prompt
-    ├── Context injection (project, stack)
-    ├── Standards injection
-    └── Performance tuning
-    │
-    ▼
-Execute with Enhanced Prompt
-    │
-    ▼
-Feedback Loop (outcome → future enhancements)
-```
+| Document | Description |
+|----------|-------------|
+| [phases-current.md](docs/roadmap/phases-current.md) | Week 144 status |
+| [phases-planned.md](docs/roadmap/phases-planned.md) | Fase 22-29 details |
+| [phases-completed.md](docs/roadmap/phases-completed.md) | Fase 1-21 archive |
+| [gap-analysis-complete-roadmap.md](docs/roadmap/gap-analysis-complete-roadmap.md) | Full 75-item specs |
 
 ---
 
-### Week 58: Polish & Production Ready
+## Milestones
 
-**Focus:** Cost tracking, optimization, documentation
-
-| Dag | Taak | Output | Lines Est. |
-|-----|------|--------|------------|
-| 1 | Cost Tracking Dashboard | Budget management UI | 500 |
-| 2 | Performance Optimization | Token efficiency, caching | 400 |
-| 3 | Documentation Update | ARCHITECTURE, AGENTS, README | 300 |
-| 4 | Integration Testing | Full platform E2E | 400 |
-| 5 | Go-Live Prep | Production checklist | 200 |
-
-**Cost Tracking Features:**
-- Daily/monthly spend tracking
-- Per-agent cost breakdown
-- Budget alerts (80% warning)
-- Cost-aware model fallback
-- Usage forecasting
+| Milestone | Week | Deliverable |
+|-----------|------|-------------|
+| **Stability Framework Complete** | 146 | All 8 detection categories |
+| **FP Methodology Fixed** | 147 | NESMA/IFPUG compliant |
+| **PIV Loop Active** | 148 | Quality gates operational |
+| **GAP Phase 1 Start** | 151 | Quick wins implementation |
+| **COBOL Support** | 163 | B1 Analyzer complete |
+| **LLM Collaboration** | 184 | B12 Framework active |
+| **Full Platform** | 232 | All 75 items complete |
 
 ---
 
-## Multi-Model Routing Strategy
-
-### Provider Registry (Week 54 - IMPLEMENTED)
-
-| Provider | Models | Tier | Cost | Use Case |
-|----------|--------|------|------|----------|
-| **Ollama** | qwen2.5-coder, deepseek-r1, codellama, mistral | Free | $0 | Simple tasks, privacy, offline |
-| **Codex CLI** | gpt-5.1-codex-max, gpt-5-codex, o3 | Deep | ~$15-60/M | Complex analysis, architecture |
-| **Claude CLI** | Haiku, Sonnet, Opus | Varied | $1-75/M | Balanced tasks (planned) |
-
-### Model Selection Matrix
-
-| Task Type | Complexity | Provider | Model | Rationale |
-|-----------|------------|----------|-------|-----------|
-| Simple generation | Low | Ollama | qwen2.5-coder | Free, fast, local |
-| Quick fixes | Low | Ollama | qwen2.5-coder | Free, fast |
-| Documentation | Low | Ollama | mistral | Good at prose |
-| Debugging | Medium | Ollama | codellama | Specialized |
-| Code review | Medium | **Codex** | gpt-5.1-codex-max | Deep analysis |
-| Refactoring | Medium | **Codex** | gpt-5.1-codex-max | Structural understanding |
-| Architecture | High | **Codex** | gpt-5.1-codex-max | Multi-file reasoning |
-| Security audit | High | **Codex** | gpt-5.1-codex-max | Critical analysis |
-| Complex analysis | High | **Codex** | gpt-5.1-codex-max | Deep investigation |
-
-### Cost Estimates (Updated with Codex)
-
-| Scenario | Ollama | Codex | Claude | Monthly Cost |
-|----------|--------|-------|--------|--------------|
-| Conservative | 85% | 10% | 5% | ~$30 |
-| Balanced | 60% | 25% | 15% | ~$75 |
-| Premium | 40% | 35% | 25% | ~$200 |
-
-**Recommendation:** Use Ollama for routine tasks, Codex for complex analysis, Claude for specific needs.
-
----
-
-## Weekly Progress History
-
-### Week 53 COMPLETE (25-29 Nov 2025)
-
-**Completed:**
-- Evolution Dashboard (real-time metrics)
-- Automatic Experiment Scheduler
-- Gradual Rollout System
-- Performance Trend Analysis
-- ProjectProfile System
-- Quinn/Felix Spec Review
-
-**Output:** 6,060+ lines, 130+ tests, 31 endpoints
-
-### Week 52 COMPLETE
-
-**Completed:** LLM Council multi-model decision making
-**Output:** 3,300+ lines, 47 tests, 8 endpoints, 4 tables
-
-### Week 51 COMPLETE
-
-**Completed:** A/B Testing Framework & Evolution Metrics
-**Output:** 2,150+ lines, 53 tests, 9 endpoints, 3 tables
-
-### Week 50 COMPLETE
-
-**Completed:** Quality Gate Integration & Agent Validation Loop
-**Output:** 55 tests, 7 endpoints
-
-### Week 49 COMPLETE
-
-**Completed:** Quality Gates Configuration UI
-**Output:** 700+ lines, 12 dashboards, 144 endpoints
-
-### Week 48 COMPLETE
-
-**Completed:** Bug fixes, E2E testing, documentation, Fase 5 design
-
-### Week 47 COMPLETE
-
-**Completed:** Hub Portal, navigation, backend verification
-
----
-
-## Completed Phases
-
-| Fase | Weeks | Status | Key Deliverables |
-|------|-------|--------|------------------|
-| Fase 1 | 1-4 | DONE | FastAPI, PostgreSQL, Frontend |
-| Fase 2 | 5-8 | DONE | 10 Agents, 9 Workflows, Quality Gates |
-| Fase 3 | 9-12 | DONE | Felix AI, Estimation, ML Pipeline |
-| Fase 4 | 13-16 | DONE | UI Dashboards, Hub Portal (280% delivered) |
-
-**Total Completed:** 16 weeks, ~35,000 lines of code
-
----
-
-## Future Phases
-
-| Fase | Weeks | Focus | Status |
-|------|-------|-------|--------|
-| Fase 5 | 17-20 | Quality & Testing | Planned |
-| Fase 6 | 21-24 | Advanced Features | Planned |
-| Fase 7 | 25-28 | Migration Pilot (3 repos) | Planned |
-| Fase 8 | 29-36 | Full Migration (29 repos) | Planned |
-| Fase 9 | 37-40 | Optimization & Learning | Planned |
-
----
-
-## Milestones (Updated)
-
-| Date | Milestone | Status |
-|------|-----------|--------|
-| 2025-11-19 | Fase 3 Complete | DONE |
-| 2025-11-24 | Self-Questioning Complete | DONE |
-| 2025-11-26 | Multi-Stack Platform Review | DONE |
-| 2025-12-06 | Provider Registry Live | PLANNED |
-| 2025-12-13 | Observability Dashboard Live | PLANNED |
-| 2025-12-20 | Stack Templates Live | PLANNED |
-| 2025-12-27 | PromptEngineer Live | PLANNED |
-| 2026-01-03 | Multi-Stack Platform v1.0 | PLANNED |
-
----
-
-## Success Metrics (Updated)
-
-| Metric | Target | Current | Week 58 Target |
-|--------|--------|---------|----------------|
-| Agent Success Rate | +15% | Baseline | Measurable via Observability |
-| Estimation Accuracy | +/-15% | +/-20% | +/-15% |
-| Auto-classification | >95% | 95% | 95% |
-| Quality Gate Pass | >98% | 95% | 98% |
-| Supported Stacks | 4 | 1 | 4 |
-| Cost per Task | <$0.10 | N/A | Tracked |
-
----
-
-## Risk Summary (Updated)
-
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Claude API Costs | MEDIUM | Budget controls, Ollama fallback |
-| Stack Template Complexity | MEDIUM | Start with 2 stacks, grow organically |
-| Observability Overhead | LOW | Configurable log levels |
-| Meta-prompting Latency | LOW | Cache enhanced prompts |
-| Multi-project Complexity | MEDIUM | Thorough testing, gradual rollout |
-
----
-
-## Resource Planning (Updated)
-
-### Team
-- 1 Developer (full-time)
-- AI Agents (10 core + stack templates)
-
-### Infrastructure
-- PostgreSQL (Docker)
-- ChromaDB (Docker)
-- Ollama (6 models, ~25GB)
-- Claude CLI (subscription-based)
-
-### Costs (Updated)
-- Infrastructure: ~$50/month
-- Claude API (Conservative): ~$20/month
-- Claude API (Balanced): ~$50/month
-- Total Project: ~$1,200-2,400 over 40 weeks
-
----
-
-## Quick Links
-
-### Documentation
-- [PROJECT_STATUS_SUMMARY.md](PROJECT_STATUS_SUMMARY.md) - Current status
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Technical deep dive
-- [AGENTS.md](AGENTS.md) - Agent system reference
-
-### Reviews
-- [2025-11-26 Multi-Stack Platform Review](docs/reviews/2025-11-26_MULTI_STACK_PLATFORM_REVIEW.md)
-
-### Phase Details
-- [docs/roadmap/completed/](docs/roadmap/completed/) - Completed phases
-- [docs/roadmap/active/](docs/roadmap/active/) - Active & planned phases
-- [docs/roadmap/parallel/](docs/roadmap/parallel/) - Parallel tracks
-
----
-
-**Last Updated:** 2025-11-26 (Week 54 Planning)
-**Next Review:** Weekly (Friday)
+*Generated: Week 144 (2026-01-08)*

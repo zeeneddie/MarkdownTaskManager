@@ -5,7 +5,7 @@ Tracks agent performance over time, aggregates metrics,
 and stores evolution milestones in ChromaDB.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Tuple
 from uuid import UUID
 import statistics

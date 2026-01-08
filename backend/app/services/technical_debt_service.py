@@ -15,7 +15,7 @@ import subprocess
 import json
 import os
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -29,6 +29,7 @@ from app.models.technical_debt import (
     DebtResolution, QualityGateResult,
     DebtType, DebtSeverity, DebtStatus, DetectionSource
 )
+from app.scanners import get_scanner_registry, ScanFinding, Severity, FindingType
 
 
 # ============================================================================
@@ -251,21 +252,38 @@ class TechnicalDebtService:
     async def scan_codebase(
         self,
         scanners: Optional[List[str]] = None,
-        project_id: Optional[int] = None
+        project_id: Optional[int] = None,
+        project_path: Optional[str] = None,
+        tech_stack: Optional[List[str]] = None
     ) -> TechnicalDebtSnapshot:
         """
         Run all scanners and create a new snapshot.
 
         Args:
-            scanners: List of scanners to run (default: all)
+            scanners: List of scanners to run (default: auto-detect based on stack)
             project_id: Optional project ID
+            project_path: Path to project to scan (default: current project)
+            tech_stack: Tech stack for scanner selection (auto-detected if not provided)
 
         Returns:
             TechnicalDebtSnapshot with all detected items
         """
         start_time = datetime.utcnow()
 
-        # Default scanners
+        # Use specified path or default
+        scan_path = Path(project_path) if project_path else self.project_path
+
+        # Use scanner registry for stack-aware scanning
+        if tech_stack or project_path:
+            return await self._scan_with_registry(
+                scan_path=scan_path,
+                tech_stack=tech_stack,
+                scanner_names=scanners,
+                project_id=project_id,
+                start_time=start_time
+            )
+
+        # Legacy scanning (fallback for local project)
         if scanners is None:
             scanners = ["ruff", "bandit", "coverage"]
 
@@ -303,6 +321,152 @@ class TechnicalDebtService:
         )
 
         return snapshot
+
+    async def _scan_with_registry(
+        self,
+        scan_path: Path,
+        tech_stack: Optional[List[str]],
+        scanner_names: Optional[List[str]],
+        project_id: Optional[int],
+        start_time: datetime
+    ) -> TechnicalDebtSnapshot:
+        """
+        Run scans using the scanner registry for stack-aware scanning.
+        """
+        registry = get_scanner_registry()
+
+        # Auto-detect stack if not provided
+        if not tech_stack:
+            tech_stack = self._detect_tech_stack(scan_path)
+
+        # Run scans via registry
+        registry_results = await registry.run_scan(
+            project_path=str(scan_path),
+            stacks=tech_stack,
+            scanner_names=scanner_names
+        )
+
+        # Convert registry results to debt items
+        all_items: List[Dict[str, Any]] = []
+        scan_results: Dict[str, ScanResult] = {}
+
+        for scanner_name, result in registry_results.items():
+            items = []
+            if result.success and result.findings:
+                for finding in result.findings:
+                    item = self._convert_finding_to_debt_item(finding)
+                    items.append(item)
+                    all_items.append(item)
+
+            # Create ScanResult in legacy format
+            source = self._get_detection_source(scanner_name)
+            scan_results[scanner_name] = ScanResult(
+                source=source,
+                items=items,
+                duration_seconds=(result.completed_at - result.started_at).total_seconds()
+                    if result.completed_at and result.started_at else 0,
+                success=result.success,
+                error=result.error_message,
+                version=result.scanner_version
+            )
+
+            if result.scanner_version:
+                self._scanner_versions[scanner_name] = result.scanner_version
+
+        # Calculate duration
+        duration = (datetime.utcnow() - start_time).total_seconds()
+
+        # Create snapshot
+        snapshot = await self._create_snapshot(
+            items=all_items,
+            scan_results=scan_results,
+            duration=duration,
+            project_id=project_id
+        )
+
+        return snapshot
+
+    def _detect_tech_stack(self, path: Path) -> List[str]:
+        """Auto-detect tech stack from project files"""
+        stacks = []
+
+        # Python
+        if list(path.glob("*.py")) or list(path.glob("**/*.py")):
+            stacks.append("python")
+
+        # .NET
+        if list(path.glob("*.csproj")) or list(path.glob("**/*.csproj")):
+            stacks.append("dotnet")
+            stacks.append("csharp")
+        if list(path.glob("*.vbproj")) or list(path.glob("**/*.vbproj")):
+            stacks.append("vbnet")
+        if list(path.glob("**/*.aspx")) or list(path.glob("**/*.asp")):
+            stacks.append("aspnet")
+
+        # JavaScript/TypeScript
+        if (path / "package.json").exists():
+            stacks.append("node")
+        if list(path.glob("**/*.ts")) or list(path.glob("**/*.tsx")):
+            stacks.append("typescript")
+        if list(path.glob("**/*.js")) or list(path.glob("**/*.jsx")):
+            stacks.append("javascript")
+
+        return list(set(stacks)) if stacks else ["generic"]
+
+    def _get_detection_source(self, scanner_name: str) -> DetectionSource:
+        """Map scanner name to DetectionSource enum"""
+        mapping = {
+            "ruff": DetectionSource.SCANNER_RUFF,
+            "bandit": DetectionSource.SCANNER_BANDIT,
+            "eslint": DetectionSource.SCANNER_ESLINT,
+            "radon": DetectionSource.SCANNER_RUFF,  # Complexity
+            "dotnet-volume": DetectionSource.MANUAL,
+            "dotnet-duplication": DetectionSource.MANUAL,
+        }
+        return mapping.get(scanner_name, DetectionSource.MANUAL)
+
+    def _convert_finding_to_debt_item(self, finding: ScanFinding) -> Dict[str, Any]:
+        """Convert a ScanFinding to the debt item format"""
+        # Map severity
+        severity_map = {
+            Severity.CRITICAL: DebtSeverity.CRITICAL,
+            Severity.HIGH: DebtSeverity.HIGH,
+            Severity.MEDIUM: DebtSeverity.MEDIUM,
+            Severity.LOW: DebtSeverity.LOW,
+            Severity.INFO: DebtSeverity.LOW,
+        }
+        severity = severity_map.get(finding.severity, DebtSeverity.MEDIUM)
+
+        # Map finding type to debt type
+        type_map = {
+            FindingType.CODE_SMELL: DebtType.CODE_SMELL,
+            FindingType.SECURITY: DebtType.SECURITY,
+            FindingType.PERFORMANCE: DebtType.PERFORMANCE,
+            FindingType.COMPLEXITY: DebtType.CODE_SMELL,
+            FindingType.DUPLICATION: DebtType.DUPLICATION,
+            FindingType.DEPENDENCY: DebtType.DEPENDENCY,
+            FindingType.TEST_GAP: DebtType.TEST_GAP,
+            FindingType.DOCUMENTATION: DebtType.DOCUMENTATION,
+        }
+        debt_type = type_map.get(finding.finding_type, DebtType.CODE_SMELL)
+
+        # Get detection source
+        detection_source = self._get_detection_source(finding.scanner)
+
+        return {
+            "title": f"{finding.rule_id}: {finding.message[:100] if finding.message else 'Issue found'}",
+            "description": finding.message,
+            "debt_type": debt_type.value,  # Use .value for asyncpg compatibility
+            "severity": severity.value,    # Use .value for asyncpg compatibility
+            "file_path": finding.file_path,
+            "line_start": finding.line_number,
+            "line_end": finding.end_line,
+            "detected_by": detection_source.value if hasattr(detection_source, 'value') else detection_source,
+            "detection_rule": finding.rule_id,
+            "detection_message": finding.message,
+            "principal": PRINCIPAL_ESTIMATES.get(debt_type, 0.5),
+            "interest_rate": INTEREST_RATES.get(severity, 0.1),
+        }
 
     async def _run_ruff(self) -> ScanResult:
         """Run ruff linter on Python files"""
@@ -683,15 +847,38 @@ class TechnicalDebtService:
 
         # Create debt items
         for item_data in items:
+            # Helper function to get enum value as string (for asyncpg compatibility)
+            def get_enum_value(value, enum_class, default_value: str) -> str:
+                """Convert any enum representation to its string value"""
+                if isinstance(value, enum_class):
+                    return value.value
+                if isinstance(value, str):
+                    # Already a string - normalize to lowercase
+                    val_lower = value.lower()
+                    # Check if it's a valid value
+                    for member in enum_class:
+                        if member.value == val_lower:
+                            return member.value
+                        if member.name.lower() == val_lower or member.name == value:
+                            return member.value
+                    # If it looks like a valid value, use it
+                    if val_lower in [m.value for m in enum_class]:
+                        return val_lower
+                return default_value
+
+            debt_type_val = get_enum_value(item_data["debt_type"], DebtType, "code_smell")
+            severity_val = get_enum_value(item_data["severity"], DebtSeverity, "medium")
+            detected_by_val = get_enum_value(item_data.get("detected_by", "manual"), DetectionSource, "manual")
+
             debt_item = TechnicalDebtItem(
                 title=item_data["title"],
                 description=item_data.get("description"),
-                debt_type=item_data["debt_type"],
-                severity=item_data["severity"],
+                debt_type=debt_type_val,
+                severity=severity_val,
                 file_path=item_data.get("file_path"),
                 line_start=item_data.get("line_start"),
                 line_end=item_data.get("line_end"),
-                detected_by=item_data["detected_by"],
+                detected_by=detected_by_val,
                 detection_rule=item_data.get("detection_rule"),
                 detection_message=item_data.get("detection_message"),
                 principal=item_data.get("principal", 0.5),

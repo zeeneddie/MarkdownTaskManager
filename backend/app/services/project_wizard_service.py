@@ -87,7 +87,7 @@ class ProjectConfig:
     sprint_duration_weeks: int = 2
     working_hours_per_day: int = 8
     workflow: Optional[WorkflowConfig] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
 
     def to_dict(self) -> Dict[str, Any]:
         return {

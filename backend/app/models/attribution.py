@@ -26,7 +26,7 @@ class TaskOutcome(Base):
     quality_gate_results = Column(Text)
     validation_history = Column(Text)
     duration_ms = Column(Integer)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.utcnow())
 
 
 class Attribution(Base):
@@ -46,8 +46,8 @@ class Attribution(Base):
     validation_history = Column(Text)
     confidence = Column(Float, nullable=False)
     confidence_level = Column(String(20))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    analyzed_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    analyzed_at = Column(DateTime, default=lambda: datetime.utcnow())
 
 
 class AttributionFeedback(Base):
@@ -63,7 +63,7 @@ class AttributionFeedback(Base):
     recommended_adjustments = Column(Text)
     delivered = Column(Boolean, default=False)
     delivered_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.utcnow())
 
 
 class QualityGateStats(Base):
@@ -80,4 +80,4 @@ class QualityGateStats(Base):
     false_positives = Column(Integer, default=0)
     false_negatives = Column(Integer, default=0)
     effectiveness = Column(Float, default=0.0)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.utcnow())

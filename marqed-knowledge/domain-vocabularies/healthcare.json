@@ -1,0 +1,97 @@
+{
+  "domain": "healthcare",
+  "version": "1.0.0",
+  "compliance_standards": ["NEN7510", "HIPAA", "GDPR"],
+  "terms": {
+    "patient": {
+      "definition": "Individual receiving medical care",
+      "synonyms": ["client", "service_user", "resident"],
+      "code_patterns": ["Patient", "patient_id", "PatientRecord"],
+      "pii": true
+    },
+    "diagnosis": {
+      "definition": "Medical condition identification",
+      "synonyms": ["condition", "disorder", "assessment"],
+      "code_patterns": ["Diagnosis", "diagnosis_code", "ICD10"],
+      "pii": true
+    },
+    "prescription": {
+      "definition": "Medication order by healthcare provider",
+      "synonyms": ["medication_order", "rx", "drug_order"],
+      "code_patterns": ["Prescription", "prescribe", "medication"],
+      "pii": true
+    },
+    "appointment": {
+      "definition": "Scheduled healthcare encounter",
+      "synonyms": ["visit", "consultation", "encounter", "booking"],
+      "code_patterns": ["Appointment", "schedule", "booking"],
+      "pii": true
+    },
+    "healthcare_provider": {
+      "definition": "Person providing medical services",
+      "synonyms": ["doctor", "physician", "nurse", "clinician", "practitioner"],
+      "code_patterns": ["Provider", "Clinician", "Doctor", "HCP"],
+      "pii": false
+    },
+    "medical_record": {
+      "definition": "Patient's health information collection",
+      "synonyms": ["EMR", "EHR", "health_record", "chart"],
+      "code_patterns": ["MedicalRecord", "PatientChart", "EMR"],
+      "pii": true
+    },
+    "insurance_claim": {
+      "definition": "Request for healthcare payment",
+      "synonyms": ["claim", "reimbursement", "billing"],
+      "code_patterns": ["Claim", "Insurance", "Billing"],
+      "pii": true
+    },
+    "consent": {
+      "definition": "Patient permission for treatment/data",
+      "synonyms": ["authorization", "permission", "agreement"],
+      "code_patterns": ["Consent", "Authorization", "Permission"],
+      "pii": true
+    },
+    "treatment": {
+      "definition": "Medical intervention or therapy",
+      "synonyms": ["therapy", "procedure", "intervention", "care_plan"],
+      "code_patterns": ["Treatment", "Therapy", "CarePlan"],
+      "pii": true
+    },
+    "vital_signs": {
+      "definition": "Basic health measurements",
+      "synonyms": ["vitals", "observations", "measurements"],
+      "code_patterns": ["Vitals", "BloodPressure", "Temperature", "HeartRate"],
+      "pii": true
+    }
+  },
+  "abbreviations": {
+    "EMR": "Electronic Medical Record",
+    "EHR": "Electronic Health Record",
+    "HCP": "Healthcare Provider",
+    "ICD": "International Classification of Diseases",
+    "CPT": "Current Procedural Terminology",
+    "PHI": "Protected Health Information",
+    "BSN": "Burger Service Nummer (Dutch SSN)",
+    "AGB": "Dutch Healthcare Provider ID"
+  },
+  "compliance_patterns": {
+    "NEN7510": {
+      "requirements": [
+        "Patient data encrypted at rest",
+        "Audit logging for all PHI access",
+        "Role-based access control",
+        "Two-factor authentication for clinical staff"
+      ],
+      "code_indicators": ["encryption", "audit_log", "rbac", "2fa", "mfa"]
+    },
+    "HIPAA": {
+      "requirements": [
+        "Minimum necessary access",
+        "Business associate agreements",
+        "Breach notification procedures",
+        "Patient access to records"
+      ],
+      "code_indicators": ["access_control", "phi_access", "authorization"]
+    }
+  }
+}

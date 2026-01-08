@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GhostCrew Security - Week 80-82</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .severity-critical { background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%); }
+        .severity-high { background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); }
+        .severity-medium { background: linear-gradient(135deg, #ca8a04 0%, #a16207 100%); }
+        .severity-low { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); }
+        .severity-info { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .ghost-gradient {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+        }
+        .pulse-scan { animation: pulse-purple 2s infinite; }
+        @keyframes pulse-purple {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
+            50% { box-shadow: 0 0 0 15px rgba(139, 92, 246, 0); }
+        }
+        .agent-card { transition: all 0.3s ease; }
+        .agent-card:hover { transform: scale(1.02); }
+        .pattern-card { transition: all 0.2s ease; }
+        .pattern-card:hover { border-color: rgba(139, 92, 246, 0.5); }
+        .tab-active { border-bottom: 2px solid #8b5cf6; color: #fff; }
+        .scan-progress {
+            background: linear-gradient(90deg, #6366f1 var(--progress), transparent var(--progress));
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900 min-h-screen text-white">
+    <!-- Header -->
+    <header class="bg-slate-900/80 backdrop-blur-lg border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <svg class="w-8 h-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                    </svg>
+                    <h1 class="text-2xl font-bold">Ghost<span class="text-purple-500">Crew</span></h1>
+                </div>
+                <span class="text-sm text-slate-400">Week 80-82 - Multi-Agent Security</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="showAssistModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Assist
+                </button>
+                <button onclick="startQuickScan()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium transition">
+                    Quick Scan
+                </button>
+                <button onclick="startFullScan()" class="px-4 py-2 ghost-gradient hover:opacity-90 rounded-lg text-sm font-medium transition">
+                    Full Crew Scan
+                </button>
+                <a href="index.html" class="text-slate-400 hover:text-white ml-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Active Scan Banner -->
+        <div id="active-scan-banner" class="hidden mb-6 glass-card rounded-xl p-4 border border-purple-500/30">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-3 h-3 bg-purple-500 rounded-full pulse-scan"></div>
+                    <span class="font-medium">Scan in Progress</span>
+                    <span id="scan-type-badge" class="text-xs bg-purple-500/20 px-2 py-1 rounded">full</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-sm text-slate-400">
+                        <span id="scan-files-count">0</span> files scanned
+                    </div>
+                    <div class="w-48 h-2 bg-slate-700 rounded-full overflow-hidden">
+                        <div id="scan-progress-bar" class="h-full ghost-gradient transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <button onclick="cancelScan()" class="text-slate-400 hover:text-red-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+            <div class="glass-card rounded-xl p-5">
+                <div class="text-slate-400 text-sm mb-1">Total Scans</div>
+                <div id="stat-total-scans" class="text-3xl font-bold text-white">-</div>
+                <div class="text-xs text-slate-500 mt-1">Last 30 days</div>
+            </div>
+            <div class="glass-card rounded-xl p-5">
+                <div class="text-slate-400 text-sm mb-1">Findings</div>
+                <div id="stat-findings" class="text-3xl font-bold text-red-400">-</div>
+                <div class="text-xs text-slate-500 mt-1">Active issues</div>
+            </div>
+            <div class="glass-card rounded-xl p-5">
+                <div class="text-slate-400 text-sm mb-1">Critical</div>
+                <div id="stat-critical" class="text-3xl font-bold text-red-600">-</div>
+                <div class="text-xs text-slate-500 mt-1">Needs attention</div>
+            </div>
+            <div class="glass-card rounded-xl p-5">
+                <div class="text-slate-400 text-sm mb-1">Patterns Learned</div>
+                <div id="stat-patterns" class="text-3xl font-bold text-purple-400">-</div>
+                <div class="text-xs text-slate-500 mt-1">Shadow Graph</div>
+            </div>
+            <div class="glass-card rounded-xl p-5">
+                <div class="text-slate-400 text-sm mb-1">FP Rate</div>
+                <div id="stat-fp-rate" class="text-3xl font-bold text-green-400">-</div>
+                <div class="text-xs text-slate-500 mt-1">False positives</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-1 mb-6 border-b border-slate-700">
+            <button onclick="switchTab('overview')" id="tab-overview" class="px-4 py-3 text-sm font-medium text-slate-400 hover:text-white tab-active">
+                Overview
+            </button>
+            <button onclick="switchTab('findings')" id="tab-findings" class="px-4 py-3 text-sm font-medium text-slate-400 hover:text-white">
+                Findings
+            </button>
+            <button onclick="switchTab('patterns')" id="tab-patterns" class="px-4 py-3 text-sm font-medium text-slate-400 hover:text-white">
+                Shadow Graph
+            </button>
+            <button onclick="switchTab('knowledge')" id="tab-knowledge" class="px-4 py-3 text-sm font-medium text-slate-400 hover:text-white">
+                Knowledge Base
+            </button>
+            <button onclick="switchTab('agents')" id="tab-agents" class="px-4 py-3 text-sm font-medium text-slate-400 hover:text-white">
+                Crew Agents
+            </button>
+        </div>
+
+        <!-- Overview Tab -->
+        <div id="panel-overview" class="space-y-6">
+            <!-- Charts Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Severity Distribution -->
+                <div class="glass-card rounded-xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">Severity Distribution</h3>
+                    <canvas id="severityChart" height="200"></canvas>
+                </div>
+
+                <!-- Vulnerability Types -->
+                <div class="glass-card rounded-xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">Top Vulnerability Types</h3>
+                    <canvas id="vulnTypesChart" height="200"></canvas>
+                </div>
+
+                <!-- Scan Trend -->
+                <div class="glass-card rounded-xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">Scan Trend (7 days)</h3>
+                    <canvas id="trendChart" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Scans -->
+            <div class="glass-card rounded-xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">Recent Scans</h3>
+                    <button onclick="refreshScans()" class="text-sm text-purple-400 hover:text-purple-300">Refresh</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="text-left text-slate-400 text-sm border-b border-slate-700">
+                            <tr>
+                                <th class="pb-3">Scan ID</th>
+                                <th class="pb-3">Type</th>
+                                <th class="pb-3">Status</th>
+                                <th class="pb-3">Findings</th>
+                                <th class="pb-3">Duration</th>
+                                <th class="pb-3">Date</th>
+                                <th class="pb-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="scans-table" class="text-sm">
+                            <tr><td colspan="7" class="py-8 text-center text-slate-500">Loading scans...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Top Patterns & OWASP Coverage -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Top Learned Patterns -->
+                <div class="glass-card rounded-xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">Top Learned Patterns</h3>
+                    <div id="top-patterns" class="space-y-3">
+                        <div class="text-slate-500 text-sm">Loading patterns...</div>
+                    </div>
+                </div>
+
+                <!-- OWASP Coverage -->
+                <div class="glass-card rounded-xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">OWASP Top 10 Coverage</h3>
+                    <div id="owasp-coverage" class="grid grid-cols-2 gap-3">
+                        <div class="text-slate-500 text-sm">Loading coverage...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Findings Tab -->
+        <div id="panel-findings" class="hidden space-y-6">
+            <!-- Filters -->
+            <div class="glass-card rounded-xl p-4 flex flex-wrap gap-4 items-center">
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">Severity</label>
+                    <select id="filter-severity" onchange="filterFindings()" class="bg-slate-700 border-slate-600 rounded-lg px-3 py-2 text-sm">
+                        <option value="">All</option>
+                        <option value="critical">Critical</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">OWASP Category</label>
+                    <select id="filter-owasp" onchange="filterFindings()" class="bg-slate-700 border-slate-600 rounded-lg px-3 py-2 text-sm">
+                        <option value="">All Categories</option>
+                        <option value="A01">A01: Broken Access Control</option>
+                        <option value="A02">A02: Cryptographic Failures</option>
+                        <option value="A03">A03: Injection</option>
+                        <option value="A04">A04: Insecure Design</option>
+                        <option value="A05">A05: Security Misconfiguration</option>
+                        <option value="A06">A06: Vulnerable Components</option>
+                        <option value="A07">A07: Auth Failures</option>
+                        <option value="A08">A08: Integrity Failures</option>
+                        <option value="A09">A09: Logging Failures</option>
+                        <option value="A10">A10: SSRF</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-400 block mb-1">Status</label>
+                    <select id="filter-status" onchange="filterFindings()" class="bg-slate-700 border-slate-600 rounded-lg px-3 py-2 text-sm">
+                        <option value="">All</option>
+                        <option value="open">Open</option>
+                        <option value="false_positive">False Positive</option>
+                        <option value="fixed">Fixed</option>
+                    </select>
+                </div>
+                <div class="flex-1"></div>
+                <button onclick="exportFindings()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm">
+                    Export CSV
+                </button>
+            </div>
+
+            <!-- Findings Table -->
+            <div class="glass-card rounded-xl p-6">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="text-left text-slate-400 text-sm border-b border-slate-700">
+                            <tr>
+                                <th class="pb-3">Severity</th>
+                                <th class="pb-3">Vulnerability</th>
+                                <th class="pb-3">OWASP</th>
+                                <th class="pb-3">CWE</th>
+                                <th class="pb-3">File</th>
+                                <th class="pb-3">Line</th>
+                                <th class="pb-3">Confidence</th>
+                                <th class="pb-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="findings-table" class="text-sm">
+                            <tr><td colspan="8" class="py-8 text-center text-slate-500">Loading findings...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-4 flex items-center justify-between">
+                    <div id="findings-count" class="text-sm text-slate-400">0 findings</div>
+                    <div class="flex gap-2">
+                        <button onclick="prevPage()" class="px-3 py-1 bg-slate-700 rounded text-sm">Previous</button>
+                        <span id="page-info" class="px-3 py-1 text-sm">Page 1</span>
+                        <button onclick="nextPage()" class="px-3 py-1 bg-slate-700 rounded text-sm">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shadow Graph Tab -->
+        <div id="panel-patterns" class="hidden space-y-6">
+            <!-- Pattern Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="glass-card rounded-xl p-5">
+                    <div class="text-slate-400 text-sm mb-1">Total Patterns</div>
+                    <div id="pattern-stat-total" class="text-2xl font-bold">-</div>
+                </div>
+                <div class="glass-card rounded-xl p-5">
+                    <div class="text-slate-400 text-sm mb-1">Avg Accuracy</div>
+                    <div id="pattern-stat-accuracy" class="text-2xl font-bold text-green-400">-</div>
+                </div>
+                <div class="glass-card rounded-xl p-5">
+                    <div class="text-slate-400 text-sm mb-1">True Positives</div>
+                    <div id="pattern-stat-tp" class="text-2xl font-bold text-blue-400">-</div>
+                </div>
+                <div class="glass-card rounded-xl p-5">
+                    <div class="text-slate-400 text-sm mb-1">False Positives</div>
+                    <div id="pattern-stat-fp" class="text-2xl font-bold text-yellow-400">-</div>
+                </div>
+            </div>
+
+            <!-- Pattern List -->
+            <div class="glass-card rounded-xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">Learned Vulnerability Patterns</h3>
+                    <div class="flex gap-2">
+                        <select id="pattern-language" onchange="filterPatterns()" class="bg-slate-700 border-slate-600 rounded-lg px-3 py-2 text-sm">
+                            <option value="">All Languages</option>
+                            <option value="python">Python</option>
+                            <option value="javascript">JavaScript</option>
+                            <option value="typescript">TypeScript</option>
+                            <option value="java">Java</option>
+                            <option value="go">Go</option>
+                        </select>
+                        <select id="pattern-min-accuracy" onchange="filterPatterns()" class="bg-slate-700 border-slate-600 rounded-lg px-3 py-2 text-sm">
+                            <option value="0">All Accuracy</option>
+                            <option value="0.5">50%+</option>
+                            <option value="0.7">70%+</option>
+                            <option value="0.9">90%+</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="patterns-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="text-slate-500 text-sm">Loading patterns...</div>
+                </div>
+            </div>
+
+            <!-- Learning Stats Chart -->
+            <div class="glass-card rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4">Pattern Learning Over Time</h3>
+                <canvas id="learningChart" height="150"></canvas>
+            </div>
+        </div>
+
+        <!-- Knowledge Base Tab -->
+        <div id="panel-knowledge" class="hidden space-y-6">
+            <!-- Search -->
+            <div class="glass-card rounded-xl p-4">
+                <div class="flex gap-4">
+                    <input type="text" id="knowledge-search" placeholder="Search OWASP, CWE, or vulnerability..."
+                           class="flex-1 bg-slate-700 border-slate-600 rounded-lg px-4 py-2 text-sm">
+                    <button onclick="searchKnowledge()" class="px-6 py-2 ghost-gradient rounded-lg text-sm font-medium">
+                        Search
+                    </button>
+                </div>
+            </div>
+
+            <!-- OWASP Top 10 -->
+            <div class="glass-card rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4">OWASP Top 10 2021</h3>
+                <div id="owasp-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- OWASP items will be populated here -->
+                </div>
+            </div>
+
+            <!-- CWE Quick Reference -->
+            <div class="glass-card rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4">Common CWE References</h3>
+                <div id="cwe-list" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- CWE items will be populated here -->
+                </div>
+            </div>
+
+            <!-- Remediation Guide -->
+            <div class="glass-card rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4">Remediation Guidance</h3>
+                <div id="remediation-guide" class="text-slate-400 text-sm">
+                    Select a vulnerability type to see remediation guidance.
+                </div>
+            </div>
+        </div>
+
+        <!-- Agents Tab -->
+        <div id="panel-agents" class="hidden space-y-6">
+            <!-- Agent Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- SecurityAgent -->
+                <div class="agent-card glass-card rounded-xl p-6 border-2 border-transparent hover:border-purple-500/30">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-12 h-12 rounded-xl ghost-gradient flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">SecurityAgent</h4>
+                            <p class="text-xs text-slate-400">OWASP Top 10 Specialist</p>
+                        </div>
+                        <span id="security-agent-status" class="ml-auto px-2 py-1 rounded text-xs bg-green-500/20 text-green-400">Ready</span>
+                    </div>
+                    <p class="text-sm text-slate-400 mb-4">Scans for OWASP Top 10 vulnerabilities, CWE patterns, and common security issues.</p>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-slate-800/50 rounded p-2">
+                            <div class="text-slate-500">Scans Run</div>
+                            <div id="security-agent-scans" class="font-bold">-</div>
+                        </div>
+                        <div class="bg-slate-800/50 rounded p-2">
+                            <div class="text-slate-500">Findings</div>
+                            <div id="security-agent-findings" class="font-bold">-</div>
+                        </div>
+                    </div>
+                    <button onclick="runSecurityAgent()" class="mt-4 w-full py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm">
+                        Run Security Scan
+                    </button>
+                </div>
+
+                <!-- AuditAgent -->
+                <div class="agent-card glass-card rounded-xl p-6 border-2 border-transparent hover:border-blue-500/30">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">AuditAgent</h4>
+                            <p class="text-xs text-slate-400">Code Audit Specialist</p>
+                        </div>
+                        <span id="audit-agent-status" class="ml-auto px-2 py-1 rounded text-xs bg-green-500/20 text-green-400">Ready</span>
+                    </div>
+                    <p class="text-sm text-slate-400 mb-4">Performs deep code audits, checks authentication flows, and validates authorization logic.</p>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-slate-800/50 rounded p-2">
+                            <div class="text-slate-500">Audits Run</div>
+                            <div id="audit-agent-scans" class="font-bold">-</div>
+                        </div>
+                        <div class="bg-slate-800/50 rounded p-2">
+                            <div class="text-slate-500">Issues Found</div>
+                            <div id="audit-agent-findings" class="font-bold">-</div>
+                        </div>
+                    </div>
+                    <button onclick="runAuditAgent()" class="mt-4 w-full py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm">
+                        Run Code Audit
+                    </button>
+                </div>
+
+                <!-- ComplianceAgent -->
+                <div class="agent-card glass-card rounded-xl p-6 border-2 border-transparent hover:border-emerald-500/30">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-green-500 flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">ComplianceAgent</h4>
+                            <p class="text-xs text-slate-400">Compliance Specialist</p>
+                        </div>
+                        <span id="compliance-agent-status" class="ml-auto px-2 py-1 rounded text-xs bg-green-500/20 text-green-400">Ready</span>
+                    </div>
+                    <p class="text-sm text-slate-400 mb-4">Checks GDPR, SOC2, HIPAA compliance requirements and validates security controls.</p>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-slate-800/50 rounded p-2">
+                            <div class="text-slate-500">Checks Run</div>
+                            <div id="compliance-agent-scans" class="font-bold">-</div>
+                        </div>
+                        <div class="bg-slate-800/50 rounded p-2">
+                            <div class="text-slate-500">Violations</div>
+                            <div id="compliance-agent-findings" class="font-bold">-</div>
+                        </div>
+                    </div>
+                    <button onclick="runComplianceAgent()" class="mt-4 w-full py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm">
+                        Run Compliance Check
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Crew Runs -->
+            <div class="glass-card rounded-xl p-6">
+                <h3 class="text-lg font-semibold mb-4">Recent Crew Runs</h3>
+                <div id="crew-runs" class="space-y-3">
+                    <div class="text-slate-500 text-sm">Loading crew runs...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Assist Modal -->
+    <div id="assist-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="glass-card rounded-2xl w-full max-w-2xl mx-4 max-h-[80vh] overflow-hidden">
+            <div class="p-6 border-b border-slate-700 flex items-center justify-between">
+                <h3 class="text-lg font-semibold">Security Assistant</h3>
+                <button onclick="hideAssistModal()" class="text-slate-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto" style="max-height: 50vh;">
+                <div id="assist-messages" class="space-y-4">
+                    <div class="text-slate-400 text-sm">Ask any security question or paste code for analysis...</div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-slate-700">
+                <div class="flex gap-2">
+                    <textarea id="assist-input" rows="2" placeholder="Ask about security, paste code to analyze..."
+                              class="flex-1 bg-slate-700 border-slate-600 rounded-lg px-4 py-2 text-sm resize-none"></textarea>
+                    <button onclick="sendAssistMessage()" class="px-4 py-2 ghost-gradient rounded-lg text-sm font-medium">
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Finding Detail Modal -->
+    <div id="finding-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="glass-card rounded-2xl w-full max-w-3xl mx-4 max-h-[80vh] overflow-hidden">
+            <div class="p-6 border-b border-slate-700 flex items-center justify-between">
+                <h3 class="text-lg font-semibold">Finding Details</h3>
+                <button onclick="hideFindingModal()" class="text-slate-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="finding-details" class="p-6 overflow-y-auto" style="max-height: 60vh;">
+                <div class="text-slate-400">Loading...</div>
+            </div>
+            <div class="p-4 border-t border-slate-700 flex gap-2 justify-end">
+                <button onclick="markAsFalsePositive()" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg text-sm">
+                    Mark False Positive
+                </button>
+                <button onclick="confirmVulnerability()" class="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm">
+                    Confirm Vulnerability
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/ghostcrew';
+        let currentTab = 'overview';
+        let currentFindingId = null;
+        let currentPage = 1;
+        let allFindings = [];
+        let charts = {};
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadDashboard();
+            initCharts();
+        });
+
+        async function loadDashboard() {
+            try {
+                const response = await fetch(`${API_BASE}/dashboard`);
+                const data = await response.json();
+                updateStats(data);
+                updateRecentScans(data.recent_scans || []);
+                updateTopPatterns(data.top_patterns || []);
+                updateLearningStats(data.learning_stats || {});
+            } catch (error) {
+                console.error('Failed to load dashboard:', error);
+            }
+        }
+
+        function updateStats(data) {
+            document.getElementById('stat-total-scans').textContent = data.total_scans || 0;
+
+            const stats = data.learning_stats || {};
+            document.getElementById('stat-findings').textContent = stats.total_findings || 0;
+            document.getElementById('stat-critical').textContent = stats.critical_findings || 0;
+            document.getElementById('stat-patterns').textContent = stats.total_patterns || 0;
+
+            const fpRate = stats.false_positive_rate;
+            document.getElementById('stat-fp-rate').textContent = fpRate !== undefined ? `${(fpRate * 100).toFixed(1)}%` : '-';
+        }
+
+        function updateRecentScans(scans) {
+            const tbody = document.getElementById('scans-table');
+            if (!scans.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-500">No scans yet</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = scans.map(scan => `
+                <tr class="border-b border-slate-800 hover:bg-slate-800/30">
+                    <td class="py-3 font-mono text-xs">${scan.id.slice(0, 8)}...</td>
+                    <td><span class="px-2 py-1 rounded text-xs ${getScanTypeBadge(scan.scan_type)}">${scan.scan_type}</span></td>
+                    <td><span class="px-2 py-1 rounded text-xs ${getStatusBadge(scan.status)}">${scan.status}</span></td>
+                    <td class="text-red-400">${scan.findings_count || 0}</td>
+                    <td>${scan.duration ? `${scan.duration}s` : '-'}</td>
+                    <td class="text-slate-400">${formatDate(scan.created_at)}</td>
+                    <td>
+                        <button onclick="viewScanFindings('${scan.id}')" class="text-purple-400 hover:text-purple-300 text-xs">
+                            View Findings
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateTopPatterns(patterns) {
+            const container = document.getElementById('top-patterns');
+            if (!patterns.length) {
+                container.innerHTML = '<div class="text-slate-500 text-sm">No patterns learned yet</div>';
+                return;
+            }
+
+            container.innerHTML = patterns.map(p => `
+                <div class="pattern-card flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                    <div>
+                        <div class="font-medium text-sm">${p.vulnerability_type || p.pattern_name}</div>
+                        <div class="text-xs text-slate-400">${p.language || 'All languages'}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-bold ${getAccuracyColor(p.accuracy)}">${(p.accuracy * 100).toFixed(0)}%</div>
+                        <div class="text-xs text-slate-500">${p.match_count || 0} matches</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateLearningStats(stats) {
+            document.getElementById('pattern-stat-total').textContent = stats.total_patterns || 0;
+            document.getElementById('pattern-stat-accuracy').textContent =
+                stats.avg_accuracy ? `${(stats.avg_accuracy * 100).toFixed(1)}%` : '-';
+            document.getElementById('pattern-stat-tp').textContent = stats.true_positives || 0;
+            document.getElementById('pattern-stat-fp').textContent = stats.false_positives || 0;
+        }
+
+        function initCharts() {
+            // Severity Distribution Chart
+            charts.severity = new Chart(document.getElementById('severityChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Critical', 'High', 'Medium', 'Low'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['#dc2626', '#ea580c', '#ca8a04', '#16a34a'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } }
+                }
+            });
+
+            // Vulnerability Types Chart
+            charts.vulnTypes = new Chart(document.getElementById('vulnTypesChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['SQL Injection', 'XSS', 'SSRF', 'Path Traversal', 'Secrets'],
+                    datasets: [{
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: '#8b5cf6',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+
+            // Trend Chart
+            charts.trend = new Chart(document.getElementById('trendChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+                    datasets: [{
+                        label: 'Findings',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+
+            // Learning Chart (for patterns tab)
+            charts.learning = new Chart(document.getElementById('learningChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [
+                        {
+                            label: 'True Positives',
+                            data: [0, 0, 0, 0],
+                            borderColor: '#22c55e',
+                            tension: 0.3
+                        },
+                        {
+                            label: 'False Positives',
+                            data: [0, 0, 0, 0],
+                            borderColor: '#eab308',
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } },
+                    scales: {
+                        x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        // Tab Navigation
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.remove('tab-active'));
+            document.querySelectorAll('[id^="panel-"]').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tab}`).classList.add('tab-active');
+            document.getElementById(`panel-${tab}`).classList.remove('hidden');
+
+            // Load tab-specific data
+            if (tab === 'findings') loadFindings();
+            if (tab === 'patterns') loadPatterns();
+            if (tab === 'knowledge') loadKnowledge();
+            if (tab === 'agents') loadAgentStats();
+        }
+
+        // Scanning Functions
+        async function startQuickScan() {
+            await startScan('quick');
+        }
+
+        async function startFullScan() {
+            await startScan('full');
+        }
+
+        async function startScan(scanType) {
+            const banner = document.getElementById('active-scan-banner');
+            banner.classList.remove('hidden');
+            document.getElementById('scan-type-badge').textContent = scanType;
+            document.getElementById('scan-progress-bar').style.width = '0%';
+
+            try {
+                const response = await fetch(`${API_BASE}/scan`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        repo_path: '/home/eddie/Projects/MarkdownTaskManager',
+                        scan_type: scanType
+                    })
+                });
+                const result = await response.json();
+
+                // Simulate progress
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 5;
+                    document.getElementById('scan-progress-bar').style.width = `${Math.min(progress, 100)}%`;
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        setTimeout(() => {
+                            banner.classList.add('hidden');
+                            loadDashboard();
+                        }, 500);
+                    }
+                }, 200);
+
+            } catch (error) {
+                console.error('Scan failed:', error);
+                banner.classList.add('hidden');
+                alert('Scan failed: ' + error.message);
+            }
+        }
+
+        function cancelScan() {
+            document.getElementById('active-scan-banner').classList.add('hidden');
+        }
+
+        // Findings Functions
+        async function loadFindings() {
+            try {
+                const severity = document.getElementById('filter-severity').value;
+                const response = await fetch(`${API_BASE}/scans/latest/findings?severity=${severity}&limit=100`);
+                if (response.ok) {
+                    allFindings = await response.json();
+                    renderFindings();
+                }
+            } catch (error) {
+                console.error('Failed to load findings:', error);
+            }
+        }
+
+        function renderFindings() {
+            const tbody = document.getElementById('findings-table');
+            const start = (currentPage - 1) * 20;
+            const pageFindings = allFindings.slice(start, start + 20);
+
+            if (!pageFindings.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-500">No findings found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = pageFindings.map(f => `
+                <tr class="border-b border-slate-800 hover:bg-slate-800/30 cursor-pointer" onclick="showFindingDetail('${f.id}')">
+                    <td class="py-3">
+                        <span class="px-2 py-1 rounded text-xs text-white ${getSeverityClass(f.severity)}">${f.severity}</span>
+                    </td>
+                    <td class="font-medium">${f.vulnerability_type}</td>
+                    <td><span class="text-xs font-mono bg-slate-700 px-2 py-1 rounded">${f.owasp_category || '-'}</span></td>
+                    <td><span class="text-xs font-mono">${f.cwe_id || '-'}</span></td>
+                    <td class="text-slate-400 font-mono text-xs">${truncatePath(f.file_path)}</td>
+                    <td class="text-slate-400">${f.line_number || '-'}</td>
+                    <td><span class="${getConfidenceColor(f.confidence)}">${(f.confidence * 100).toFixed(0)}%</span></td>
+                    <td>
+                        <button onclick="event.stopPropagation(); markAsFalsePositive('${f.id}')"
+                                class="text-yellow-400 hover:text-yellow-300 text-xs mr-2" title="Mark FP">
+                            FP
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            document.getElementById('findings-count').textContent = `${allFindings.length} findings`;
+            document.getElementById('page-info').textContent = `Page ${currentPage}`;
+        }
+
+        function filterFindings() {
+            currentPage = 1;
+            loadFindings();
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderFindings();
+            }
+        }
+
+        function nextPage() {
+            if (currentPage * 20 < allFindings.length) {
+                currentPage++;
+                renderFindings();
+            }
+        }
+
+        // Pattern Functions
+        async function loadPatterns() {
+            try {
+                const language = document.getElementById('pattern-language').value;
+                const minAccuracy = document.getElementById('pattern-min-accuracy').value;
+                const response = await fetch(
+                    `${API_BASE}/shadow-graph/patterns?language=${language}&min_accuracy=${minAccuracy}&limit=50`
+                );
+                const patterns = await response.json();
+                renderPatterns(patterns);
+            } catch (error) {
+                console.error('Failed to load patterns:', error);
+            }
+        }
+
+        function renderPatterns(patterns) {
+            const container = document.getElementById('patterns-list');
+            if (!patterns.length) {
+                container.innerHTML = '<div class="text-slate-500 text-sm">No patterns match the filters</div>';
+                return;
+            }
+
+            container.innerHTML = patterns.map(p => `
+                <div class="pattern-card bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-medium">${p.vulnerability_type}</span>
+                        <span class="text-xs ${getAccuracyColor(p.accuracy)} font-bold">${(p.accuracy * 100).toFixed(0)}%</span>
+                    </div>
+                    <div class="text-xs text-slate-400 mb-2">${p.language || 'All'} | ${p.pattern_type}</div>
+                    <div class="font-mono text-xs bg-slate-900 rounded p-2 overflow-x-auto">
+                        ${escapeHtml(p.pattern_regex?.slice(0, 100) || 'N/A')}...
+                    </div>
+                    <div class="mt-2 grid grid-cols-3 gap-2 text-xs">
+                        <div class="text-center">
+                            <div class="text-slate-500">Matches</div>
+                            <div class="font-bold">${p.match_count || 0}</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-slate-500">TP</div>
+                            <div class="font-bold text-green-400">${p.true_positives || 0}</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-slate-500">FP</div>
+                            <div class="font-bold text-yellow-400">${p.false_positives || 0}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterPatterns() {
+            loadPatterns();
+        }
+
+        // Knowledge Base Functions
+        async function loadKnowledge() {
+            // Load OWASP Top 10
+            const owaspContainer = document.getElementById('owasp-list');
+            const owaspCategories = [
+                { id: 'A01', name: 'Broken Access Control', color: 'red' },
+                { id: 'A02', name: 'Cryptographic Failures', color: 'orange' },
+                { id: 'A03', name: 'Injection', color: 'red' },
+                { id: 'A04', name: 'Insecure Design', color: 'yellow' },
+                { id: 'A05', name: 'Security Misconfiguration', color: 'orange' },
+                { id: 'A06', name: 'Vulnerable Components', color: 'yellow' },
+                { id: 'A07', name: 'Auth Failures', color: 'red' },
+                { id: 'A08', name: 'Integrity Failures', color: 'orange' },
+                { id: 'A09', name: 'Logging Failures', color: 'blue' },
+                { id: 'A10', name: 'SSRF', color: 'purple' }
+            ];
+
+            owaspContainer.innerHTML = owaspCategories.map(cat => `
+                <div onclick="showOwaspDetail('${cat.id}')"
+                     class="bg-slate-800/50 rounded-lg p-4 border border-slate-700 cursor-pointer hover:border-${cat.color}-500/50 transition">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs font-mono bg-${cat.color}-500/20 text-${cat.color}-400 px-2 py-1 rounded">${cat.id}</span>
+                    </div>
+                    <div class="font-medium text-sm">${cat.name}</div>
+                </div>
+            `).join('');
+
+            // Load CWE list
+            const cweContainer = document.getElementById('cwe-list');
+            const commonCWEs = [
+                { id: 'CWE-79', name: 'XSS' },
+                { id: 'CWE-89', name: 'SQL Injection' },
+                { id: 'CWE-22', name: 'Path Traversal' },
+                { id: 'CWE-78', name: 'OS Command Injection' },
+                { id: 'CWE-352', name: 'CSRF' },
+                { id: 'CWE-918', name: 'SSRF' }
+            ];
+
+            cweContainer.innerHTML = commonCWEs.map(cwe => `
+                <div onclick="showCweDetail('${cwe.id}')"
+                     class="bg-slate-800/50 rounded-lg p-3 border border-slate-700 cursor-pointer hover:border-purple-500/50 transition">
+                    <div class="font-mono text-sm text-purple-400">${cwe.id}</div>
+                    <div class="text-xs text-slate-400">${cwe.name}</div>
+                </div>
+            `).join('');
+        }
+
+        async function searchKnowledge() {
+            const query = document.getElementById('knowledge-search').value;
+            if (!query) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/knowledge/search?query=${encodeURIComponent(query)}&limit=10`);
+                const results = await response.json();
+
+                const guideContainer = document.getElementById('remediation-guide');
+                if (results.length === 0) {
+                    guideContainer.innerHTML = '<div class="text-slate-500">No results found</div>';
+                    return;
+                }
+
+                guideContainer.innerHTML = results.map(r => `
+                    <div class="mb-4 p-4 bg-slate-800/50 rounded-lg">
+                        <div class="font-medium mb-2">${r.title || r.vulnerability_type}</div>
+                        <div class="text-sm text-slate-400">${r.description || r.content}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Search failed:', error);
+            }
+        }
+
+        async function showOwaspDetail(category) {
+            try {
+                const response = await fetch(`${API_BASE}/knowledge/owasp/${category}`);
+                const data = await response.json();
+
+                document.getElementById('remediation-guide').innerHTML = `
+                    <div class="space-y-4">
+                        <h4 class="font-semibold text-lg">${category}: ${data.name}</h4>
+                        <p class="text-slate-300">${data.description}</p>
+                        <div class="mt-4">
+                            <h5 class="font-medium mb-2 text-purple-400">Prevention</h5>
+                            <ul class="list-disc list-inside text-sm text-slate-400 space-y-1">
+                                ${(data.prevention || []).map(p => `<li>${p}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Failed to load OWASP detail:', error);
+            }
+        }
+
+        async function showCweDetail(cweId) {
+            try {
+                const response = await fetch(`${API_BASE}/knowledge/cwe/${cweId}`);
+                const data = await response.json();
+
+                document.getElementById('remediation-guide').innerHTML = `
+                    <div class="space-y-4">
+                        <h4 class="font-semibold text-lg">${cweId}: ${data.name}</h4>
+                        <p class="text-slate-300">${data.description}</p>
+                        <div class="mt-4">
+                            <h5 class="font-medium mb-2 text-purple-400">Example</h5>
+                            <pre class="bg-slate-900 p-3 rounded text-xs overflow-x-auto">${escapeHtml(data.example || 'N/A')}</pre>
+                        </div>
+                        <div class="mt-4">
+                            <h5 class="font-medium mb-2 text-green-400">Mitigation</h5>
+                            <p class="text-sm text-slate-400">${data.mitigation || 'N/A'}</p>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Failed to load CWE detail:', error);
+            }
+        }
+
+        // Agent Functions
+        async function loadAgentStats() {
+            // Mock data for now
+            document.getElementById('security-agent-scans').textContent = '12';
+            document.getElementById('security-agent-findings').textContent = '47';
+            document.getElementById('audit-agent-scans').textContent = '8';
+            document.getElementById('audit-agent-findings').textContent = '23';
+            document.getElementById('compliance-agent-scans').textContent = '5';
+            document.getElementById('compliance-agent-findings').textContent = '12';
+        }
+
+        async function runSecurityAgent() {
+            alert('Starting Security Agent scan...');
+            // Would call: POST /api/ghostcrew/crew/{project_id} with agents: ["SecurityAgent"]
+        }
+
+        async function runAuditAgent() {
+            alert('Starting Audit Agent scan...');
+        }
+
+        async function runComplianceAgent() {
+            alert('Starting Compliance Agent check...');
+        }
+
+        // Assist Modal Functions
+        function showAssistModal() {
+            document.getElementById('assist-modal').classList.remove('hidden');
+        }
+
+        function hideAssistModal() {
+            document.getElementById('assist-modal').classList.add('hidden');
+        }
+
+        async function sendAssistMessage() {
+            const input = document.getElementById('assist-input');
+            const query = input.value.trim();
+            if (!query) return;
+
+            const messagesContainer = document.getElementById('assist-messages');
+
+            // Add user message
+            messagesContainer.innerHTML += `
+                <div class="flex justify-end">
+                    <div class="bg-purple-600 rounded-lg px-4 py-2 max-w-md">
+                        <p class="text-sm">${escapeHtml(query)}</p>
+                    </div>
+                </div>
+            `;
+            input.value = '';
+
+            try {
+                const response = await fetch(`${API_BASE}/assist`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query, include_knowledge: true })
+                });
+                const data = await response.json();
+
+                messagesContainer.innerHTML += `
+                    <div class="flex">
+                        <div class="bg-slate-700 rounded-lg px-4 py-2 max-w-md">
+                            <p class="text-sm whitespace-pre-wrap">${escapeHtml(data.response || data.message || 'No response')}</p>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                messagesContainer.innerHTML += `
+                    <div class="flex">
+                        <div class="bg-red-900/50 rounded-lg px-4 py-2">
+                            <p class="text-sm text-red-400">Error: ${error.message}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Finding Modal Functions
+        async function showFindingDetail(findingId) {
+            currentFindingId = findingId;
+            document.getElementById('finding-modal').classList.remove('hidden');
+
+            const finding = allFindings.find(f => f.id === findingId);
+            if (!finding) return;
+
+            document.getElementById('finding-details').innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1 rounded text-sm text-white ${getSeverityClass(finding.severity)}">${finding.severity}</span>
+                        <span class="font-mono text-sm bg-slate-700 px-2 py-1 rounded">${finding.owasp_category || 'N/A'}</span>
+                        <span class="font-mono text-sm text-slate-400">${finding.cwe_id || 'N/A'}</span>
+                    </div>
+
+                    <h4 class="text-xl font-semibold">${finding.vulnerability_type}</h4>
+                    <p class="text-slate-300">${finding.description || 'No description available.'}</p>
+
+                    <div class="bg-slate-800 rounded-lg p-4">
+                        <div class="text-xs text-slate-400 mb-2">Location</div>
+                        <div class="font-mono text-sm">${finding.file_path}:${finding.line_number || '?'}</div>
+                    </div>
+
+                    ${finding.code_snippet ? `
+                        <div class="bg-slate-900 rounded-lg p-4">
+                            <div class="text-xs text-slate-400 mb-2">Code Snippet</div>
+                            <pre class="font-mono text-xs overflow-x-auto">${escapeHtml(finding.code_snippet)}</pre>
+                        </div>
+                    ` : ''}
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-slate-800 rounded-lg p-3">
+                            <div class="text-xs text-slate-400">Confidence</div>
+                            <div class="font-bold ${getConfidenceColor(finding.confidence)}">${(finding.confidence * 100).toFixed(0)}%</div>
+                        </div>
+                        <div class="bg-slate-800 rounded-lg p-3">
+                            <div class="text-xs text-slate-400">Status</div>
+                            <div class="font-bold">${finding.status || 'open'}</div>
+                        </div>
+                    </div>
+
+                    ${finding.recommendation ? `
+                        <div class="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
+                            <div class="text-xs text-green-400 mb-2">Recommendation</div>
+                            <p class="text-sm">${finding.recommendation}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function hideFindingModal() {
+            document.getElementById('finding-modal').classList.add('hidden');
+            currentFindingId = null;
+        }
+
+        async function markAsFalsePositive(findingId = null) {
+            const id = findingId || currentFindingId;
+            if (!id) return;
+
+            const reason = prompt('Please provide a reason for marking this as false positive:');
+            if (!reason) return;
+
+            try {
+                await fetch(`${API_BASE}/findings/${id}/false-positive`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason, marked_by: 'user' })
+                });
+                alert('Marked as false positive. Pattern accuracy will be updated.');
+                hideFindingModal();
+                loadFindings();
+            } catch (error) {
+                alert('Failed to mark as false positive: ' + error.message);
+            }
+        }
+
+        async function confirmVulnerability() {
+            if (!currentFindingId) return;
+
+            try {
+                await fetch(`${API_BASE}/shadow-graph/confirm/${currentFindingId}?confirmed_by=user`, {
+                    method: 'POST'
+                });
+                alert('Vulnerability confirmed. Pattern accuracy improved.');
+                hideFindingModal();
+            } catch (error) {
+                alert('Failed to confirm: ' + error.message);
+            }
+        }
+
+        // Utility Functions
+        function getSeverityClass(severity) {
+            const classes = {
+                critical: 'severity-critical',
+                high: 'severity-high',
+                medium: 'severity-medium',
+                low: 'severity-low',
+                info: 'severity-info'
+            };
+            return classes[severity?.toLowerCase()] || 'bg-slate-600';
+        }
+
+        function getScanTypeBadge(type) {
+            const badges = {
+                full: 'bg-purple-500/20 text-purple-400',
+                quick: 'bg-blue-500/20 text-blue-400',
+                targeted: 'bg-green-500/20 text-green-400'
+            };
+            return badges[type] || 'bg-slate-500/20 text-slate-400';
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                completed: 'bg-green-500/20 text-green-400',
+                running: 'bg-blue-500/20 text-blue-400',
+                failed: 'bg-red-500/20 text-red-400'
+            };
+            return badges[status] || 'bg-slate-500/20 text-slate-400';
+        }
+
+        function getAccuracyColor(accuracy) {
+            if (accuracy >= 0.9) return 'text-green-400';
+            if (accuracy >= 0.7) return 'text-yellow-400';
+            return 'text-red-400';
+        }
+
+        function getConfidenceColor(confidence) {
+            if (confidence >= 0.8) return 'text-green-400';
+            if (confidence >= 0.5) return 'text-yellow-400';
+            return 'text-red-400';
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleDateString('en-US', {
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+        }
+
+        function truncatePath(path) {
+            if (!path) return '-';
+            if (path.length > 40) return '...' + path.slice(-37);
+            return path;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;');
+        }
+
+        async function viewScanFindings(scanId) {
+            switchTab('findings');
+            // Would load findings for specific scan
+        }
+
+        function refreshScans() {
+            loadDashboard();
+        }
+
+        function exportFindings() {
+            // Export to CSV
+            const headers = ['Severity', 'Type', 'OWASP', 'CWE', 'File', 'Line', 'Confidence'];
+            const rows = allFindings.map(f => [
+                f.severity, f.vulnerability_type, f.owasp_category, f.cwe_id,
+                f.file_path, f.line_number, f.confidence
+            ]);
+
+            const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ghostcrew-findings-${Date.now()}.csv`;
+            a.click();
+        }
+    </script>
+</body>
+</html>

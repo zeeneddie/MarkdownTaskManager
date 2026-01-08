@@ -1,0 +1,322 @@
+# C# Security Patterns
+language: csharp
+version: "1.0"
+file_extensions:
+  - ".cs"
+  - ".cshtml"
+  - ".razor"
+
+patterns:
+  injection:
+    - id: CS-INJ-001
+      pattern: "new\\s+SqlCommand\\s*\\(\\s*\\$\".*\\{.*\\}\""
+      title: SQL Injection via interpolated string
+      description: SqlCommand with string interpolation
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use SqlCommand.Parameters.AddWithValue() for parameterized queries
+
+    - id: CS-INJ-002
+      pattern: "new\\s+SqlCommand\\s*\\(\\s*[\"'].*[\"']\\s*\\+\\s*"
+      title: SQL Injection via concatenation
+      description: SqlCommand with string concatenation
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use parameterized queries with SqlParameter
+
+    - id: CS-INJ-003
+      pattern: "\\.CommandText\\s*=\\s*\\$\".*(?:SELECT|INSERT|UPDATE|DELETE).*\\{.*\\}\""
+      title: SQL Injection in CommandText
+      description: CommandText assigned interpolated SQL query
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use command.Parameters.AddWithValue()
+
+    - id: CS-INJ-004
+      pattern: "string\\.Format\\s*\\(\\s*[\"'].*(?:SELECT|INSERT|UPDATE|DELETE)"
+      title: SQL Injection via String.Format
+      description: SQL query using String.Format
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use parameterized queries instead of String.Format
+
+    - id: CS-INJ-005
+      pattern: "ExecuteSqlRaw\\s*\\(\\s*\\$\""
+      title: SQL Injection in EF Core ExecuteSqlRaw
+      description: Entity Framework raw SQL with interpolation
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use ExecuteSqlInterpolated or parameterized FromSqlRaw
+
+    - id: CS-INJ-006
+      pattern: "FromSqlRaw\\s*\\(\\s*\\$\""
+      title: SQL Injection in EF Core FromSqlRaw
+      description: Entity Framework raw SQL with interpolation
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use FromSqlInterpolated which handles parameters safely
+
+    - id: CS-INJ-007
+      pattern: "Process\\.Start\\s*\\([^)]*\\+\\s*"
+      title: Command Injection via Process.Start
+      description: Process.Start with string concatenation
+      severity: critical
+      owasp: A03
+      cwe: CWE-78
+      remediation: Use ProcessStartInfo with ArgumentList or properly escape arguments
+
+    - id: CS-INJ-008
+      pattern: "ProcessStartInfo.*Arguments\\s*=.*\\$\""
+      title: Command Injection in ProcessStartInfo
+      description: ProcessStartInfo.Arguments with interpolation
+      severity: high
+      owasp: A03
+      cwe: CWE-78
+      remediation: Use ArgumentList collection instead of Arguments string
+
+    - id: CS-INJ-009
+      pattern: "XmlDocument\\.Load\\s*\\([^)]*Request"
+      title: XXE Injection via XmlDocument
+      description: Loading XML from user input without protection
+      severity: high
+      owasp: A03
+      cwe: CWE-611
+      remediation: Disable DTD processing with xmlDoc.XmlResolver = null
+
+    - id: CS-INJ-010
+      pattern: "XDocument\\.Load\\s*\\([^)]*Request"
+      title: XXE Injection via XDocument
+      description: Loading XML from user input
+      severity: high
+      owasp: A03
+      cwe: CWE-611
+      remediation: Use XDocument.Load with LoadOptions.None and disabled DTD
+
+  crypto:
+    - id: CS-CRYPTO-001
+      pattern: "(?:password|Password|wachtwoord)\\s*=\\s*[\"'][^\"']{4,}[\"']"
+      title: Hardcoded password
+      description: Password hardcoded in source code
+      severity: critical
+      owasp: A02
+      cwe: CWE-798
+      remediation: Use IConfiguration, Azure Key Vault, or environment variables
+
+    - id: CS-CRYPTO-002
+      pattern: "(?:connectionString|ConnectionString)\\s*=\\s*[\"'].*(?:Password|Pwd)\\s*="
+      title: Hardcoded connection string
+      description: Connection string with credentials in code
+      severity: critical
+      owasp: A02
+      cwe: CWE-798
+      remediation: Store in appsettings.json with user secrets or Azure Key Vault
+
+    - id: CS-CRYPTO-003
+      pattern: "MD5\\.Create\\(\\)|MD5CryptoServiceProvider"
+      title: Use of weak MD5 hash
+      description: MD5 is cryptographically broken
+      severity: medium
+      owasp: A02
+      cwe: CWE-328
+      remediation: Use SHA256, SHA384, or SHA512
+
+    - id: CS-CRYPTO-004
+      pattern: "SHA1\\.Create\\(\\)|SHA1Managed|SHA1CryptoServiceProvider"
+      title: Use of weak SHA1 hash
+      description: SHA1 is deprecated for security
+      severity: medium
+      owasp: A02
+      cwe: CWE-328
+      remediation: Use SHA256 or SHA512
+
+    - id: CS-CRYPTO-005
+      pattern: "new\\s+DESCryptoServiceProvider|TripleDESCryptoServiceProvider"
+      title: Use of weak encryption (DES/3DES)
+      description: DES and 3DES are considered weak
+      severity: medium
+      owasp: A02
+      cwe: CWE-327
+      remediation: Use Aes.Create() with 256-bit keys
+
+    - id: CS-CRYPTO-006
+      pattern: "new\\s+Random\\s*\\(\\)"
+      title: Non-cryptographic random
+      description: System.Random is predictable
+      severity: medium
+      owasp: A02
+      cwe: CWE-330
+      remediation: Use RandomNumberGenerator.Create() for security-sensitive randomness
+
+    - id: CS-CRYPTO-007
+      pattern: "(?:ApiKey|api_key|apiKey)\\s*=\\s*[\"'][^\"']{10,}[\"']"
+      title: Hardcoded API key
+      description: API key in source code
+      severity: critical
+      owasp: A02
+      cwe: CWE-798
+      remediation: Use configuration or secrets manager
+
+  auth:
+    - id: CS-AUTH-001
+      pattern: "ServerCertificateValidationCallback\\s*=.*=>\\s*true"
+      title: SSL certificate validation disabled
+      description: Lambda always returns true for certificate validation
+      severity: high
+      owasp: A07
+      cwe: CWE-295
+      remediation: Implement proper certificate validation
+
+    - id: CS-AUTH-002
+      pattern: "ServicePointManager\\.ServerCertificateValidationCallback"
+      title: Global certificate callback modification
+      description: Modifying global SSL validation is dangerous
+      severity: high
+      owasp: A07
+      cwe: CWE-295
+      remediation: Use HttpClientHandler with specific certificate validation per client
+
+    - id: CS-AUTH-003
+      pattern: "\\[AllowAnonymous\\].*(?:Delete|Admin|Edit|Create)"
+      title: Anonymous access to sensitive action
+      description: Sensitive action may be accessible without authentication
+      severity: high
+      owasp: A07
+      cwe: CWE-862
+      remediation: Review AllowAnonymous usage on sensitive endpoints
+
+  xss:
+    - id: CS-XSS-001
+      pattern: "Html\\.Raw\\s*\\("
+      title: XSS via Html.Raw
+      description: Html.Raw bypasses HTML encoding
+      severity: high
+      owasp: A03
+      cwe: CWE-79
+      remediation: Use @Model.Property which auto-encodes, or sanitize HTML
+
+    - id: CS-XSS-002
+      pattern: "@Html\\.Raw\\s*\\(.*Request"
+      title: XSS via Html.Raw with Request data
+      description: User input rendered without encoding
+      severity: critical
+      owasp: A03
+      cwe: CWE-79
+      remediation: Never use Html.Raw with user input
+
+    - id: CS-XSS-003
+      pattern: "HtmlString\\s*\\(.*Request"
+      title: XSS via HtmlString
+      description: Creating HtmlString from user input
+      severity: high
+      owasp: A03
+      cwe: CWE-79
+      remediation: Sanitize input before creating HtmlString
+
+    - id: CS-XSS-004
+      pattern: "\\.InnerHtml\\s*=.*Request"
+      title: XSS via InnerHtml assignment
+      description: Setting InnerHtml from user input
+      severity: high
+      owasp: A03
+      cwe: CWE-79
+      remediation: Use InnerText or sanitize HTML content
+
+  integrity:
+    - id: CS-INT-001
+      pattern: "BinaryFormatter\\.Deserialize"
+      title: Insecure deserialization
+      description: BinaryFormatter allows arbitrary code execution
+      severity: critical
+      owasp: A08
+      cwe: CWE-502
+      remediation: Use System.Text.Json or DataContractSerializer
+
+    - id: CS-INT-002
+      pattern: "JavaScriptSerializer\\(\\)\\.Deserialize"
+      title: Insecure JSON deserialization
+      description: JavaScriptSerializer can deserialize to arbitrary types
+      severity: high
+      owasp: A08
+      cwe: CWE-502
+      remediation: Use System.Text.Json.JsonSerializer
+
+    - id: CS-INT-003
+      pattern: "JsonConvert\\.DeserializeObject.*TypeNameHandling"
+      title: Newtonsoft.Json TypeNameHandling
+      description: TypeNameHandling can lead to deserialization attacks
+      severity: high
+      owasp: A08
+      cwe: CWE-502
+      remediation: Avoid TypeNameHandling.Auto/All. Use None or a SerializationBinder
+
+  config:
+    - id: CS-CFG-001
+      pattern: "\\[EnableCors\\s*\\(\\s*[\"']?\\*[\"']?\\s*\\)\\]"
+      title: CORS allows all origins
+      description: Wildcard CORS policy is insecure
+      severity: medium
+      owasp: A05
+      cwe: CWE-942
+      remediation: Specify allowed origins explicitly
+
+    - id: CS-CFG-002
+      pattern: "options\\.AllowAnyOrigin\\s*\\(\\s*\\)"
+      title: CORS AllowAnyOrigin
+      description: CORS configured to allow any origin
+      severity: medium
+      owasp: A05
+      cwe: CWE-942
+      remediation: Use WithOrigins() with specific domains
+
+    - id: CS-CFG-003
+      pattern: "\\.UseDeveloperExceptionPage\\s*\\(\\s*\\)"
+      title: Developer exception page in production
+      description: Developer exceptions expose sensitive information
+      severity: medium
+      owasp: A05
+      cwe: CWE-209
+      remediation: Only use UseDeveloperExceptionPage in Development environment
+
+  access:
+    - id: CS-AC-001
+      pattern: "File\\.(?:Read|Write|Delete|Open).*Request\\."
+      title: Path traversal via Request input
+      description: File operation with user-controlled path
+      severity: high
+      owasp: A01
+      cwe: CWE-22
+      remediation: Validate paths and use Path.GetFileName() to strip directory info
+
+    - id: CS-AC-002
+      pattern: "Directory\\.(?:Delete|Create).*Request\\."
+      title: Directory operation with user input
+      description: Directory operation with user-controlled path
+      severity: high
+      owasp: A01
+      cwe: CWE-22
+      remediation: Validate and sanitize directory paths
+
+  ssrf:
+    - id: CS-SSRF-001
+      pattern: "HttpClient.*GetAsync\\s*\\([^)]*\\+\\s*"
+      title: SSRF via HttpClient
+      description: HttpClient request with concatenated URL
+      severity: high
+      owasp: A10
+      cwe: CWE-918
+      remediation: Validate and whitelist allowed URLs
+
+    - id: CS-SSRF-002
+      pattern: "WebRequest\\.Create\\s*\\([^)]*\\+\\s*"
+      title: SSRF via WebRequest
+      description: WebRequest with concatenated URL
+      severity: high
+      owasp: A10
+      cwe: CWE-918
+      remediation: Validate URLs against allowlist before creating requests

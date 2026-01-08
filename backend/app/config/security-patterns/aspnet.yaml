@@ -1,0 +1,327 @@
+# ASP.NET / ASP Classic Security Patterns
+language: aspnet
+version: "1.0"
+file_extensions:
+  - ".asp"
+  - ".aspx"
+  - ".ascx"
+  - ".asax"
+  - ".ashx"
+  - ".asmx"
+  - ".master"
+
+patterns:
+  injection_classic:
+    - id: ASP-INJ-001
+      pattern: "Request\\s*[\\[(]\\s*[\"']?\\w+[\"']?\\s*[\\])]\\s*"
+      title: Unsanitized Request variable usage
+      description: Direct use of Request variables without validation
+      severity: medium
+      owasp: A03
+      cwe: CWE-20
+      remediation: Always validate and sanitize Request input. Use Server.HtmlEncode() for output.
+
+    - id: ASP-INJ-002
+      pattern: "[\"']\\s*SELECT\\s+.*\\s+FROM\\s+.*[\"']\\s*&\\s*Request"
+      title: SQL Injection via Request concatenation
+      description: SQL query built with Request variables
+      severity: critical
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use parameterized queries with ADODB.Command and Parameters
+
+    - id: ASP-INJ-003
+      pattern: "[\"']\\s*INSERT\\s+INTO\\s+.*[\"']\\s*&\\s*Request"
+      title: SQL Injection in INSERT with Request
+      description: INSERT statement built with Request variables
+      severity: critical
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use ADODB.Command with parameterized queries
+
+    - id: ASP-INJ-004
+      pattern: "[\"']\\s*UPDATE\\s+.*\\s+SET\\s+.*[\"']\\s*&\\s*Request"
+      title: SQL Injection in UPDATE with Request
+      description: UPDATE statement built with Request variables
+      severity: critical
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use ADODB.Command with parameterized queries
+
+    - id: ASP-INJ-005
+      pattern: "[\"']\\s*DELETE\\s+FROM\\s+.*[\"']\\s*&\\s*Request"
+      title: SQL Injection in DELETE with Request
+      description: DELETE statement built with Request variables
+      severity: critical
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use ADODB.Command with parameterized queries
+
+    - id: ASP-INJ-006
+      pattern: "\\.Execute\\s*\\(\\s*[\"']\\s*(?:SELECT|INSERT|UPDATE|DELETE|EXEC).*[\"']\\s*&"
+      title: SQL Injection in Execute method
+      description: ADODB Execute with string concatenation
+      severity: critical
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use ADODB.Command object with Parameters collection
+
+    - id: ASP-INJ-007
+      pattern: "CreateObject\\s*\\(\\s*[\"']WScript\\.Shell[\"']\\s*\\)"
+      title: WScript.Shell usage - Command execution
+      description: WScript.Shell allows arbitrary command execution
+      severity: critical
+      owasp: A03
+      cwe: CWE-78
+      remediation: Avoid WScript.Shell. If needed, strictly validate all input.
+
+    - id: ASP-INJ-008
+      pattern: "\\.Run\\s*\\([^)]*Request"
+      title: Command execution with Request input
+      description: Shell command built with user input
+      severity: critical
+      owasp: A03
+      cwe: CWE-78
+      remediation: Never use user input in shell commands
+
+  xss:
+    - id: ASP-XSS-001
+      pattern: "Response\\.Write\\s*\\(\\s*Request"
+      title: Reflected XSS via Response.Write
+      description: Writing Request data directly to response
+      severity: high
+      owasp: A03
+      cwe: CWE-79
+      remediation: Use Server.HtmlEncode(Request(...)) before outputting
+
+    - id: ASP-XSS-002
+      pattern: "<%\\s*=\\s*Request"
+      title: Reflected XSS via inline expression
+      description: Inline ASP expression with Request data
+      severity: high
+      owasp: A03
+      cwe: CWE-79
+      remediation: Use <%=Server.HtmlEncode(Request(...))%>
+
+    - id: ASP-XSS-003
+      pattern: "<%\\s*=\\s*[^%]*(?:QueryString|Form)\\s*[\\[(]"
+      title: XSS via QueryString/Form inline output
+      description: Direct output of QueryString or Form values
+      severity: high
+      owasp: A03
+      cwe: CWE-79
+      remediation: Always encode output with Server.HtmlEncode()
+
+    - id: ASP-XSS-004
+      pattern: "\\.InnerHtml\\s*=\\s*.*Request"
+      title: XSS via InnerHtml assignment
+      description: Setting InnerHtml from user input
+      severity: high
+      owasp: A03
+      cwe: CWE-79
+      remediation: Use InnerText or properly sanitize HTML
+
+    - id: ASP-XSS-005
+      pattern: "\\.Text\\s*=\\s*Request\\s*[\\[(]"
+      title: XSS via Text property
+      description: Setting control text from Request
+      severity: medium
+      owasp: A03
+      cwe: CWE-79
+      remediation: Encode user input before assigning to Text property
+
+    - id: ASP-XSS-006
+      pattern: "ValidateRequest\\s*=\\s*[\"']?false[\"']?"
+      title: ValidateRequest disabled
+      description: ASP.NET request validation disabled in page directive
+      severity: high
+      owasp: A03
+      cwe: CWE-79
+      remediation: Keep ValidateRequest enabled; handle encoding properly instead
+
+    - id: ASP-XSS-007
+      pattern: "document\\.write\\s*\\(.*<%"
+      title: Client-side XSS via document.write
+      description: Server-side data written via document.write
+      severity: high
+      owasp: A03
+      cwe: CWE-79
+      remediation: Escape data for JavaScript context or use DOM manipulation
+
+  crypto:
+    - id: ASP-CRYPTO-001
+      pattern: "(?:password|Password|wachtwoord|Wachtwoord|pwd|Pwd)\\s*=\\s*[\"'][^\"']{4,}[\"']"
+      title: Hardcoded password
+      description: Password hardcoded in ASP page
+      severity: critical
+      owasp: A02
+      cwe: CWE-798
+      remediation: Store credentials in secure configuration or environment variables
+
+    - id: ASP-CRYPTO-002
+      pattern: "(?:ConnectionString|connString|strConn)\\s*=\\s*[\"'].*(?:Password|Pwd)\\s*="
+      title: Hardcoded connection string
+      description: Database credentials in connection string
+      severity: critical
+      owasp: A02
+      cwe: CWE-798
+      remediation: Store connection strings in Web.config with encryption
+
+    - id: ASP-CRYPTO-003
+      pattern: "(?:uid|user\\s+id|User\\s+Id)\\s*=\\s*[\"']?sa[\"']?"
+      title: SA account in connection string
+      description: Using SQL Server SA account is dangerous
+      severity: critical
+      owasp: A02
+      cwe: CWE-250
+      remediation: Use a dedicated application account with minimum required privileges
+
+    - id: ASP-CRYPTO-004
+      pattern: "(?:api_key|ApiKey|strApiKey)\\s*=\\s*[\"'][^\"']{10,}[\"']"
+      title: Hardcoded API key
+      description: API key embedded in ASP code
+      severity: critical
+      owasp: A02
+      cwe: CWE-798
+      remediation: Store API keys in configuration files or key vault
+
+  access_control:
+    - id: ASP-AC-001
+      pattern: "Session\\s*[\\[(]\\s*[\"'](?:Admin|IsAdmin|UserRole|Role)[\"']"
+      title: Role check via Session
+      description: Authorization check using session variables
+      severity: medium
+      owasp: A01
+      cwe: CWE-284
+      remediation: Use proper authorization framework. Session can be manipulated.
+
+    - id: ASP-AC-002
+      pattern: "If\\s+.*Request.*=\\s*[\"']admin[\"']"
+      title: Authorization via Request parameter
+      description: Access control based on user-supplied parameter
+      severity: high
+      owasp: A01
+      cwe: CWE-284
+      remediation: Never trust client-supplied role information
+
+    - id: ASP-AC-003
+      pattern: "<!--\\s*#include\\s+file\\s*=\\s*[\"'].*Request"
+      title: Path traversal in include
+      description: Include file path based on user input
+      severity: critical
+      owasp: A01
+      cwe: CWE-98
+      remediation: Never use user input in file includes
+
+  config:
+    - id: ASP-CFG-001
+      pattern: "<%@.*Debug\\s*=\\s*[\"']?true[\"']?"
+      title: Debug mode in page directive
+      description: Debug mode enabled in ASPX page
+      severity: medium
+      owasp: A05
+      cwe: CWE-489
+      remediation: Remove Debug=true in production
+
+    - id: ASP-CFG-002
+      pattern: "On\\s+Error\\s+Resume\\s+Next"
+      title: Error suppression (On Error Resume Next)
+      description: Errors are silently ignored, hiding potential issues
+      severity: medium
+      owasp: A05
+      cwe: CWE-390
+      remediation: Handle errors explicitly with proper logging
+
+    - id: ASP-CFG-003
+      pattern: "EnableViewState\\s*=\\s*[\"']?true[\"']?"
+      title: ViewState enabled (review encryption)
+      description: ViewState can leak sensitive data if not encrypted
+      severity: low
+      owasp: A05
+      cwe: CWE-315
+      remediation: Ensure ViewState encryption is enabled in Web.config
+
+    - id: ASP-CFG-004
+      pattern: "Trace\\s*=\\s*[\"']?true[\"']?"
+      title: Trace enabled in page
+      description: ASP.NET trace exposes sensitive debugging info
+      severity: medium
+      owasp: A05
+      cwe: CWE-200
+      remediation: Disable trace in production
+
+  logging:
+    - id: ASP-LOG-001
+      pattern: "Response\\.Write.*(?:password|Password|wachtwoord|secret|token|sessie)"
+      title: Sensitive data in output
+      description: Writing potentially sensitive data to response
+      severity: medium
+      owasp: A09
+      cwe: CWE-532
+      remediation: Never output sensitive data. Use proper logging with masking.
+
+  ssrf:
+    - id: ASP-SSRF-001
+      pattern: "(?:XMLHTTP|ServerXMLHTTP|WinHttp).*\\.Open.*Request"
+      title: SSRF via HTTP request with user input
+      description: HTTP request URL built from user input
+      severity: high
+      owasp: A10
+      cwe: CWE-918
+      remediation: Validate and whitelist allowed URLs/domains
+
+    - id: ASP-SSRF-002
+      pattern: "Server\\.CreateObject\\s*\\(\\s*[\"'](?:MSXML2\\.ServerXMLHTTP|Msxml2\\.XMLHTTP)"
+      title: Server-side HTTP request object
+      description: XMLHTTP objects can be used for SSRF attacks
+      severity: medium
+      owasp: A10
+      cwe: CWE-918
+      remediation: Validate all URLs before making server-side requests
+
+  design:
+    - id: ASP-DES-001
+      pattern: "<!--.*(?:TODO|FIXME|HACK|password|secret|token)"
+      title: Sensitive info in HTML comments
+      description: HTML comments may contain sensitive information
+      severity: low
+      owasp: A04
+      cwe: CWE-615
+      remediation: Remove all sensitive information from comments
+
+    - id: ASP-DES-002
+      pattern: "<%--.*(?:password|secret|token|connection).*--%>"
+      title: Sensitive info in ASP.NET comments
+      description: Server-side comments with sensitive data
+      severity: low
+      owasp: A04
+      cwe: CWE-615
+      remediation: Remove sensitive information from all comments
+
+  file:
+    - id: ASP-FILE-001
+      pattern: "FileSystemObject.*(?:OpenTextFile|CreateTextFile|DeleteFile).*Request"
+      title: File operation with user input
+      description: File system operation using Request data
+      severity: critical
+      owasp: A01
+      cwe: CWE-22
+      remediation: Validate and sanitize file paths. Use whitelist of allowed paths.
+
+    - id: ASP-FILE-002
+      pattern: "Server\\.MapPath\\s*\\(.*Request"
+      title: Path traversal via Server.MapPath
+      description: Server.MapPath with user input may allow path traversal
+      severity: high
+      owasp: A01
+      cwe: CWE-22
+      remediation: Validate input and check resulting path is within allowed directory
+
+    - id: ASP-FILE-003
+      pattern: "\\.SaveAs\\s*\\([^)]*Request"
+      title: File upload with user-controlled path
+      description: File save location from user input
+      severity: high
+      owasp: A01
+      cwe: CWE-434
+      remediation: Generate safe filenames server-side. Validate file types.

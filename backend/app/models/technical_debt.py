@@ -98,9 +98,10 @@ class TechnicalDebtItem(Base):
     description = Column(Text, nullable=True)
 
     # Classification
-    debt_type = Column(SQLEnum(DebtType), nullable=False, index=True)
-    severity = Column(SQLEnum(DebtSeverity), nullable=False, index=True)
-    status = Column(SQLEnum(DebtStatus), default=DebtStatus.OPEN, index=True)
+    # Note: Use native_enum=False to avoid asyncpg enum serialization issues
+    debt_type = Column(SQLEnum(DebtType, values_callable=lambda e: [m.value for m in e]), nullable=False, index=True)
+    severity = Column(SQLEnum(DebtSeverity, values_callable=lambda e: [m.value for m in e]), nullable=False, index=True)
+    status = Column(SQLEnum(DebtStatus, values_callable=lambda e: [m.value for m in e]), default=DebtStatus.OPEN, index=True)
 
     # Location
     file_path = Column(String(500), nullable=True)
@@ -114,7 +115,7 @@ class TechnicalDebtItem(Base):
     interest_rate = Column(Float, default=0.1)  # Cost per sprint if not fixed
 
     # Detection
-    detected_by = Column(SQLEnum(DetectionSource), nullable=False)
+    detected_by = Column(SQLEnum(DetectionSource, values_callable=lambda e: [m.value for m in e]), nullable=False)
     detection_rule = Column(String(255), nullable=True)  # e.g., "E501", "SQL injection"
     detection_message = Column(Text, nullable=True)
     first_detected = Column(DateTime, default=func.now())

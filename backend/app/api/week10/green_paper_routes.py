@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.models.project_profile import (
     ProjectProfile,
@@ -33,16 +33,19 @@ def normalize_project_id(project_id: ProjectId) -> str:
     """
     Normalize project_id to string format.
     - Integer IDs are converted to string
-    - UUID strings are kept as-is
-    - Validates UUID format if it looks like a UUID
+    - UUID strings are validated and kept as-is
+    - Other string IDs (like "EPIC-001") are allowed
     """
     if isinstance(project_id, int):
         return str(project_id)
 
     project_id_str = str(project_id)
 
-    # If it looks like a UUID (contains dashes), validate it
-    if '-' in project_id_str:
+    # Only validate as UUID if it matches UUID pattern (8-4-4-4-12 hex chars)
+    # This allows custom string IDs like "EPIC-001" or "EPIC-TEST-abc123"
+    import re
+    uuid_pattern = r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+    if re.match(uuid_pattern, project_id_str):
         try:
             UUID(project_id_str)
         except ValueError:
@@ -86,7 +89,8 @@ class StartSessionRequest(BaseModel):
         description="Project profile for agent configuration. Sets strictness levels for all agents throughout project lifecycle."
     )
 
-    @validator('project_id', pre=True)
+    @field_validator('project_id', mode='before')
+    @classmethod
     def validate_project_id(cls, v):
         return normalize_project_id(v)
 
@@ -107,7 +111,8 @@ class SubmitAnswerRequest(BaseModel):
     answer: str = Field(..., min_length=1)
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
 
-    @validator('answer')
+    @field_validator('answer')
+    @classmethod
     def answer_not_empty(cls, v):
         if not v.strip():
             raise ValueError("Answer cannot be empty")
@@ -126,11 +131,11 @@ class ReviewConstitutionRequest(BaseModel):
     reviewed_by: str
     requested_changes: List[Dict[str, Any]] = Field(default_factory=list)
 
-    @validator('requested_changes')
-    def validate_rejection_changes(cls, v, values):
-        if values.get('action') == 'reject' and not v:
+    @model_validator(mode='after')
+    def validate_rejection_changes(self):
+        if self.action == 'reject' and not self.requested_changes:
             raise ValueError("Rejection requires at least one requested change")
-        return v
+        return self
 
 
 class RegenerateConstitutionRequest(BaseModel):
@@ -151,11 +156,11 @@ class ReviewSpecificationRequest(BaseModel):
     reviewed_by: str
     requested_changes: List[Dict[str, Any]] = Field(default_factory=list)
 
-    @validator('requested_changes')
-    def validate_rejection_changes(cls, v, values):
-        if values.get('action') == 'reject' and not v:
+    @model_validator(mode='after')
+    def validate_rejection_changes(self):
+        if self.action == 'reject' and not self.requested_changes:
             raise ValueError("Rejection requires at least one requested change")
-        return v
+        return self
 
 
 class RegenerateSpecificationRequest(BaseModel):

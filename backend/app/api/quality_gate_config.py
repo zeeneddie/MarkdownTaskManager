@@ -17,7 +17,7 @@ from sqlalchemy import select, update, delete
 from sqlalchemy.orm import selectinload
 from typing import Any, Dict, List, Optional
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
 import uuid
 
@@ -53,8 +53,7 @@ class CheckConfigSchema(BaseModel):
     description: Optional[str] = None
     fix_suggestion: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CategoryConfigSchema(BaseModel):
@@ -66,8 +65,7 @@ class CategoryConfigSchema(BaseModel):
     weight: float = Field(default=1.0, ge=0.0, le=10.0, description="Category weight 0-10")
     checks: Optional[List[CheckConfigSchema]] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WorkflowRulesSchema(BaseModel):
@@ -81,8 +79,7 @@ class WorkflowRulesSchema(BaseModel):
     max_iterations: int = Field(default=3, ge=1, le=10, description="Max validation iterations 1-10")
     stop_on_first_failure: bool = True
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FullConfigSchema(BaseModel):
@@ -94,8 +91,7 @@ class FullConfigSchema(BaseModel):
     categories: List[CategoryConfigSchema] = []
     workflow_rules: List[WorkflowRulesSchema] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CategoryUpdateSchema(BaseModel):
@@ -135,8 +131,7 @@ class HistoryEntrySchema(BaseModel):
     new_value: Optional[Dict] = None
     comment: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ConfigResponse(BaseModel):

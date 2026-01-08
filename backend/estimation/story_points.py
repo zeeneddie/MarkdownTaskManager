@@ -12,7 +12,7 @@ Date: 2025-11-19
 """
 
 from typing import Dict, List, Optional, Tuple
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, model_validator
 import math
 
 
@@ -32,19 +32,14 @@ class ThreePointEstimate(BaseModel):
     most_likely_hours: float = Field(..., gt=0, description="Most likely estimate (hours)")
     pessimistic_hours: float = Field(..., gt=0, description="Pessimistic estimate (hours)")
 
-    @validator('pessimistic_hours')
-    def validate_pessimistic(cls, v, values):
+    @model_validator(mode='after')
+    def validate_estimates_order(self):
         """Ensure pessimistic >= most_likely >= optimistic"""
-        if 'most_likely_hours' in values and v < values['most_likely_hours']:
-            raise ValueError("Pessimistic estimate must be >= most likely estimate")
-        return v
-
-    @validator('most_likely_hours')
-    def validate_most_likely(cls, v, values):
-        """Ensure most_likely >= optimistic"""
-        if 'optimistic_hours' in values and v < values['optimistic_hours']:
+        if self.most_likely_hours < self.optimistic_hours:
             raise ValueError("Most likely estimate must be >= optimistic estimate")
-        return v
+        if self.pessimistic_hours < self.most_likely_hours:
+            raise ValueError("Pessimistic estimate must be >= most likely estimate")
+        return self
 
 
 class StoryPointRequest(BaseModel):

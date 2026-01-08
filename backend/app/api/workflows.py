@@ -98,6 +98,73 @@ async def analyze_work(
         )
 
 
+@router.post("/analyze/{project_id}", response_model=WorkflowResult, status_code=status.HTTP_200_OK)
+async def analyze_work_with_project(
+    project_id: int,
+    request: WorkflowRequest,
+    background_tasks: BackgroundTasks
+) -> WorkflowResult:
+    """
+    Execute a workflow with project-specific context including graph analysis.
+
+    This enhanced endpoint (Week 88) includes:
+    1. All features from /analyze
+    2. Graph-based impact analysis
+    3. Dependency checking
+    4. Coupling metrics
+    5. Test coverage mapping
+
+    The graph analysis is automatically determined based on work_type:
+    - NEW_FEATURE: impact_analysis, dependency_check
+    - BUG: dependency_check, test_coverage_map
+    - MAINTENANCE: impact_analysis, coupling_metrics
+    - MIGRATION: dependency_check, coupling_metrics
+    - QUALITY_AUDIT: coupling_metrics
+    - QUALITY_IMPROVEMENT: coupling_metrics, impact_analysis
+    - TESTING: test_coverage_map
+    - ENHANCEMENT: enhancement_scope, impact_analysis
+
+    **Example Request:**
+    ```json
+    {
+      "description": "Refactor authentication module",
+      "context": {
+        "changes": ["src/auth/login.py", "src/auth/session.py"],
+        "entity_id": "AuthService"
+      },
+      "work_type": "MAINTENANCE",
+      "priority": "high"
+    }
+    ```
+    """
+    from app.database import get_db
+
+    try:
+        logger.info(f"Project workflow request for project {project_id}: {request.description[:100]}")
+
+        agent_service = get_agent_service()
+
+        # Get database session for graph analysis
+        async for db in get_db():
+            result = await agent_service.execute_workflow(
+                request,
+                project_id=project_id,
+                db_session=db
+            )
+            break
+
+        logger.info(f"Project workflow completed: {result.work_type}, status: {result.status}")
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Project workflow execution error: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Workflow execution failed: {str(e)}"
+        )
+
+
 @router.get("/work-types", response_model=List[WorkTypeInfo])
 async def get_work_types() -> List[WorkTypeInfo]:
     """

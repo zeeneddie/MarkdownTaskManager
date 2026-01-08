@@ -8,7 +8,7 @@ Provides 8 endpoints for the 3-stage consensus process
 from typing import Dict, List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -38,8 +38,7 @@ class ResponseSummary(BaseModel):
     confidence: float
     created_at: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
 
 
 class DecisionSummary(BaseModel):
@@ -52,8 +51,7 @@ class DecisionSummary(BaseModel):
     dissenting_opinions: Optional[List[str]]
     created_at: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SessionResponse(BaseModel):
@@ -69,8 +67,7 @@ class SessionResponse(BaseModel):
     response_count: int
     has_decision: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SessionDetailResponse(BaseModel):

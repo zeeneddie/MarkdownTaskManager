@@ -23,6 +23,7 @@ from app.models.llm_council import (
     CouncilReview,
     CouncilDecision
 )
+from app.config import settings
 
 
 class LLMCouncilService:
@@ -44,10 +45,11 @@ class LLMCouncilService:
     def __init__(
         self,
         db_session: AsyncSession,
-        ollama_base_url: str = "http://localhost:11434"
+        ollama_base_url: str = None
     ):
         self.db = db_session
-        self.ollama_url = ollama_base_url
+        # Use settings.OLLAMA_BASE_URL if no base_url provided
+        self.ollama_url = ollama_base_url or settings.OLLAMA_BASE_URL
 
         # Council model configuration
         self.models = {
@@ -267,7 +269,7 @@ class LLMCouncilService:
                         "prompt": prompt,
                         "stream": False
                     },
-                    timeout=aiohttp.ClientTimeout(total=120)  # 2 min timeout
+                    timeout=aiohttp.ClientTimeout(total=900)  # 15 min timeout for complex queries
                 ) as response:
                     response.raise_for_status()
                     data = await response.json()
@@ -582,7 +584,7 @@ COMMENTS: [Your explanation]
                         "prompt": prompt,
                         "stream": False
                     },
-                    timeout=aiohttp.ClientTimeout(total=60)
+                    timeout=aiohttp.ClientTimeout(total=600)  # 10 min for peer reviews
                 ) as response:
                     response.raise_for_status()
                     data = await response.json()
@@ -741,7 +743,7 @@ KEY CONSIDERATIONS: [Important points to remember]
                         "prompt": prompt,
                         "stream": False
                     },
-                    timeout=aiohttp.ClientTimeout(total=120)
+                    timeout=aiohttp.ClientTimeout(total=600)  # 10 min for chairman synthesis
                 ) as response:
                     response.raise_for_status()
                     data = await response.json()

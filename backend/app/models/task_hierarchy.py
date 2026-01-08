@@ -107,13 +107,13 @@ class Epic(Base):
 
     # Generation metadata
     generated_by = Column(String(50), default="Felix")
-    generated_at = Column(DateTime, default=datetime.utcnow)
+    generated_at = Column(DateTime, default=lambda: datetime.utcnow())
     generation_prompt = Column(Text, nullable=True)  # Prompt used for generation
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
 
-    generation_metadata = Column(JSONB, nullable=True)  # dependencies, risks, notes
+    extra_metadata = Column("metadata", JSONB, nullable=True)  # dependencies, risks, notes
 
     # Relationships
     specification = relationship("Specification", foreign_keys=[specification_id])
@@ -161,12 +161,12 @@ class Feature(Base):
     progress_percentage = Column(Integer, default=0)
 
     generated_by = Column(String(50), default="Felix")
-    generated_at = Column(DateTime, default=datetime.utcnow)
+    generated_at = Column(DateTime, default=lambda: datetime.utcnow())
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
 
-    generation_metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column("metadata", JSONB, nullable=True)
 
     # Relationships
     epic = relationship("Epic", back_populates="features")
@@ -213,6 +213,12 @@ class Story(Base):
     estimated_hours = Column(Float, nullable=True)  # Developer estimate
     actual_hours = Column(Float, nullable=True)  # Actual time spent
 
+    # Function Points (Deep Extraction - Week 81-87)
+    function_points = Column(Float, nullable=True)  # IFPUG function points
+    fp_complexity = Column(String(20), nullable=True)  # low, average, high
+    fp_type = Column(String(30), nullable=True)  # EI, EO, EQ, ILF, EIF
+    extraction_confidence = Column(Float, nullable=True)  # 0.0-1.0 from Deep Extraction
+
     # Sprint assignment
     sprint_id = Column(String(50), nullable=True, index=True)  # Which sprint this is in
     assigned_to = Column(String(100), nullable=True)  # Developer assigned
@@ -223,14 +229,14 @@ class Story(Base):
     blocked_reason = Column(Text, nullable=True)
 
     generated_by = Column(String(50), default="Felix")
-    generated_at = Column(DateTime, default=datetime.utcnow)
+    generated_at = Column(DateTime, default=lambda: datetime.utcnow())
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
 
     completed_at = Column(DateTime, nullable=True)
 
-    generation_metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column("metadata", JSONB, nullable=True)
 
     # Relationships
     feature = relationship("Feature", back_populates="stories")
@@ -272,6 +278,10 @@ class Task(Base):
     estimated_hours = Column(Float, nullable=True)  # 0.5, 1, 2, 4
     actual_hours = Column(Float, nullable=True)
 
+    # Function Points (Deep Extraction - Week 81-87)
+    function_points = Column(Float, nullable=True)  # IFPUG function points
+    extraction_confidence = Column(Float, nullable=True)  # 0.0-1.0 from Deep Extraction
+
     # Tracking
     sequence_number = Column(Integer, nullable=False)  # Order within story
     assigned_to = Column(String(100), nullable=True)
@@ -284,13 +294,13 @@ class Task(Base):
     pull_request_url = Column(String(500), nullable=True)
 
     generated_by = Column(String(50), default="Felix")
-    generated_at = Column(DateTime, default=datetime.utcnow)
+    generated_at = Column(DateTime, default=lambda: datetime.utcnow())
 
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
     completed_at = Column(DateTime, nullable=True)
 
-    generation_metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column("metadata", JSONB, nullable=True)
 
     # Relationships
     story = relationship("Story", back_populates="tasks")

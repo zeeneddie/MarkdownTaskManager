@@ -571,6 +571,142 @@
             border: 1px solid #bee5eb;
         }
 
+        /* Quality Checks Grid */
+        .quality-checks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .quality-check {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px;
+            transition: all 0.3s;
+        }
+
+        .quality-check.passed {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .quality-check.failed {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        .quality-check .check-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .quality-check .check-name {
+            font-weight: 600;
+            font-size: 13px;
+            color: #2c3e50;
+        }
+
+        .quality-check .check-icon {
+            font-size: 18px;
+        }
+
+        .quality-check .check-category {
+            font-size: 11px;
+            color: #6c757d;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .quality-check .check-message {
+            font-size: 12px;
+            color: #495057;
+        }
+
+        .quality-check .check-score {
+            margin-top: 8px;
+            height: 4px;
+            background: #dee2e6;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .quality-check .check-score-fill {
+            height: 100%;
+            background: #667eea;
+            transition: width 0.3s;
+        }
+
+        .quality-check.passed .check-score-fill {
+            background: #28a745;
+        }
+
+        .quality-check.failed .check-score-fill {
+            background: #dc3545;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.draft { background: #e9ecef; color: #495057; }
+        .status-badge.shaping { background: #cce5ff; color: #004085; }
+        .status-badge.verifying { background: #fff3cd; color: #856404; }
+        .status-badge.approved { background: #d4edda; color: #155724; }
+        .status-badge.rejected { background: #f8d7da; color: #721c24; }
+        .status-badge.max_iterations { background: #f8d7da; color: #721c24; }
+
+        /* Iteration History Item */
+        .iteration-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .iteration-item .iteration-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .iteration-item .iteration-number {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .iteration-item .iteration-stats {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .iteration-item .iteration-checks {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .iteration-item .check-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #dc3545;
+        }
+
+        .iteration-item .check-dot.passed {
+            background: #28a745;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .stepper {
@@ -623,6 +759,10 @@
             </div>
             <div class="step" data-step="3">
                 <div class="step-number">3</div>
+                <div class="step-label">Shaping</div>
+            </div>
+            <div class="step" data-step="4">
+                <div class="step-number">4</div>
                 <div class="step-label">Tasks</div>
             </div>
         </div>
@@ -633,6 +773,73 @@
             <div id="alertSuccess" class="alert alert-success"></div>
             <div id="alertError" class="alert alert-error"></div>
             <div id="alertInfo" class="alert alert-info"></div>
+
+            <!-- Quick Spec Templates Section -->
+            <div id="quickSpecSection" class="quick-spec-section" style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; border: 2px dashed #667eea;">
+                <h3 style="margin-bottom: 15px; color: #667eea;">
+                    ⚡ Quick Spec Templates
+                    <span style="font-size: 12px; font-weight: 400; color: #6c757d; margin-left: 10px;">Fast track for common work types</span>
+                </h3>
+                <div class="quick-spec-cards" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+                    <div class="quick-spec-card" onclick="openQuickSpec('bug_fix')" style="background: white; border: 2px solid #dc3545; border-radius: 8px; padding: 15px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                        <div style="font-size: 28px; margin-bottom: 8px;">🐛</div>
+                        <div style="font-weight: 600; color: #dc3545;">Bug Fix</div>
+                        <div style="font-size: 11px; color: #6c757d; margin-top: 4px;">1-4 hours</div>
+                    </div>
+                    <div class="quick-spec-card" onclick="openQuickSpec('enhancement')" style="background: white; border: 2px solid #28a745; border-radius: 8px; padding: 15px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                        <div style="font-size: 28px; margin-bottom: 8px;">✨</div>
+                        <div style="font-weight: 600; color: #28a745;">Enhancement</div>
+                        <div style="font-size: 11px; color: #6c757d; margin-top: 4px;">4-16 hours</div>
+                    </div>
+                    <div class="quick-spec-card" onclick="openQuickSpec('refactoring')" style="background: white; border: 2px solid #fd7e14; border-radius: 8px; padding: 15px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                        <div style="font-size: 28px; margin-bottom: 8px;">🔧</div>
+                        <div style="font-weight: 600; color: #fd7e14;">Refactoring</div>
+                        <div style="font-size: 11px; color: #6c757d; margin-top: 4px;">2-8 hours</div>
+                    </div>
+                    <div class="quick-spec-card" onclick="openQuickSpec('hotfix')" style="background: white; border: 2px solid #6f42c1; border-radius: 8px; padding: 15px; cursor: pointer; transition: all 0.2s; text-align: center;">
+                        <div style="font-size: 28px; margin-bottom: 8px;">🚨</div>
+                        <div style="font-weight: 600; color: #6f42c1;">Hotfix</div>
+                        <div style="font-size: 11px; color: #6c757d; margin-top: 4px;">30min-2h</div>
+                    </div>
+                </div>
+                <p style="margin-top: 15px; font-size: 13px; color: #6c757d; text-align: center;">
+                    Or continue below for a full project specification...
+                </p>
+            </div>
+
+            <!-- Quick Spec Modal -->
+            <div id="quickSpecModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;">
+                <div style="background: white; max-width: 700px; margin: 40px auto; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                    <div id="quickSpecModalHeader" style="background: #667eea; color: white; padding: 20px; border-radius: 12px 12px 0 0;">
+                        <h2 id="quickSpecModalTitle" style="margin: 0;">Quick Spec</h2>
+                        <p id="quickSpecModalDesc" style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;"></p>
+                    </div>
+                    <div id="quickSpecModalBody" style="padding: 25px;">
+                        <!-- Dynamic form will be inserted here -->
+                    </div>
+                    <div style="padding: 15px 25px 25px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="btn btn-secondary" onclick="closeQuickSpec()">Cancel</button>
+                        <button class="btn btn-primary" onclick="generateQuickSpec()">Generate Spec</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Spec Result Modal -->
+            <div id="quickSpecResultModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1001; overflow-y: auto;">
+                <div style="background: white; max-width: 800px; margin: 40px auto; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                    <div style="background: #28a745; color: white; padding: 20px; border-radius: 12px 12px 0 0;">
+                        <h2 style="margin: 0;">✅ Spec Generated</h2>
+                    </div>
+                    <div style="padding: 25px;">
+                        <pre id="quickSpecResult" style="white-space: pre-wrap; background: #f8f9fa; padding: 20px; border-radius: 8px; max-height: 400px; overflow-y: auto; font-size: 13px;"></pre>
+                    </div>
+                    <div style="padding: 15px 25px 25px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="btn btn-secondary" onclick="closeQuickSpecResult()">Close</button>
+                        <button class="btn btn-primary" onclick="downloadQuickSpec()">📥 Download .md</button>
+                        <button class="btn btn-success" onclick="copyQuickSpec()">📋 Copy to Clipboard</button>
+                    </div>
+                </div>
+            </div>
 
             <!-- Stage 1: Constitution -->
             <div id="stage1" class="stage active">
@@ -779,16 +986,128 @@
                             ← Back to Constitution
                         </button>
                         <button class="btn btn-success" onclick="goToStage(3)">
+                            Continue to Shaping →
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stage 3: Spec Shaping Loop -->
+            <div id="stage3" class="stage">
+                <div class="stage-title">
+                    🔄 Stage 3: Spec Shaping Loop
+                </div>
+                <p class="stage-description">
+                    Iteratively refine your specification until it passes all quality checks.
+                    The AI will shape and verify your spec against 7 quality gates.
+                </p>
+
+                <!-- Spec Shaping Controls -->
+                <div class="shaping-controls">
+                    <div class="form-group">
+                        <label class="form-label">Workflow Type</label>
+                        <select id="shapingWorkflowType" class="form-input">
+                            <option value="NEW_FEATURE">New Feature</option>
+                            <option value="BUG">Bug Fix</option>
+                            <option value="ENHANCEMENT">Enhancement</option>
+                            <option value="MAINTENANCE">Maintenance</option>
+                            <option value="MIGRATION">Migration</option>
+                        </select>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="goToStage(2)">
+                            ← Back to Specification
+                        </button>
+                        <button class="btn btn-primary" id="startShapingBtn" onclick="startShapingSession()">
+                            🔄 Start Shaping Session
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Shaping Session Active -->
+                <div id="shapingSession" style="display: none;">
+                    <!-- Session Info -->
+                    <div class="session-info" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>Session ID:</strong> <span id="shapingSessionId">-</span>
+                                <br>
+                                <strong>Status:</strong> <span id="shapingStatus" class="status-badge">draft</span>
+                            </div>
+                            <div>
+                                <strong>Iteration:</strong> <span id="shapingIteration">0</span> / <span id="shapingMaxIterations">5</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quality Checks Grid -->
+                    <div class="quality-checks-section">
+                        <h3 style="margin-bottom: 15px;">Quality Checks (7 gates)</h3>
+                        <div id="qualityChecksGrid" class="quality-checks-grid">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Current Spec Preview -->
+                    <div class="collapsible open" id="currentSpecPreview">
+                        <div class="collapsible-header" onclick="toggleCollapsible('currentSpecPreview')">
+                            <span>📝 Current Spec Preview</span>
+                            <span class="collapsible-icon">▼</span>
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="collapsible-body">
+                                <pre id="currentSpecContent" style="white-space: pre-wrap; background: #f1f3f4; padding: 15px; border-radius: 6px; max-height: 300px; overflow-y: auto;">
+Loading...
+                                </pre>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Iteration History -->
+                    <div class="collapsible" id="iterationHistory">
+                        <div class="collapsible-header" onclick="toggleCollapsible('iterationHistory')">
+                            <span>📊 Iteration History</span>
+                            <span class="collapsible-icon">▼</span>
+                        </div>
+                        <div class="collapsible-content">
+                            <div class="collapsible-body" id="iterationHistoryContent">
+                                No iterations yet.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="button-group" style="margin-top: 20px;">
+                        <button class="btn btn-primary" id="iterateBtn" onclick="runShapingIteration()">
+                            🔄 Run Iteration
+                        </button>
+                        <button class="btn btn-success" id="approveBtn" onclick="approveSpec()" style="display: none;">
+                            ✅ Approve & Continue
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Shaping Complete -->
+                <div id="shapingComplete" style="display: none;">
+                    <div class="results-box" style="background: #d4edda; border-color: #28a745;">
+                        <h3 style="color: #155724;">✅ Specification Approved!</h3>
+                        <p>All 7 quality checks passed. Your specification is ready for task generation.</p>
+                    </div>
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="goToStage(2)">
+                            ← Back to Specification
+                        </button>
+                        <button class="btn btn-success" onclick="goToStage(4)">
                             Continue to Tasks →
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Stage 3: Tasks -->
-            <div id="stage3" class="stage">
+            <!-- Stage 4: Tasks -->
+            <div id="stage4" class="stage">
                 <div class="stage-title">
-                    ✅ Stage 3: Tasks
+                    ✅ Stage 4: Tasks
                 </div>
                 <p class="stage-description">
                     Generate actionable epics, features, stories, and tasks. Ready for your project management tool!
@@ -802,15 +1121,15 @@
                     </div>
                     <div class="collapsible-content">
                         <div class="collapsible-body" id="specificationSummaryContent">
-                            <!-- Will be populated from Stage 2 -->
+                            <!-- Will be populated from Stage 3 -->
                         </div>
                     </div>
                 </div>
 
                 <!-- Generate Tasks Button -->
                 <div class="button-group">
-                    <button class="btn btn-secondary" onclick="goToStage(2)">
-                        ← Back to Specification
+                    <button class="btn btn-secondary" onclick="goToStage(3)">
+                        ← Back to Shaping
                     </button>
                     <button class="btn btn-primary" onclick="generateTasks()">
                         Generate Tasks →
@@ -1066,14 +1385,25 @@
                 .map(input => input.value.trim())
                 .filter(v => v);
 
+            // Parse comma-separated values into arrays for technical_context
+            const existingSystemsRaw = document.getElementById('existingSystems').value.trim();
+            const techStackRaw = document.getElementById('techStack').value.trim();
+
+            const existingSystems = existingSystemsRaw
+                ? existingSystemsRaw.split(',').map(s => s.trim()).filter(s => s)
+                : null;
+            const technologies = techStackRaw
+                ? techStackRaw.split(',').map(s => s.trim()).filter(s => s)
+                : null;
+
             const data = {
                 business_case: document.getElementById('businessCase').value.trim(),
                 stakeholders: stakeholders,
                 constraints: constraints,
                 success_criteria: successCriteria,
                 technical_context: {
-                    existing_systems: document.getElementById('existingSystems').value.trim() || null,
-                    tech_stack: document.getElementById('techStack').value.trim() || null,
+                    existing_systems: existingSystems,
+                    technologies: technologies,
                     team_size: parseInt(document.getElementById('teamSize').value) || null,
                     timeline: document.getElementById('timeline').value.trim() || null
                 }
@@ -1209,14 +1539,25 @@
                 .map(input => input.value.trim())
                 .filter(v => v);
 
+            // Parse comma-separated values into arrays for technical_context
+            const existingSystemsRaw = document.getElementById('existingSystems').value.trim();
+            const techStackRaw = document.getElementById('techStack').value.trim();
+
+            const existingSystems = existingSystemsRaw
+                ? existingSystemsRaw.split(',').map(s => s.trim()).filter(s => s)
+                : null;
+            const technologies = techStackRaw
+                ? techStackRaw.split(',').map(s => s.trim()).filter(s => s)
+                : null;
+
             const data = {
                 business_case: document.getElementById('businessCase').value.trim(),
                 stakeholders: stakeholders,
                 constraints: constraints,
                 success_criteria: successCriteria,
                 technical_context: {
-                    existing_systems: document.getElementById('existingSystems').value.trim() || null,
-                    tech_stack: document.getElementById('techStack').value.trim() || null,
+                    existing_systems: existingSystems,
+                    technologies: technologies,
                     team_size: parseInt(document.getElementById('teamSize').value) || null,
                     timeline: document.getElementById('timeline').value.trim() || null
                 }
@@ -1384,6 +1725,414 @@
             if (confirm('Are you sure you want to start a new project? All current data will be lost.')) {
                 location.reload();
             }
+        }
+
+        // ============================================
+        // SPEC SHAPING LOOP FUNCTIONS
+        // ============================================
+
+        let shapingSessionId = null;
+        let shapingIterations = [];
+
+        // Quality check definitions for UI
+        const QUALITY_CHECKS = [
+            { name: 'has_problem_statement', label: 'Problem Statement', category: 'completeness' },
+            { name: 'has_success_criteria', label: 'Success Criteria', category: 'completeness' },
+            { name: 'has_scope_boundaries', label: 'Scope Boundaries', category: 'structure' },
+            { name: 'has_user_context', label: 'User Context', category: 'content' },
+            { name: 'has_technical_constraints', label: 'Technical Constraints', category: 'feasibility' },
+            { name: 'is_actionable', label: 'Actionable Items', category: 'clarity' },
+            { name: 'sufficient_length', label: 'Sufficient Detail', category: 'completeness' },
+        ];
+
+        // Initialize quality checks grid
+        function initQualityChecksGrid() {
+            const grid = document.getElementById('qualityChecksGrid');
+            grid.innerHTML = QUALITY_CHECKS.map(check => `
+                <div class="quality-check" id="check-${check.name}">
+                    <div class="check-header">
+                        <span class="check-name">${check.label}</span>
+                        <span class="check-icon">⏳</span>
+                    </div>
+                    <div class="check-category">${check.category}</div>
+                    <div class="check-message">Waiting...</div>
+                    <div class="check-score">
+                        <div class="check-score-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Start a new shaping session
+        async function startShapingSession() {
+            if (!specificationData) {
+                showAlert('error', 'Please generate a specification first (Stage 2)');
+                return;
+            }
+
+            const workflowType = document.getElementById('shapingWorkflowType').value;
+            const description = JSON.stringify(specificationData);
+
+            try {
+                const button = document.getElementById('startShapingBtn');
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner"></span> Starting...';
+
+                const response = await fetch(`${API_BASE}/spec-shaping/sessions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        description: description,
+                        workflow_type: workflowType,
+                        max_iterations: 5
+                    })
+                });
+
+                if (!response.ok) throw new Error('Failed to start shaping session');
+
+                const result = await response.json();
+                shapingSessionId = result.session_id;
+                shapingIterations = [];
+
+                // Update UI
+                document.getElementById('shapingSessionId').textContent = shapingSessionId;
+                updateShapingStatus(result.status);
+                document.getElementById('shapingIteration').textContent = '0';
+
+                // Show session panel, hide controls
+                document.querySelector('.shaping-controls').style.display = 'none';
+                document.getElementById('shapingSession').style.display = 'block';
+
+                // Initialize quality checks grid
+                initQualityChecksGrid();
+
+                // Set initial spec preview
+                document.getElementById('currentSpecContent').textContent = description.substring(0, 1000) + '...';
+
+                showAlert('success', 'Shaping session started! Click "Run Iteration" to begin.');
+
+                button.disabled = false;
+                button.innerHTML = '🔄 Start Shaping Session';
+            } catch (error) {
+                showAlert('error', error.message);
+                const button = document.getElementById('startShapingBtn');
+                button.disabled = false;
+                button.innerHTML = '🔄 Start Shaping Session';
+            }
+        }
+
+        // Run one shaping iteration
+        async function runShapingIteration() {
+            if (!shapingSessionId) {
+                showAlert('error', 'No active shaping session');
+                return;
+            }
+
+            try {
+                const button = document.getElementById('iterateBtn');
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner"></span> Shaping...';
+
+                const response = await fetch(`${API_BASE}/spec-shaping/sessions/${shapingSessionId}/iterate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (!response.ok) throw new Error('Failed to run iteration');
+
+                const result = await response.json();
+
+                // Update status
+                updateShapingStatus(result.status);
+                document.getElementById('shapingIteration').textContent = result.iteration_number;
+
+                // Update quality checks grid
+                if (result.verifications) {
+                    updateQualityChecks(result.verifications);
+                }
+
+                // Update spec preview
+                if (result.current_spec_preview) {
+                    document.getElementById('currentSpecContent').textContent = result.current_spec_preview;
+                }
+
+                // Add to iteration history
+                shapingIterations.push(result);
+                updateIterationHistory();
+
+                // Check if approved
+                if (result.all_passed || result.status === 'approved') {
+                    showAlert('success', 'All quality checks passed! Specification approved.');
+                    document.getElementById('iterateBtn').style.display = 'none';
+                    document.getElementById('approveBtn').style.display = 'inline-block';
+                } else if (result.status === 'max_iterations') {
+                    showAlert('error', 'Maximum iterations reached. Consider reviewing manually.');
+                    document.getElementById('iterateBtn').disabled = true;
+                } else {
+                    showAlert('info', `Iteration ${result.iteration_number}: ${result.checks_passed}/${result.checks_total} checks passed`);
+                }
+
+                button.disabled = false;
+                button.innerHTML = '🔄 Run Iteration';
+            } catch (error) {
+                showAlert('error', error.message);
+                const button = document.getElementById('iterateBtn');
+                button.disabled = false;
+                button.innerHTML = '🔄 Run Iteration';
+            }
+        }
+
+        // Update quality checks display
+        function updateQualityChecks(verifications) {
+            verifications.forEach(v => {
+                const el = document.getElementById(`check-${v.check}`);
+                if (!el) return;
+
+                el.className = 'quality-check ' + (v.passed ? 'passed' : 'failed');
+                el.querySelector('.check-icon').textContent = v.passed ? '✅' : '❌';
+                el.querySelector('.check-message').textContent = v.message;
+                el.querySelector('.check-score-fill').style.width = (v.score * 100) + '%';
+            });
+        }
+
+        // Update iteration history
+        function updateIterationHistory() {
+            const container = document.getElementById('iterationHistoryContent');
+            if (shapingIterations.length === 0) {
+                container.innerHTML = 'No iterations yet.';
+                return;
+            }
+
+            container.innerHTML = shapingIterations.map(it => `
+                <div class="iteration-item">
+                    <div class="iteration-header">
+                        <span class="iteration-number">Iteration ${it.iteration_number}</span>
+                        <span class="iteration-stats">${it.checks_passed}/${it.checks_total} passed</span>
+                    </div>
+                    <div class="iteration-checks">
+                        ${(it.verifications || []).map(v => `
+                            <div class="check-dot ${v.passed ? 'passed' : ''}" title="${v.check}: ${v.message}"></div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update shaping status badge
+        function updateShapingStatus(status) {
+            const badge = document.getElementById('shapingStatus');
+            badge.textContent = status;
+            badge.className = 'status-badge ' + status;
+        }
+
+        // Approve spec and continue
+        function approveSpec() {
+            // Hide shaping session, show complete message
+            document.getElementById('shapingSession').style.display = 'none';
+            document.getElementById('shapingComplete').style.display = 'block';
+
+            showAlert('success', 'Specification approved! Ready for task generation.');
+        }
+
+        // ============================================
+        // QUICK SPEC TEMPLATE FUNCTIONS
+        // ============================================
+
+        let currentQuickSpecType = null;
+        let currentQuickSpecTemplate = null;
+        let generatedQuickSpec = null;
+
+        // Template field configurations
+        const QUICK_SPEC_FIELDS = {
+            bug_fix: [
+                { name: 'title', label: 'Bug Title', type: 'text', required: true, placeholder: 'E.g., Login button not responding' },
+                { name: 'reproduction_steps', label: 'Reproduction Steps', type: 'textarea', required: true, placeholder: '1. Go to login page\n2. Enter credentials\n3. Click login button' },
+                { name: 'expected_behavior', label: 'Expected Behavior', type: 'textarea', required: true, placeholder: 'User should be logged in and redirected to dashboard' },
+                { name: 'actual_behavior', label: 'Actual Behavior', type: 'textarea', required: true, placeholder: 'Nothing happens when clicking the button' },
+                { name: 'environment', label: 'Environment', type: 'text', required: false, placeholder: 'E.g., Chrome 120, Windows 11' },
+                { name: 'priority', label: 'Priority', type: 'select', required: false, options: ['Low', 'Medium', 'High', 'Critical'] },
+            ],
+            enhancement: [
+                { name: 'title', label: 'Enhancement Title', type: 'text', required: true, placeholder: 'E.g., Add dark mode support' },
+                { name: 'current_behavior', label: 'Current Behavior', type: 'textarea', required: true, placeholder: 'Currently only light theme is available' },
+                { name: 'desired_behavior', label: 'Desired Behavior', type: 'textarea', required: true, placeholder: 'Users should be able to toggle dark mode' },
+                { name: 'user_benefit', label: 'User Benefit', type: 'textarea', required: true, placeholder: 'Reduces eye strain, improves accessibility' },
+                { name: 'acceptance_criteria', label: 'Acceptance Criteria', type: 'textarea', required: false, placeholder: '- [ ] Dark mode toggle in settings\n- [ ] Theme persists across sessions' },
+                { name: 'technical_notes', label: 'Technical Notes', type: 'textarea', required: false, placeholder: 'Use CSS variables for theming' },
+                { name: 'dependencies', label: 'Dependencies', type: 'text', required: false, placeholder: 'E.g., Design system update needed' },
+            ],
+            refactoring: [
+                { name: 'title', label: 'Refactoring Title', type: 'text', required: true, placeholder: 'E.g., Extract payment logic into service' },
+                { name: 'current_state', label: 'Current State', type: 'textarea', required: true, placeholder: 'Payment logic is scattered across multiple controllers' },
+                { name: 'target_state', label: 'Target State', type: 'textarea', required: true, placeholder: 'Centralized PaymentService with clear interfaces' },
+                { name: 'motivation', label: 'Motivation', type: 'textarea', required: true, placeholder: 'Reduce code duplication, improve testability' },
+                { name: 'risk_assessment', label: 'Risk Assessment', type: 'textarea', required: false, placeholder: 'Low risk - no behavioral changes expected' },
+                { name: 'rollback_plan', label: 'Rollback Plan', type: 'textarea', required: false, placeholder: 'Revert to previous commit if tests fail' },
+                { name: 'affected_tests', label: 'Affected Tests', type: 'textarea', required: false, placeholder: 'tests/payment/*.test.ts' },
+            ],
+            hotfix: [
+                { name: 'title', label: 'Hotfix Title', type: 'text', required: true, placeholder: 'E.g., Fix payment processing failure' },
+                { name: 'issue_description', label: 'Issue Description', type: 'textarea', required: true, placeholder: 'Payments failing with 500 error since deployment' },
+                { name: 'impact', label: 'Impact', type: 'textarea', required: true, placeholder: 'All payment transactions failing - revenue loss' },
+                { name: 'fix_description', label: 'Fix Description', type: 'textarea', required: true, placeholder: 'Revert database migration that broke foreign key' },
+                { name: 'root_cause', label: 'Root Cause (if known)', type: 'textarea', required: false, placeholder: 'Migration script had incorrect column reference' },
+                { name: 'prevention', label: 'Prevention', type: 'textarea', required: false, placeholder: 'Add integration tests for payment flow' },
+            ],
+        };
+
+        const QUICK_SPEC_COLORS = {
+            bug_fix: '#dc3545',
+            enhancement: '#28a745',
+            refactoring: '#fd7e14',
+            hotfix: '#6f42c1',
+        };
+
+        const QUICK_SPEC_NAMES = {
+            bug_fix: 'Bug Fix',
+            enhancement: 'Enhancement',
+            refactoring: 'Refactoring',
+            hotfix: 'Hotfix',
+        };
+
+        // Open quick spec modal
+        async function openQuickSpec(type) {
+            currentQuickSpecType = type;
+
+            // Fetch template from API
+            try {
+                const response = await fetch(`${API_BASE}/quick-specs/templates/${type}`);
+                if (!response.ok) throw new Error('Failed to fetch template');
+                currentQuickSpecTemplate = await response.json();
+            } catch (error) {
+                console.warn('Using local template definition:', error);
+                // Fallback to local definition
+            }
+
+            // Update modal header
+            const color = QUICK_SPEC_COLORS[type];
+            document.getElementById('quickSpecModalHeader').style.background = color;
+            document.getElementById('quickSpecModalTitle').textContent = QUICK_SPEC_NAMES[type];
+            document.getElementById('quickSpecModalDesc').textContent = currentQuickSpecTemplate?.description || `Generate a ${QUICK_SPEC_NAMES[type]} spec`;
+
+            // Build form
+            const fields = QUICK_SPEC_FIELDS[type];
+            const formHtml = fields.map(field => {
+                if (field.type === 'select') {
+                    return `
+                        <div class="form-group">
+                            <label class="form-label">${field.label} ${field.required ? '*' : '<span class="optional">(optional)</span>'}</label>
+                            <select id="qs_${field.name}" class="form-input" ${field.required ? 'required' : ''}>
+                                <option value="">-- Select --</option>
+                                ${field.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                            </select>
+                        </div>
+                    `;
+                } else if (field.type === 'textarea') {
+                    return `
+                        <div class="form-group">
+                            <label class="form-label">${field.label} ${field.required ? '*' : '<span class="optional">(optional)</span>'}</label>
+                            <textarea id="qs_${field.name}" class="form-textarea" placeholder="${field.placeholder}" ${field.required ? 'required' : ''} rows="3"></textarea>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="form-group">
+                            <label class="form-label">${field.label} ${field.required ? '*' : '<span class="optional">(optional)</span>'}</label>
+                            <input type="text" id="qs_${field.name}" class="form-input" placeholder="${field.placeholder}" ${field.required ? 'required' : ''}>
+                        </div>
+                    `;
+                }
+            }).join('');
+
+            document.getElementById('quickSpecModalBody').innerHTML = formHtml;
+            document.getElementById('quickSpecModal').style.display = 'block';
+        }
+
+        // Close quick spec modal
+        function closeQuickSpec() {
+            document.getElementById('quickSpecModal').style.display = 'none';
+            currentQuickSpecType = null;
+            currentQuickSpecTemplate = null;
+        }
+
+        // Generate quick spec
+        async function generateQuickSpec() {
+            const fields = QUICK_SPEC_FIELDS[currentQuickSpecType];
+            const fieldValues = {};
+
+            // Collect field values
+            for (const field of fields) {
+                const el = document.getElementById(`qs_${field.name}`);
+                if (el) {
+                    fieldValues[field.name] = el.value.trim();
+
+                    // Check required fields
+                    if (field.required && !fieldValues[field.name]) {
+                        showAlert('error', `Please fill in: ${field.label}`);
+                        return;
+                    }
+                }
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/quick-specs/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        template_type: currentQuickSpecType,
+                        fields: fieldValues
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to generate spec');
+                }
+
+                const result = await response.json();
+                generatedQuickSpec = result;
+
+                // Close input modal, show result modal
+                closeQuickSpec();
+                document.getElementById('quickSpecResult').textContent = result.content;
+                document.getElementById('quickSpecResultModal').style.display = 'block';
+
+                showAlert('success', 'Spec generated successfully!');
+            } catch (error) {
+                showAlert('error', error.message);
+            }
+        }
+
+        // Close result modal
+        function closeQuickSpecResult() {
+            document.getElementById('quickSpecResultModal').style.display = 'none';
+            generatedQuickSpec = null;
+        }
+
+        // Download quick spec
+        function downloadQuickSpec() {
+            if (!generatedQuickSpec) return;
+
+            const blob = new Blob([generatedQuickSpec.content], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${generatedQuickSpec.type}-${Date.now()}.md`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showAlert('success', 'Downloaded spec file!');
+        }
+
+        // Copy quick spec to clipboard
+        function copyQuickSpec() {
+            if (!generatedQuickSpec) return;
+
+            navigator.clipboard.writeText(generatedQuickSpec.content).then(() => {
+                showAlert('success', 'Copied to clipboard!');
+            }).catch(err => {
+                showAlert('error', 'Failed to copy: ' + err.message);
+            });
         }
 
         // Initialize

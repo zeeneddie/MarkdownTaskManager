@@ -10,7 +10,10 @@ from typing import Any, Dict, List, Literal, Optional
 from datetime import datetime
 
 
-ProviderName = Literal["ollama", "codex", "claude"]
+ProviderName = Literal[
+    "ollama", "codex", "claude",  # Original providers
+    "groq", "gemini", "openai", "anthropic", "qwen"  # Week 90: New providers
+]
 ModelTier = Literal["free", "fast", "balanced", "deep"]
 
 
@@ -53,7 +56,7 @@ class LLMResponse:
     success: bool = True
     error: Optional[str] = None
     raw: Dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
 
 
 class LLMProvider(ABC):

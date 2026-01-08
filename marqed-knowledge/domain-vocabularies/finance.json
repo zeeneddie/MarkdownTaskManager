@@ -1,0 +1,107 @@
+{
+  "domain": "finance",
+  "version": "1.0.0",
+  "compliance_standards": ["PCI-DSS", "SOX", "AML", "KYC", "GDPR"],
+  "terms": {
+    "account": {
+      "definition": "Financial record for customer",
+      "synonyms": ["bank_account", "financial_account"],
+      "code_patterns": ["Account", "account_id", "AccountNumber"],
+      "pii": true
+    },
+    "transaction": {
+      "definition": "Financial operation (debit/credit)",
+      "synonyms": ["transfer", "payment", "movement"],
+      "code_patterns": ["Transaction", "txn", "Transfer"],
+      "pii": true
+    },
+    "payment": {
+      "definition": "Money transfer between parties",
+      "synonyms": ["remittance", "settlement"],
+      "code_patterns": ["Payment", "pay", "Remit"],
+      "pii": true
+    },
+    "credit_card": {
+      "definition": "Payment card with credit line",
+      "synonyms": ["card", "cc", "payment_card"],
+      "code_patterns": ["CreditCard", "CardNumber", "PAN"],
+      "pii": true,
+      "sensitive": true
+    },
+    "customer": {
+      "definition": "Account holder or service user",
+      "synonyms": ["client", "account_holder", "user"],
+      "code_patterns": ["Customer", "client_id", "AccountHolder"],
+      "pii": true
+    },
+    "balance": {
+      "definition": "Current account value",
+      "synonyms": ["funds", "available_amount", "saldo"],
+      "code_patterns": ["Balance", "available_balance", "current_balance"],
+      "pii": true
+    },
+    "interest": {
+      "definition": "Cost of borrowing or earning on deposits",
+      "synonyms": ["rate", "APR", "yield"],
+      "code_patterns": ["Interest", "InterestRate", "APR"],
+      "pii": false
+    },
+    "fraud": {
+      "definition": "Unauthorized financial activity",
+      "synonyms": ["suspicious_activity", "unauthorized"],
+      "code_patterns": ["Fraud", "FraudCheck", "Suspicious"],
+      "pii": false
+    },
+    "verification": {
+      "definition": "Identity or transaction confirmation",
+      "synonyms": ["authentication", "validation", "KYC"],
+      "code_patterns": ["Verify", "Verification", "KYC"],
+      "pii": true
+    },
+    "loan": {
+      "definition": "Borrowed funds with repayment terms",
+      "synonyms": ["credit", "mortgage", "financing"],
+      "code_patterns": ["Loan", "Credit", "Mortgage"],
+      "pii": true
+    }
+  },
+  "abbreviations": {
+    "PAN": "Primary Account Number",
+    "CVV": "Card Verification Value",
+    "IBAN": "International Bank Account Number",
+    "SWIFT": "Society for Worldwide Interbank Financial Telecommunication",
+    "AML": "Anti-Money Laundering",
+    "KYC": "Know Your Customer",
+    "APR": "Annual Percentage Rate",
+    "ACH": "Automated Clearing House"
+  },
+  "compliance_patterns": {
+    "PCI-DSS": {
+      "requirements": [
+        "Credit card data encrypted",
+        "No storage of CVV after authorization",
+        "Secure transmission (TLS 1.2+)",
+        "Access logging for cardholder data"
+      ],
+      "code_indicators": ["encrypt", "mask_pan", "tokenize", "secure_transmission"]
+    },
+    "SOX": {
+      "requirements": [
+        "Financial data integrity controls",
+        "Audit trails for financial transactions",
+        "Segregation of duties",
+        "Change management for financial systems"
+      ],
+      "code_indicators": ["audit", "approval_workflow", "dual_control"]
+    },
+    "AML": {
+      "requirements": [
+        "Transaction monitoring",
+        "Suspicious activity reporting",
+        "Customer due diligence",
+        "Record retention"
+      ],
+      "code_indicators": ["aml_check", "suspicious", "threshold", "reporting"]
+    }
+  }
+}

@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeWiki Dashboard - Repository Documentation</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background-attachment: fixed;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(138, 43, 226, 0.3);
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #8a2be2 0%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header h1::before {
+            content: "📚";
+            -webkit-text-fill-color: initial;
+        }
+
+        .back-link {
+            color: #8a2be2;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .back-link:hover {
+            background: rgba(138, 43, 226, 0.1);
+            border-color: #8a2be2;
+        }
+
+        .project-selector {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .project-selector select {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            background: rgba(255,255,255,0.05);
+            color: #e0e0e0;
+            font-size: 0.9rem;
+            min-width: 200px;
+        }
+
+        .analyze-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: none;
+            background: linear-gradient(135deg, #8a2be2 0%, #6a1bb2 100%);
+            color: white;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(138, 43, 226, 0.2);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border-color: rgba(138, 43, 226, 0.4);
+        }
+
+        .stat-card .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #8a2be2;
+        }
+
+        .stat-card .label {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 0.25rem;
+        }
+
+        /* Main Content Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Module Tree */
+        .module-tree-panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(138, 43, 226, 0.2);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 1rem 1.5rem;
+            background: rgba(138, 43, 226, 0.1);
+            border-bottom: 1px solid rgba(138, 43, 226, 0.2);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .module-tree {
+            padding: 1rem;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .tree-item {
+            padding: 0.5rem;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tree-item:hover {
+            background: rgba(138, 43, 226, 0.1);
+        }
+
+        .tree-item.selected {
+            background: rgba(138, 43, 226, 0.2);
+            border-left: 3px solid #8a2be2;
+        }
+
+        .tree-item .expand-icon {
+            width: 16px;
+            color: #666;
+        }
+
+        .tree-item .module-icon {
+            font-size: 1rem;
+        }
+
+        .tree-item .module-name {
+            flex: 1;
+        }
+
+        .tree-item .file-count {
+            font-size: 0.75rem;
+            background: rgba(138, 43, 226, 0.2);
+            padding: 0.15rem 0.5rem;
+            border-radius: 10px;
+            color: #8a2be2;
+        }
+
+        .tree-children {
+            margin-left: 1.5rem;
+            display: none;
+        }
+
+        .tree-children.expanded {
+            display: block;
+        }
+
+        /* Content Panel */
+        .content-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.05);
+            padding: 0.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(138, 43, 226, 0.2);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: #888;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #e0e0e0;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .tab.active {
+            background: rgba(138, 43, 226, 0.2);
+            color: #8a2be2;
+        }
+
+        /* Diagram Panel */
+        .diagram-panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(138, 43, 226, 0.2);
+            min-height: 400px;
+        }
+
+        .diagram-container {
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 350px;
+        }
+
+        .diagram-container svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Mermaid styling */
+        .mermaid {
+            background: transparent;
+        }
+
+        /* Module Details */
+        .module-details {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(138, 43, 226, 0.2);
+            padding: 1.5rem;
+            display: none;
+        }
+
+        .module-details.visible {
+            display: block;
+        }
+
+        .module-details h3 {
+            color: #8a2be2;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .detail-item {
+            background: rgba(0,0,0,0.2);
+            padding: 0.75rem;
+            border-radius: 8px;
+        }
+
+        .detail-item .label {
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .detail-item .value {
+            font-size: 1.2rem;
+            color: #8a2be2;
+            font-weight: 600;
+        }
+
+        /* Documentation Panel */
+        .docs-panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(138, 43, 226, 0.2);
+            display: none;
+        }
+
+        .docs-panel.visible {
+            display: block;
+        }
+
+        .docs-content {
+            padding: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .docs-content h1, .docs-content h2, .docs-content h3 {
+            color: #8a2be2;
+            margin: 1rem 0 0.5rem;
+        }
+
+        .docs-content pre {
+            background: rgba(0,0,0,0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        .docs-content code {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+        }
+
+        /* Agent Context Panel */
+        .agent-context-panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(138, 43, 226, 0.2);
+            display: none;
+        }
+
+        .agent-context-panel.visible {
+            display: block;
+        }
+
+        .agent-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            padding: 1.5rem;
+        }
+
+        .agent-card {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid rgba(138, 43, 226, 0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .agent-card:hover {
+            border-color: rgba(138, 43, 226, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .agent-card .agent-name {
+            font-weight: 600;
+            color: #8a2be2;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .agent-card .agent-summary {
+            font-size: 0.85rem;
+            color: #888;
+            line-height: 1.5;
+        }
+
+        /* Loading state */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(138, 43, 226, 0.2);
+            border-top-color: #8a2be2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Status badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-badge.completed {
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+        }
+
+        .status-badge.pending {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+        }
+
+        .status-badge.failed {
+            background: rgba(255, 82, 82, 0.1);
+            color: #ff5252;
+        }
+
+        .status-badge.scanning {
+            background: rgba(0, 212, 255, 0.1);
+            color: #00d4ff;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            color: #888;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>CodeWiki Dashboard</h1>
+            <div class="project-selector">
+                <select id="projectSelect">
+                    <option value="">Select Project...</option>
+                </select>
+                <button class="analyze-btn" id="analyzeBtn" disabled>
+                    Analyze Repository
+                </button>
+            </div>
+            <a href="index.html" class="back-link">
+                <span>&larr;</span> Hub Portal
+            </a>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="icon">📁</div>
+                <div class="value" id="totalModules">-</div>
+                <div class="label">Modules</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">📄</div>
+                <div class="value" id="totalFiles">-</div>
+                <div class="label">Files</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">⚡</div>
+                <div class="value" id="totalFunctions">-</div>
+                <div class="label">Functions</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🏛️</div>
+                <div class="value" id="totalClasses">-</div>
+                <div class="label">Classes</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🔄</div>
+                <div class="value" id="analysisStatus">-</div>
+                <div class="label">Status</div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Module Tree -->
+            <div class="module-tree-panel">
+                <div class="panel-header">
+                    <span>📂</span> Module Tree
+                </div>
+                <div class="module-tree" id="moduleTree">
+                    <div class="empty-state">
+                        <div class="icon">📚</div>
+                        <h3>No Analysis</h3>
+                        <p>Select a project and run analysis</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content Panel -->
+            <div class="content-panel">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab active" data-tab="diagram">Architecture Diagram</button>
+                    <button class="tab" data-tab="docs">Documentation</button>
+                    <button class="tab" data-tab="agents">Agent Contexts</button>
+                </div>
+
+                <!-- Diagram Panel -->
+                <div class="diagram-panel" id="diagramPanel">
+                    <div class="panel-header">
+                        <span>🗺️</span> Architecture Diagram
+                        <select id="diagramType" style="margin-left: auto; padding: 0.25rem 0.5rem; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid rgba(138, 43, 226, 0.3); color: #e0e0e0;">
+                            <option value="architecture">Architecture</option>
+                            <option value="data_flow">Data Flow</option>
+                            <option value="dependency">Dependencies</option>
+                            <option value="sequence">Sequence</option>
+                        </select>
+                    </div>
+                    <div class="diagram-container" id="diagramContainer">
+                        <div class="empty-state">
+                            <div class="icon">🗺️</div>
+                            <h3>No Diagram</h3>
+                            <p>Run analysis to generate diagrams</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Module Details -->
+                <div class="module-details" id="moduleDetails">
+                    <h3><span>📦</span> <span id="moduleName">Module Details</span></h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="label">Files</div>
+                            <div class="value" id="moduleFiles">0</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="label">Functions</div>
+                            <div class="value" id="moduleFunctions">0</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="label">Classes</div>
+                            <div class="value" id="moduleClasses">0</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="label">Lines</div>
+                            <div class="value" id="moduleLines">0</div>
+                        </div>
+                    </div>
+                    <div id="moduleDescription" style="color: #888; line-height: 1.6;"></div>
+                </div>
+
+                <!-- Documentation Panel -->
+                <div class="docs-panel" id="docsPanel">
+                    <div class="panel-header">
+                        <span>📄</span> Generated Documentation
+                    </div>
+                    <div class="docs-content" id="docsContent">
+                        <div class="empty-state">
+                            <div class="icon">📄</div>
+                            <h3>No Documentation</h3>
+                            <p>Run analysis to generate documentation</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Agent Context Panel -->
+                <div class="agent-context-panel" id="agentsPanel">
+                    <div class="panel-header">
+                        <span>🤖</span> Agent Contexts
+                    </div>
+                    <div class="agent-cards" id="agentCards">
+                        <div class="agent-card" data-agent="felix">
+                            <div class="agent-name">🏗️ Felix (Architect)</div>
+                            <div class="agent-summary" id="felixSummary">Architecture and system design context</div>
+                        </div>
+                        <div class="agent-card" data-agent="miguel">
+                            <div class="agent-name">🔄 Miguel (Migration)</div>
+                            <div class="agent-summary" id="miguelSummary">Dependency and migration context</div>
+                        </div>
+                        <div class="agent-card" data-agent="quinn">
+                            <div class="agent-name">🔍 Quinn (Quality)</div>
+                            <div class="agent-summary" id="quinnSummary">Complexity and quality context</div>
+                        </div>
+                        <div class="agent-card" data-agent="diana">
+                            <div class="agent-name">📝 Diana (Docs)</div>
+                            <div class="agent-summary" id="dianaSummary">Documentation status context</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#8a2be2',
+                primaryTextColor: '#e0e0e0',
+                primaryBorderColor: '#6a1bb2',
+                lineColor: '#888',
+                secondaryColor: '#1a1a2e',
+                tertiaryColor: '#16213e'
+            }
+        });
+
+        const API_BASE = '/api/codewiki';
+        let currentProjectId = null;
+        let currentAnalysis = null;
+
+        // Load projects
+        async function loadProjects() {
+            try {
+                const response = await fetch('/api/project-registration/projects');
+                const data = await response.json();
+
+                const select = document.getElementById('projectSelect');
+                select.innerHTML = '<option value="">Select Project...</option>';
+
+                (data.projects || data || []).forEach(project => {
+                    const option = document.createElement('option');
+                    option.value = project.id;
+                    option.textContent = project.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Failed to load projects:', error);
+            }
+        }
+
+        // Load analysis for project
+        async function loadAnalysis(projectId) {
+            try {
+                const response = await fetch(`${API_BASE}/${projectId}/status`);
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        // No analysis yet
+                        resetUI();
+                        return;
+                    }
+                    throw new Error('Failed to load analysis');
+                }
+
+                currentAnalysis = await response.json();
+                updateStats(currentAnalysis);
+
+                if (currentAnalysis.status === 'completed') {
+                    await loadModules(projectId);
+                    await loadDiagram(projectId);
+                    await loadDocs(projectId);
+                    await loadAgentContexts(projectId);
+                }
+            } catch (error) {
+                console.error('Failed to load analysis:', error);
+                resetUI();
+            }
+        }
+
+        // Update stats display
+        function updateStats(analysis) {
+            document.getElementById('totalModules').textContent = analysis.total_modules || 0;
+            document.getElementById('totalFiles').textContent = analysis.total_files || 0;
+            document.getElementById('totalFunctions').textContent = analysis.total_functions || 0;
+            document.getElementById('totalClasses').textContent = analysis.total_classes || 0;
+
+            const statusEl = document.getElementById('analysisStatus');
+            statusEl.innerHTML = `<span class="status-badge ${analysis.status}">${analysis.status}</span>`;
+        }
+
+        // Load modules tree
+        async function loadModules(projectId) {
+            try {
+                const response = await fetch(`${API_BASE}/${projectId}/modules?format=list`);
+                const data = await response.json();
+
+                renderModuleTree(data.modules || []);
+            } catch (error) {
+                console.error('Failed to load modules:', error);
+            }
+        }
+
+        // Render module tree
+        function renderModuleTree(modules) {
+            const container = document.getElementById('moduleTree');
+
+            if (!modules || modules.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📚</div>
+                        <h3>No Modules</h3>
+                        <p>No modules found in analysis</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Build tree from flat list
+            const topLevel = modules.filter(m => m.level === 0 || !m.parent_module_id);
+
+            container.innerHTML = topLevel.map(module => renderTreeItem(module, modules)).join('');
+
+            // Add click handlers
+            container.querySelectorAll('.tree-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const moduleId = item.dataset.moduleId;
+                    const moduleName = item.dataset.moduleName;
+
+                    // Toggle selection
+                    container.querySelectorAll('.tree-item').forEach(i => i.classList.remove('selected'));
+                    item.classList.add('selected');
+
+                    // Toggle children
+                    const children = item.nextElementSibling;
+                    if (children && children.classList.contains('tree-children')) {
+                        children.classList.toggle('expanded');
+                        const icon = item.querySelector('.expand-icon');
+                        if (icon) {
+                            icon.textContent = children.classList.contains('expanded') ? '▼' : '▶';
+                        }
+                    }
+
+                    // Show module details
+                    showModuleDetails(modules.find(m => m.id == moduleId) || modules.find(m => m.name === moduleName));
+                });
+            });
+        }
+
+        function renderTreeItem(module, allModules) {
+            const children = allModules.filter(m => m.parent_module_id === module.id);
+            const hasChildren = children.length > 0;
+
+            return `
+                <div class="tree-item" data-module-id="${module.id}" data-module-name="${module.name}">
+                    <span class="expand-icon">${hasChildren ? '▶' : ''}</span>
+                    <span class="module-icon">📁</span>
+                    <span class="module-name">${module.name}</span>
+                    <span class="file-count">${module.file_count || 0}</span>
+                </div>
+                ${hasChildren ? `
+                    <div class="tree-children">
+                        ${children.map(child => renderTreeItem(child, allModules)).join('')}
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        // Show module details
+        function showModuleDetails(module) {
+            if (!module) return;
+
+            const panel = document.getElementById('moduleDetails');
+            panel.classList.add('visible');
+
+            document.getElementById('moduleName').textContent = module.name;
+            document.getElementById('moduleFiles').textContent = module.file_count || 0;
+            document.getElementById('moduleFunctions').textContent = module.function_count || 0;
+            document.getElementById('moduleClasses').textContent = module.class_count || 0;
+            document.getElementById('moduleLines').textContent = module.line_count || 0;
+            document.getElementById('moduleDescription').textContent = module.description || module.purpose || 'No description available';
+        }
+
+        // Load diagram
+        async function loadDiagram(projectId, type = 'architecture') {
+            try {
+                const response = await fetch(`${API_BASE}/${projectId}/diagram?type=${type}`);
+                const data = await response.json();
+
+                const container = document.getElementById('diagramContainer');
+
+                if (data.mermaid_code) {
+                    container.innerHTML = `<div class="mermaid">${data.mermaid_code}</div>`;
+                    await mermaid.run();
+                } else {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">🗺️</div>
+                            <h3>No Diagram</h3>
+                            <p>No ${type} diagram available</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Failed to load diagram:', error);
+            }
+        }
+
+        // Load documentation
+        async function loadDocs(projectId) {
+            try {
+                const response = await fetch(`${API_BASE}/${projectId}/docs`);
+                const data = await response.json();
+
+                const container = document.getElementById('docsContent');
+
+                if (data.overview) {
+                    // Simple markdown rendering
+                    container.innerHTML = renderMarkdown(data.overview);
+                } else {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">📄</div>
+                            <h3>No Documentation</h3>
+                            <p>No documentation generated</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Failed to load docs:', error);
+            }
+        }
+
+        // Simple markdown renderer
+        function renderMarkdown(md) {
+            return md
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+                .replace(/\*(.*)\*/gim, '<em>$1</em>')
+                .replace(/```([^`]+)```/gim, '<pre><code>$1</code></pre>')
+                .replace(/`([^`]+)`/gim, '<code>$1</code>')
+                .replace(/- (.*)/gim, '<li>$1</li>')
+                .replace(/\n/gim, '<br>');
+        }
+
+        // Load agent contexts
+        async function loadAgentContexts(projectId) {
+            const agents = ['felix', 'miguel', 'quinn', 'diana'];
+
+            for (const agent of agents) {
+                try {
+                    const response = await fetch(`${API_BASE}/${projectId}/agent-context/${agent}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        const summaryEl = document.getElementById(`${agent}Summary`);
+                        if (summaryEl) {
+                            summaryEl.textContent = data.context_summary || 'Context available';
+                        }
+                    }
+                } catch (error) {
+                    console.log(`No context for ${agent}`);
+                }
+            }
+        }
+
+        // Start analysis
+        async function startAnalysis() {
+            if (!currentProjectId) return;
+
+            const btn = document.getElementById('analyzeBtn');
+            btn.disabled = true;
+            btn.textContent = 'Analyzing...';
+
+            try {
+                // Get project details for repo path
+                const projectResponse = await fetch(`/api/project-registration/projects/${currentProjectId}`);
+                const project = await projectResponse.json();
+
+                const repoPath = project.repository_path || `/home/eddie/Projects/${project.name}`;
+
+                const response = await fetch(`${API_BASE}/analyze/${currentProjectId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        repository_path: repoPath,
+                        branch: 'main'
+                    })
+                });
+
+                if (!response.ok) throw new Error('Analysis failed to start');
+
+                const data = await response.json();
+
+                // Poll for status
+                pollAnalysisStatus(currentProjectId);
+            } catch (error) {
+                console.error('Failed to start analysis:', error);
+                alert('Failed to start analysis: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Analyze Repository';
+            }
+        }
+
+        // Poll analysis status
+        async function pollAnalysisStatus(projectId) {
+            const poll = async () => {
+                try {
+                    const response = await fetch(`${API_BASE}/${projectId}/status`);
+                    if (!response.ok) return;
+
+                    const data = await response.json();
+                    updateStats(data);
+
+                    if (data.status === 'completed') {
+                        await loadAnalysis(projectId);
+                    } else if (data.status !== 'failed') {
+                        setTimeout(poll, 2000);
+                    }
+                } catch (error) {
+                    console.error('Poll error:', error);
+                }
+            };
+
+            poll();
+        }
+
+        // Reset UI
+        function resetUI() {
+            document.getElementById('totalModules').textContent = '-';
+            document.getElementById('totalFiles').textContent = '-';
+            document.getElementById('totalFunctions').textContent = '-';
+            document.getElementById('totalClasses').textContent = '-';
+            document.getElementById('analysisStatus').textContent = '-';
+
+            document.getElementById('moduleTree').innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">📚</div>
+                    <h3>No Analysis</h3>
+                    <p>Select a project and run analysis</p>
+                </div>
+            `;
+
+            document.getElementById('diagramContainer').innerHTML = `
+                <div class="empty-state">
+                    <div class="icon">🗺️</div>
+                    <h3>No Diagram</h3>
+                    <p>Run analysis to generate diagrams</p>
+                </div>
+            `;
+
+            document.getElementById('moduleDetails').classList.remove('visible');
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                const tabName = tab.dataset.tab;
+                document.getElementById('diagramPanel').style.display = tabName === 'diagram' ? 'block' : 'none';
+                document.getElementById('docsPanel').classList.toggle('visible', tabName === 'docs');
+                document.getElementById('agentsPanel').classList.toggle('visible', tabName === 'agents');
+            });
+        });
+
+        // Event listeners
+        document.getElementById('projectSelect').addEventListener('change', (e) => {
+            currentProjectId = e.target.value;
+            document.getElementById('analyzeBtn').disabled = !currentProjectId;
+
+            if (currentProjectId) {
+                loadAnalysis(currentProjectId);
+            } else {
+                resetUI();
+            }
+        });
+
+        document.getElementById('analyzeBtn').addEventListener('click', startAnalysis);
+
+        document.getElementById('diagramType').addEventListener('change', (e) => {
+            if (currentProjectId) {
+                loadDiagram(currentProjectId, e.target.value);
+            }
+        });
+
+        // Initialize
+        loadProjects();
+    </script>
+</body>
+</html>

@@ -50,7 +50,10 @@ async def get_item_hierarchy(db: AsyncSession, item_id: str) -> dict:
 
 async def create_item(db: AsyncSession, item_data: dict) -> Item:
     """Create a new item"""
-    item = Item(**item_data)
+    # Filter out keys that aren't valid Item model columns
+    valid_columns = {c.name for c in Item.__table__.columns}
+    filtered_data = {k: v for k, v in item_data.items() if k in valid_columns}
+    item = Item(**filtered_data)
     db.add(item)
     await db.commit()
     await db.refresh(item)
@@ -71,8 +74,11 @@ async def update_item(db: AsyncSession, item_id: str, update_data: dict) -> Opti
     old_status = item.status
     old_parent_id = item.parent_id
 
+    # Filter out keys that aren't valid Item model columns
+    valid_columns = {c.name for c in Item.__table__.columns}
     for key, value in update_data.items():
-        setattr(item, key, value)
+        if key in valid_columns:
+            setattr(item, key, value)
 
     item.updated_at = datetime.utcnow()
 
@@ -177,9 +183,17 @@ async def get_stories(db: AsyncSession, feature_id: Optional[str] = None, sprint
 
     if sprint is not None:
         if sprint == "no-sprint":
-            query = query.where(Item.sprint.is_(None))
+            query = query.where(Item.sprint_id.is_(None))
         else:
-            query = query.where(Item.sprint == sprint)
+            # sprint is a name, need to look up sprint_id
+            from app.models.sprint import Sprint
+            sprint_result = await db.execute(select(Sprint).where(Sprint.name == sprint))
+            sprint_obj = sprint_result.scalar_one_or_none()
+            if sprint_obj:
+                query = query.where(Item.sprint_id == sprint_obj.id)
+            else:
+                # Sprint not found, return empty
+                return []
 
     query = query.order_by(Item.id)
     result = await db.execute(query)

@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Requirements Browser - rmtoo Integration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background-attachment: fixed;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(138, 43, 226, 0.3);
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #8a2be2 0%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header h1::before {
+            content: "📋";
+            -webkit-text-fill-color: initial;
+        }
+
+        .back-link {
+            color: #8a2be2;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .back-link:hover {
+            background: rgba(138, 43, 226, 0.1);
+            border-color: #8a2be2;
+        }
+
+        .project-selector {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .project-selector select {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            background: rgba(255,255,255,0.05);
+            color: #e0e0e0;
+            font-size: 0.9rem;
+            min-width: 200px;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: none;
+            background: linear-gradient(135deg, #8a2be2 0%, #6a1bb2 100%);
+            color: white;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .action-btn.secondary {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(138, 43, 226, 0.3);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(138, 43, 226, 0.2);
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border-color: rgba(138, 43, 226, 0.4);
+        }
+
+        .stat-card .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #8a2be2;
+        }
+
+        .stat-card .label {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 0.25rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.05);
+            padding: 0.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(138, 43, 226, 0.2);
+            margin-bottom: 2rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            color: #888;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            color: #e0e0e0;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .tab.active {
+            background: rgba(138, 43, 226, 0.2);
+            color: #8a2be2;
+        }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Filter Panel */
+        .filter-panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(138, 43, 226, 0.2);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 1rem 1.5rem;
+            background: rgba(138, 43, 226, 0.1);
+            border-bottom: 1px solid rgba(138, 43, 226, 0.2);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-content {
+            padding: 1rem;
+        }
+
+        .filter-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            background: rgba(0,0,0,0.2);
+            color: #e0e0e0;
+            font-size: 0.9rem;
+        }
+
+        .filter-group .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+        }
+
+        .filter-group .checkbox-item input[type="checkbox"] {
+            width: auto;
+        }
+
+        /* Requirements List */
+        .requirements-panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(138, 43, 226, 0.2);
+        }
+
+        .requirements-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .requirement-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(138, 43, 226, 0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .requirement-item:hover {
+            background: rgba(138, 43, 226, 0.1);
+        }
+
+        .requirement-item.selected {
+            background: rgba(138, 43, 226, 0.2);
+            border-left: 3px solid #8a2be2;
+        }
+
+        .requirement-item .req-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .requirement-item .req-name {
+            font-weight: 600;
+            color: #8a2be2;
+        }
+
+        .requirement-item .req-category {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            background: rgba(138, 43, 226, 0.2);
+            color: #a855f7;
+        }
+
+        .requirement-item .req-description {
+            font-size: 0.9rem;
+            color: #888;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .requirement-item .req-meta {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        /* Status badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-badge.done {
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+        }
+
+        .status-badge.approved {
+            background: rgba(0, 212, 255, 0.1);
+            color: #00d4ff;
+        }
+
+        .status-badge.not-done {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+        }
+
+        .status-badge.rejected {
+            background: rgba(255, 82, 82, 0.1);
+            color: #ff5252;
+        }
+
+        /* Detail Panel */
+        .detail-panel {
+            display: none;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(138, 43, 226, 0.2);
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .detail-panel.visible {
+            display: block;
+        }
+
+        .detail-panel h3 {
+            color: #8a2be2;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .detail-item {
+            background: rgba(0,0,0,0.2);
+            padding: 0.75rem;
+            border-radius: 8px;
+        }
+
+        .detail-item .label {
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .detail-item .value {
+            font-size: 1.1rem;
+            color: #8a2be2;
+            font-weight: 600;
+        }
+
+        .detail-description {
+            background: rgba(0,0,0,0.2);
+            padding: 1rem;
+            border-radius: 8px;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* Traceability Matrix */
+        .matrix-panel {
+            display: none;
+        }
+
+        .matrix-panel.visible {
+            display: block;
+        }
+
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .matrix-table th,
+        .matrix-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(138, 43, 226, 0.1);
+        }
+
+        .matrix-table th {
+            background: rgba(138, 43, 226, 0.1);
+            color: #8a2be2;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .matrix-table tr:hover {
+            background: rgba(138, 43, 226, 0.05);
+        }
+
+        .coverage-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.75rem;
+        }
+
+        .coverage-badge.covered {
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+        }
+
+        .coverage-badge.uncovered {
+            background: rgba(255, 82, 82, 0.1);
+            color: #ff5252;
+        }
+
+        /* Export Panel */
+        .export-panel {
+            display: none;
+        }
+
+        .export-panel.visible {
+            display: block;
+        }
+
+        .export-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .export-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(138, 43, 226, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .export-card:hover {
+            border-color: #8a2be2;
+            transform: translateY(-2px);
+        }
+
+        .export-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .export-card .title {
+            font-weight: 600;
+            color: #8a2be2;
+            margin-bottom: 0.25rem;
+        }
+
+        .export-card .desc {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* Loading/Empty states */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(138, 43, 226, 0.2);
+            border-top-color: #8a2be2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            color: #888;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            background: rgba(138, 43, 226, 0.9);
+            color: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 2000;
+        }
+
+        .toast.visible {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.error {
+            background: rgba(255, 82, 82, 0.9);
+        }
+
+        .toast.success {
+            background: rgba(0, 200, 100, 0.9);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>Requirements Browser</h1>
+            <div class="project-selector">
+                <select id="projectSelect">
+                    <option value="">Select Project...</option>
+                </select>
+                <button class="action-btn" id="initTopicsBtn" disabled>
+                    Initialize Topics
+                </button>
+            </div>
+            <a href="index.html" class="back-link">
+                <span>&larr;</span> Hub Portal
+            </a>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="icon">📋</div>
+                <div class="value" id="totalRequirements">-</div>
+                <div class="label">Total Requirements</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">📊</div>
+                <div class="value" id="byCategory">-</div>
+                <div class="label">Categories</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">✅</div>
+                <div class="value" id="validatedCount">-</div>
+                <div class="label">Validated</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">📈</div>
+                <div class="value" id="validationPct">-</div>
+                <div class="label">Validation %</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🔗</div>
+                <div class="value" id="traceLinks">-</div>
+                <div class="label">Trace Links</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🎯</div>
+                <div class="value" id="avgConfidence">-</div>
+                <div class="label">Avg Confidence</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="browse">Browse Requirements</button>
+            <button class="tab" data-tab="matrix">Traceability Matrix</button>
+            <button class="tab" data-tab="export">Export & Sync</button>
+        </div>
+
+        <!-- Browse Tab -->
+        <div class="browse-panel" id="browsePanel">
+            <div class="main-grid">
+                <!-- Filters -->
+                <div class="filter-panel">
+                    <div class="panel-header">
+                        <span>🔍</span> Filters
+                    </div>
+                    <div class="filter-content">
+                        <div class="filter-group">
+                            <label>Category</label>
+                            <select id="filterCategory">
+                                <option value="">All Categories</option>
+                                <option value="BR">Business Rule (BR)</option>
+                                <option value="FR">Functional (FR)</option>
+                                <option value="NFR">Non-Functional (NFR)</option>
+                                <option value="TR">Technical (TR)</option>
+                                <option value="CMP">Compliance (CMP)</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Status</label>
+                            <select id="filterStatus">
+                                <option value="">All Statuses</option>
+                                <option value="not done">Not Done</option>
+                                <option value="done">Done</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Validation</label>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="filterValidated">
+                                <label for="filterValidated">Validated Only</label>
+                            </div>
+                        </div>
+                        <div class="filter-group">
+                            <label>Search</label>
+                            <input type="text" id="filterSearch" placeholder="Search requirements...">
+                        </div>
+                        <button class="action-btn" style="width: 100%;" onclick="applyFilters()">
+                            Apply Filters
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Requirements List -->
+                <div class="requirements-panel">
+                    <div class="panel-header">
+                        <span>📋</span> Requirements
+                        <span id="reqCount" style="margin-left: auto; font-size: 0.85rem; color: #888;"></span>
+                    </div>
+                    <div class="requirements-list" id="requirementsList">
+                        <div class="empty-state">
+                            <div class="icon">📋</div>
+                            <h3>No Requirements</h3>
+                            <p>Select a project to view requirements</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail Panel -->
+            <div class="detail-panel" id="detailPanel">
+                <h3><span>📄</span> <span id="detailName">Requirement Details</span></h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="label">Category</div>
+                        <div class="value" id="detailCategory">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">Status</div>
+                        <div class="value" id="detailStatus">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">Priority</div>
+                        <div class="value" id="detailPriority">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">Effort (FP)</div>
+                        <div class="value" id="detailEffort">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">Confidence</div>
+                        <div class="value" id="detailConfidence">-</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">Validated</div>
+                        <div class="value" id="detailValidated">-</div>
+                    </div>
+                </div>
+                <div class="detail-description" id="detailDescription">
+                    Select a requirement to view details
+                </div>
+                <div id="detailRationale" style="display: none;">
+                    <strong>Rationale:</strong>
+                    <div class="detail-description" id="detailRationaleText"></div>
+                </div>
+                <div class="detail-actions">
+                    <button class="action-btn" onclick="validateRequirement()">
+                        ✅ Validate
+                    </button>
+                    <button class="action-btn secondary" onclick="addTraceLink()">
+                        🔗 Add Trace Link
+                    </button>
+                    <button class="action-btn secondary" onclick="viewRmtooContent()">
+                        📝 View rmtoo Format
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Traceability Matrix Tab -->
+        <div class="matrix-panel" id="matrixPanel">
+            <div class="requirements-panel">
+                <div class="panel-header">
+                    <span>🔗</span> Traceability Matrix
+                    <span id="coveragePct" style="margin-left: auto; font-size: 0.85rem;"></span>
+                </div>
+                <div style="padding: 1rem; overflow-x: auto;">
+                    <table class="matrix-table" id="matrixTable">
+                        <thead>
+                            <tr>
+                                <th>Requirement</th>
+                                <th>Category</th>
+                                <th>Linked Entities</th>
+                                <th>Coverage</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matrixBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Tab -->
+        <div class="export-panel" id="exportPanel">
+            <div class="export-options">
+                <div class="export-card" onclick="exportDocumentation('html')">
+                    <div class="icon">🌐</div>
+                    <div class="title">HTML Documentation</div>
+                    <div class="desc">Export as browsable HTML pages</div>
+                </div>
+                <div class="export-card" onclick="exportDocumentation('markdown')">
+                    <div class="icon">📝</div>
+                    <div class="title">Markdown</div>
+                    <div class="desc">Export as Markdown documentation</div>
+                </div>
+                <div class="export-card" onclick="exportDocumentation('graph')">
+                    <div class="icon">📊</div>
+                    <div class="title">Dependency Graph</div>
+                    <div class="desc">Export as DOT/SVG graph</div>
+                </div>
+                <div class="export-card" onclick="exportDocumentation('pdf')">
+                    <div class="icon">📄</div>
+                    <div class="title">PDF (LaTeX)</div>
+                    <div class="desc">Export as PDF (requires LaTeX)</div>
+                </div>
+            </div>
+
+            <div class="requirements-panel" style="margin-top: 2rem;">
+                <div class="panel-header">
+                    <span>🔄</span> Sync Operations
+                </div>
+                <div style="padding: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <button class="action-btn" onclick="syncDbToFiles()">
+                        📤 Export DB → rmtoo Files
+                    </button>
+                    <button class="action-btn secondary" onclick="syncFilesToDb()">
+                        📥 Import rmtoo Files → DB
+                    </button>
+                    <button class="action-btn secondary" onclick="showSyncHistory()">
+                        📋 Sync History
+                    </button>
+                </div>
+            </div>
+
+            <div class="requirements-panel" style="margin-top: 2rem;">
+                <div class="panel-header">
+                    <span>📥</span> Import from Extraction
+                </div>
+                <div style="padding: 1.5rem;">
+                    <div class="filter-group">
+                        <label>Extraction Session ID</label>
+                        <input type="text" id="extractionSessionId" placeholder="UUID of extraction session">
+                    </div>
+                    <div class="filter-group">
+                        <label>Minimum Confidence</label>
+                        <input type="number" id="minConfidence" value="0.5" min="0" max="1" step="0.1">
+                    </div>
+                    <button class="action-btn" onclick="importFromExtraction()">
+                        📥 Import Requirements
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_BASE = '/api/requirements';
+        let currentProjectId = null;
+        let currentRequirements = [];
+        let selectedRequirement = null;
+
+        // Load projects on page load
+        async function loadProjects() {
+            try {
+                const response = await fetch(`${API_BASE}/projects`);
+                const data = await response.json();
+
+                const select = document.getElementById('projectSelect');
+                select.innerHTML = '<option value="">Select Project...</option>';
+
+                (data.projects || []).forEach(project => {
+                    const option = document.createElement('option');
+                    option.value = project.id;
+                    option.textContent = project.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Failed to load projects:', error);
+                showToast('Failed to load projects', 'error');
+            }
+        }
+
+        // Load statistics
+        async function loadStatistics(projectId) {
+            try {
+                const response = await fetch(`${API_BASE}/projects/${projectId}/statistics`);
+                if (!response.ok) {
+                    resetStats();
+                    return;
+                }
+
+                const stats = await response.json();
+
+                document.getElementById('totalRequirements').textContent = stats.total_requirements || 0;
+                document.getElementById('byCategory').textContent = Object.keys(stats.by_category || {}).length;
+                document.getElementById('validatedCount').textContent = stats.validated_count || 0;
+                document.getElementById('validationPct').textContent =
+                    (stats.validation_percentage || 0).toFixed(1) + '%';
+                document.getElementById('traceLinks').textContent = stats.traceability_links || 0;
+                document.getElementById('avgConfidence').textContent =
+                    ((stats.average_confidence || 0) * 100).toFixed(0) + '%';
+            } catch (error) {
+                console.error('Failed to load statistics:', error);
+                resetStats();
+            }
+        }
+
+        function resetStats() {
+            ['totalRequirements', 'byCategory', 'validatedCount', 'validationPct', 'traceLinks', 'avgConfidence']
+                .forEach(id => document.getElementById(id).textContent = '-');
+        }
+
+        // Load requirements
+        async function loadRequirements(projectId, filters = {}) {
+            const list = document.getElementById('requirementsList');
+            list.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            try {
+                let url = `${API_BASE}/projects/${projectId}`;
+                const params = new URLSearchParams();
+
+                if (filters.category) params.append('category', filters.category);
+                if (filters.status) params.append('status', filters.status);
+                if (filters.validated_only) params.append('validated_only', 'true');
+
+                if (params.toString()) url += '?' + params.toString();
+
+                const response = await fetch(url);
+                if (!response.ok) {
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">📋</div>
+                            <h3>No Requirements</h3>
+                            <p>No requirements found for this project</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                currentRequirements = await response.json();
+
+                // Apply local search filter
+                let filtered = currentRequirements;
+                if (filters.search) {
+                    const searchLower = filters.search.toLowerCase();
+                    filtered = filtered.filter(r =>
+                        r.name.toLowerCase().includes(searchLower) ||
+                        r.description.toLowerCase().includes(searchLower)
+                    );
+                }
+
+                renderRequirements(filtered);
+                document.getElementById('reqCount').textContent = `${filtered.length} requirements`;
+
+            } catch (error) {
+                console.error('Failed to load requirements:', error);
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">❌</div>
+                        <h3>Error</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Render requirements list
+        function renderRequirements(requirements) {
+            const list = document.getElementById('requirementsList');
+
+            if (!requirements || requirements.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📋</div>
+                        <h3>No Requirements</h3>
+                        <p>No requirements match the current filters</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = requirements.map(req => `
+                <div class="requirement-item" data-id="${req.id}" onclick="selectRequirement('${req.id}')">
+                    <div class="req-header">
+                        <span class="req-name">${req.name}</span>
+                        <span class="req-category">${req.category}</span>
+                    </div>
+                    <div class="req-description">${req.description}</div>
+                    <div class="req-meta">
+                        <span class="status-badge ${req.status.replace(' ', '-')}">${req.status}</span>
+                        ${req.validated ? '<span style="color: #00ff88;">✓ Validated</span>' : ''}
+                        ${req.confidence ? `<span>Confidence: ${(req.confidence * 100).toFixed(0)}%</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Select requirement
+        function selectRequirement(id) {
+            const req = currentRequirements.find(r => r.id === id);
+            if (!req) return;
+
+            selectedRequirement = req;
+
+            // Update UI selection
+            document.querySelectorAll('.requirement-item').forEach(el => {
+                el.classList.toggle('selected', el.dataset.id === id);
+            });
+
+            // Show detail panel
+            const panel = document.getElementById('detailPanel');
+            panel.classList.add('visible');
+
+            document.getElementById('detailName').textContent = req.name;
+            document.getElementById('detailCategory').textContent = req.category;
+            document.getElementById('detailStatus').textContent = req.status;
+            document.getElementById('detailPriority').textContent = req.priority || '-';
+            document.getElementById('detailEffort').textContent = req.effort_estimation || '-';
+            document.getElementById('detailConfidence').textContent =
+                req.confidence ? (req.confidence * 100).toFixed(0) + '%' : '-';
+            document.getElementById('detailValidated').textContent =
+                req.validated ? `Yes (by ${req.validated_by || 'unknown'})` : 'No';
+            document.getElementById('detailDescription').textContent = req.description;
+
+            if (req.rationale) {
+                document.getElementById('detailRationale').style.display = 'block';
+                document.getElementById('detailRationaleText').textContent = req.rationale;
+            } else {
+                document.getElementById('detailRationale').style.display = 'none';
+            }
+        }
+
+        // Apply filters
+        function applyFilters() {
+            if (!currentProjectId) return;
+
+            const filters = {
+                category: document.getElementById('filterCategory').value,
+                status: document.getElementById('filterStatus').value,
+                validated_only: document.getElementById('filterValidated').checked,
+                search: document.getElementById('filterSearch').value
+            };
+
+            loadRequirements(currentProjectId, filters);
+        }
+
+        // Validate requirement
+        async function validateRequirement() {
+            if (!selectedRequirement) return;
+
+            const validatedBy = prompt('Enter validator name:');
+            if (!validatedBy) return;
+
+            try {
+                const response = await fetch(
+                    `${API_BASE}/requirements/${selectedRequirement.id}/validate?validated_by=${encodeURIComponent(validatedBy)}`,
+                    { method: 'POST' }
+                );
+
+                if (response.ok) {
+                    showToast('Requirement validated successfully', 'success');
+                    loadRequirements(currentProjectId);
+                    loadStatistics(currentProjectId);
+                } else {
+                    const error = await response.json();
+                    showToast(error.detail || 'Validation failed', 'error');
+                }
+            } catch (error) {
+                showToast('Validation failed: ' + error.message, 'error');
+            }
+        }
+
+        // Add trace link
+        async function addTraceLink() {
+            if (!selectedRequirement) return;
+
+            const entityType = prompt('Entity type (epic, feature, story, task, business_rule):');
+            if (!entityType) return;
+
+            const entityId = prompt('Entity ID:');
+            if (!entityId) return;
+
+            const entityName = prompt('Entity name (optional):');
+
+            try {
+                const response = await fetch(
+                    `${API_BASE}/requirements/${selectedRequirement.id}/traceability`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            entity_type: entityType,
+                            entity_id: entityId,
+                            entity_name: entityName || null,
+                            link_type: 'implements'
+                        })
+                    }
+                );
+
+                if (response.ok) {
+                    showToast('Trace link created', 'success');
+                    loadStatistics(currentProjectId);
+                } else {
+                    const error = await response.json();
+                    showToast(error.detail || 'Failed to create link', 'error');
+                }
+            } catch (error) {
+                showToast('Failed to create link: ' + error.message, 'error');
+            }
+        }
+
+        // View rmtoo content
+        async function viewRmtooContent() {
+            if (!selectedRequirement) return;
+
+            try {
+                const response = await fetch(
+                    `${API_BASE}/projects/${currentProjectId}/requirements/${selectedRequirement.name}`
+                );
+
+                if (response.ok) {
+                    const data = await response.json();
+                    alert(`rmtoo Format:\n\n${data.rmtoo_content || 'Not available'}`);
+                }
+            } catch (error) {
+                showToast('Failed to load rmtoo content', 'error');
+            }
+        }
+
+        // Load traceability matrix
+        async function loadTraceabilityMatrix(projectId) {
+            const tbody = document.getElementById('matrixBody');
+            tbody.innerHTML = '<tr><td colspan="4"><div class="loading"><div class="spinner"></div></div></td></tr>';
+
+            try {
+                const response = await fetch(`${API_BASE}/projects/${projectId}/traceability-matrix`);
+                if (!response.ok) {
+                    tbody.innerHTML = '<tr><td colspan="4">No data available</td></tr>';
+                    return;
+                }
+
+                const data = await response.json();
+
+                document.getElementById('coveragePct').innerHTML =
+                    `Coverage: <span style="color: #8a2be2;">${data.coverage_percentage.toFixed(1)}%</span>`;
+
+                tbody.innerHTML = (data.matrix || []).map(row => `
+                    <tr>
+                        <td>
+                            <strong>${row.requirement.name}</strong><br>
+                            <span style="color: #666; font-size: 0.85rem;">${row.requirement.description}</span>
+                        </td>
+                        <td><span class="req-category">${row.requirement.category}</span></td>
+                        <td>
+                            ${row.links.map(link => `
+                                <span style="display: inline-block; margin: 0.2rem; padding: 0.2rem 0.5rem;
+                                       background: rgba(138, 43, 226, 0.1); border-radius: 4px; font-size: 0.8rem;">
+                                    ${link.entity_type}: ${link.entity_name || link.entity_id}
+                                </span>
+                            `).join('') || '<span style="color: #666;">No links</span>'}
+                        </td>
+                        <td>
+                            <span class="coverage-badge ${row.coverage ? 'covered' : 'uncovered'}">
+                                ${row.coverage ? '✓ Covered' : '✗ Uncovered'}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load matrix:', error);
+                tbody.innerHTML = '<tr><td colspan="4">Error loading matrix</td></tr>';
+            }
+        }
+
+        // Export documentation
+        async function exportDocumentation(type) {
+            if (!currentProjectId) {
+                showToast('Please select a project first', 'error');
+                return;
+            }
+
+            const outputPath = prompt(`Enter output path for ${type} export:`, `/tmp/requirements-export-${type}`);
+            if (!outputPath) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/projects/${currentProjectId}/export`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        export_type: type,
+                        output_path: outputPath
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showToast(`Exported ${data.requirements_included} requirements to ${data.output_path}`, 'success');
+                } else {
+                    const error = await response.json();
+                    showToast(error.detail || 'Export failed', 'error');
+                }
+            } catch (error) {
+                showToast('Export failed: ' + error.message, 'error');
+            }
+        }
+
+        // Sync DB to files
+        async function syncDbToFiles() {
+            if (!currentProjectId) {
+                showToast('Please select a project first', 'error');
+                return;
+            }
+
+            const outputPath = prompt('Enter output path for rmtoo files:', '/tmp/rmtoo-export');
+            if (!outputPath) return;
+
+            const gitCommit = confirm('Auto-commit to git?');
+
+            try {
+                const response = await fetch(`${API_BASE}/projects/${currentProjectId}/sync/db-to-files`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        output_path: outputPath,
+                        git_auto_commit: gitCommit
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showToast(`Sync complete: ${data.requirements_created + data.requirements_updated} requirements`, 'success');
+                } else {
+                    const error = await response.json();
+                    showToast(error.detail || 'Sync failed', 'error');
+                }
+            } catch (error) {
+                showToast('Sync failed: ' + error.message, 'error');
+            }
+        }
+
+        // Sync files to DB
+        async function syncFilesToDb() {
+            if (!currentProjectId) {
+                showToast('Please select a project first', 'error');
+                return;
+            }
+
+            const inputPath = prompt('Enter path to rmtoo files:', '/tmp/rmtoo-import');
+            if (!inputPath) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/projects/${currentProjectId}/sync/files-to-db`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        output_path: inputPath
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showToast(`Import complete: ${data.requirements_created} created, ${data.requirements_updated} updated`, 'success');
+                    loadRequirements(currentProjectId);
+                    loadStatistics(currentProjectId);
+                } else {
+                    const error = await response.json();
+                    showToast(error.detail || 'Import failed', 'error');
+                }
+            } catch (error) {
+                showToast('Import failed: ' + error.message, 'error');
+            }
+        }
+
+        // Show sync history
+        async function showSyncHistory() {
+            if (!currentProjectId) {
+                showToast('Please select a project first', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/projects/${currentProjectId}/sync/history`);
+                if (response.ok) {
+                    const sessions = await response.json();
+                    const historyText = sessions.map(s =>
+                        `${s.started_at}: ${s.direction} - ${s.status} (${s.requirements_created}/${s.requirements_updated})`
+                    ).join('\n');
+                    alert('Sync History:\n\n' + (historyText || 'No sync history'));
+                }
+            } catch (error) {
+                showToast('Failed to load history', 'error');
+            }
+        }
+
+        // Import from extraction
+        async function importFromExtraction() {
+            if (!currentProjectId) {
+                showToast('Please select a project first', 'error');
+                return;
+            }
+
+            const sessionId = document.getElementById('extractionSessionId').value;
+            if (!sessionId) {
+                showToast('Please enter extraction session ID', 'error');
+                return;
+            }
+
+            const minConfidence = parseFloat(document.getElementById('minConfidence').value) || 0.5;
+
+            try {
+                const response = await fetch(`${API_BASE}/projects/${currentProjectId}/import-from-extraction`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        extraction_session_id: sessionId,
+                        min_confidence: minConfidence
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showToast(`Imported ${data.imported_count || 0} requirements`, 'success');
+                    loadRequirements(currentProjectId);
+                    loadStatistics(currentProjectId);
+                } else {
+                    const error = await response.json();
+                    showToast(error.detail || 'Import failed', 'error');
+                }
+            } catch (error) {
+                showToast('Import failed: ' + error.message, 'error');
+            }
+        }
+
+        // Initialize topics
+        async function initializeTopics() {
+            if (!currentProjectId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/projects/${currentProjectId}/initialize-topics`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showToast(data.message, 'success');
+                } else {
+                    const error = await response.json();
+                    showToast(error.detail || 'Failed to initialize topics', 'error');
+                }
+            } catch (error) {
+                showToast('Failed to initialize topics: ' + error.message, 'error');
+            }
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                const tabName = tab.dataset.tab;
+                document.getElementById('browsePanel').style.display = tabName === 'browse' ? 'block' : 'none';
+                document.getElementById('matrixPanel').classList.toggle('visible', tabName === 'matrix');
+                document.getElementById('exportPanel').classList.toggle('visible', tabName === 'export');
+
+                if (tabName === 'matrix' && currentProjectId) {
+                    loadTraceabilityMatrix(currentProjectId);
+                }
+            });
+        });
+
+        // Project selection
+        document.getElementById('projectSelect').addEventListener('change', (e) => {
+            currentProjectId = e.target.value;
+            document.getElementById('initTopicsBtn').disabled = !currentProjectId;
+
+            if (currentProjectId) {
+                loadStatistics(currentProjectId);
+                loadRequirements(currentProjectId);
+            } else {
+                resetStats();
+                document.getElementById('requirementsList').innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📋</div>
+                        <h3>No Project Selected</h3>
+                        <p>Select a project to view requirements</p>
+                    </div>
+                `;
+            }
+        });
+
+        document.getElementById('initTopicsBtn').addEventListener('click', initializeTopics);
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast visible ${type}`;
+
+            setTimeout(() => {
+                toast.classList.remove('visible');
+            }, 4000);
+        }
+
+        // Initialize
+        loadProjects();
+    </script>
+</body>
+</html>

@@ -13,7 +13,7 @@ Author: Claude Code (Week 50 Day 1)
 Date: 2025-11-24
 """
 
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional, Tuple, TYPE_CHECKING
 from dataclasses import dataclass
 from enum import Enum
 from datetime import datetime
@@ -352,6 +352,191 @@ class QualityGateIntegrationService:
         self._config_cache = None
         self._workflow_rules_cache.clear()
 
+    async def get_coding_principles_rules(
+        self,
+        tech_stacks: List[str]
+    ) -> List[Dict[str, Any]]:
+        """
+        Get coding principles rules for quality gate checks.
+
+        Week 59+: Loads NASA Power of 10 adapted rules from .standards/stacks/
+        These rules are enforced by Quinn during code review.
+
+        Args:
+            tech_stacks: List of tech stacks (e.g., ["python", "typescript"])
+
+        Returns:
+            List of rule definitions with check_id, rule, threshold, severity
+        """
+        from app.services.standards_loader_service import get_standards_loader
+
+        loader = get_standards_loader()
+        return loader.get_quality_gate_rules(tech_stacks)
+
+    async def evaluate_coding_principles(
+        self,
+        tech_stacks: List[str],
+        code_analysis_result: Dict[str, Any]
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        """
+        Evaluate code against NASA Power of 10 coding principles.
+
+        Args:
+            tech_stacks: Project tech stacks
+            code_analysis_result: Analysis result with metrics like:
+                - max_nesting_depth: int
+                - unbounded_loops: int
+                - max_function_lines: int
+                - assertion_count: int
+                - global_variable_count: int
+                - unchecked_returns: int
+
+        Returns:
+            Tuple of (blocking_issues, warnings)
+        """
+        rules = await self.get_coding_principles_rules(tech_stacks)
+        blocking_issues = []
+        warnings = []
+
+        metrics = code_analysis_result.get("metrics", {})
+
+        for rule in rules:
+            check_id = rule.get("check_id", "")
+            threshold_str = rule.get("threshold", "")
+            severity = rule.get("severity", "medium")
+
+            # Parse threshold (e.g., "3", "60 lines", "0", "Warn")
+            if threshold_str.lower() in ["warn", "warning"]:
+                threshold = None  # Warning only
+            else:
+                threshold = self._parse_threshold(threshold_str)
+
+            # Match check ID to metric
+            violation = self._check_principle_violation(
+                check_id, metrics, threshold
+            )
+
+            if violation:
+                issue = {
+                    "phase": "coding_principles",
+                    "check_id": check_id,
+                    "rule": rule.get("rule", ""),
+                    "message": violation["message"],
+                    "severity": severity,
+                    "actual_value": violation.get("actual"),
+                    "threshold": threshold,
+                    "stack": rule.get("stack", ""),
+                    "file": violation.get("file"),
+                    "line": violation.get("line")
+                }
+
+                if severity in ["critical", "high"]:
+                    blocking_issues.append(issue)
+                else:
+                    warnings.append(issue)
+
+        return blocking_issues, warnings
+
+    def _parse_threshold(self, threshold_str: str) -> Optional[int]:
+        """Parse threshold string to integer value."""
+        if not threshold_str:
+            return None
+
+        # Extract number from string like "3", "60 lines", "0"
+        import re
+        match = re.search(r'\d+', str(threshold_str))
+        if match:
+            return int(match.group())
+        return None
+
+    def _check_principle_violation(
+        self,
+        check_id: str,
+        metrics: Dict[str, Any],
+        threshold: Optional[int]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Check if a coding principle is violated.
+
+        Returns violation dict if violated, None otherwise.
+        """
+        # Map check IDs to metrics
+        check_mapping = {
+            # Universal NASA rules (all stacks)
+            "P1": ("max_nesting_depth", "Max nesting depth {actual} exceeds limit {threshold}"),
+            "P2": ("unbounded_loops", "Found {actual} unbounded loops"),
+            "P3": ("max_function_lines", "Function length {actual} lines exceeds {threshold}"),
+            "P4": ("assertion_density", "Assertion density too low: {actual}%"),
+            "P5": ("global_variables", "Found {actual} global/module-level variables"),
+            "P7": ("linter_errors", "Found {actual} linter errors"),
+
+            # Python specific
+            "PY-P1": ("py_max_nesting", "Nesting depth {actual} exceeds {threshold}"),
+            "PY-P2": ("py_unbounded_while", "Found {actual} unbounded while loops"),
+            "PY-P4": ("py_assert_count", "Missing assertions in critical functions"),
+            "PY-P7": ("py_type_errors", "Found {actual} type errors"),
+
+            # TypeScript/JavaScript
+            "TS-P1": ("ts_max_nesting", "Nesting depth {actual} exceeds {threshold}"),
+            "TS-P2": ("ts_unbounded_loops", "Found {actual} unbounded loops without guards"),
+            "TS-P4": ("ts_strict_violations", "Found {actual} strict mode violations"),
+            "TS-P7": ("ts_eslint_errors", "Found {actual} ESLint errors"),
+
+            # C# specific
+            "CS-P1": ("cs_max_nesting", "Nesting depth {actual} exceeds {threshold}"),
+            "CS-P4": ("cs_null_checks", "Missing null checks: {actual}"),
+            "CS-P5": ("cs_static_fields", "Found {actual} mutable static fields"),
+
+            # Java specific
+            "JV-P1": ("java_max_nesting", "Nesting depth {actual} exceeds {threshold}"),
+            "JV-P4": ("java_npe_risk", "NPE risk in {actual} locations"),
+            "JV-OPT": ("java_optional_get", "Found {actual} unchecked Optional.get() calls"),
+
+            # Go specific
+            "GO-P1": ("go_max_nesting", "Nesting depth {actual} exceeds {threshold}"),
+            "GO-P2": ("go_unbounded_for", "Found {actual} unbounded for loops"),
+            "GO-P4": ("go_unchecked_err", "Found {actual} unchecked error returns"),
+            "GO-CTX": ("go_ctx_missing", "Context not propagated in {actual} functions"),
+
+            # React specific
+            "RCT-HOOK": ("react_hook_order", "Hook order violations: {actual}"),
+            "RCT-P2": ("react_missing_cleanup", "Missing effect cleanup: {actual}"),
+            "RCT-KEY": ("react_missing_keys", "Missing keys in lists: {actual}"),
+
+            # Vue specific
+            "VUE-P1": ("vue_template_complexity", "Template complexity too high: {actual}"),
+            "VUE-PERF": ("vue_vfor_without_key", "v-for without :key: {actual}"),
+
+            # Angular specific
+            "ANG-P1": ("angular_template_nesting", "Template nesting {actual} exceeds {threshold}"),
+            "ANG-RX": ("angular_rx_no_unsubscribe", "RxJS without unsubscribe: {actual}"),
+        }
+
+        if check_id not in check_mapping:
+            return None
+
+        metric_key, message_template = check_mapping[check_id]
+        actual = metrics.get(metric_key)
+
+        if actual is None:
+            return None
+
+        # Check violation
+        if threshold is not None:
+            if actual > threshold:
+                return {
+                    "message": message_template.format(actual=actual, threshold=threshold),
+                    "actual": actual
+                }
+        elif actual > 0:
+            # For "0" threshold checks
+            return {
+                "message": message_template.format(actual=actual, threshold=0),
+                "actual": actual
+            }
+
+        return None
+
 
 # ============================================================================
 # HELPER FUNCTIONS
@@ -389,3 +574,59 @@ async def evaluate_quality_gate(
     """
     service = QualityGateIntegrationService(db)
     return await service.evaluate_gate(workflow_type, validation_result)
+
+
+async def evaluate_coding_principles(
+    db: AsyncSession,
+    tech_stacks: List[str],
+    code_analysis_result: Dict[str, Any]
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """
+    Convenience function to evaluate coding principles.
+
+    Week 59+: NASA Power of 10 adapted rules loaded from .standards/stacks/
+
+    Usage:
+        blocking, warnings = await evaluate_coding_principles(
+            db,
+            ["python", "typescript"],
+            {"metrics": {"max_nesting_depth": 4, "unbounded_loops": 2}}
+        )
+
+        if blocking:
+            print(f"Blocking issues: {len(blocking)}")
+            for issue in blocking:
+                print(f"  [{issue['check_id']}] {issue['message']}")
+
+    Args:
+        db: Database session
+        tech_stacks: List of tech stacks (e.g., ["python", "typescript"])
+        code_analysis_result: Dict with "metrics" key containing analysis metrics
+
+    Returns:
+        Tuple of (blocking_issues, warnings)
+    """
+    service = QualityGateIntegrationService(db)
+    return await service.evaluate_coding_principles(tech_stacks, code_analysis_result)
+
+
+def get_coding_principles_rules_sync(tech_stacks: List[str]) -> List[Dict[str, Any]]:
+    """
+    Synchronous function to get coding principles rules.
+
+    Useful for non-async contexts like report generation.
+
+    Usage:
+        rules = get_coding_principles_rules_sync(["python"])
+        for rule in rules:
+            print(f"{rule['check_id']}: {rule['rule']} (severity: {rule['severity']})")
+
+    Args:
+        tech_stacks: List of tech stacks
+
+    Returns:
+        List of rule definitions
+    """
+    from app.services.standards_loader_service import get_standards_loader
+    loader = get_standards_loader()
+    return loader.get_quality_gate_rules(tech_stacks)

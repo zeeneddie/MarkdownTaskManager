@@ -12,7 +12,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -65,8 +65,7 @@ class AgentPerformanceResponse(BaseModel):
     last_activity: Optional[datetime]
     data_points: int
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "agent_id": "felix",
                 "agent_role": "Feature Architect",
@@ -90,7 +89,7 @@ class AgentPerformanceResponse(BaseModel):
                 "last_activity": "2025-11-25T14:30:00Z",
                 "data_points": 150
             }
-        }
+        })
 
 
 class DashboardOverviewResponse(BaseModel):
@@ -122,8 +121,7 @@ class DashboardOverviewResponse(BaseModel):
     time_range: str
     generated_at: datetime
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "total_experiments": 25,
                 "active_experiments": 5,
@@ -142,7 +140,7 @@ class DashboardOverviewResponse(BaseModel):
                 "time_range": "30d",
                 "generated_at": "2025-11-25T14:30:00Z"
             }
-        }
+        })
 
 
 class ExperimentSummaryResponse(BaseModel):
@@ -174,8 +172,7 @@ class ExperimentSummaryResponse(BaseModel):
     control_success_rate: Optional[float]
     treatment_success_rate: Optional[float]
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "experiment_id": "123e4567-e89b-12d3-a456-426614174000",
                 "agent_id": "felix",
@@ -195,7 +192,7 @@ class ExperimentSummaryResponse(BaseModel):
                 "control_success_rate": 80.0,
                 "treatment_success_rate": 92.4
             }
-        }
+        })
 
 
 class TrendsResponse(BaseModel):
@@ -205,8 +202,7 @@ class TrendsResponse(BaseModel):
     time_range: str
     generated_at: datetime
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "agents": [
                     {
@@ -219,7 +215,7 @@ class TrendsResponse(BaseModel):
                 "time_range": "30d",
                 "generated_at": "2025-11-25T14:30:00Z"
             }
-        }
+        })
 
 
 class ExperimentsResponse(BaseModel):
@@ -229,8 +225,7 @@ class ExperimentsResponse(BaseModel):
     total_count: int
     active_count: int
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "experiments": [
                     {
@@ -243,7 +238,7 @@ class ExperimentsResponse(BaseModel):
                 "total_count": 5,
                 "active_count": 3
             }
-        }
+        })
 
 
 # ========== ROUTER ==========

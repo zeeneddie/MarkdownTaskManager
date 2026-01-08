@@ -9,7 +9,7 @@ from typing import Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -27,8 +27,7 @@ class VariantCreateRequest(BaseModel):
     config_json: Dict = Field(default_factory=dict)
     is_control: bool = Field(default=False)
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "variant_name": "control",
                 "description": "Baseline configuration",
@@ -36,7 +35,7 @@ class VariantCreateRequest(BaseModel):
                 "config_json": {"timeout": 30, "retries": 3},
                 "is_control": True
             }
-        }
+        })
 
 
 class ExperimentCreateRequest(BaseModel):
@@ -45,7 +44,7 @@ class ExperimentCreateRequest(BaseModel):
     agent_id: str = Field(..., min_length=1, max_length=50)
     feature_name: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = Field(None, max_length=1000)
-    variants: List[VariantCreateRequest] = Field(..., min_items=2)
+    variants: List[VariantCreateRequest] = Field(..., min_length=2)
 
     @field_validator("variants")
     @classmethod
@@ -67,8 +66,7 @@ class ExperimentCreateRequest(BaseModel):
 
         return variants
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "agent_id": "felix",
                 "feature_name": "async_processing",
@@ -88,7 +86,7 @@ class ExperimentCreateRequest(BaseModel):
                     }
                 ]
             }
-        }
+        })
 
 
 class CompleteExperimentRequest(BaseModel):
@@ -96,12 +94,11 @@ class CompleteExperimentRequest(BaseModel):
 
     winner_variant_id: UUID
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "winner_variant_id": "123e4567-e89b-12d3-a456-426614174000"
             }
-        }
+        })
 
 
 class LogResultRequest(BaseModel):
@@ -114,8 +111,7 @@ class LogResultRequest(BaseModel):
     metrics: Dict = Field(default_factory=dict)
     error_message: Optional[str] = Field(None, max_length=2000)
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "variant_id": "123e4567-e89b-12d3-a456-426614174000",
                 "task_id": "task_12345",
@@ -128,7 +124,7 @@ class LogResultRequest(BaseModel):
                     "retry_count": 0
                 }
             }
-        }
+        })
 
 
 class VariantResponse(BaseModel):
@@ -143,8 +139,7 @@ class VariantResponse(BaseModel):
     is_control: bool
     created_at: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ExperimentResponse(BaseModel):
@@ -161,8 +156,7 @@ class ExperimentResponse(BaseModel):
     winner_variant_id: Optional[str]
     variants: List[VariantResponse]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ExperimentResultResponse(BaseModel):
@@ -177,8 +171,7 @@ class ExperimentResultResponse(BaseModel):
     error_message: Optional[str]
     created_at: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AnalysisResponse(BaseModel):
@@ -191,8 +184,7 @@ class AnalysisResponse(BaseModel):
     consensus_level: float
     min_samples_reached: bool
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "experiment_id": "123e4567-e89b-12d3-a456-426614174000",
                 "variant_statistics": {
@@ -214,7 +206,7 @@ class AnalysisResponse(BaseModel):
                 "consensus_level": 0.988,
                 "min_samples_reached": True
             }
-        }
+        })
 
 
 class TrafficAllocationResponse(BaseModel):
@@ -224,14 +216,13 @@ class TrafficAllocationResponse(BaseModel):
     variant_name: str
     config_json: Dict
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra={
             "example": {
                 "variant_id": "123e4567-e89b-12d3-a456-426614174000",
                 "variant_name": "async_variant",
                 "config_json": {"mode": "async"}
             }
-        }
+        })
 
 
 # ========== API ROUTER ==========

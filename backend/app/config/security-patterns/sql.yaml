@@ -1,0 +1,340 @@
+# SQL Server / T-SQL Security Patterns
+language: sql
+version: "1.0"
+file_extensions:
+  - ".sql"
+  - ".tsql"
+  - ".prc"
+
+patterns:
+  injection:
+    - id: SQL-INJ-001
+      pattern: "EXEC\\s*\\(\\s*@\\w+"
+      title: Dynamic SQL execution
+      description: EXEC with string variable may be vulnerable to SQL injection
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use sp_executesql with parameters instead of EXEC with concatenated strings
+
+    - id: SQL-INJ-002
+      pattern: "EXECUTE\\s*\\(\\s*@\\w+"
+      title: Dynamic SQL via EXECUTE
+      description: EXECUTE with variable string
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use sp_executesql with properly typed parameters
+
+    - id: SQL-INJ-003
+      pattern: "SET\\s+@\\w+\\s*=\\s*['\"].*SELECT.*['\"]\\s*\\+\\s*@"
+      title: SQL Injection in variable assignment
+      description: Building SQL query by concatenating parameters
+      severity: critical
+      owasp: A03
+      cwe: CWE-89
+      remediation: "Use sp_executesql: EXEC sp_executesql @sql, N'@param INT', @param=@value"
+
+    - id: SQL-INJ-004
+      pattern: "SET\\s+@\\w+\\s*=\\s*['\"].*INSERT.*['\"]\\s*\\+\\s*@"
+      title: SQL Injection in INSERT query building
+      description: Building INSERT query by concatenation
+      severity: critical
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use parameterized sp_executesql
+
+    - id: SQL-INJ-005
+      pattern: "SET\\s+@\\w+\\s*=\\s*['\"].*UPDATE.*['\"]\\s*\\+\\s*@"
+      title: SQL Injection in UPDATE query building
+      description: Building UPDATE query by concatenation
+      severity: critical
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use parameterized sp_executesql
+
+    - id: SQL-INJ-006
+      pattern: "SET\\s+@\\w+\\s*=\\s*['\"].*DELETE.*['\"]\\s*\\+\\s*@"
+      title: SQL Injection in DELETE query building
+      description: Building DELETE query by concatenation
+      severity: critical
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use parameterized sp_executesql
+
+    - id: SQL-INJ-007
+      pattern: "sp_executesql\\s+@\\w+\\s*$"
+      title: sp_executesql without parameters
+      description: sp_executesql called without parameter binding
+      severity: medium
+      owasp: A03
+      cwe: CWE-89
+      remediation: "Add parameter definitions: sp_executesql @sql, N'@p1 INT', @p1=@val"
+
+    - id: SQL-INJ-008
+      pattern: "['\"]\\s*\\+\\s*@\\w+\\s*\\+\\s*['\"]"
+      title: String concatenation with variable
+      description: Direct string concatenation with parameter
+      severity: high
+      owasp: A03
+      cwe: CWE-89
+      remediation: Use QUOTENAME() for identifiers or parameterize values
+
+    - id: SQL-INJ-009
+      pattern: "QUOTENAME\\s*\\(\\s*@\\w+\\s*\\)"
+      title: QUOTENAME usage (good practice)
+      description: QUOTENAME properly escapes identifiers
+      severity: info
+      owasp: A03
+      cwe: CWE-89
+      remediation: This is correct usage for dynamic identifiers
+
+  access_control:
+    - id: SQL-AC-001
+      pattern: "GRANT\\s+.*\\s+TO\\s+(?:public|guest)"
+      title: Permissions granted to public/guest
+      description: Granting permissions to public or guest is insecure
+      severity: high
+      owasp: A01
+      cwe: CWE-276
+      remediation: Grant permissions to specific roles or users, not public/guest
+
+    - id: SQL-AC-002
+      pattern: "GRANT\\s+EXECUTE\\s+ON\\s+.*\\s+TO\\s+.*WITH\\s+GRANT\\s+OPTION"
+      title: WITH GRANT OPTION on stored procedure
+      description: Users can propagate execute permissions
+      severity: medium
+      owasp: A01
+      cwe: CWE-276
+      remediation: Avoid WITH GRANT OPTION unless explicitly required
+
+    - id: SQL-AC-003
+      pattern: "GRANT\\s+(?:ALTER|CONTROL|CREATE)\\s+.*\\s+TO\\s+\\w+"
+      title: DDL permission granted
+      description: ALTER/CONTROL/CREATE permissions are privileged
+      severity: medium
+      owasp: A01
+      cwe: CWE-276
+      remediation: Review if this permission level is actually required
+
+    - id: SQL-AC-004
+      pattern: "EXECUTE\\s+AS\\s+(?:OWNER|SELF|['\"]?dbo['\"]?)"
+      title: EXECUTE AS elevated context
+      description: Stored procedure runs with elevated privileges
+      severity: medium
+      owasp: A01
+      cwe: CWE-250
+      remediation: Review if elevation is necessary; prefer EXECUTE AS CALLER
+
+    - id: SQL-AC-005
+      pattern: "TRUSTWORTHY\\s+ON"
+      title: TRUSTWORTHY database setting
+      description: TRUSTWORTHY allows privilege escalation
+      severity: high
+      owasp: A01
+      cwe: CWE-250
+      remediation: Set TRUSTWORTHY OFF unless absolutely required
+
+  crypto:
+    - id: SQL-CRYPTO-001
+      pattern: "(?:password|wachtwoord|pwd)\\s*(?:VARCHAR|NVARCHAR|CHAR)"
+      title: Plain text password column
+      description: Password stored without encryption indication
+      severity: high
+      owasp: A02
+      cwe: CWE-256
+      remediation: "Use HASHBYTES('SHA2_256', @password) or application-level hashing"
+
+    - id: SQL-CRYPTO-002
+      pattern: "HASHBYTES\\s*\\(\\s*['\"]MD5['\"]\\s*,"
+      title: MD5 hash used for passwords
+      description: MD5 is cryptographically broken
+      severity: high
+      owasp: A02
+      cwe: CWE-328
+      remediation: "Use SHA2_256 or SHA2_512: HASHBYTES('SHA2_256', @value)"
+
+    - id: SQL-CRYPTO-003
+      pattern: "HASHBYTES\\s*\\(\\s*['\"]SHA1['\"]\\s*,"
+      title: SHA1 hash (deprecated)
+      description: SHA1 is deprecated for security purposes
+      severity: medium
+      owasp: A02
+      cwe: CWE-328
+      remediation: Use SHA2_256 or SHA2_512
+
+    - id: SQL-CRYPTO-004
+      pattern: "ENCRYPTBYPASSPHRASE\\s*\\(\\s*['\"][^'\"]+['\"]\\s*,"
+      title: Hardcoded encryption passphrase
+      description: Encryption passphrase hardcoded in SQL
+      severity: critical
+      owasp: A02
+      cwe: CWE-798
+      remediation: Store encryption keys separately; use certificate-based encryption
+
+    - id: SQL-CRYPTO-005
+      pattern: "(?:api_key|apikey|secret)\\s*=\\s*['\"][^'\"]{10,}['\"]"
+      title: Hardcoded secret in SQL
+      description: API key or secret in stored procedure
+      severity: critical
+      owasp: A02
+      cwe: CWE-798
+      remediation: Store secrets in Azure Key Vault or application configuration
+
+  config:
+    - id: SQL-CFG-001
+      pattern: "xp_cmdshell"
+      title: xp_cmdshell usage
+      description: xp_cmdshell executes OS commands and is a security risk
+      severity: critical
+      owasp: A05
+      cwe: CWE-78
+      remediation: Disable xp_cmdshell. Use CLR procedures or application code instead.
+
+    - id: SQL-CFG-002
+      pattern: "sp_configure\\s+['\"]xp_cmdshell['\"]\\s*,\\s*1"
+      title: Enabling xp_cmdshell
+      description: Enabling xp_cmdshell is a major security risk
+      severity: critical
+      owasp: A05
+      cwe: CWE-78
+      remediation: Do not enable xp_cmdshell in production
+
+    - id: SQL-CFG-003
+      pattern: "OPENROWSET\\s*\\("
+      title: OPENROWSET usage
+      description: OPENROWSET can access external data sources
+      severity: medium
+      owasp: A05
+      cwe: CWE-284
+      remediation: Review OPENROWSET usage; prefer linked servers with proper security
+
+    - id: SQL-CFG-004
+      pattern: "OPENDATASOURCE\\s*\\("
+      title: OPENDATASOURCE usage
+      description: OPENDATASOURCE allows ad-hoc external connections
+      severity: medium
+      owasp: A05
+      cwe: CWE-284
+      remediation: Use linked servers with specific security configurations
+
+    - id: SQL-CFG-005
+      pattern: "sp_OACreate|sp_OAMethod"
+      title: OLE Automation procedures
+      description: OLE Automation can execute arbitrary code
+      severity: high
+      owasp: A05
+      cwe: CWE-78
+      remediation: Disable OLE Automation procedures; use CLR or application code
+
+    - id: SQL-CFG-006
+      pattern: "WITH\\s+SCHEMABINDING"
+      title: Schema binding (good practice)
+      description: SCHEMABINDING prevents accidental schema changes
+      severity: info
+      owasp: A05
+      cwe: CWE-693
+      remediation: Good practice for views and functions
+
+  logging:
+    - id: SQL-LOG-001
+      pattern: "PRINT\\s+@\\w*(?:password|wachtwoord|secret|token)"
+      title: Sensitive data in PRINT statement
+      description: Printing potentially sensitive data
+      severity: medium
+      owasp: A09
+      cwe: CWE-532
+      remediation: Remove PRINT statements with sensitive data
+
+    - id: SQL-LOG-002
+      pattern: "RAISERROR\\s*\\([^)]*(?:password|wachtwoord|secret|token)"
+      title: Sensitive data in error message
+      description: Sensitive information in error messages
+      severity: medium
+      owasp: A09
+      cwe: CWE-209
+      remediation: Use generic error messages; log details securely
+
+    - id: SQL-LOG-003
+      pattern: "SELECT\\s+.*\\*\\s+FROM\\s+.*(?:audit|log)"
+      title: Unrestricted audit log access
+      description: Selecting all columns from audit tables
+      severity: low
+      owasp: A09
+      cwe: CWE-532
+      remediation: Limit access to audit tables; select only needed columns
+
+  design:
+    - id: SQL-DES-001
+      pattern: "--\\s*(?:TODO|FIXME|HACK|password|secret|temp)"
+      title: Concerning comment in SQL
+      description: Comment indicating potential security issue
+      severity: low
+      owasp: A04
+      cwe: CWE-615
+      remediation: Review and address TODO/FIXME comments
+
+    - id: SQL-DES-002
+      pattern: "SELECT\\s+\\*\\s+FROM"
+      title: SELECT * usage
+      description: SELECT * may return sensitive columns
+      severity: low
+      owasp: A04
+      cwe: CWE-200
+      remediation: Specify explicit column list to prevent exposing sensitive data
+
+    - id: SQL-DES-003
+      pattern: "WHERE\\s+1\\s*=\\s*1"
+      title: Tautology in WHERE clause
+      description: WHERE 1=1 pattern may indicate dynamic SQL building
+      severity: low
+      owasp: A04
+      cwe: CWE-89
+      remediation: Review for potential SQL injection; use parameterized queries
+
+    - id: SQL-DES-004
+      pattern: "CURSOR\\s+.*FOR\\s+SELECT"
+      title: Cursor usage (performance)
+      description: Cursors can be inefficient; review for set-based alternatives
+      severity: info
+      owasp: A04
+      cwe: CWE-400
+      remediation: Consider set-based operations instead of row-by-row processing
+
+  error_handling:
+    - id: SQL-ERR-001
+      pattern: "BEGIN\\s+TRY.*END\\s+CATCH"
+      title: Try-Catch block (good practice)
+      description: Proper error handling implemented
+      severity: info
+      owasp: A04
+      cwe: CWE-755
+      remediation: Good practice - ensure errors are logged appropriately
+
+    - id: SQL-ERR-002
+      pattern: "BEGIN\\s+TRANSACTION(?!.*COMMIT|.*ROLLBACK)"
+      title: Transaction without commit/rollback
+      description: Transaction may not be properly completed
+      severity: medium
+      owasp: A04
+      cwe: CWE-755
+      remediation: Ensure all transactions have COMMIT or ROLLBACK
+
+  dutch:
+    - id: SQL-NL-001
+      pattern: "(?:wachtwoord|geheim|sleutel)\\s*(?:VARCHAR|NVARCHAR)"
+      title: "Dutch: Plain text wachtwoord column"
+      description: Wachtwoord opgeslagen zonder encryptie
+      severity: high
+      owasp: A02
+      cwe: CWE-256
+      remediation: Gebruik HASHBYTES of encryptie voor wachtwoorden
+
+    - id: SQL-NL-002
+      pattern: "(?:BSN|burgerservicenummer|bsn_nummer)"
+      title: "Dutch: BSN (citizen ID) in SQL"
+      description: BSN is sensitive personal data under AVG/GDPR
+      severity: high
+      owasp: A02
+      cwe: CWE-359
+      remediation: BSN moet versleuteld worden opgeslagen per AVG

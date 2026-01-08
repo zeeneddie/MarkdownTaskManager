@@ -334,6 +334,131 @@ async def get_profile_details(preset_name: str):
 
 
 # ============================================================================
+# WEEK 143: VECTOR DB CONTEXT ENDPOINTS
+# ============================================================================
+
+@router.get(
+    "/vector-context",
+    summary="Get Vector DB context for spec review",
+    description="Fetch relevant architecture and pattern context from Vector DB"
+)
+async def get_review_vector_context(
+    section: Optional[str] = None,
+    topics: Optional[str] = None,  # comma-separated
+    project_id: int = 1000,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get Vector DB context for specification review.
+
+    Args:
+        section: Specific section being reviewed (e.g., "architecture")
+        topics: Comma-separated list of topics (e.g., "authentication,database")
+        project_id: Project ID for Vector DB query (default: 1000 = HCI-CRS)
+
+    Returns:
+        Dict with architecture docs, best practices, and code patterns
+    """
+    try:
+        service = SpecReviewService(db, project_id=project_id)
+
+        topic_list = None
+        if topics:
+            topic_list = [t.strip() for t in topics.split(",") if t.strip()]
+
+        context = service._fetch_review_context(
+            spec_section=section,
+            topics=topic_list
+        )
+
+        if not context:
+            return {
+                "status": "no_context",
+                "message": "No relevant context found in Vector DB",
+                "context": None
+            }
+
+        return {
+            "status": "success",
+            "section": section,
+            "topics": topic_list,
+            "project_id": project_id,
+            "context": context,
+            "total_items": sum(len(v) for v in context.values() if isinstance(v, list))
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching vector context: {str(e)}"
+        )
+
+
+@router.post(
+    "/review/{spec_id}/with-context",
+    summary="Review specification with Vector DB context",
+    description="Run Quinn review with pre-fetched Vector DB context for richer analysis"
+)
+async def review_with_vector_context(
+    spec_id: UUID,
+    topics: Optional[List[str]] = None,
+    project_id: int = 1000,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Review specification with Vector DB context enhancement.
+
+    Args:
+        spec_id: Specification UUID to review
+        topics: List of topics to fetch context for
+        project_id: Project ID for Vector DB query
+
+    Returns:
+        Review result with quality score, suggestions, and context used
+    """
+    try:
+        service = SpecReviewService(db, project_id=project_id)
+
+        # Fetch context first for reporting
+        context = service._fetch_review_context(
+            spec_section="specification",
+            topics=topics or ["architecture", "design patterns"]
+        )
+
+        # Run review (context is automatically included in prompt)
+        result = await service.quinn_review(spec_id)
+
+        return {
+            "status": "success",
+            "specification_id": str(spec_id),
+            "quality_score": result.overall_quality_score,
+            "suggestions_count": len(result.suggestions),
+            "requires_human_review": result.requires_human_review,
+            "escalation_reason": result.escalation_reason,
+            "review_duration_seconds": result.review_duration_seconds,
+            "suggestions": [
+                {
+                    "id": s.id,
+                    "type": s.type.value,
+                    "priority": s.priority.value,
+                    "section": s.section,
+                    "description": s.description,
+                    "reasoning": s.reasoning
+                }
+                for s in result.suggestions
+            ],
+            "vector_context_used": context is not None,
+            "context_items": sum(len(v) for v in context.values() if isinstance(v, list)) if context else 0
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Review failed: {str(e)}"
+        )
+
+
+# ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
 

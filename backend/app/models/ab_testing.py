@@ -5,12 +5,24 @@ Tracks experiments, variants, and results for continuous evolution.
 """
 from datetime import datetime
 from typing import Optional
+from enum import Enum
 from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, ForeignKey, Text, CheckConstraint, Index
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 import uuid
 
 from app.database import Base
+
+
+class ExperimentStatus(str, Enum):
+    """Valid experiment lifecycle states."""
+    DRAFT = "DRAFT"
+    # Backwards-compat alias used by scheduler/tests.
+    PENDING = "DRAFT"
+    ACTIVE = "ACTIVE"
+    PAUSED = "PAUSED"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
 
 
 class Experiment(Base):
@@ -31,12 +43,12 @@ class Experiment(Base):
     status = Column(String(20), nullable=False, default="DRAFT")
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
 
-    # Winner tracking
-    winner_variant_id = Column(UUID(as_uuid=True), ForeignKey('experiment_variants.id'), nullable=True)
+    # Winner tracking (use_alter=True to break circular FK dependency during table creation)
+    winner_variant_id = Column(UUID(as_uuid=True), ForeignKey('experiment_variants.id', use_alter=True, name='fk_experiments_winner_variant'), nullable=True)
 
     # Extra metadata (renamed from 'metadata' to avoid SQLAlchemy reserved name)
     extra_metadata = Column(JSONB, nullable=True, default={})
@@ -82,7 +94,7 @@ class ExperimentVariant(Base):
     is_control = Column(Boolean, nullable=False, default=False)
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
 
     # Relationships
     experiment = relationship("Experiment", back_populates="variants", foreign_keys=[experiment_id])
@@ -131,7 +143,7 @@ class ExperimentResult(Base):
     error_message = Column(Text, nullable=True)
 
     # Timestamp
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow(), index=True)
 
     # Relationships
     variant = relationship("ExperimentVariant", back_populates="results")

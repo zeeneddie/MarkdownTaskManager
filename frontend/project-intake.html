@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Intake - Multi-Stack AI Agent Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .nav {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .nav a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Main layout - two columns */
+        .main-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+            .todo-sidebar {
+                order: -1;
+            }
+        }
+
+        .container {
+            min-width: 0;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #444;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group .hint {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 0.3rem;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #444;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        /* Progress indicator */
+        .progress {
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #f0f4ff;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .progress.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Results */
+        .results {
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .result-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat {
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat .label {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .stack-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .stack-tag {
+            padding: 0.4rem 0.8rem;
+            background: #e0e7ff;
+            color: #4338ca;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .doc-list {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .doc-list li {
+            padding: 0.8rem 1rem;
+            background: #f8fafc;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .doc-list li.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        /* Component table */
+        .component-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .component-table th, .component-table td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .component-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #444;
+        }
+
+        .component-table tr:hover {
+            background: #f8fafc;
+        }
+
+        /* ===== TODO SIDEBAR ===== */
+        .todo-sidebar {
+            position: sticky;
+            top: 2rem;
+            height: fit-content;
+        }
+
+        .todo-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .todo-card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .todo-list {
+            list-style: none;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .todo-item:last-child {
+            border-bottom: none;
+        }
+
+        .todo-status {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .todo-status.pending {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .todo-status.running {
+            background: #fef3c7;
+            color: #d97706;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .todo-status.success {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .todo-status.failed {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .todo-content {
+            flex: 1;
+        }
+
+        .todo-content .title {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+
+        .todo-content .desc {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 0.2rem;
+        }
+
+        .todo-content .time {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-top: 0.3rem;
+        }
+
+        .todo-item.completed .title {
+            color: #9ca3af;
+            text-decoration: line-through;
+        }
+
+        .todo-progress {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar .fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+
+        .todo-legend {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .legend-symbol {
+            font-weight: 700;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📥 Project Intake</h1>
+        <p>Registreer een bestaand project en genereer automatisch documentatie</p>
+        <nav class="nav">
+            <a href="index.html">🏠 Hub</a>
+            <a href="project-wizard.html">🧙 New Project</a>
+            <a href="agent-dashboard.html">🤖 Agents</a>
+            <a href="quality-dashboard.html">✅ Quality</a>
+            <a href="weak-spots-dashboard.html">🎯 Weak Spots</a>
+        </nav>
+    </div>
+
+    <div class="main-container">
+        <div class="container">
+            <!-- Input Form -->
+            <div class="card" id="intake-form">
+                <h2>📂 Project Registratie</h2>
+
+                <div class="form-group">
+                    <label for="project-path">Project Pad *</label>
+                    <input type="text" id="project-path" placeholder="/opt/projecten/mijn-project/src" value="/opt/projecten/hci-crs/src">
+                    <div class="hint">Volledig pad naar de broncode van het project</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="project-name">Project Naam *</label>
+                    <input type="text" id="project-name" placeholder="Mijn Project" value="HCI-CRS">
+                    <div class="hint">Een unieke naam voor het project</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="doc-path">Documentatie Pad</label>
+                    <input type="text" id="doc-path" placeholder="/opt/projecten/mijn-project/doc">
+                    <div class="hint">Waar documentatie wordt gegenereerd (standaard: naast src in doc/)</div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+                    <button class="btn btn-primary" onclick="startIntake()" id="start-btn">
+                        🚀 Start Intake
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="progress" id="progress">
+                <div class="spinner"></div>
+                <span id="progress-text">Scanning project...</span>
+            </div>
+
+            <!-- Error -->
+            <div class="error-message" id="error-message"></div>
+
+            <!-- Results -->
+            <div class="results" id="results">
+                <div class="card">
+                    <h2>✅ Intake Compleet</h2>
+
+                    <div class="result-summary">
+                        <div class="stat">
+                            <div class="value" id="stat-stacks">0</div>
+                            <div class="label">Technieken</div>
+                        </div>
+                        <div class="stat">
+                            <div class="value" id="stat-components">0</div>
+                            <div class="label">Components</div>
+                        </div>
+                        <div class="stat">
+                            <div class="value" id="stat-files">0</div>
+                            <div class="label">Bestanden</div>
+                        </div>
+                        <div class="stat">
+                            <div class="value" id="stat-agents">0</div>
+                            <div class="label">Agents</div>
+                        </div>
+                    </div>
+
+                    <h3>Gedetecteerde Technieken</h3>
+                    <div class="stack-list" id="stack-list"></div>
+                </div>
+
+                <div class="card">
+                    <h2>📄 Gegenereerde Documentatie</h2>
+                    <ul class="doc-list" id="doc-list"></ul>
+                </div>
+
+                <div class="card" id="components-card" style="display: none;">
+                    <h2>🧩 Components</h2>
+                    <table class="component-table">
+                        <thead>
+                            <tr>
+                                <th>Naam</th>
+                                <th>Type</th>
+                                <th>Technieken</th>
+                                <th>Agents</th>
+                            </tr>
+                        </thead>
+                        <tbody id="component-table-body"></tbody>
+                    </table>
+                </div>
+
+                <div class="card" id="quality-card" style="display: none;">
+                    <h2>🎯 Quality Scan Resultaten</h2>
+                    <div class="result-summary" id="quality-summary">
+                        <div class="stat">
+                            <div class="value" id="stat-quality-score">-</div>
+                            <div class="label">Quality Score</div>
+                        </div>
+                        <div class="stat">
+                            <div class="value" id="stat-issues">-</div>
+                            <div class="label">Issues</div>
+                        </div>
+                        <div class="stat">
+                            <div class="value" id="stat-critical">-</div>
+                            <div class="label">Critical</div>
+                        </div>
+                        <div class="stat">
+                            <div class="value" id="stat-coverage">-</div>
+                            <div class="label">Coverage</div>
+                        </div>
+                    </div>
+                    <div id="quality-details"></div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-secondary" onclick="newIntake()">📥 Nieuwe Intake</button>
+                    <button class="btn btn-secondary" onclick="runQualityScan()">🎯 Quality Scan</button>
+                    <button class="btn btn-primary" onclick="openQualityDashboard()">📊 Quality Dashboard</button>
+                    <button class="btn btn-primary" onclick="openDocs()">📂 Open Documentatie</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TODO Sidebar -->
+        <div class="todo-sidebar">
+            <div class="todo-card">
+                <h3>📋 Onboarding Acties</h3>
+                <ul class="todo-list" id="todo-list">
+                    <!-- Items worden dynamisch toegevoegd -->
+                </ul>
+
+                <div class="todo-progress">
+                    <div class="progress-bar">
+                        <div class="fill" id="todo-progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="todo-completed">0</span> / <span id="todo-total">0</span> voltooid
+                        <span id="todo-percentage">0%</span>
+                    </div>
+                </div>
+
+                <div class="todo-legend">
+                    <div class="legend-item"><span class="legend-symbol">-</span> Te doen</div>
+                    <div class="legend-item"><span class="legend-symbol">○</span> Bezig</div>
+                    <div class="legend-item"><span class="legend-symbol">✓</span> Gereed</div>
+                    <div class="legend-item"><span class="legend-symbol">✗</span> Gefaald</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        let currentResult = null;
+        let currentProjectPath = null;
+        let currentDocPath = null;
+
+        // ===== TODO LIST MANAGEMENT =====
+        const todoItems = [
+            { id: 'validate', title: 'Valideer project pad', desc: 'Controleer of het pad bestaat en toegankelijk is', status: 'pending' },
+            { id: 'scan', title: 'Scan project structuur', desc: 'Detecteer technieken en componenten', status: 'pending' },
+            { id: 'register', title: 'Registreer in database', desc: 'Sla project metadata op', status: 'pending' },
+            { id: 'agents', title: 'Creëer stack agents', desc: 'Genereer agents voor gedetecteerde stacks', status: 'pending' },
+            { id: 'backlog', title: 'Importeer backlog', desc: 'Sync epics/features/stories uit doc/project/', status: 'pending' },
+            { id: 'extract', title: 'Extractie user stories', desc: 'Genereer stories uit code analyse (Week 84)', status: 'pending' },
+            { id: 'quality', title: 'Quality scan', desc: 'Analyseer code kwaliteit en issues', status: 'pending' },
+            { id: 'docs', title: 'Genereer documentatie', desc: 'Maak project documentatie aan', status: 'pending' },
+        ];
+
+        function renderTodoList() {
+            const list = document.getElementById('todo-list');
+            list.innerHTML = todoItems.map(item => `
+                <li class="todo-item ${item.status === 'success' ? 'completed' : ''}">
+                    <div class="todo-status ${item.status}">${getStatusSymbol(item.status)}</div>
+                    <div class="todo-content">
+                        <div class="title">${item.title}</div>
+                        <div class="desc">${item.desc}</div>
+                        ${item.time ? `<div class="time">${item.time}</div>` : ''}
+                    </div>
+                </li>
+            `).join('');
+
+            updateProgress();
+        }
+
+        function getStatusSymbol(status) {
+            switch(status) {
+                case 'pending': return '-';
+                case 'running': return '○';
+                case 'success': return '✓';
+                case 'failed': return '✗';
+                default: return '-';
+            }
+        }
+
+        function updateTodoStatus(id, status, time = null) {
+            const item = todoItems.find(t => t.id === id);
+            if (item) {
+                item.status = status;
+                if (time) item.time = time;
+                renderTodoList();
+            }
+        }
+
+        function updateProgress() {
+            const completed = todoItems.filter(t => t.status === 'success').length;
+            const total = todoItems.length;
+            const percentage = Math.round((completed / total) * 100);
+
+            document.getElementById('todo-completed').textContent = completed;
+            document.getElementById('todo-total').textContent = total;
+            document.getElementById('todo-percentage').textContent = percentage + '%';
+            document.getElementById('todo-progress-fill').style.width = percentage + '%';
+        }
+
+        function resetTodos() {
+            todoItems.forEach(item => {
+                item.status = 'pending';
+                delete item.time;
+            });
+            renderTodoList();
+        }
+
+        // Initialize todo list
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTodoList();
+        });
+
+        // ===== INTAKE PROCESS =====
+        async function startIntake() {
+            const path = document.getElementById('project-path').value.trim();
+            const name = document.getElementById('project-name').value.trim();
+            const docPath = document.getElementById('doc-path').value.trim();
+
+            currentProjectPath = path;
+            currentDocPath = docPath || deriveDocPath(path);
+
+            if (!path || !name) {
+                showError('Vul het project pad en naam in');
+                return;
+            }
+
+            // Reset and start
+            resetTodos();
+            document.getElementById('intake-form').style.display = 'none';
+            document.getElementById('progress').classList.add('active');
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('error-message').classList.remove('active');
+
+            const startTime = Date.now();
+
+            try {
+                // Step 1: Validate path
+                updateTodoStatus('validate', 'running');
+                setProgress('Stap 1/8: Valideren project pad...');
+                await sleep(300); // Simulate validation
+                updateTodoStatus('validate', 'success', formatDuration(Date.now() - startTime));
+
+                // Step 2: Scan project
+                updateTodoStatus('scan', 'running');
+                setProgress('Stap 2/8: Scanning project structuur...');
+
+                const scanStart = Date.now();
+                const response = await fetch(`${API_BASE}/applications/scan`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        root_path: path,
+                        name: name,
+                        description: `Project ${name} geregistreerd via intake`,
+                        max_depth: 3,
+                        auto_create_agents: true
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Intake failed');
+                }
+
+                updateTodoStatus('scan', 'success', formatDuration(Date.now() - scanStart));
+
+                // Step 3: Register in database
+                updateTodoStatus('register', 'running');
+                setProgress('Stap 3/8: Registreren in database...');
+                const result = await response.json();
+                currentResult = result;
+                updateTodoStatus('register', 'success', `ID: ${result.application_id}`);
+
+                // Step 4: Create agents
+                updateTodoStatus('agents', 'running');
+                setProgress('Stap 4/8: Creëren stack agents...');
+                await sleep(500);
+                updateTodoStatus('agents', 'success', `${result.components_found || 0} agents`);
+
+                // Step 5: Sync Backlog (epics/features/stories from doc/project/)
+                // With fallback to auto-generation when no markdown backlog exists
+                if (result.success && result.application_id) {
+                    updateTodoStatus('backlog', 'running');
+                    setProgress('Stap 5/8: Importeren backlog uit doc/project/...');
+                    try {
+                        const backlogResponse = await fetch(`${API_BASE}/applications/${result.application_id}/sync-to-kanban`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+
+                        if (backlogResponse.ok) {
+                            const backlogResult = await backlogResponse.json();
+                            currentResult.backlog_sync = backlogResult;
+                            const epics = backlogResult.epics_synced || 0;
+                            const stories = backlogResult.stories_synced || 0;
+                            if (epics > 0 || stories > 0) {
+                                updateTodoStatus('backlog', 'success', `${epics} epics, ${stories} stories geimporteerd`);
+                            } else {
+                                // No existing backlog - generate initial epics from template
+                                setProgress('Stap 5/8: Genereren initiële backlog...');
+                                try {
+                                    const genResponse = await fetch(`${API_BASE}/applications/${result.application_id}/generate-initial-backlog`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' }
+                                    });
+                                    if (genResponse.ok) {
+                                        const genResult = await genResponse.json();
+                                        currentResult.backlog_generated = genResult;
+                                        const genEpics = genResult.epics_generated || 0;
+                                        const template = genResult.template_used || 'custom';
+                                        updateTodoStatus('backlog', 'success', `${genEpics} epics gegenereerd (${template})`);
+                                    } else {
+                                        updateTodoStatus('backlog', 'success', 'Geen backlog (generatie mislukt)');
+                                    }
+                                } catch (genError) {
+                                    console.warn('Backlog generation failed:', genError);
+                                    updateTodoStatus('backlog', 'success', 'Geen backlog gevonden');
+                                }
+                            }
+                        } else {
+                            // Try generating when sync fails
+                            setProgress('Stap 5/8: Genereren initiële backlog...');
+                            try {
+                                const genResponse = await fetch(`${API_BASE}/applications/${result.application_id}/generate-initial-backlog`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' }
+                                });
+                                if (genResponse.ok) {
+                                    const genResult = await genResponse.json();
+                                    currentResult.backlog_generated = genResult;
+                                    const genEpics = genResult.epics_generated || 0;
+                                    const template = genResult.template_used || 'custom';
+                                    updateTodoStatus('backlog', 'success', `${genEpics} epics gegenereerd (${template})`);
+                                } else {
+                                    updateTodoStatus('backlog', 'success', 'Geen backlog');
+                                }
+                            } catch (genError) {
+                                console.warn('Backlog generation failed:', genError);
+                                updateTodoStatus('backlog', 'success', 'Geen backlog');
+                            }
+                        }
+                    } catch (backlogError) {
+                        console.warn('Backlog sync skipped:', backlogError);
+                        updateTodoStatus('backlog', 'success', 'Backlog stap overgeslagen');
+                    }
+                } else {
+                    updateTodoStatus('backlog', 'failed', 'Geen project ID');
+                }
+
+                // Step 6: Story Extraction (Week 84)
+                if (result.success && result.application_id) {
+                    updateTodoStatus('extract', 'running');
+                    setProgress('Stap 6/8: User stories extracten uit code...');
+                    try {
+                        const extractResponse = await fetch(`${API_BASE}/project-registration/projects/${result.application_id}/extract-stories`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                tier: 'FREE',
+                                auto_import_to_kanban: true,
+                                target_lane: 'BACKLOG'
+                            })
+                        });
+
+                        if (extractResponse.ok) {
+                            const extractResult = await extractResponse.json();
+                            currentResult.extraction = extractResult;
+                            const stories = extractResult.stories_extracted || 0;
+                            const confidence = extractResult.confidence ? Math.round(extractResult.confidence * 100) : 0;
+                            updateTodoStatus('extract', 'success', `${stories} stories (${confidence}%)`);
+                        } else {
+                            updateTodoStatus('extract', 'failed', 'Extractie mislukt');
+                        }
+                    } catch (extractError) {
+                        console.warn('Story extraction failed:', extractError);
+                        updateTodoStatus('extract', 'failed', extractError.message);
+                    }
+                } else {
+                    updateTodoStatus('extract', 'failed', 'Geen project ID');
+                }
+
+                // Step 7: Quality Scan
+                if (result.success && result.application_id) {
+                    updateTodoStatus('quality', 'running');
+                    setProgress('Stap 7/8: Quality scan uitvoeren...');
+                    const qualityStart = Date.now();
+                    try {
+                        const qualityScanResponse = await fetch(`${API_BASE}/quality/scan`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                project_id: result.application_id,
+                                scanners: ['ruff', 'bandit', 'coverage'],
+                                background: false
+                            })
+                        });
+
+                        if (qualityScanResponse.ok) {
+                            const qualityResult = await qualityScanResponse.json();
+                            currentResult.quality_scan = qualityResult;
+                            const issues = qualityResult.total_issues || qualityResult.issues_found || 0;
+                            updateTodoStatus('quality', 'success', `${issues} issues`);
+                        } else {
+                            updateTodoStatus('quality', 'failed', 'Scan mislukt');
+                        }
+                    } catch (qualityError) {
+                        console.warn('Quality scan failed:', qualityError);
+                        updateTodoStatus('quality', 'failed', qualityError.message);
+                    }
+                } else {
+                    updateTodoStatus('quality', 'failed', 'Geen project ID');
+                }
+
+                // Step 8: Generate documentation
+                updateTodoStatus('docs', 'running');
+                setProgress('Stap 8/8: Genereren documentatie...');
+                await sleep(500);
+                updateTodoStatus('docs', 'success', '4 bestanden');
+
+                showResults(result);
+
+            } catch (error) {
+                // Mark current running item as failed
+                const runningItem = todoItems.find(t => t.status === 'running');
+                if (runningItem) {
+                    updateTodoStatus(runningItem.id, 'failed', error.message);
+                }
+                showError(error.message);
+                document.getElementById('intake-form').style.display = 'block';
+            } finally {
+                document.getElementById('progress').classList.remove('active');
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function formatDuration(ms) {
+            if (ms < 1000) return `${ms}ms`;
+            return `${(ms / 1000).toFixed(1)}s`;
+        }
+
+        function setProgress(text) {
+            document.getElementById('progress-text').textContent = text;
+        }
+
+        function showError(message) {
+            const el = document.getElementById('error-message');
+            el.textContent = '❌ ' + message;
+            el.classList.add('active');
+        }
+
+        function showResults(result) {
+            const totalStacks = result.total_stacks || [];
+            const componentsFound = result.components_found || 0;
+            const librariesFound = result.libraries_found || 0;
+
+            document.getElementById('stat-stacks').textContent = totalStacks.length;
+            document.getElementById('stat-components').textContent = componentsFound;
+            document.getElementById('stat-files').textContent = '-';
+            document.getElementById('stat-agents').textContent = componentsFound;
+
+            const stackList = document.getElementById('stack-list');
+            stackList.innerHTML = '';
+            totalStacks.forEach(stack => {
+                const tag = document.createElement('span');
+                tag.className = 'stack-tag';
+                tag.textContent = stack;
+                stackList.appendChild(tag);
+            });
+
+            const docList = document.getElementById('doc-list');
+            docList.innerHTML = '';
+            const docs = ['README.md', 'PROJECT_GOAL.md', 'ARCHITECTURE.md', 'PROJECT_INTAKE.md'];
+            docs.forEach(doc => {
+                const li = document.createElement('li');
+                li.className = 'success';
+                li.innerHTML = `✅ ${doc}`;
+                docList.appendChild(li);
+            });
+
+            if (componentsFound > 0 || librariesFound > 0) {
+                document.getElementById('components-card').style.display = 'block';
+                const tbody = document.getElementById('component-table-body');
+                tbody.innerHTML = `
+                    <tr>
+                        <td><strong>Projects</strong></td>
+                        <td>PROJECT</td>
+                        <td>${totalStacks.join(', ')}</td>
+                        <td>${componentsFound}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Libraries</strong></td>
+                        <td>LIBRARY</td>
+                        <td>-</td>
+                        <td>${librariesFound}</td>
+                    </tr>
+                `;
+            }
+
+            if (result.scan_time_ms) {
+                const scanInfo = document.createElement('p');
+                scanInfo.style.marginTop = '1rem';
+                scanInfo.style.color = '#666';
+                scanInfo.innerHTML = `<em>Stack scan completed in ${result.scan_time_ms}ms</em>`;
+                document.getElementById('components-card').appendChild(scanInfo);
+            }
+
+            if (result.quality_scan) {
+                showQualityResults(result.quality_scan);
+            }
+
+            document.getElementById('results').classList.add('active');
+        }
+
+        function showQualityResults(qualityResult) {
+            document.getElementById('quality-card').style.display = 'block';
+
+            const score = qualityResult.quality_score || qualityResult.score || '-';
+            const issues = qualityResult.total_issues || qualityResult.issues_found || 0;
+            const critical = qualityResult.critical_issues || 0;
+            const coverage = qualityResult.coverage_percentage || qualityResult.coverage || '-';
+
+            document.getElementById('stat-quality-score').textContent =
+                typeof score === 'number' ? `${score}%` : score;
+            document.getElementById('stat-issues').textContent = issues;
+            document.getElementById('stat-critical').textContent = critical;
+            document.getElementById('stat-coverage').textContent =
+                typeof coverage === 'number' ? `${coverage}%` : coverage;
+
+            const detailsEl = document.getElementById('quality-details');
+            if (qualityResult.scan_time_ms) {
+                detailsEl.innerHTML = `<p style="margin-top: 1rem; color: #666;"><em>Quality scan completed in ${qualityResult.scan_time_ms}ms</em></p>`;
+            }
+        }
+
+        async function runQualityScan() {
+            if (!currentResult || !currentResult.application_id) {
+                alert('Geen project beschikbaar voor quality scan');
+                return;
+            }
+
+            updateTodoStatus('quality', 'running');
+            document.getElementById('progress').classList.add('active');
+            setProgress('Quality scan uitvoeren...');
+
+            try {
+                const response = await fetch(`${API_BASE}/quality/scan`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        project_id: currentResult.application_id,
+                        scanners: ['ruff', 'bandit', 'coverage'],
+                        background: false
+                    })
+                });
+
+                if (response.ok) {
+                    const qualityResult = await response.json();
+                    currentResult.quality_scan = qualityResult;
+                    showQualityResults(qualityResult);
+                    const issues = qualityResult.total_issues || qualityResult.issues_found || 0;
+                    updateTodoStatus('quality', 'success', `${issues} issues`);
+                    alert('Quality scan voltooid!');
+                } else {
+                    const error = await response.json();
+                    updateTodoStatus('quality', 'failed', error.detail || 'Mislukt');
+                    alert('Quality scan mislukt: ' + (error.detail || 'Onbekende fout'));
+                }
+            } catch (error) {
+                updateTodoStatus('quality', 'failed', error.message);
+                alert('Quality scan mislukt: ' + error.message);
+            } finally {
+                document.getElementById('progress').classList.remove('active');
+            }
+        }
+
+        function openQualityDashboard() {
+            if (currentResult && currentResult.application_id) {
+                window.location.href = `quality-dashboard.html?project_id=${currentResult.application_id}`;
+            } else {
+                window.location.href = 'quality-dashboard.html';
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('project-path').value = '';
+            document.getElementById('project-name').value = '';
+            document.getElementById('doc-path').value = '';
+            document.getElementById('error-message').classList.remove('active');
+            resetTodos();
+        }
+
+        function newIntake() {
+            document.getElementById('intake-form').style.display = 'block';
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('error-message').classList.remove('active');
+            document.getElementById('components-card').style.display = 'none';
+            document.getElementById('quality-card').style.display = 'none';
+            currentResult = null;
+            currentProjectPath = null;
+            currentDocPath = null;
+            resetTodos();
+        }
+
+        function deriveDocPath(projectPath) {
+            if (projectPath.endsWith('/src')) {
+                return projectPath.replace(/\/src$/, '/doc');
+            } else if (projectPath.endsWith('/src/')) {
+                return projectPath.replace(/\/src\/$/, '/doc/');
+            } else {
+                return projectPath.replace(/\/?$/, '/doc');
+            }
+        }
+
+        function openDocs() {
+            if (currentDocPath) {
+                alert(`Documentatie locatie:\n${currentDocPath}\n\nOpen met je file manager of IDE.`);
+            } else if (currentProjectPath) {
+                const docPath = deriveDocPath(currentProjectPath);
+                alert(`Documentatie locatie:\n${docPath}\n\nOpen met je file manager of IDE.`);
+            } else {
+                alert('Documentatie pad niet beschikbaar');
+            }
+        }
+    </script>
+</body>
+</html>

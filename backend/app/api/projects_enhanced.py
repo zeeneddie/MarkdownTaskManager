@@ -22,6 +22,10 @@ import logging
 
 # Note: ChromaService will be imported when implemented
 # from app.services.chroma_service import get_chroma_service
+from app.services.quality_scan_service import get_quality_scan_service
+from app.database import get_db
+from app.models.project import Project
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -360,51 +364,73 @@ async def run_quality_scan(
     }
     ```
     """
+    db = next(get_db())
     try:
         logger.info(f"Starting quality scan for project {project_id}")
 
-        # TODO: Implement actual quality scan
-        # 1. Validate project exists and is brownfield
-        # 2. Trigger quality scan workflow via agent service
-        # 3. Wait for completion or return job ID for async polling
-        # 4. Store results in ChromaDB
-        # 5. Return scan summary
+        # 1. Get project from database
+        project = db.query(Project).filter(Project.id == project_id).first()
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project {project_id} not found"
+            )
 
-        scan_id = f"scan-{project_id}-{datetime.now().strftime('%Y-%m-%d')}"
+        # 2. Validate codebase path
+        codebase_path = request.codebase_path
+        if not codebase_path:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="codebase_path is required"
+            )
+
+        # 3. Run quality scan using scanner registry
+        scan_service = get_quality_scan_service()
+        results = await scan_service.run_scan(
+            project_path=codebase_path,
+            tech_stack=project.tech_stack,  # Use project's configured tech stack
+            scan_options=request.scan_options
+        )
+
+        # 4. Generate scan ID
+        scan_id = f"scan-{project_id}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+
+        # 5. Update project with scan reference
+        project.quality_scan_id = scan_id
+        db.commit()
+
+        logger.info(f"Quality scan completed: {scan_id}, {results['total_violations']} violations found")
 
         return QualityScanResponse(
             scan_id=scan_id,
             project_id=project_id,
-            overall_score=65,
-            security_score=58,
-            quality_score=72,
-            test_coverage=45,
-            tech_debt_days=180,
-            total_violations=287,
-            top_violations=[
-                {
-                    "type": "SQL Injection",
-                    "severity": "critical",
-                    "count": 12,
-                    "description": "User input not sanitized in patient search"
-                },
-                {
-                    "type": "Code Smells",
-                    "severity": "medium",
-                    "count": 234,
-                    "description": "Complex methods requiring refactoring"
-                }
-            ],
+            overall_score=results["scores"]["overall"],
+            security_score=results["scores"]["security"],
+            quality_score=results["scores"]["quality"],
+            test_coverage=0,  # TODO: Add test coverage scanner
+            tech_debt_days=results["tech_debt_days"],
+            total_violations=results["total_violations"],
+            top_violations=results["top_violations"],
             status="completed",
             scanned_at=datetime.now()
         )
 
+    except HTTPException:
+        raise
+    except ValueError as e:
+        logger.error(f"Invalid scan request: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
     except Exception as e:
         logger.error(f"Failed to run quality scan: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to run quality scan: {str(e)}"
         )
+    finally:
+        db.close()
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)

@@ -157,6 +157,9 @@ class GreenPaperService:
             for a in answers
         ]
 
+        # Calculate progress
+        progress = await self.calculate_progress(session_id)
+
         return {
             "session_id": session.id,
             "project_id": session.project_id,
@@ -167,6 +170,7 @@ class GreenPaperService:
             "updated_at": session.updated_at.isoformat(),
             "completed_at": session.completed_at.isoformat() if session.completed_at else None,
             "answers": answers_data,
+            "progress": progress,
             "questions": await self.get_questions()
         }
 
