@@ -54,6 +54,13 @@ from app.services.application_registry_service import (
     ApplicationComponent,
     ComponentType,
 )
+
+# Brown Paper Database Models - for persistence
+from app.models.brown_paper import (
+    BrownPaperSession as BrownPaperSessionDB,
+    BrownPaperAnalysis as BrownPaperAnalysisDB,
+    BrownPaperSessionStatus as DBSessionStatus,
+)
 from app.services.brown_paper_estimation_service import (
     get_brown_paper_estimation_service,
     BrownPaperEstimationService,
@@ -261,9 +268,27 @@ class BrownPaperService:
     # ========================================================================
 
     async def start_session(self, application_id: int) -> BrownPaperSession:
-        """Start a new Brown Paper analysis session."""
+        """Start a new Brown Paper analysis session.
+
+        Gets application info from registry and sets project_path for enhanced analysis.
+        Persists to database for durability.
+        """
         session_id = str(uuid.uuid4())
 
+        # Get application info from registry for project_path
+        project_path = None
+        project_name = None
+        try:
+            app_service = get_application_registry_service()
+            application = app_service.get_application(application_id)
+            if application:
+                project_path = application.root_path
+                project_name = application.name
+                logger.info(f"Application found: {project_name} at {project_path}")
+        except Exception as e:
+            logger.warning(f"Could not get application {application_id} from registry: {e}")
+
+        # Create in-memory session object
         session = BrownPaperSession(
             id=session_id,
             application_id=application_id,
@@ -271,7 +296,28 @@ class BrownPaperService:
             analysis=None,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
+            project_path=project_path,
+            project_name=project_name,
         )
+
+        # Persist to database
+        try:
+            async with AsyncSessionLocal() as db:
+                db_session = BrownPaperSessionDB(
+                    id=uuid.UUID(session_id),
+                    application_id=application_id,
+                    application_name=project_name or f"App-{application_id}",
+                    root_path=project_path or "",
+                    status=DBSessionStatus.SCANNING,
+                    modules_count=0,
+                    domains_count=0,
+                )
+                db.add(db_session)
+                await db.commit()
+                logger.info(f"Persisted Brown Paper session {session_id} to database")
+        except Exception as e:
+            logger.error(f"Failed to persist session to database: {e}")
+            # Continue with in-memory session even if DB fails
 
         self._sessions[session_id] = session
         logger.info(f"Started Brown Paper session {session_id} for application {application_id}")
@@ -279,15 +325,231 @@ class BrownPaperService:
         return session
 
     def get_session(self, session_id: str) -> Optional[BrownPaperSession]:
-        """Get a Brown Paper session by ID."""
+        """Get a Brown Paper session by ID (sync, from cache)."""
         return self._sessions.get(session_id)
 
+    async def get_session_async(self, session_id: str) -> Optional[BrownPaperSession]:
+        """Get a Brown Paper session by ID (async, with database fallback)."""
+        # Check cache first
+        if session_id in self._sessions:
+            return self._sessions[session_id]
+
+        # Load from database
+        try:
+            async with AsyncSessionLocal() as db:
+                result = await db.execute(
+                    select(BrownPaperSessionDB).where(
+                        BrownPaperSessionDB.id == uuid.UUID(session_id)
+                    )
+                )
+                db_session = result.scalar_one_or_none()
+
+                if db_session:
+                    # Also load analysis if exists
+                    analysis_result = await db.execute(
+                        select(BrownPaperAnalysisDB).where(
+                            BrownPaperAnalysisDB.session_id == db_session.id
+                        )
+                    )
+                    db_analysis = analysis_result.scalar_one_or_none()
+
+                    # Convert to in-memory object
+                    analysis = None
+                    if db_analysis:
+                        analysis = BrownPaperAnalysis(
+                            application_id=db_session.application_id,
+                            application_name=db_session.application_name,
+                            root_path=db_session.root_path,
+                            modules=[CodeModule(**m) if isinstance(m, dict) else m for m in (db_analysis.modules or [])],
+                            total_classes=db_session.classes_count or 0,
+                            total_functions=db_session.functions_count or 0,
+                            primary_patterns=db_analysis.primary_patterns or [],
+                            doc_insights=db_analysis.doc_insights or [],
+                            readme_summary=db_analysis.readme_summary,
+                            domains=[BusinessDomain(**d) if isinstance(d, dict) else d for d in (db_analysis.domains or [])],
+                            analysis_time_ms=db_analysis.analysis_time_ms or 0,
+                            status=db_session.status,
+                        )
+
+                    session = BrownPaperSession(
+                        id=str(db_session.id),
+                        application_id=db_session.application_id,
+                        status=BrownPaperStatus(db_session.status) if db_session.status in [s.value for s in BrownPaperStatus] else BrownPaperStatus.SCANNING,
+                        analysis=analysis,
+                        created_at=db_session.created_at,
+                        updated_at=db_session.updated_at,
+                        project_path=db_session.root_path,
+                        project_name=db_session.application_name,
+                    )
+
+                    # Add to cache
+                    self._sessions[session_id] = session
+                    return session
+
+        except Exception as e:
+            logger.error(f"Failed to load session {session_id} from database: {e}")
+
+        return None
+
     def list_sessions(self, application_id: Optional[int] = None) -> List[BrownPaperSession]:
-        """List all Brown Paper sessions, optionally filtered by application."""
+        """List all Brown Paper sessions (sync, from cache only)."""
         sessions = list(self._sessions.values())
         if application_id is not None:
             sessions = [s for s in sessions if s.application_id == application_id]
         return sorted(sessions, key=lambda s: s.created_at, reverse=True)
+
+    async def list_sessions_async(self, application_id: Optional[int] = None) -> List[BrownPaperSession]:
+        """List all Brown Paper sessions (async, from database)."""
+        try:
+            async with AsyncSessionLocal() as db:
+                query = select(BrownPaperSessionDB)
+                if application_id is not None:
+                    query = query.where(BrownPaperSessionDB.application_id == application_id)
+                query = query.order_by(BrownPaperSessionDB.created_at.desc())
+
+                result = await db.execute(query)
+                db_sessions = result.scalars().all()
+
+                sessions = []
+                for db_session in db_sessions:
+                    session_id = str(db_session.id)
+
+                    # Check cache first
+                    if session_id in self._sessions:
+                        sessions.append(self._sessions[session_id])
+                    else:
+                        # Create minimal session object (without full analysis)
+                        session = BrownPaperSession(
+                            id=session_id,
+                            application_id=db_session.application_id,
+                            status=BrownPaperStatus(db_session.status) if db_session.status in [s.value for s in BrownPaperStatus] else BrownPaperStatus.SCANNING,
+                            analysis=None,  # Load on demand
+                            created_at=db_session.created_at,
+                            updated_at=db_session.updated_at,
+                            project_path=db_session.root_path,
+                            project_name=db_session.application_name,
+                            modules_count=db_session.modules_count or 0,
+                            domains_count=db_session.domains_count or 0,
+                        )
+                        sessions.append(session)
+
+                return sessions
+
+        except Exception as e:
+            logger.error(f"Failed to list sessions from database: {e}")
+            # Fallback to cache
+            return self.list_sessions(application_id)
+
+    async def _persist_analysis_to_db(
+        self,
+        session_id: str,
+        session: BrownPaperSession,
+        analysis: BrownPaperAnalysis
+    ) -> None:
+        """Persist analysis results to database."""
+        try:
+            async with AsyncSessionLocal() as db:
+                # Update session summary
+                await db.execute(
+                    update(BrownPaperSessionDB)
+                    .where(BrownPaperSessionDB.id == uuid.UUID(session_id))
+                    .values(
+                        status=session.status.value if hasattr(session.status, 'value') else session.status,
+                        modules_count=len(analysis.modules),
+                        domains_count=len(analysis.domains),
+                        classes_count=analysis.total_classes,
+                        functions_count=analysis.total_functions,
+                        patterns_detected=analysis.primary_patterns,
+                        updated_at=datetime.utcnow(),
+                        generation_metadata={
+                            "analysis_time_ms": analysis.analysis_time_ms,
+                        }
+                    )
+                )
+
+                # Check if analysis record exists
+                result = await db.execute(
+                    select(BrownPaperAnalysisDB).where(
+                        BrownPaperAnalysisDB.session_id == uuid.UUID(session_id)
+                    )
+                )
+                existing_analysis = result.scalar_one_or_none()
+
+                # Convert modules and domains to JSON-serializable format
+                modules_json = [
+                    {
+                        "name": m.name,
+                        "path": m.path,
+                        "module_type": m.module_type,
+                        "description": m.description,
+                        "classes": m.classes,
+                        "functions": m.functions,
+                        "dependencies": m.dependencies,
+                        "estimated_complexity": m.estimated_complexity,
+                        "business_domain": m.business_domain,
+                    } if hasattr(m, 'name') else m
+                    for m in analysis.modules
+                ]
+
+                domains_json = [
+                    {
+                        "name": d.name,
+                        "description": d.description,
+                        "modules": d.modules,
+                        "entities": d.entities,
+                        "use_cases": d.use_cases,
+                        "complexity": d.complexity,
+                        "priority": d.priority,
+                    } if hasattr(d, 'name') else d
+                    for d in analysis.domains
+                ]
+
+                doc_insights_json = [
+                    {
+                        "source": di.source,
+                        "section": di.section,
+                        "content": di.content,
+                        "insight_type": di.insight_type,
+                        "confidence": di.confidence,
+                    } if hasattr(di, 'source') else di
+                    for di in analysis.doc_insights
+                ]
+
+                if existing_analysis:
+                    # Update existing
+                    await db.execute(
+                        update(BrownPaperAnalysisDB)
+                        .where(BrownPaperAnalysisDB.session_id == uuid.UUID(session_id))
+                        .values(
+                            modules=modules_json,
+                            primary_patterns=analysis.primary_patterns,
+                            doc_insights=doc_insights_json,
+                            readme_summary=analysis.readme_summary,
+                            domains=domains_json,
+                            analysis_time_ms=analysis.analysis_time_ms,
+                            updated_at=datetime.utcnow(),
+                        )
+                    )
+                else:
+                    # Create new
+                    db_analysis = BrownPaperAnalysisDB(
+                        session_id=uuid.UUID(session_id),
+                        modules=modules_json,
+                        primary_patterns=analysis.primary_patterns,
+                        doc_insights=doc_insights_json,
+                        readme_summary=analysis.readme_summary,
+                        domains=domains_json,
+                        analysis_time_ms=analysis.analysis_time_ms,
+                    )
+                    db.add(db_analysis)
+
+                await db.commit()
+                logger.info(f"Persisted analysis for session {session_id} to database: "
+                           f"{len(analysis.modules)} modules, {len(analysis.domains)} domains")
+
+        except Exception as e:
+            logger.error(f"Failed to persist analysis to database: {e}", exc_info=True)
+            # Don't raise - continue with in-memory data
 
     # ========================================================================
     # MAIN ANALYSIS FLOW
@@ -369,6 +631,9 @@ class BrownPaperService:
 
             session.analysis = analysis
             session.updated_at = datetime.utcnow()
+
+            # Persist analysis to database
+            await self._persist_analysis_to_db(session_id, session, analysis)
 
             logger.info(f"Analysis complete for session {session_id}: "
                        f"{len(modules)} modules, {len(domains)} domains, "

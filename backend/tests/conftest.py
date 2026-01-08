@@ -17,6 +17,55 @@ from app.models.user import User
 import os
 import socket
 
+
+def _check_postgres_available():
+    """Check if PostgreSQL is available and responding.
+
+    Uses asyncpg to verify actual database connectivity, not just port.
+    """
+    # Check environment override to skip DB tests
+    if os.getenv("SKIP_DB_TESTS", "").lower() in ("1", "true", "yes"):
+        return False
+
+    import asyncio
+
+    async def _try_connect(host: str, port: int) -> bool:
+        """Try to connect to PostgreSQL database."""
+        try:
+            import asyncpg
+            conn = await asyncio.wait_for(
+                asyncpg.connect(
+                    host=host,
+                    port=port,
+                    user='user',
+                    password='password',
+                    database='project_manager_test',
+                ),
+                timeout=2.0
+            )
+            await conn.close()
+            return True
+        except Exception:
+            return False
+
+    # Try Docker hostname first
+    try:
+        socket.gethostbyname('db')
+        if asyncio.get_event_loop().run_until_complete(_try_connect('db', 5432)):
+            return True
+    except (socket.gaierror, RuntimeError):
+        pass
+
+    # Try localhost - create new event loop if needed
+    try:
+        loop = asyncio.new_event_loop()
+        result = loop.run_until_complete(_try_connect('localhost', 5433))
+        loop.close()
+        return result
+    except Exception:
+        return False
+
+
 def _get_default_test_db_url():
     """Detect if running in Docker or locally and return appropriate URL."""
     # Check if 'db' hostname resolves (we're in Docker)
@@ -27,20 +76,29 @@ def _get_default_test_db_url():
         # Running locally, use localhost with external port
         return "postgresql+asyncpg://user:password@localhost:5433/project_manager_test"
 
+
+# Check database availability once at module load
+POSTGRES_AVAILABLE = _check_postgres_available()
+
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", _get_default_test_db_url())
 
-# Create test engine
-test_engine = create_async_engine(
-    TEST_DATABASE_URL,
-    poolclass=NullPool,
-)
+# Lazy engine creation - only create when PostgreSQL is available
+test_engine = None
+TestSessionLocal = None
 
-# Create test session factory
-TestSessionLocal = async_sessionmaker(
-    test_engine,
-    class_=AsyncSession,
-    expire_on_commit=False
-)
+if POSTGRES_AVAILABLE:
+    # Create test engine only when DB is available
+    test_engine = create_async_engine(
+        TEST_DATABASE_URL,
+        poolclass=NullPool,
+    )
+
+    # Create test session factory
+    TestSessionLocal = async_sessionmaker(
+        test_engine,
+        class_=AsyncSession,
+        expire_on_commit=False
+    )
 
 
 @pytest.fixture(scope="function")
@@ -53,7 +111,13 @@ def event_loop():
 
 @pytest.fixture(scope="function")
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    """Create a fresh database session for each test"""
+    """Create a fresh database session for each test.
+
+    Skips if PostgreSQL is not available.
+    """
+    if not POSTGRES_AVAILABLE:
+        pytest.skip("PostgreSQL test database not available (localhost:5433 or db:5432)")
+
     from sqlalchemy import text
 
     # Drop all objects with CASCADE to handle views and FK constraints

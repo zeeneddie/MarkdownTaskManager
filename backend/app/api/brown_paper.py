@@ -13,7 +13,11 @@ CODE-ANALYSIS ENDPOINTS (prefix: /api/brown-paper/sessions):
 - POST /sessions         - Start analysis session
 - GET  /sessions         - List sessions
 - GET  /sessions/{id}    - Get session details
-- POST /sessions/{id}/analyze  - Run analysis
+- POST /sessions/{id}/analyze  - Run basic analysis
+- POST /sessions/{id}/enhanced-analyze  - Run 6-phase deep analysis
+- GET  /sessions/{id}/dependency-graph  - Get D3.js graph visualization
+- GET  /sessions/{id}/hierarchy  - Get Epic/Feature/Story/Task tree
+- GET  /sessions/{id}/metrics  - Get code quality metrics
 - POST /sessions/{id}/constitution  - Generate constitution
 - POST /sessions/{id}/epics  - Generate epics
 - POST /sessions/{id}/approve  - Approve session
@@ -190,6 +194,43 @@ class ApproveRejectRequest(BaseModel):
     reason: Optional[str] = Field(None, description="Reason for rejection (required for reject)")
 
 
+class EnhancedAnalysisRequestModel(BaseModel):
+    """Request for enhanced 6-phase analysis."""
+    tier: str = Field(
+        default="STANDARD",
+        description="Analysis tier: FREE, BASIC, STANDARD, PROFESSIONAL, PREMIUM"
+    )
+    include_phases: List[int] = Field(
+        default=[1, 2, 3, 4, 5, 6],
+        description="Phases to include (1-6)"
+    )
+    skip_vbscript: bool = Field(default=False, description="Skip VBScript analysis")
+    include_cira: bool = Field(default=True, description="Include CiRA causality detection")
+    generate_tests: bool = Field(default=True, description="Generate test cases")
+    include_swot: bool = Field(default=True, description="Include SWOT analysis")
+
+
+class EnhancedAnalysisResponseModel(BaseModel):
+    """Response from enhanced analysis."""
+    session_id: str
+    status: str
+    tier: str
+    phases_completed: List[int] = []
+    confidence: float = 0.0
+    summary: Optional[Dict[str, Any]] = None
+    phase1_result: Optional[Dict[str, Any]] = None
+    phase2_result: Optional[Dict[str, Any]] = None
+    phase3_result: Optional[Dict[str, Any]] = None
+    phase4_result: Optional[Dict[str, Any]] = None
+    phase5_result: Optional[Dict[str, Any]] = None
+    dependency_graph_url: Optional[str] = None
+    hierarchy_url: Optional[str] = None
+    metrics_url: Optional[str] = None
+    conflicts_url: Optional[str] = None
+    total_duration_ms: int = 0
+    errors: List[str] = []
+
+
 # ============================================================================
 # API ENDPOINTS
 # ============================================================================
@@ -234,21 +275,23 @@ async def list_sessions(application_id: Optional[int] = None):
     List all Brown Paper sessions.
 
     Optionally filter by application_id.
+    Sessions are loaded from database for persistence across server restarts.
     """
     try:
         service = get_brown_paper_service()
-        sessions = service.list_sessions(application_id)
+        # Use async method to load from database
+        sessions = await service.list_sessions_async(application_id)
 
         return [
             SessionSummaryResponse(
                 id=s.id,
                 application_id=s.application_id,
-                status=s.status.value,
-                created_at=s.created_at.isoformat(),
-                updated_at=s.updated_at.isoformat(),
-                error_message=s.error_message,
-                modules_count=len(s.analysis.modules) if s.analysis else 0,
-                domains_count=len(s.analysis.domains) if s.analysis else 0,
+                status=s.status.value if hasattr(s.status, 'value') else s.status,
+                created_at=s.created_at.isoformat() if s.created_at else None,
+                updated_at=s.updated_at.isoformat() if s.updated_at else None,
+                error_message=s.error_message if hasattr(s, 'error_message') else None,
+                modules_count=getattr(s, 'modules_count', 0) or (len(s.analysis.modules) if s.analysis else 0),
+                domains_count=getattr(s, 'domains_count', 0) or (len(s.analysis.domains) if s.analysis else 0),
             )
             for s in sessions
         ]
@@ -267,10 +310,12 @@ async def get_session(session_id: str):
     Get detailed information about a Brown Paper session.
 
     Includes analysis results if analysis has been run.
+    Loads from database for persistence across server restarts.
     """
     try:
         service = get_brown_paper_service()
-        session = service.get_session(session_id)
+        # Use async method to load from database
+        session = await service.get_session_async(session_id)
 
         if not session:
             raise HTTPException(
@@ -589,6 +634,274 @@ async def reject_session(session_id: str, request: ApproveRejectRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Rejection failed: {str(e)}",
+        )
+
+
+# ============================================================================
+# ENHANCED ANALYSIS ENDPOINTS (Sessions)
+# ============================================================================
+
+@router.post("/sessions/{session_id}/enhanced-analyze", response_model=EnhancedAnalysisResponseModel)
+async def sessions_enhanced_analysis(
+    session_id: str,
+    request: EnhancedAnalysisRequestModel
+):
+    """
+    Start 6-phase enhanced analysis for a Brown Paper session.
+
+    This endpoint integrates multiple services for deep code analysis:
+    - Phase 1: DependencyGraph + CodeAnalysis + LayeredAnalysis
+    - Phase 2: Domain Extraction (Peter agent)
+    - Phase 3: HierarchicalStoryExtractionService
+    - Phase 4: DeepExtractionService + LLM Council
+    - Phase 5: brown_paper_estimation_service (enhanced)
+    - Phase 6: Output consolidation
+
+    The phases run depend on the tier:
+    - FREE: Phase 1 only
+    - BASIC: Phases 1-2
+    - STANDARD: Phases 1-3
+    - PROFESSIONAL: Phases 1-5
+    - PREMIUM: All 6 phases with Human Review
+
+    **Example Request:**
+    ```json
+    {
+      "tier": "STANDARD",
+      "include_phases": [1, 2, 3, 4, 5, 6],
+      "skip_vbscript": false,
+      "include_cira": true,
+      "generate_tests": true,
+      "include_swot": true
+    }
+    ```
+    """
+    from app.database import AsyncSessionLocal
+    from app.models.brown_paper_enhanced import (
+        EnhancedAnalysisTier,
+        EnhancedAnalysisRequest,
+        EnhancedAnalysisOptions,
+    )
+
+    try:
+        service = get_brown_paper_service()
+
+        # Verify session exists
+        session = service.get_session(session_id)
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Session not found: {session_id}",
+            )
+
+        # Convert tier string to enum
+        try:
+            tier_enum = EnhancedAnalysisTier(request.tier.upper())
+        except ValueError:
+            tier_enum = EnhancedAnalysisTier.STANDARD
+
+        # Build request
+        enhanced_request = EnhancedAnalysisRequest(
+            tier=tier_enum,
+            include_phases=request.include_phases,
+            options=EnhancedAnalysisOptions(
+                skip_vbscript=request.skip_vbscript,
+                include_cira=request.include_cira,
+                generate_tests=request.generate_tests,
+                include_swot=request.include_swot,
+            )
+        )
+
+        async with AsyncSessionLocal() as db:
+            result = await service.run_enhanced_analysis(
+                session_id=session_id,
+                request=enhanced_request,
+                db=db
+            )
+
+        # Convert dataclasses to dict for response
+        return EnhancedAnalysisResponseModel(
+            session_id=result.session_id,
+            status=result.status,
+            tier=result.tier.value,
+            phases_completed=result.phases_completed,
+            confidence=result.confidence,
+            summary=vars(result.summary) if result.summary else None,
+            phase1_result=vars(result.phase1_result) if result.phase1_result else None,
+            phase2_result=vars(result.phase2_result) if result.phase2_result else None,
+            phase3_result=vars(result.phase3_result) if result.phase3_result else None,
+            phase4_result=vars(result.phase4_result) if result.phase4_result else None,
+            phase5_result=vars(result.phase5_result) if result.phase5_result else None,
+            dependency_graph_url=result.dependency_graph_url,
+            hierarchy_url=result.hierarchy_url,
+            metrics_url=result.metrics_url,
+            conflicts_url=result.conflicts_url,
+            total_duration_ms=result.total_duration_ms,
+            errors=result.errors,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Enhanced analysis failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Enhanced analysis failed: {str(e)}",
+        )
+
+
+@router.get("/sessions/{session_id}/dependency-graph")
+async def sessions_dependency_graph(session_id: str):
+    """
+    Get dependency graph visualization data for a session.
+
+    Returns graph nodes and edges in D3.js-compatible format.
+    """
+    try:
+        service = get_brown_paper_service()
+        session = service.get_session(session_id)
+
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Session not found: {session_id}",
+            )
+
+        # Check if enhanced analysis has been run
+        enhanced = getattr(session, 'enhanced_analysis', None)
+        if not enhanced:
+            return {
+                "session_id": session_id,
+                "has_graph": False,
+                "message": "Run enhanced-analyze first to generate dependency graph",
+            }
+
+        phase1 = enhanced.get('phase1_result', {}) if isinstance(enhanced, dict) else {}
+        dep_graph = phase1.get('dependency_graph', {})
+
+        return {
+            "session_id": session_id,
+            "has_graph": bool(dep_graph),
+            "graph": dep_graph,
+            "nodes": dep_graph.get('nodes', []),
+            "edges": dep_graph.get('edges', []),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get dependency graph: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get dependency graph: {str(e)}",
+        )
+
+
+@router.get("/sessions/{session_id}/hierarchy")
+async def sessions_hierarchy(session_id: str):
+    """
+    Get Epic/Feature/Story/Task hierarchy for a session.
+
+    Returns the hierarchical breakdown generated by enhanced analysis.
+    """
+    try:
+        service = get_brown_paper_service()
+        session = service.get_session(session_id)
+
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Session not found: {session_id}",
+            )
+
+        # Check if enhanced analysis has been run
+        enhanced = getattr(session, 'enhanced_analysis', None)
+        if not enhanced:
+            return {
+                "session_id": session_id,
+                "has_hierarchy": False,
+                "message": "Run enhanced-analyze first to generate hierarchy",
+            }
+
+        phase3 = enhanced.get('phase3_result', {}) if isinstance(enhanced, dict) else {}
+        phase4 = enhanced.get('phase4_result', {}) if isinstance(enhanced, dict) else {}
+
+        return {
+            "session_id": session_id,
+            "has_hierarchy": bool(phase3 or phase4),
+            "epics": phase3.get('epics', []) or phase4.get('epics', []),
+            "features": phase3.get('features', []) or phase4.get('features', []),
+            "stories": phase3.get('stories', []) or phase4.get('stories', []),
+            "tasks": phase4.get('tasks', []),
+            "summary": {
+                "total_epics": len(phase3.get('epics', []) or phase4.get('epics', [])),
+                "total_features": len(phase3.get('features', []) or phase4.get('features', [])),
+                "total_stories": len(phase3.get('stories', []) or phase4.get('stories', [])),
+                "total_tasks": len(phase4.get('tasks', [])),
+            }
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get hierarchy: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get hierarchy: {str(e)}",
+        )
+
+
+@router.get("/sessions/{session_id}/metrics")
+async def sessions_metrics(session_id: str):
+    """
+    Get code quality metrics for a session.
+
+    Returns metrics from code analysis and estimation phases.
+    """
+    try:
+        service = get_brown_paper_service()
+        session = service.get_session(session_id)
+
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Session not found: {session_id}",
+            )
+
+        # Check if enhanced analysis has been run
+        enhanced = getattr(session, 'enhanced_analysis', None)
+        if not enhanced:
+            return {
+                "session_id": session_id,
+                "has_metrics": False,
+                "message": "Run enhanced-analyze first to generate metrics",
+            }
+
+        phase1 = enhanced.get('phase1_result', {}) if isinstance(enhanced, dict) else {}
+        phase5 = enhanced.get('phase5_result', {}) if isinstance(enhanced, dict) else {}
+
+        return {
+            "session_id": session_id,
+            "has_metrics": bool(phase1 or phase5),
+            "code_analysis": phase1.get('code_analysis', {}),
+            "layered_analysis": phase1.get('layered_analysis', {}),
+            "estimation": {
+                "total_fp": phase5.get('total_fp', 0),
+                "total_sp": phase5.get('total_sp', 0),
+                "estimated_hours": phase5.get('estimated_hours', 0),
+                "complexity_multiplier": phase5.get('complexity_multiplier', 1.0),
+            },
+            "confidence": enhanced.get('confidence', 0),
+            "phases_completed": enhanced.get('phases_completed', []),
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get metrics: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get metrics: {str(e)}",
         )
 
 
@@ -1328,45 +1641,8 @@ async def bmad_list_questions():
 
 
 # ============================================================================
-# PHASE 20: BROWN PAPER ENHANCED - 6-PHASE DEEP ANALYSIS ENDPOINTS
+# PHASE 20: BROWN PAPER ENHANCED - 6-PHASE DEEP ANALYSIS ENDPOINTS (BMAD)
 # ============================================================================
-
-class EnhancedAnalysisRequestModel(BaseModel):
-    """Request for enhanced 6-phase analysis."""
-    tier: str = Field(
-        default="STANDARD",
-        description="Analysis tier: FREE, BASIC, STANDARD, PROFESSIONAL, PREMIUM"
-    )
-    include_phases: List[int] = Field(
-        default=[1, 2, 3, 4, 5, 6],
-        description="Phases to include (1-6)"
-    )
-    skip_vbscript: bool = Field(default=False, description="Skip VBScript analysis")
-    include_cira: bool = Field(default=True, description="Include CiRA causality detection")
-    generate_tests: bool = Field(default=True, description="Generate test cases")
-    include_swot: bool = Field(default=True, description="Include SWOT analysis")
-
-
-class EnhancedAnalysisResponseModel(BaseModel):
-    """Response from enhanced analysis."""
-    session_id: str
-    status: str
-    tier: str
-    phases_completed: List[int] = []
-    confidence: float = 0.0
-    summary: Optional[Dict[str, Any]] = None
-    phase1_result: Optional[Dict[str, Any]] = None
-    phase2_result: Optional[Dict[str, Any]] = None
-    phase3_result: Optional[Dict[str, Any]] = None
-    phase4_result: Optional[Dict[str, Any]] = None
-    phase5_result: Optional[Dict[str, Any]] = None
-    dependency_graph_url: Optional[str] = None
-    hierarchy_url: Optional[str] = None
-    metrics_url: Optional[str] = None
-    conflicts_url: Optional[str] = None
-    total_duration_ms: int = 0
-    errors: List[str] = []
-
 
 @router.post("/bmad/{session_id}/enhanced-analyze", response_model=EnhancedAnalysisResponseModel)
 async def start_enhanced_analysis(

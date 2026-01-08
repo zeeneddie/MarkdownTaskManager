@@ -8,6 +8,7 @@ apscheduler==3.10.4
 anyio==3.7.1
 async-timeout==5.0.1
 asyncpg==0.29.0
+aiosqlite==0.22.1  # For SQLite async unit tests
 attrs==25.4.0
 bcrypt>=4.0.0  # Password hashing (direct usage, no passlib)
 billiard==4.2.2

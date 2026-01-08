@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brown Paper Analysis - Multi-Stack AI Agent Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+            color: white;
+            padding: 1.5rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+        }
+
+        .header .nav {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .header .nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: background 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .header .nav a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* Session Selector */
+        .session-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .session-panel h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .session-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .session-controls select, .session-controls input {
+            padding: 0.6rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            min-width: 200px;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #8B4513;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #6B3410;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+        }
+
+        .btn-kanban {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-kanban:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: none;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .phase-progress {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .phase-step {
+            flex: 1;
+            text-align: center;
+            padding: 0.75rem 0.5rem;
+            background: #f0f2f5;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            position: relative;
+        }
+
+        .phase-step.active {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .phase-step.completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .phase-step .phase-num {
+            font-weight: 700;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8B4513, #D2691E);
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .progress-status {
+            margin-top: 0.75rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        /* Results Grid */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .result-card h3 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #555;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .metric {
+            text-align: center;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .metric-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #8B4513;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.25rem;
+        }
+
+        /* Backlog Preview */
+        .backlog-preview {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+        }
+
+        .backlog-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .backlog-header h3 {
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .epic-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .epic-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #8B4513;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .epic-item:hover {
+            background: #f0f4f8;
+            transform: translateX(4px);
+        }
+
+        .epic-priority {
+            width: 32px;
+            height: 32px;
+            background: #8B4513;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-right: 1rem;
+        }
+
+        .epic-info {
+            flex: 1;
+        }
+
+        .epic-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .epic-meta {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .epic-stats {
+            text-align: right;
+        }
+
+        .epic-sp {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #8B4513;
+        }
+
+        .epic-weeks {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        /* Dependency Graph */
+        .graph-container {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+        }
+
+        .graph-container h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        #dependency-graph {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        /* Risks Panel */
+        .risks-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .risks-panel h3 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .risk-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 0.75rem;
+            background: #fef2f2;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            border-left: 3px solid #ef4444;
+        }
+
+        .risk-item.warning {
+            background: #fffbeb;
+            border-left-color: #f59e0b;
+        }
+
+        .risk-icon {
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        .risk-text {
+            font-size: 0.9rem;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #8B4513;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Summary Stats Bar */
+        .summary-bar {
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .summary-bar.active {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .summary-stat {
+            text-align: center;
+        }
+
+        .summary-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .summary-label {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        /* Confidence Meter */
+        .confidence-meter {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .confidence-bar {
+            flex: 1;
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444, #f59e0b, #22c55e);
+            transition: width 0.5s;
+        }
+
+        .confidence-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+            min-width: 50px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            background: #333;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1001;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: #22c55e;
+        }
+
+        .toast.error {
+            background: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div>
+                <h1>Brown Paper Analysis</h1>
+                <p>Deep Code Extraction & Migration Planning</p>
+            </div>
+            <nav class="nav">
+                <a href="index.html">Home</a>
+                <a href="kanban-dashboard.html">Kanban Board</a>
+                <a href="applications.html">Applications</a>
+                <a href="migration-analyzer.html">Migration</a>
+                <a href="quality-dashboard.html">Quality</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Session Panel -->
+        <div class="session-panel">
+            <h2>Project Analyse Starten</h2>
+            <div class="session-controls">
+                <select id="applicationSelect">
+                    <option value="">-- Selecteer Applicatie --</option>
+                </select>
+                <select id="tierSelect">
+                    <option value="STANDARD">Standard (Fase 1-3)</option>
+                    <option value="PROFESSIONAL" selected>Professional (Fase 1-5)</option>
+                    <option value="PREMIUM">Premium (Alle 6 fases)</option>
+                </select>
+                <button class="btn btn-primary" id="startAnalysisBtn" disabled>
+                    Start Enhanced Analysis
+                </button>
+                <div id="sessionInfo" style="margin-left: auto; font-size: 0.9rem; color: #666;"></div>
+            </div>
+        </div>
+
+        <!-- Progress Panel -->
+        <div class="progress-container" id="progressPanel">
+            <div class="phase-progress">
+                <div class="phase-step" data-phase="1">
+                    <span class="phase-num">1</span>
+                    Code Understanding
+                </div>
+                <div class="phase-step" data-phase="2">
+                    <span class="phase-num">2</span>
+                    Domain Extraction
+                </div>
+                <div class="phase-step" data-phase="3">
+                    <span class="phase-num">3</span>
+                    Hierarchical
+                </div>
+                <div class="phase-step" data-phase="4">
+                    <span class="phase-num">4</span>
+                    Deep Extraction
+                </div>
+                <div class="phase-step" data-phase="5">
+                    <span class="phase-num">5</span>
+                    Estimation
+                </div>
+                <div class="phase-step" data-phase="6">
+                    <span class="phase-num">6</span>
+                    Output
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-status" id="progressStatus">Wachten op start...</div>
+        </div>
+
+        <!-- Summary Bar -->
+        <div class="summary-bar" id="summaryBar">
+            <div class="summary-stat">
+                <div class="summary-value" id="sumFiles">-</div>
+                <div class="summary-label">Bestanden</div>
+            </div>
+            <div class="summary-stat">
+                <div class="summary-value" id="sumLOC">-</div>
+                <div class="summary-label">Lines of Code</div>
+            </div>
+            <div class="summary-stat">
+                <div class="summary-value" id="sumFP">-</div>
+                <div class="summary-label">Function Points</div>
+            </div>
+            <div class="summary-stat">
+                <div class="summary-value" id="sumSP">-</div>
+                <div class="summary-label">Story Points</div>
+            </div>
+            <div class="summary-stat">
+                <div class="summary-value" id="sumWeeks">-</div>
+                <div class="summary-label">Weken (realistisch)</div>
+            </div>
+            <div class="summary-stat">
+                <div class="summary-value" id="sumConfidence">-</div>
+                <div class="summary-label">Confidence</div>
+            </div>
+        </div>
+
+        <!-- Results Grid -->
+        <div class="results-grid" id="resultsGrid" style="display: none;">
+            <!-- Code Metrics -->
+            <div class="result-card">
+                <h3>Code Metrics</h3>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="metric-value" id="metricFiles">-</div>
+                        <div class="metric-label">Files</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="metricClasses">-</div>
+                        <div class="metric-label">Classes</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="metricLOC">-</div>
+                        <div class="metric-label">Lines of Code</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="metricComplexity">-</div>
+                        <div class="metric-label">Avg Complexity</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Architecture -->
+            <div class="result-card">
+                <h3>Architecture</h3>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="metric-value" id="metricNodes">-</div>
+                        <div class="metric-label">Modules</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="metricEdges">-</div>
+                        <div class="metric-label">Dependencies</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="metricCircular">-</div>
+                        <div class="metric-label">Circular Deps</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="metricLayers">-</div>
+                        <div class="metric-label">Layers</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estimation -->
+            <div class="result-card">
+                <h3>Estimation</h3>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="metric-value" id="metricFP">-</div>
+                        <div class="metric-label">Function Points</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="metricSP">-</div>
+                        <div class="metric-label">Story Points</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="metricHours">-</div>
+                        <div class="metric-label">Effort Hours</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="metricWeeks">-</div>
+                        <div class="metric-label">Weeks</div>
+                    </div>
+                </div>
+                <div class="confidence-meter">
+                    <span>Confidence:</span>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" id="confidenceFill" style="width: 0%"></div>
+                    </div>
+                    <span class="confidence-value" id="confidenceValue">0%</span>
+                </div>
+            </div>
+
+            <!-- Domains -->
+            <div class="result-card">
+                <h3>Business Domains</h3>
+                <div id="domainsList"></div>
+            </div>
+        </div>
+
+        <!-- Backlog Preview -->
+        <div class="backlog-preview" id="backlogPreview" style="display: none;">
+            <div class="backlog-header">
+                <h3>Generated Backlog</h3>
+                <div style="display: flex; gap: 0.75rem;">
+                    <button class="btn btn-kanban" id="openKanbanBtn">
+                        Open in Kanban Board
+                    </button>
+                    <button class="btn btn-quality" id="openQualityBtn" style="background: #48bb78; color: white;">
+                        View Quality Dashboard
+                    </button>
+                </div>
+            </div>
+            <div class="epic-list" id="epicList"></div>
+        </div>
+
+        <!-- Dependency Graph -->
+        <div class="graph-container" id="graphContainer" style="display: none;">
+            <h3>Dependency Graph</h3>
+            <div id="dependency-graph">
+                <div class="empty-state">
+                    <div class="empty-state-icon"></div>
+                    <p>Graph wordt geladen...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Risks Panel -->
+        <div class="risks-panel" id="risksPanel" style="display: none;">
+            <h3>Risks & Issues</h3>
+            <div id="risksList"></div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState">
+            <div class="empty-state-icon"></div>
+            <h2>Geen analyse resultaten</h2>
+            <p>Selecteer een applicatie en start de Enhanced Analysis om de resultaten te zien.</p>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p id="loadingText">Analyse wordt uitgevoerd...</p>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+        let currentSessionId = null;
+        let currentApplicationId = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadApplications();
+            setupEventListeners();
+
+            // Check URL parameters for existing session
+            const params = new URLSearchParams(window.location.search);
+            const sessionParam = params.get('session');
+            const appParam = params.get('app');
+
+            if (appParam) {
+                document.getElementById('applicationSelect').value = appParam;
+                currentApplicationId = appParam;
+            }
+
+            if (sessionParam) {
+                await loadExistingSession(sessionParam);
+            }
+        });
+
+        async function loadExistingSession(sessionId) {
+            try {
+                showLoading('Sessie laden...');
+
+                const response = await fetch(`${API_BASE}/brown-paper/sessions/${sessionId}`);
+                if (!response.ok) {
+                    throw new Error('Sessie niet gevonden');
+                }
+
+                const sessionData = await response.json();
+                currentSessionId = sessionData.id;
+                currentApplicationId = sessionData.application_id;
+
+                // Update application dropdown
+                document.getElementById('applicationSelect').value = currentApplicationId;
+
+                // Display session info
+                if (sessionData.analysis) {
+                    const analysis = sessionData.analysis;
+                    const modules = analysis.modules || [];
+                    const domains = analysis.domains || [];
+                    const epics = sessionData.epics || [];
+
+                    // Calculate metrics from modules
+                    const totalClasses = modules.reduce((sum, m) => sum + (m.classes?.length || 0), 0);
+                    const totalFunctions = modules.reduce((sum, m) => sum + (m.functions?.length || 0), 0);
+
+                    displayResults({
+                        session_id: sessionData.id,
+                        status: sessionData.status,
+                        summary: {
+                            modules: modules.length,
+                            domains: domains.length,
+                            epics: epics.length,
+                            total_fp: analysis.total_fp || 0,
+                            total_sp: analysis.total_sp || 0,
+                        },
+                        phase1_result: {
+                            modules: modules,
+                            code_analysis: {
+                                total_files: modules.length,
+                                total_classes: analysis.total_classes || totalClasses,
+                                total_functions: totalFunctions,
+                                total_loc: analysis.total_loc || 0,
+                                avg_complexity: analysis.avg_complexity || 0
+                            },
+                            dependency_graph: analysis.dependency_graph || {
+                                node_count: modules.length,
+                                edge_count: modules.reduce((sum, m) => sum + (m.dependencies?.length || 0), 0),
+                                circular_dependencies: 0
+                            },
+                            layered_analysis: {
+                                layers: ['Presentation', 'Services', 'Data']
+                            },
+                            doc_insights: analysis.doc_insights || []
+                        },
+                        phase2_result: {
+                            domains: domains
+                        },
+                        phase3_result: {
+                            epics: epics
+                        }
+                    });
+                    showToast(`Sessie ${sessionId.substring(0,8)} geladen - ${modules.length} modules`, 'success');
+                } else {
+                    showToast('Sessie heeft geen analyse data', 'warning');
+                }
+
+                hideLoading();
+            } catch (error) {
+                console.error('Error loading session:', error);
+                hideLoading();
+                showToast(`Fout bij laden sessie: ${error.message}`, 'error');
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('applicationSelect').addEventListener('change', onApplicationSelect);
+            document.getElementById('startAnalysisBtn').addEventListener('click', startAnalysis);
+            document.getElementById('openKanbanBtn').addEventListener('click', openKanbanBoard);
+            document.getElementById('openQualityBtn').addEventListener('click', openQualityDashboard);
+        }
+
+        async function loadApplications() {
+            try {
+                const response = await fetch(`${API_BASE}/applications/`);
+                if (!response.ok) throw new Error('Failed to load applications');
+
+                const apps = await response.json();
+                const select = document.getElementById('applicationSelect');
+
+                apps.forEach(app => {
+                    const option = document.createElement('option');
+                    option.value = app.id;
+                    option.textContent = `${app.name} (${app.technology_stack || 'Unknown'})`;
+                    select.appendChild(option);
+                });
+
+                // Auto-select HCI-CRS if available
+                const hciCrs = apps.find(a => a.name.toLowerCase().includes('hci') || a.name.toLowerCase().includes('crs'));
+                if (hciCrs) {
+                    select.value = hciCrs.id;
+                    onApplicationSelect();
+                }
+            } catch (error) {
+                console.error('Error loading applications:', error);
+                showToast('Kon applicaties niet laden', 'error');
+            }
+        }
+
+        function onApplicationSelect() {
+            const select = document.getElementById('applicationSelect');
+            currentApplicationId = select.value;
+            document.getElementById('startAnalysisBtn').disabled = !currentApplicationId;
+
+            if (currentApplicationId) {
+                document.getElementById('sessionInfo').textContent = `Application ID: ${currentApplicationId}`;
+            }
+        }
+
+        async function startAnalysis() {
+            if (!currentApplicationId) return;
+
+            const tier = document.getElementById('tierSelect').value;
+
+            showLoading('Sessie wordt aangemaakt...');
+            hideResults();
+
+            try {
+                // Step 1: Create session
+                const sessionResponse = await fetch(`${API_BASE}/brown-paper/sessions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ application_id: parseInt(currentApplicationId) })
+                });
+
+                if (!sessionResponse.ok) throw new Error('Failed to create session');
+
+                const session = await sessionResponse.json();
+                currentSessionId = session.session_id;
+
+                document.getElementById('sessionInfo').textContent = `Session: ${currentSessionId.substring(0, 8)}...`;
+
+                // Show progress panel
+                document.getElementById('progressPanel').classList.add('active');
+                updateProgress(0, 'Basis analyse wordt uitgevoerd...');
+
+                // Step 2: Run basic analysis first
+                setLoadingText('Basis code analyse...');
+                updatePhase(1, 'active');
+
+                const analyzeResponse = await fetch(`${API_BASE}/brown-paper/sessions/${currentSessionId}/analyze`, {
+                    method: 'POST'
+                });
+
+                if (!analyzeResponse.ok) throw new Error('Basic analysis failed');
+
+                updateProgress(15, 'Basis analyse voltooid. Enhanced analysis starten...');
+                updatePhase(1, 'completed');
+
+                // Step 3: Run enhanced analysis
+                setLoadingText('Enhanced analysis (6 fases)...');
+
+                const enhancedResponse = await fetch(`${API_BASE}/brown-paper/sessions/${currentSessionId}/enhanced-analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tier: tier,
+                        include_phases: [1, 2, 3, 4, 5, 6],
+                        include_cira: true,
+                        generate_tests: true,
+                        include_swot: true
+                    })
+                });
+
+                if (!enhancedResponse.ok) {
+                    const errorData = await enhancedResponse.json();
+                    throw new Error(errorData.detail || 'Enhanced analysis failed');
+                }
+
+                const result = await enhancedResponse.json();
+
+                // Update progress based on completed phases
+                result.phases_completed.forEach(phase => {
+                    updatePhase(phase, 'completed');
+                });
+
+                updateProgress(100, 'Analyse voltooid!');
+
+                // Display results
+                displayResults(result);
+
+                hideLoading();
+                showToast('Analyse succesvol voltooid!', 'success');
+
+            } catch (error) {
+                console.error('Analysis error:', error);
+                hideLoading();
+                showToast(`Fout: ${error.message}`, 'error');
+                updateProgress(0, `Fout: ${error.message}`);
+            }
+        }
+
+        function displayResults(result) {
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('resultsGrid').style.display = 'grid';
+            document.getElementById('summaryBar').classList.add('active');
+
+            // Phase 1 results - Code Understanding
+            if (result.phase1_result) {
+                const p1 = result.phase1_result;
+                const depGraph = p1.dependency_graph || {};
+                const codeAnalysis = p1.code_analysis || {};
+
+                document.getElementById('metricFiles').textContent = codeAnalysis.total_files || '-';
+                document.getElementById('metricClasses').textContent = codeAnalysis.total_classes || '-';
+                document.getElementById('metricLOC').textContent = formatNumber(codeAnalysis.total_loc || 0);
+                document.getElementById('metricComplexity').textContent = (codeAnalysis.avg_complexity || 0).toFixed(1);
+
+                document.getElementById('metricNodes').textContent = depGraph.nodes?.length || depGraph.node_count || '-';
+                document.getElementById('metricEdges').textContent = depGraph.edges?.length || depGraph.edge_count || '-';
+                document.getElementById('metricCircular').textContent = depGraph.circular_dependencies || '0';
+                document.getElementById('metricLayers').textContent = p1.layered_analysis?.layers?.length || '3';
+
+                // Summary bar
+                document.getElementById('sumFiles').textContent = codeAnalysis.total_files || '-';
+                document.getElementById('sumLOC').textContent = formatNumber(codeAnalysis.total_loc || 0);
+            }
+
+            // Phase 2 results - Domains
+            if (result.phase2_result) {
+                const domains = result.phase2_result.domains || [];
+                const domainsList = document.getElementById('domainsList');
+                domainsList.innerHTML = domains.map(d => `
+                    <div style="padding: 0.5rem; background: #f8fafc; border-radius: 6px; margin-bottom: 0.5rem;">
+                        <strong>${d.name}</strong>
+                        <div style="font-size: 0.85rem; color: #666;">${d.description || ''}</div>
+                    </div>
+                `).join('') || '<p style="color: #666;">Geen domains gedetecteerd</p>';
+            }
+
+            // Phase 3/4 results - Backlog
+            const epics = result.phase3_result?.epics || result.phase4_result?.epics || [];
+            if (epics.length > 0) {
+                document.getElementById('backlogPreview').style.display = 'block';
+                const epicList = document.getElementById('epicList');
+                epicList.innerHTML = epics.map((epic, i) => `
+                    <div class="epic-item" onclick="openEpicInKanban('${epic.id}')">
+                        <div class="epic-priority">${i + 1}</div>
+                        <div class="epic-info">
+                            <div class="epic-name">${epic.name || epic.title}</div>
+                            <div class="epic-meta">${epic.features?.length || 0} features, ${epic.stories?.length || 0} stories</div>
+                        </div>
+                        <div class="epic-stats">
+                            <div class="epic-sp">${epic.estimated_sp || epic.story_points || '-'} SP</div>
+                            <div class="epic-weeks">${epic.estimated_weeks || '-'} weeks</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Phase 5 results - Estimation
+            if (result.phase5_result) {
+                const p5 = result.phase5_result;
+                document.getElementById('metricFP').textContent = formatNumber(p5.total_fp || 0);
+                document.getElementById('metricSP').textContent = p5.total_sp || '-';
+                document.getElementById('metricHours').textContent = formatNumber(p5.estimated_hours || 0);
+                document.getElementById('metricWeeks').textContent = p5.realistic_weeks || p5.timeline?.realistic_weeks || '-';
+
+                document.getElementById('sumFP').textContent = formatNumber(p5.total_fp || 0);
+                document.getElementById('sumSP').textContent = p5.total_sp || '-';
+                document.getElementById('sumWeeks').textContent = p5.realistic_weeks || '-';
+            }
+
+            // Confidence
+            const confidence = (result.confidence || 0) * 100;
+            document.getElementById('confidenceFill').style.width = `${confidence}%`;
+            document.getElementById('confidenceValue').textContent = `${confidence.toFixed(0)}%`;
+            document.getElementById('sumConfidence').textContent = `${confidence.toFixed(0)}%`;
+
+            // Show graph container
+            document.getElementById('graphContainer').style.display = 'block';
+            loadDependencyGraph();
+
+            // Risks
+            displayRisks(result);
+        }
+
+        async function loadDependencyGraph() {
+            if (!currentSessionId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/brown-paper/sessions/${currentSessionId}/dependency-graph`);
+                if (!response.ok) return;
+
+                const data = await response.json();
+                if (data.has_graph && data.nodes?.length > 0) {
+                    renderGraph(data);
+                } else {
+                    document.getElementById('dependency-graph').innerHTML = `
+                        <div class="empty-state">
+                            <p>Dependency graph niet beschikbaar</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading graph:', error);
+            }
+        }
+
+        function renderGraph(data) {
+            const container = document.getElementById('dependency-graph');
+            const width = container.clientWidth;
+            const height = 400;
+
+            // Simple SVG visualization
+            const nodes = data.nodes || [];
+            const edges = data.edges || [];
+
+            if (nodes.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>Geen nodes in graph</p></div>';
+                return;
+            }
+
+            // Create simple visualization
+            let svg = `<svg width="${width}" height="${height}" style="background: #fafafa;">`;
+
+            // Position nodes in a circle
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = Math.min(width, height) / 2.5;
+
+            nodes.forEach((node, i) => {
+                const angle = (2 * Math.PI * i) / nodes.length;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                node.x = x;
+                node.y = y;
+            });
+
+            // Draw edges
+            edges.forEach(edge => {
+                const source = nodes.find(n => n.id === edge.source || n.name === edge.source);
+                const target = nodes.find(n => n.id === edge.target || n.name === edge.target);
+                if (source && target) {
+                    svg += `<line x1="${source.x}" y1="${source.y}" x2="${target.x}" y2="${target.y}"
+                            stroke="#ccc" stroke-width="1" opacity="0.5"/>`;
+                }
+            });
+
+            // Draw nodes
+            nodes.forEach(node => {
+                const color = node.is_hotspot ? '#ef4444' : '#8B4513';
+                svg += `<circle cx="${node.x}" cy="${node.y}" r="8" fill="${color}" stroke="white" stroke-width="2"/>`;
+                svg += `<text x="${node.x}" y="${node.y + 20}" text-anchor="middle" font-size="10" fill="#666">
+                        ${(node.name || node.id || '').substring(0, 15)}</text>`;
+            });
+
+            svg += '</svg>';
+            container.innerHTML = svg;
+        }
+
+        function displayRisks(result) {
+            const risks = [];
+
+            // Extract risks from various phases
+            if (result.phase1_result?.dependency_graph?.circular_dependencies > 0) {
+                risks.push({
+                    type: 'error',
+                    text: `${result.phase1_result.dependency_graph.circular_dependencies} circular dependencies detected`
+                });
+            }
+
+            if (result.phase1_result?.code_analysis?.duplication_percent > 15) {
+                risks.push({
+                    type: 'warning',
+                    text: `High code duplication: ${result.phase1_result.code_analysis.duplication_percent}%`
+                });
+            }
+
+            if (result.phase4_result?.invest_validation?.needs_refinement > 0) {
+                risks.push({
+                    type: 'warning',
+                    text: `${result.phase4_result.invest_validation.needs_refinement} stories need refinement`
+                });
+            }
+
+            if (risks.length > 0) {
+                document.getElementById('risksPanel').style.display = 'block';
+                document.getElementById('risksList').innerHTML = risks.map(r => `
+                    <div class="risk-item ${r.type}">
+                        <span class="risk-icon">${r.type === 'error' ? '' : ''}</span>
+                        <span class="risk-text">${r.text}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function openKanbanBoard() {
+            if (currentSessionId) {
+                window.location.href = `kanban-dashboard.html?session=${currentSessionId}&source=brownpaper`;
+            } else {
+                window.location.href = 'kanban-dashboard.html';
+            }
+        }
+
+        function openQualityDashboard() {
+            if (currentSessionId && currentApplicationId) {
+                window.location.href = `quality-dashboard.html?app=${currentApplicationId}&session=${currentSessionId}&source=brownpaper`;
+            } else if (currentApplicationId) {
+                window.location.href = `quality-dashboard.html?app=${currentApplicationId}`;
+            } else {
+                window.location.href = 'quality-dashboard.html';
+            }
+        }
+
+        function openEpicInKanban(epicId) {
+            window.location.href = `kanban-dashboard.html?session=${currentSessionId}&epic=${epicId}&source=brownpaper`;
+        }
+
+        function hideResults() {
+            document.getElementById('resultsGrid').style.display = 'none';
+            document.getElementById('backlogPreview').style.display = 'none';
+            document.getElementById('graphContainer').style.display = 'none';
+            document.getElementById('risksPanel').style.display = 'none';
+            document.getElementById('summaryBar').classList.remove('active');
+            document.getElementById('emptyState').style.display = 'block';
+
+            // Reset phases
+            document.querySelectorAll('.phase-step').forEach(el => {
+                el.classList.remove('active', 'completed');
+            });
+        }
+
+        function updateProgress(percent, status) {
+            document.getElementById('progressFill').style.width = `${percent}%`;
+            document.getElementById('progressStatus').textContent = status;
+        }
+
+        function updatePhase(phase, state) {
+            const el = document.querySelector(`.phase-step[data-phase="${phase}"]`);
+            if (el) {
+                el.classList.remove('active', 'completed');
+                el.classList.add(state);
+            }
+        }
+
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function setLoadingText(text) {
+            document.getElementById('loadingText').textContent = text;
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        function showToast(message, type = '') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        }
+    </script>
+</body>
+</html>
