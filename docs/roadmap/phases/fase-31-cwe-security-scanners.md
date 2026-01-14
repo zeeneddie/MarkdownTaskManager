@@ -170,4 +170,23 @@ DOELBEREIK:        93% van relevante CWE's
 
 ---
 
+## Installed Scanners
+
+| Scanner | Version | License | Languages | Status |
+|---------|---------|---------|-----------|--------|
+| OpenGrep | 1.14.1 | LGPL 2.1 | 30+ languages | ✅ Installed |
+| Bandit | 1.9.2 | Apache 2.0 | Python | ✅ Installed |
+| Trivy | 0.58.0 | Apache 2.0 | Dependencies/Containers | ✅ Installed |
+| Custom ASP | 1.0.0 | Internal | Classic ASP/VBScript | ✅ Built-in |
+
+### Optional Scanners (Install When Needed)
+
+| Scanner | License | Languages | Install Command |
+|---------|---------|-----------|-----------------|
+| Gosec | Apache 2.0 | Go | `go install github.com/securego/gosec/v2/cmd/gosec@latest` |
+
+> **Note:** Gosec is only needed when scanning Go codebases. Install it when Go security analysis is required.
+
+---
+
 ← [Back to Overview](../phases-planned.md)

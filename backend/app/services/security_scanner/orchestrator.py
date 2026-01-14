@@ -150,7 +150,7 @@ class SecurityScanOrchestrator:
                     self._scanners[scanner_type] = scanner
                     logger.info(f"Scanner {scanner_type.value} initialized and available")
                 else:
-                    logger.warning(f"Scanner {scanner_type.value} not available (not installed)")
+                    logger.debug(f"Scanner {scanner_type.value} not available (install when needed)")
 
             except Exception as e:
                 logger.error(f"Failed to initialize {scanner_type.value}: {e}")

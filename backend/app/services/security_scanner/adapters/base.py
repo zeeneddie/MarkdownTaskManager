@@ -176,7 +176,7 @@ class ExternalCLIScanner(BaseScanner):
         if self._available:
             logger.info(f"Scanner {self.binary_name} found at {self._binary_path}")
         else:
-            logger.warning(f"Scanner {self.binary_name} not found in PATH")
+            logger.debug(f"Scanner {self.binary_name} not found in PATH (install if needed)")
 
         return self._available
 
