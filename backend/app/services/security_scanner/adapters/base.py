@@ -16,7 +16,7 @@ from typing import Dict, Any, Optional, List, Set
 from datetime import datetime
 
 from ..models.findings import (
-    SecurityFinding, ScanResult, Severity, ScannerType,
+    SecurityFinding, ScanResult, Severity, ScannerType, Location, SuggestedFix,
 )
 from ..parsers.sarif_parser import SarifParser
 
