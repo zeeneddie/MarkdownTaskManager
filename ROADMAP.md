@@ -1,8 +1,8 @@
 # MarQed Platform Roadmap
 
 **Project:** MarQed AI Agent Software Platform
-**Last Updated:** Week 153-154 (2026-01-14)
-**Total Phases:** 29 | **Timeline:** Week 144-244
+**Last Updated:** Week 157 (2026-01-14)
+**Total Phases:** 31+ | **Timeline:** Week 144-244
 
 ---
 
@@ -13,43 +13,77 @@ De MarQed roadmap combineert de bestaande geplande fases met een uitgebreide gap
 ### Roadmap Overview
 
 ```
-WEEK 144-155: CRITICAL FOUNDATION + ORCHESTRATOR (12 weken)
+WEEK 144-157: CRITICAL FOUNDATION + ORCHESTRATOR + SECURITY ✅ COMPLETE
 ├── Fase 21: Stability Analyzer ✅ COMPLETE
 ├── Fase 21.5: Workflow Separation ✅ COMPLETE (Week 145-146)
 ├── Fase 22: FP Methodology Overhaul ✅ COMPLETE (Week 146-147)
 ├── Fase 23: Context Engineering ✅ COMPLETE (Week 155)
 ├── Fase 23.5: Confucius Orchestrator ✅ COMPLETE (Week 149-154)
-└── Quality-Functionality Impact Mapping
+├── Fase 23.6: Stage Council Review ✅ COMPLETE (Week 157)
+├── Fase 29: Quality-Functionality Impact Mapping ✅ COMPLETE (Week 156-157)
+├── Fase 31: CWE Security Scanner Suite ✅ COMPLETE (Week 157)
+└── Fase 24-A1: Legacy Quickscan ✅ COMPLETE (Week 157)
 
-WEEK 151-232: GAP ANALYSIS IMPLEMENTATION (82 weken)
-├── Fase 24: Quick Wins & Foundation (15 items)
+WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
+├── Fase 24: Quick Wins & Foundation (15 items) 🔄 A1 DONE, K3 NEXT
 ├── Fase 25: Core Platform Enhancement (18 items)
 ├── Fase 26: AI & Automation (12 items)
 ├── Fase 27: Testing Excellence (8 items)
 ├── Fase 28: Advanced Integrations (10 items)
-└── Fase 29: Innovation & Scale (9 items)
+└── Fase GAP-29: Innovation & Scale (9 items)
 ```
 
 ---
 
-## Current Focus (Week 155)
+## Current Focus (Week 157)
 
 | Area | Status | Details |
 |------|--------|---------|
-| **Fase 23 Context Engineering** | ✅ COMPLETE | ReferenceSelector, ContextOptimizer, 60-80% token savings |
-| **Fase 23.5 Confucius Orchestrator** | ✅ COMPLETE | 4 workflow orchestrators, PIV loop, quality gates |
-| **Fase 21.5 Workflow Separation** | ✅ COMPLETE | AnalysisContract, v2 API, 100% decoupling |
-| **Fase 22 FP Methodology** | ✅ COMPLETE | NESMA/IFPUG compliant, work type classifier |
-| **Test Suite** | COMPLETE | 2,700+ tests, 97.8% pass rate |
-| **Stability Analyzers** | COMPLETE | SessionAnalyzer, MemoryAnalyzer, ExternalServiceAnalyzer |
-| **GAP Analysis** | COMPLETE | 75 items identified, 6 phases planned |
-| **Documentation** | ✅ COMPLETE | Architecture, workflows, README updated |
+| **Fase 31 CWE Security Scanner** | ✅ COMPLETE | Multi-scanner suite, 288+ findings on HCI-CRS |
+| **Fase 24-A1 Legacy Quickscan** | ✅ COMPLETE | 15-min assessment, Go/No-Go recommendation |
+| **Fase 23.6 Stage Council Review** | ✅ COMPLETE | Multi-model LLM reviews per stage |
+| **Fase 29 Quality Impact Mapping** | ✅ COMPLETE | Quality-to-functionality linking |
+| **Fase 23.5 Confucius Orchestrator** | ✅ COMPLETE | 4 workflow orchestrators, PIV loop |
+| **Fase 23 Context Engineering** | ✅ COMPLETE | 60-80% token reduction |
+| **Test Suite** | ✅ COMPLETE | 2,700+ tests, 97.8% pass rate |
+| **GAP Analysis** | 🔄 IN PROGRESS | 1/15 Fase 24 items done (A1) |
 
 See: [phases-current.md](docs/roadmap/phases-current.md)
 
 ---
 
-## Critical Path (Week 148-150)
+## Critical Path (Week 148-157)
+
+### Fase 31: CWE Security Scanner Suite ✅ COMPLETE
+
+**Status:** ✅ COMPLETE (Week 157)
+**Solution:** Multi-scanner security suite with SARIF output
+
+| Component | Status | Description |
+|-----------|--------|-------------|
+| SecurityOrchestrator | ✅ | Multi-scanner orchestration |
+| Custom ASP Scanner | ✅ | CWE-89 SQL injection, XSS, path traversal |
+| OpenGrep Adapter | ✅ | 30+ languages, LGPL 2.1 licensed |
+| Bandit/Trivy Adapters | ✅ | Python and dependency scanning |
+| API Endpoints | ✅ | /api/security-scanner/* (12 endpoints) |
+
+See: [docs/roadmap/phases/fase-31-cwe-security-scanners.md](docs/roadmap/phases/fase-31-cwe-security-scanners.md)
+
+### Fase 24-A1: Legacy Quickscan ✅ COMPLETE
+
+**Status:** ✅ COMPLETE (Week 157)
+**Solution:** 15-minute automated legacy assessment with Go/No-Go recommendation
+
+| Component | Status | Description |
+|-----------|--------|-------------|
+| TechnologyDetector | ✅ | Multi-language detection with LOC |
+| ComplexityAnalyzer | ✅ | Cyclomatic complexity, tech debt |
+| SecurityAnalyzer | ✅ | Integration with Fase 31 scanner |
+| EffortEstimator | ✅ | Person-months with ranges |
+| LegacyQuickscanService | ✅ | Parallel async orchestration |
+| API Endpoints | ✅ | /api/quickscan/* (4 endpoints) |
+
+**Real-world test:** HCI-CRS FysioOne-Classic → NO_GO (418K LOC, 1569 PM estimate)
 
 ### Fase 22: FP Methodology Overhaul ✅ COMPLETE
 
@@ -205,11 +239,15 @@ See: [gap-analysis-complete-roadmap.md](docs/roadmap/gap-analysis-complete-roadm
 | **Confucius Orchestrator** | 154 | 4 workflow orchestrators ✅ |
 | **PIV Loop Active** | 154 | Quality gates operational ✅ |
 | **Context Engineering** | 155 | 60-80% token reduction ✅ |
-| **GAP Phase 1 Start** | 163 | Quick wins implementation |
+| **Stage Council Review** | 157 | Multi-model LLM reviews ✅ |
+| **Quality Impact Mapping** | 157 | Quality-to-functionality linking ✅ |
+| **CWE Security Scanner** | 157 | Multi-scanner suite (288+ findings) ✅ |
+| **Legacy Quickscan (A1)** | 157 | 15-min Go/No-Go assessment ✅ |
+| **Secret Detection (K3)** | 158 | API keys, passwords, tokens |
 | **COBOL Support** | 175 | B1 Analyzer complete |
 | **LLM Collaboration** | 191 | B12 Framework active |
 | **Full Platform** | 244 | All 75 items complete |
 
 ---
 
-*Generated: Week 155 (2026-01-13)*
+*Generated: Week 157 (2026-01-14)*

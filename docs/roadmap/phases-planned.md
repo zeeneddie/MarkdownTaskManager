@@ -1,8 +1,8 @@
-# Planned Phases (Fase 23.6+)
+# Planned Phases (Fase 24+)
 
 **Project:** MarQed AI Agent Software Platform
 **Period:** Week 158+ (2026-01-XX onwards)
-**Last Updated:** 2026-01-13 (Fase 29 + Fase 23.6 Phase 24.1 Complete)
+**Last Updated:** 2026-01-14 (Fase 31 + Fase 24-A1 COMPLETE)
 
 ---
 
@@ -32,12 +32,28 @@
 | **23.5** | 149-154 | Confucius Orchestrator | ✅ COMPLETE | [fase-23.5-confucius-orchestrator.md](phases/fase-23.5-confucius-orchestrator.md) |
 | **29** | 156-157 | Quality-Functionality Impact Mapping | ✅ COMPLETE | [fase-29-quality-impact-mapping.md](phases/fase-29-quality-impact-mapping.md) |
 | **23.6** | 157 | Stage Council Review (All Phases) | ✅ COMPLETE | [fase-23.6-stage-council-review.md](phases/fase-23.6-stage-council-review.md) |
+| **31** | 157 | CWE Security Scanner Suite | ✅ COMPLETE | [fase-31-cwe-security-scanners.md](phases/fase-31-cwe-security-scanners.md) |
+| **24-A1** | 157 | Legacy Quickscan (15-min assessment) | ✅ COMPLETE | [phases-current.md](phases-current.md#week-157-legacy-quickscan-a1-fase-24-a1--complete) |
 
-### Quality & Security Focus (Week 158-165)
+### Fase 24 Quick Wins - In Progress (Week 157-174)
 
-| Fase | Week | Title | Status | Priority | Detail |
-|------|------|-------|--------|----------|--------|
-| **31** | 158-165 | CWE Top 25 Security Scanner Suite | PLANNED | HIGH | [fase-31-cwe-security-scanners.md](phases/fase-31-cwe-security-scanners.md) |
+| Item | ROI | Title | Status | Description |
+|------|-----|-------|--------|-------------|
+| **A1** | 8.0 | Legacy Quickscan | ✅ COMPLETE | 15-min automated assessment, Go/No-Go |
+| **K3** | 8.0 | Secret Detection | PLANNED | API keys, passwords, tokens |
+| **D1** | 7.5 | Migration Pattern Library | PLANNED | Strangler fig, database-first |
+| **D2** | 7.5 | Strangler Fig Implementation | PLANNED | Route-based migration |
+| **K1** | 6.7 | OWASP Integration | PLANNED | OWASP Top 10 scanning |
+| **K2** | 6.0 | CVE Database Integration | PLANNED | Dependency vulnerability check |
+| **A4** | 6.0 | Risk Heat Map | PLANNED | Visual risk dashboard |
+| **E1** | 5.3 | Visual Dependency Graph | PLANNED | D3.js visualization |
+| **J1** | 5.3 | Context-Aware Documentation | PLANNED | Auto-generated docs |
+| **B12** | 5.0 | LLM Agent Collaboration | PLANNED | Multi-agent framework |
+| **I1** | 4.5 | API Endpoint Discovery | PLANNED | REST/SOAP detection |
+| **F3** | 4.0 | SQL Analysis (Basic) | PLANNED | Query complexity |
+| **M1** | 4.0 | Export Multi-Format | PLANNED | CSV/Excel/ODS/MS Project |
+| **A3** | 3.7 | Technology Radar | PLANNED | End-of-life tracking |
+| **A5** | 3.5 | Complexity Dashboard | PLANNED | Module complexity view |
 
 ### GAP Analysis Implementation (Week 163-244)
 
@@ -67,18 +83,19 @@
 ## Integrated Roadmap Timeline
 
 ```
-WEEK 144-165: CRITICAL FOUNDATION + ORCHESTRATOR + QUALITY
+WEEK 144-157: CRITICAL FOUNDATION + ORCHESTRATOR + QUALITY ✅ COMPLETE
 ├── Week 143-146: Fase 21 Stability Analyzer ✅ COMPLETE
 ├── Week 145-146: Fase 21.5 Workflow Separation ✅ COMPLETE
 ├── Week 146-147: Fase 22 FP Methodology Overhaul ✅ COMPLETE
 ├── Week 149-154: Fase 23.5 Confucius Orchestrator Integration ✅ COMPLETE
 ├── Week 155: Fase 23 Context Engineering ✅ COMPLETE
 ├── Week 156-157: Fase 29 Quality-Functionality Impact Mapping ✅ COMPLETE (27 tests)
-├── Week 157: Fase 23.6 Stage Council Review ✅ COMPLETE (All 4 Phases - 44+ tests)
-└── Week 158-165: Fase 31 CWE Top 25 Security Scanners 🔐 SECURITY (PLANNED)
+├── Week 157: Fase 23.6 Stage Council Review ✅ COMPLETE (44+ tests)
+├── Week 157: Fase 31 CWE Security Scanner Suite ✅ COMPLETE (288+ findings)
+└── Week 157: Fase 24-A1 Legacy Quickscan ✅ COMPLETE (23 tests)
 
-WEEK 163-244: GAP ANALYSIS IMPLEMENTATION
-├── Week 163-174: Fase 24 - Quick Wins & Foundation (15 items)
+WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
+├── Week 157-174: Fase 24 - Quick Wins & Foundation (15 items) 🔄 IN PROGRESS (A1 done)
 ├── Week 175-190: Fase 25 - Core Platform Enhancement (18 items)
 ├── Week 191-204: Fase 26 - AI & Automation (12 items)
 ├── Week 205-214: Fase 27 - Testing Excellence (8 items)
@@ -98,10 +115,11 @@ WEEK 163-244: GAP ANALYSIS IMPLEMENTATION
 | Context Engineering | 23 | ~24 | 1 | ✅ COMPLETE |
 | Quality Impact Mapping | 29 | ~40 | 2 | ✅ COMPLETE |
 | Stage Council Review | 23.6 | ~120 | 4 | ✅ COMPLETE |
-| CWE Security Scanners | 31 | ~150 | 8 | PLANNED |
-| GAP Analysis | 24-29 | ~1500 | 82 | PLANNED |
+| CWE Security Scanners | 31 | ~40 | 1 | ✅ COMPLETE |
+| Legacy Quickscan | 24-A1 | ~16 | 1 | ✅ COMPLETE |
+| GAP Analysis (Rest) | 24-29 | ~1484 | 80 | 🔄 IN PROGRESS |
 | Future | 30 | 72 | 2 | PLANNED |
-| **Total** | **14 phases** | **~2074** | **~110** | |
+| **Total** | **15 phases** | **~1980** | **~100** | |
 
 ---
 
@@ -145,6 +163,23 @@ WEEK 163-244: GAP ANALYSIS IMPLEMENTATION
                    │   Fase 23.6     │
                    │ Stage Council   │
                    │   ✅ COMPLETE   │
+                   └────────┬────────┘
+                            │
+         ┌──────────────────┼──────────────────┐
+         ▼                                     ▼
+┌─────────────────┐                   ┌─────────────────┐
+│    Fase 31      │                   │   Fase 24-A1    │
+│ CWE Security    │                   │ Legacy Quickscan│
+│   ✅ COMPLETE   │◄──────────────────│   ✅ COMPLETE   │
+└────────┬────────┘  (uses security)  └────────┬────────┘
+         │                                     │
+         └──────────────────┬──────────────────┘
+                            │
+                            ▼
+                   ┌─────────────────┐
+                   │   Fase 24       │
+                   │ Quick Wins (K3) │
+                   │   🔄 NEXT       │
                    └─────────────────┘
 ```
 
