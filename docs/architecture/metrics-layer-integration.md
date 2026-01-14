@@ -245,6 +245,49 @@ class DuplicationAnalyzer(BaseScanner):
 - Unit tests: 20 tests
 - Integration met bestaande DotNetDuplicationScanner
 
+#### CommentsAnalyzer (NIEUW - 2026-01-09)
+
+Code Comments ratio analyzer voor SIG metric #9:
+
+```python
+class CommentsAnalyzer(BaseScanner):
+    """
+    Code comments ratio analyzer.
+    Measures documentation coverage based on comment/code ratio.
+
+    Comment Ratio = comment_lines / (comment_lines + code_lines) * 100
+
+    5-Star Rating (higher is better - more comments = better documentation):
+    ★★★★★: ratio >= 20% (excellent documentation)
+    ★★★★☆: ratio 15-20% (good documentation)
+    ★★★☆☆: ratio 10-15% (moderate documentation)
+    ★★☆☆☆: ratio 5-10% (poor documentation)
+    ★☆☆☆☆: ratio < 5% (minimal documentation)
+    """
+
+    @property
+    def name(self) -> str:
+        return "comments"
+
+    @property
+    def supported_stacks(self) -> List[str]:
+        return ['dotnet', 'csharp', 'vbnet', 'aspnet', 'python', 'javascript', 'typescript']
+
+    async def scan(self) -> ScanResult:
+        # Count comment vs code lines per file
+        # Generate findings for poorly documented files
+        pass
+```
+
+**Onderdeel van:** SIG TOP 10 Maintainability Model - Metric #9 (Code Comments)
+
+**Minimum Baseline:** Ja - verplicht voor alle Quality Trend metingen
+
+**Deliverables:**
+- `backend/app/scanners/metrics/comments_analyzer.py` (~265 LOC) ✅ DONE
+- Unit tests: 10-15 tests
+- Integration met metrics scanner registry ✅ DONE
+
 ---
 
 ### Week 127: Integration Layer

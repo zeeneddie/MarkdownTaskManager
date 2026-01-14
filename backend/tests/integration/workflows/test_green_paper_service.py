@@ -1,5 +1,5 @@
 """
-Unit tests for GreenPaperService (Week 10 Day 2)
+Unit tests for GreenPaperService
 
 Tests cover:
 - Session management (start_session, get_session)
@@ -10,7 +10,7 @@ Tests cover:
 
 NOTE: Tests are skipped because they patch GreenPaperSession in the wrong module.
 The service imports GreenPaperSession locally from app.models.green_paper,
-but tests try to patch app.services.week10.green_paper_service.GreenPaperSession.
+but tests try to patch app.services.green_paper.green_paper_service.GreenPaperSession.
 TODO: Update tests to patch the correct module path.
 """
 
@@ -22,7 +22,7 @@ from uuid import UUID, uuid4
 from datetime import datetime, timezone
 from typing import Dict, Any
 
-from app.services.week10.green_paper_service import (
+from app.services.green_paper.green_paper_service import (
     GreenPaperService,
     GreenPaperValidationError,
     IncompleteSessionError,
@@ -97,7 +97,7 @@ async def test_start_session_success(service, mock_db, sample_project_id):
     mock_session.created_at = datetime.now(timezone.utc)
 
     # Patch the GreenPaperSession model
-    with patch('app.services.week10.green_paper_service.GreenPaperSession', return_value=mock_session):
+    with patch('app.services.green_paper.green_paper_service.GreenPaperSession', return_value=mock_session):
         result = await service.start_session(sample_project_id)
 
     # Verify database operations
@@ -226,7 +226,7 @@ async def test_submit_answer_create(service, mock_db, sample_project_id, sample_
     mock_answer.created_at = datetime.now(timezone.utc)
     mock_answer.updated_at = datetime.now(timezone.utc)
 
-    with patch('app.services.week10.green_paper_service.Answer', return_value=mock_answer):
+    with patch('app.services.green_paper.green_paper_service.Answer', return_value=mock_answer):
         result = await service.submit_answer(
             sample_project_id,
             sample_session_id,

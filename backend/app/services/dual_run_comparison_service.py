@@ -17,7 +17,7 @@ from uuid import uuid4
 
 import aiohttp
 
-from app.models.week134_testing import (
+from app.models.testing import (
     ComparisonResult,
     DiffType,
     DualRunResult,

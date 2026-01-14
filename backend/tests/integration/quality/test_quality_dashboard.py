@@ -19,6 +19,7 @@ from unittest.mock import patch, MagicMock, AsyncMock
 import json
 
 from app.main import app
+from app.database import get_db
 from app.models.technical_debt import (
     TechnicalDebtItem, TechnicalDebtSnapshot, RemediationPlan,
     QualityGateResult, DebtType, DebtSeverity, DebtStatus, DetectionSource
@@ -107,11 +108,34 @@ def mock_debt_service():
 
 
 @pytest.fixture
-async def client():
-    """Async test client"""
+def mock_db_session():
+    """Mock database session for tests that don't need real DB"""
+    mock_session = AsyncMock()
+
+    # Create a proper mock result that returns None for scalar_one_or_none
+    mock_result = MagicMock()
+    mock_result.scalars = MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))
+    mock_result.scalar_one_or_none = MagicMock(return_value=None)
+
+    mock_session.execute = AsyncMock(return_value=mock_result)
+    mock_session.commit = AsyncMock()
+    mock_session.refresh = AsyncMock()
+    mock_session.add = MagicMock()
+    mock_session.get = AsyncMock(return_value=None)
+    return mock_session
+
+
+@pytest.fixture
+async def client(mock_db_session):
+    """Async test client with mocked database"""
+    async def override_get_db():
+        yield mock_db_session
+
+    app.dependency_overrides[get_db] = override_get_db
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
+    app.dependency_overrides.clear()
 
 
 # ============================================================================
@@ -178,16 +202,26 @@ class TestScanEndpoints:
             assert response.status_code in [200, 500]
 
     @pytest.mark.asyncio
-    async def test_list_snapshots(self, client):
+    async def test_list_snapshots(self, client, mock_debt_service):
         """Test GET /api/quality/snapshots"""
-        response = await client.get("/api/quality/snapshots?limit=10")
-        assert response.status_code in [200, 500]
+        mock_debt_service.list_snapshots = AsyncMock(return_value=[])
+        with patch(
+            'app.api.quality_dashboard.get_technical_debt_service',
+            return_value=mock_debt_service
+        ):
+            response = await client.get("/api/quality/snapshots?limit=10")
+            assert response.status_code in [200, 500]
 
     @pytest.mark.asyncio
-    async def test_get_snapshot(self, client):
+    async def test_get_snapshot(self, client, mock_debt_service):
         """Test GET /api/quality/snapshots/{id}"""
-        response = await client.get("/api/quality/snapshots/1")
-        assert response.status_code in [200, 404, 500]
+        mock_debt_service.get_snapshot = AsyncMock(return_value=None)
+        with patch(
+            'app.api.quality_dashboard.get_technical_debt_service',
+            return_value=mock_debt_service
+        ):
+            response = await client.get("/api/quality/snapshots/1")
+            assert response.status_code in [200, 404, 500]
 
 
 # ============================================================================
@@ -198,36 +232,60 @@ class TestDebtItemEndpoints:
     """Test debt item endpoints"""
 
     @pytest.mark.asyncio
-    async def test_list_debt_items(self, client):
+    async def test_list_debt_items(self, client, mock_debt_service):
         """Test GET /api/quality/items"""
-        response = await client.get("/api/quality/items")
-        assert response.status_code in [200, 500]
+        mock_debt_service.list_debt_items = AsyncMock(return_value=[])
+        with patch(
+            'app.api.quality_dashboard.get_technical_debt_service',
+            return_value=mock_debt_service
+        ):
+            response = await client.get("/api/quality/items")
+            assert response.status_code in [200, 500]
 
     @pytest.mark.asyncio
-    async def test_list_debt_items_with_filters(self, client):
+    async def test_list_debt_items_with_filters(self, client, mock_debt_service):
         """Test GET /api/quality/items with filters"""
-        response = await client.get(
-            "/api/quality/items?severity=high&debt_type=security&limit=10"
-        )
-        assert response.status_code in [200, 500]
+        mock_debt_service.list_debt_items = AsyncMock(return_value=[])
+        with patch(
+            'app.api.quality_dashboard.get_technical_debt_service',
+            return_value=mock_debt_service
+        ):
+            response = await client.get(
+                "/api/quality/items?severity=high&debt_type=security&limit=10"
+            )
+            assert response.status_code in [200, 500]
 
     @pytest.mark.asyncio
-    async def test_get_debt_item(self, client):
+    async def test_get_debt_item(self, client, mock_debt_service):
         """Test GET /api/quality/items/{id}"""
-        response = await client.get("/api/quality/items/1")
-        assert response.status_code in [200, 404, 500]
+        mock_debt_service.get_debt_item = AsyncMock(return_value=None)
+        with patch(
+            'app.api.quality_dashboard.get_technical_debt_service',
+            return_value=mock_debt_service
+        ):
+            response = await client.get("/api/quality/items/1")
+            assert response.status_code in [200, 404, 500]
 
     @pytest.mark.asyncio
-    async def test_update_item_status(self, client):
+    async def test_update_item_status(self, client, mock_debt_service):
         """Test PATCH /api/quality/items/{id}/status"""
-        response = await client.patch(
-            "/api/quality/items/1/status?status=acknowledged"
-        )
-        assert response.status_code in [200, 404, 500]
+        mock_debt_service.update_item_status = AsyncMock(return_value=None)
+        with patch(
+            'app.api.quality_dashboard.get_technical_debt_service',
+            return_value=mock_debt_service
+        ):
+            response = await client.patch(
+                "/api/quality/items/1/status?status=acknowledged"
+            )
+            assert response.status_code in [200, 404, 500]
 
     @pytest.mark.asyncio
     async def test_resolve_debt_item(self, client, mock_debt_service):
         """Test POST /api/quality/items/{id}/resolve"""
+        # Mock raises ValueError when item not found (returns 404)
+        mock_debt_service.resolve_debt_item = AsyncMock(
+            side_effect=ValueError("Debt item not found")
+        )
         with patch(
             'app.api.quality_dashboard.get_technical_debt_service',
             return_value=mock_debt_service
@@ -319,24 +377,39 @@ class TestRemediationPlanEndpoints:
             assert response.status_code in [200, 400, 500]
 
     @pytest.mark.asyncio
-    async def test_list_remediation_plans(self, client):
+    async def test_list_remediation_plans(self, client, mock_debt_service):
         """Test GET /api/quality/plans"""
-        response = await client.get("/api/quality/plans")
-        assert response.status_code in [200, 500]
+        mock_debt_service.list_remediation_plans = AsyncMock(return_value=[])
+        with patch(
+            'app.api.quality_dashboard.get_technical_debt_service',
+            return_value=mock_debt_service
+        ):
+            response = await client.get("/api/quality/plans")
+            assert response.status_code in [200, 500]
 
     @pytest.mark.asyncio
-    async def test_get_remediation_plan(self, client):
+    async def test_get_remediation_plan(self, client, mock_debt_service):
         """Test GET /api/quality/plans/{id}"""
-        response = await client.get("/api/quality/plans/1")
-        assert response.status_code in [200, 404, 500]
+        mock_debt_service.get_remediation_plan = AsyncMock(return_value=None)
+        with patch(
+            'app.api.quality_dashboard.get_technical_debt_service',
+            return_value=mock_debt_service
+        ):
+            response = await client.get("/api/quality/plans/1")
+            assert response.status_code in [200, 404, 500]
 
     @pytest.mark.asyncio
-    async def test_update_plan_status(self, client):
+    async def test_update_plan_status(self, client, mock_debt_service):
         """Test PATCH /api/quality/plans/{id}/status"""
-        response = await client.patch(
-            "/api/quality/plans/1/status?status=active"
-        )
-        assert response.status_code in [200, 404, 500]
+        mock_debt_service.update_plan_status = AsyncMock(return_value=None)
+        with patch(
+            'app.api.quality_dashboard.get_technical_debt_service',
+            return_value=mock_debt_service
+        ):
+            response = await client.patch(
+                "/api/quality/plans/1/status?status=active"
+            )
+            assert response.status_code in [200, 404, 500]
 
 
 # ============================================================================
@@ -385,10 +458,15 @@ class TestQualityGateEndpoints:
             assert response.status_code in [200, 500]
 
     @pytest.mark.asyncio
-    async def test_get_gate_history(self, client):
+    async def test_get_gate_history(self, client, mock_debt_service):
         """Test GET /api/quality/gates/history"""
-        response = await client.get("/api/quality/gates/history?limit=10")
-        assert response.status_code in [200, 500]
+        mock_debt_service.get_gate_history = AsyncMock(return_value=[])
+        with patch(
+            'app.api.quality_dashboard.get_technical_debt_service',
+            return_value=mock_debt_service
+        ):
+            response = await client.get("/api/quality/gates/history?limit=10")
+            assert response.status_code in [200, 500]
 
 
 # ============================================================================
@@ -399,16 +477,26 @@ class TestAnalyticsEndpoints:
     """Test analytics endpoints"""
 
     @pytest.mark.asyncio
-    async def test_get_stats_by_type(self, client):
+    async def test_get_stats_by_type(self, client, mock_debt_service):
         """Test GET /api/quality/stats/by-type"""
-        response = await client.get("/api/quality/stats/by-type")
-        assert response.status_code in [200, 500]
+        mock_debt_service.get_stats_by_type = AsyncMock(return_value={})
+        with patch(
+            'app.api.quality_dashboard.get_technical_debt_service',
+            return_value=mock_debt_service
+        ):
+            response = await client.get("/api/quality/stats/by-type")
+            assert response.status_code in [200, 500]
 
     @pytest.mark.asyncio
-    async def test_get_stats_by_file(self, client):
+    async def test_get_stats_by_file(self, client, mock_debt_service):
         """Test GET /api/quality/stats/by-file"""
-        response = await client.get("/api/quality/stats/by-file?limit=20")
-        assert response.status_code in [200, 500]
+        mock_debt_service.get_stats_by_file = AsyncMock(return_value=[])
+        with patch(
+            'app.api.quality_dashboard.get_technical_debt_service',
+            return_value=mock_debt_service
+        ):
+            response = await client.get("/api/quality/stats/by-file?limit=20")
+            assert response.status_code in [200, 500]
 
 
 # ============================================================================

@@ -4,9 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pathlib import Path
-from app.api import epics, features, stories, tasks, sprints, auth, project, workflows, projects, scheduler, estimation, estimation_history, project_wizard, websocket, maintenance, ml_training, evolution, quality_dashboard, self_navigating, attribution, task_generation, continuous_learning, rollback, quality_gate_config, quality_gate_evaluation, agent_validation, ab_testing, llm_council, evolution_dashboard, spec_review, observability, council_human_review, stack_agents, project_registration, application_registry, test_organization, brown_paper, fp_estimation, hci_crs_knowledge, kanban, standards, spec_shaping, quick_spec, improve_skills, spec_verification, cctrace, codewiki, knowledge, knowledge_graph, security, rl_training, migration_analyzer, migration_security, migration_estimation, migration_architecture, migration_report, project_workflows, workflow_dashboard, mcp_proxy, anytool, memmachine, code_graph, claude_mem, layered_analysis, playwriter, bigagi, ccpm, ghostcrew, deep_extraction, graph_workflow, debt_categorization, code_analysis, hierarchical_extraction, rerun_upgrade, portal_features, portal_roadmap, harness, design, static_analysis, devops_analysis, orchestration, traceability, hybrid_extraction, requirements, portal_boost, portal_engagement, causality, metrics, migration_enhanced, week131_research, week132_dead_code, week134_testing, week131_transformation, data_architecture, migration_execution, decision_tables, state_machine_extraction, authorization_matrix, api_inventory, customers, codecharta, token_context, project_intake, stability
-from app.api.week10 import green_paper_routes
-from app.api.week11 import task_generation_routes
+from app.api import epics, features, stories, tasks, sprints, auth, project, workflows, projects, scheduler, estimation, estimation_history, project_wizard, websocket, maintenance, ml_training, evolution, quality_dashboard, self_navigating, attribution, task_generation, continuous_learning, rollback, quality_gate_config, quality_gate_evaluation, agent_validation, ab_testing, llm_council, evolution_dashboard, spec_review, observability, council_human_review, stack_agents, project_registration, application_registry, test_organization, brown_paper, fp_estimation, hci_crs_knowledge, kanban, standards, spec_shaping, quick_spec, improve_skills, spec_verification, cctrace, codewiki, knowledge, knowledge_graph, security, rl_training, migration_analyzer, migration_security, migration_estimation, migration_architecture, migration_report, project_workflows, workflow_dashboard, mcp_proxy, anytool, memmachine, code_graph, claude_mem, layered_analysis, playwriter, bigagi, ccpm, ghostcrew, deep_extraction, graph_workflow, debt_categorization, code_analysis, hierarchical_extraction, rerun_upgrade, portal_features, portal_roadmap, harness, design, static_analysis, devops_analysis, orchestration, traceability, hybrid_extraction, requirements, portal_boost, portal_engagement, causality, metrics, migration_enhanced, research, dead_code, testing, code_transformation, data_architecture, migration_execution, decision_tables, state_machine_extraction, authorization_matrix, api_inventory, customers, codecharta, token_context, project_intake, stability, context_engineering, quality_impact, stage_review
+from app.api.green_paper import green_paper_routes
+from app.api.task_generation import task_generation_routes
+from app.api.v2 import migration_router, quality_router
+from app.api import fp_methodology
 from app.database import engine
 from app.models.item import Base as ItemBase
 from app.models.sprint import Base as SprintBase
@@ -121,8 +123,8 @@ app.include_router(attribution.router)  # Week 21-22: Attribution tracking
 # app.include_router(task_generation.router)  # Week 23-24: needs ChromaDB (no tests)
 # app.include_router(rollback.router)  # Week 25-26: needs service dependencies (no tests)
 app.include_router(scheduler.router)
-app.include_router(green_paper_routes.router)  # Week 10: Green Paper BMAD Workflow
-app.include_router(task_generation_routes.router)  # Week 11: Task Generation from Specifications
+app.include_router(green_paper_routes.router)  # Green Paper BMAD Workflow (6-question greenfield)
+app.include_router(task_generation_routes.router)  # Task Generation from Specifications
 app.include_router(quality_gate_config.router)  # Week 49: Quality Gates Configuration UI
 app.include_router(quality_gate_evaluation.router)  # Week 50: Quality Gate Evaluation API
 app.include_router(agent_validation.router)  # Week 50: Agent Validation Loop API
@@ -189,10 +191,10 @@ app.include_router(portal_engagement.router)  # Week 119-120: Client Portal 2.0 
 app.include_router(causality.router)  # Week 123: CiRA Causality Detection (BERT-based cause-effect analysis)
 app.include_router(metrics.router, prefix="/api")  # Week 126: Metrics Layer (HCI Quality Scanners - Complexity, Coupling, Balance, Duplication)
 app.include_router(migration_enhanced.router)  # Week 130: Migration Enhanced (7-Phase Execution Workflow)
-app.include_router(week131_research.router)  # Week 131: Research Services (Background Jobs, Load Estimation, Documentation Rules)
-app.include_router(week131_transformation.router)  # Week 131: Transformation Services (Code + DB Migration)
-app.include_router(week132_dead_code.router)  # Week 132-133: Dead Code & Runtime Analysis (Fase 22)
-app.include_router(week134_testing.router)  # Week 134-135: Testing Excellence (Golden Master, Visual Regression, Dual-Run)
+app.include_router(research.router)  # Research Services (Background Jobs, Load Estimation, Documentation Rules)
+app.include_router(code_transformation.router)  # Code Transformation Services (Code + DB Migration)
+app.include_router(dead_code.router)  # Dead Code & Runtime Analysis (Fase 22)
+app.include_router(testing.router)  # Testing Excellence (Golden Master, Visual Regression, Dual-Run)
 app.include_router(data_architecture.router)  # Week 136-137: Data Architecture (Fase 24 - Lineage, ERD, Journey Comparison)
 app.include_router(decision_tables.router)  # Week 138-139: Decision Tables (Fase 25 - Business Logic Extraction)
 app.include_router(state_machine_extraction.router)  # Week 138-139: State Machines (Fase 25 - Business Logic Extraction)
@@ -204,6 +206,12 @@ app.include_router(codecharta.router)  # Week 145: CodeCharta 3D Visualization E
 app.include_router(token_context.router)  # Week 143: Token-Optimized Context (Vector DB Context within Token Budgets)
 app.include_router(project_intake.router)  # Week 145: Project Intake Wizard (Brown Paper, Green Paper, Migration)
 app.include_router(stability.router)  # Week 143-146: ASP Stability Analyzer (Fase 21 - Resource Leak Detection)
+app.include_router(migration_router)  # Week 145-146: Migration v2 (Fase 21.5 - Contract-based, uses analysis_id)
+app.include_router(quality_router)  # Week 145-146: Quality v2 (Fase 21.5 - Independent scanning, 3 execution modes)
+app.include_router(fp_methodology.router)  # Week 146-147: FP Methodology (Fase 22 - NESMA/IFPUG compliant)
+app.include_router(context_engineering.router)  # Week 151-154: Context Engineering (Fase 23 - Reference-on-Demand, 60-80% Token Savings)
+app.include_router(quality_impact.router)  # Week 156-157: Quality Impact Mapping (Fase 29 - Quality-to-Functionality Linking)
+app.include_router(stage_review.router)  # Week 157-158: Stage-Based Council Review (Fase 23.6 - LLM Council per Stage)
 app.include_router(websocket.router)  # Week 15: Real-time WebSocket Updates
 
 # Mount frontend static files

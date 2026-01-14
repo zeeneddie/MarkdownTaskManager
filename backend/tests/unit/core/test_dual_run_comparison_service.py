@@ -14,7 +14,7 @@ from app.services.dual_run_comparison_service import (
     SystemConfig,
     DualRunStatistics,
 )
-from app.models.week134_testing import (
+from app.models.testing import (
     ComparisonResult,
     DiffType,
     DualRunResult,

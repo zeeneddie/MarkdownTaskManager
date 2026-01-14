@@ -1,0 +1,2773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarQed.ai - AI Agent Platform for Legacy Modernization</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- AOS Animation Library -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'marqed': {
+                            'orange-light': '#FFEAA7',
+                            'orange': '#FDCB6E',
+                            'orange-mid': '#F39C12',
+                            'orange-dark': '#E67E22',
+                            'orange-darker': '#D35400',
+                            'blue-light': '#81ECEC',
+                            'blue': '#00CEC9',
+                            'blue-mid': '#0984E3',
+                            'blue-dark': '#0C4A6E',
+                            'blue-darker': '#074863',
+                            'dark': '#0A0A1A',
+                            'dark-mid': '#12122A',
+                            'dark-light': '#1A1A3A',
+                        }
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(180deg, #0A0A1A 0%, #12122A 50%, #0A0A1A 100%);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        /* Gradient Text Effects */
+        .gradient-text-orange {
+            background: linear-gradient(135deg, #FFEAA7 0%, #FDCB6E 25%, #F39C12 50%, #E67E22 75%, #D35400 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .gradient-text-blue {
+            background: linear-gradient(135deg, #81ECEC 0%, #00CEC9 25%, #0984E3 50%, #0C4A6E 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .gradient-text-mixed {
+            background: linear-gradient(90deg, #F39C12 0%, #E67E22 30%, #0984E3 70%, #00CEC9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Button Styles */
+        .btn-primary {
+            background: linear-gradient(135deg, #F39C12 0%, #E67E22 50%, #D35400 100%);
+            color: white;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(243, 156, 18, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: white;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255,255,255,0.3);
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            border-color: #00CEC9;
+            color: #00CEC9;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(0, 206, 201, 0.2);
+        }
+
+        /* Card Styles */
+        .feature-card {
+            background: linear-gradient(145deg, rgba(26, 26, 58, 0.8) 0%, rgba(18, 18, 42, 0.9) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #F39C12, #E67E22, #0984E3, #00CEC9);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(243, 156, 18, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        /* Agent Card */
+        .agent-card {
+            background: linear-gradient(145deg, rgba(26, 26, 58, 0.6) 0%, rgba(18, 18, 42, 0.8) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 24px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .agent-card:hover {
+            transform: scale(1.05);
+            border-color: rgba(243, 156, 18, 0.4);
+            box-shadow: 0 25px 80px rgba(243, 156, 18, 0.15);
+        }
+
+        .agent-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        /* Logo Carousel */
+        .logo-carousel {
+            display: flex;
+            animation: scroll 30s linear infinite;
+        }
+
+        .logo-carousel:hover {
+            animation-play-state: paused;
+        }
+
+        @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* Stats Counter Animation */
+        .stat-number {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        /* Glowing Orb Background */
+        .glow-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .glow-orange {
+            background: radial-gradient(circle, #F39C12 0%, transparent 70%);
+        }
+
+        .glow-blue {
+            background: radial-gradient(circle, #0984E3 0%, transparent 70%);
+        }
+
+        /* Navigation */
+        .nav-link {
+            position: relative;
+            padding: 8px 16px;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #F39C12, #E67E22);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .nav-link:hover {
+            color: #F39C12;
+        }
+
+        .nav-link:hover::after {
+            width: 80%;
+        }
+
+        /* Dropdown Menu */
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: rgba(18, 18, 42, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            min-width: 240px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(20px);
+            z-index: 100;
+        }
+
+        .dropdown:hover .dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 12px 16px;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(243, 156, 18, 0.1);
+            color: #F39C12;
+        }
+
+        /* Tabs */
+        .tab-btn {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab-btn.active {
+            color: #F39C12;
+        }
+
+        .tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #F39C12, #E67E22);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .tab-btn.active::after {
+            transform: scaleX(1);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Workflow Visualization */
+        .workflow-step {
+            position: relative;
+        }
+
+        .workflow-step::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -40px;
+            width: 40px;
+            height: 2px;
+            background: linear-gradient(90deg, #F39C12, #0984E3);
+        }
+
+        .workflow-step:last-child::after {
+            display: none;
+        }
+
+        /* Pulse Animation */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        .pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        /* Floating Animation */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* Testimonial Slider */
+        .testimonial-slider {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .testimonial-slide {
+            display: none;
+            animation: slideIn 0.5s ease;
+        }
+
+        .testimonial-slide.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .animate-spin-slow {
+            animation: spin-slow 8s linear infinite;
+        }
+
+        /* Pricing Card */
+        .pricing-card {
+            background: linear-gradient(145deg, rgba(26, 26, 58, 0.8) 0%, rgba(18, 18, 42, 0.9) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            transition: all 0.4s ease;
+            position: relative;
+        }
+
+        .pricing-card.featured {
+            border-color: #F39C12;
+            transform: scale(1.05);
+        }
+
+        .pricing-card.featured::before {
+            content: 'Most Popular';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(90deg, #F39C12, #E67E22);
+            color: white;
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+        }
+
+        .pricing-card.featured:hover {
+            transform: scale(1.05) translateY(-10px);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 80%;
+            max-width: 400px;
+            height: 100vh;
+            background: rgba(10, 10, 26, 0.98);
+            backdrop-filter: blur(20px);
+            transition: right 0.4s ease;
+            z-index: 200;
+            padding: 80px 40px;
+        }
+
+        .mobile-menu.open {
+            right: 0;
+        }
+
+        .mobile-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s ease;
+            z-index: 150;
+        }
+
+        .mobile-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0A0A1A;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #F39C12, #E67E22);
+            border-radius: 4px;
+        }
+
+        /* Selection */
+        ::selection {
+            background: rgba(243, 156, 18, 0.3);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <a href="#" class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-marqed-orange to-marqed-orange-dark flex items-center justify-center">
+                        <span class="text-white font-bold text-xl">M</span>
+                    </div>
+                    <span class="text-2xl font-bold gradient-text-orange">MarQed.ai</span>
+                </a>
+
+                <!-- Desktop Navigation -->
+                <div class="hidden lg:flex items-center gap-2">
+                    <div class="dropdown">
+                        <a href="#" class="nav-link text-white/80 hover:text-white flex items-center gap-1">
+                            Platform <i class="fas fa-chevron-down text-xs ml-1"></i>
+                        </a>
+                        <div class="dropdown-menu">
+                            <a href="#agents" class="dropdown-item">
+                                <i class="fas fa-robot mr-2 text-marqed-orange"></i> AI Agents
+                            </a>
+                            <a href="#workflows" class="dropdown-item">
+                                <i class="fas fa-project-diagram mr-2 text-marqed-blue"></i> Workflows
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-plug mr-2 text-marqed-orange"></i> Integrations
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-shield-alt mr-2 text-marqed-blue"></i> Security
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="dropdown">
+                        <a href="#" class="nav-link text-white/80 hover:text-white flex items-center gap-1">
+                            Solutions <i class="fas fa-chevron-down text-xs ml-1"></i>
+                        </a>
+                        <div class="dropdown-menu">
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-code mr-2 text-marqed-orange"></i> Legacy Modernization
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-chart-line mr-2 text-marqed-blue"></i> Code Analysis
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-tasks mr-2 text-marqed-orange"></i> Project Management
+                            </a>
+                            <a href="#" class="dropdown-item">
+                                <i class="fas fa-bug mr-2 text-marqed-blue"></i> Quality Assurance
+                            </a>
+                        </div>
+                    </div>
+
+                    <a href="#pricing" class="nav-link text-white/80 hover:text-white">Pricing</a>
+                    <a href="#" class="nav-link text-white/80 hover:text-white">Resources</a>
+                    <a href="#" class="nav-link text-white/80 hover:text-white">Company</a>
+                </div>
+
+                <!-- CTA Buttons -->
+                <div class="hidden lg:flex items-center gap-4">
+                    <a href="#" class="text-white/80 hover:text-white transition">Login</a>
+                    <button class="btn-primary">Gratis Demo Aanvragen</button>
+                </div>
+
+                <!-- Mobile Menu Toggle -->
+                <button class="lg:hidden text-white text-2xl" id="mobileMenuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+    <div class="mobile-menu" id="mobileMenu">
+        <button class="absolute top-6 right-6 text-white text-2xl" id="mobileMenuClose">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="flex flex-col gap-6">
+            <a href="#" class="text-xl text-white/80 hover:text-marqed-orange transition">Platform</a>
+            <a href="#" class="text-xl text-white/80 hover:text-marqed-orange transition">Solutions</a>
+            <a href="#pricing" class="text-xl text-white/80 hover:text-marqed-orange transition">Pricing</a>
+            <a href="#" class="text-xl text-white/80 hover:text-marqed-orange transition">Resources</a>
+            <a href="#" class="text-xl text-white/80 hover:text-marqed-orange transition">Company</a>
+            <hr class="border-white/10 my-4">
+            <a href="#" class="text-xl text-white/80 hover:text-marqed-orange transition">Login</a>
+            <button class="btn-primary w-full">Gratis Demo Aanvragen</button>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex items-center pt-20 overflow-hidden">
+        <!-- Background Glows -->
+        <div class="glow-orb glow-orange w-[600px] h-[600px] -top-40 -right-40 float"></div>
+        <div class="glow-orb glow-blue w-[500px] h-[500px] bottom-0 -left-40 float" style="animation-delay: -3s;"></div>
+
+        <div class="max-w-7xl mx-auto px-6 py-20 relative z-10">
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <!-- Hero Content -->
+                <div data-aos="fade-right">
+                    <div class="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2 mb-6">
+                        <span class="w-2 h-2 bg-green-400 rounded-full pulse"></span>
+                        <span class="text-sm text-white/80">AI Agent Teams - Op maat samengesteld</span>
+                    </div>
+
+                    <h1 class="text-5xl lg:text-7xl font-bold leading-tight mb-6">
+                        <span class="gradient-text-orange">Modernize</span> Your
+                        <span class="gradient-text-blue">Legacy Code</span> with AI
+                    </h1>
+
+                    <p class="text-xl text-white/70 mb-8 leading-relaxed">
+                        MarQed.ai is het AI-platform voor <strong class="text-white">legacy modernisatie</strong>,
+                        <strong class="text-white">code analyse</strong> en <strong class="text-white">software onderhoud</strong>.
+                        Onze gespecialiseerde AI agent teams voeren diepgaande bug analyses uit,
+                        detecteren security issues en transformeren uw codebase naar moderne tech-stacks
+                        met bewezen software design principles en marktstandaarden.
+                    </p>
+
+                    <div class="flex flex-wrap gap-4 mb-12">
+                        <button class="btn-primary flex items-center gap-2">
+                            <i class="fas fa-calculator"></i>
+                            <span>Gratis Demo Aanvragen</span>
+                        </button>
+                        <button class="btn-secondary flex items-center gap-2">
+                            <i class="fas fa-phone"></i>
+                            <span>Neem Contact Op</span>
+                        </button>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="grid grid-cols-3 gap-8">
+                        <div>
+                            <div class="stat-number gradient-text-orange">Teams</div>
+                            <div class="text-white/60 text-sm mt-1">AI Agent Teams</div>
+                        </div>
+                        <div>
+                            <div class="stat-number gradient-text-blue" data-count="700">0</div>
+                            <div class="text-white/60 text-sm mt-1">API Endpoints</div>
+                        </div>
+                        <div>
+                            <div class="stat-number gradient-text-orange" data-count="98">0</div>
+                            <div class="text-white/60 text-sm mt-1">% Test Coverage</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hero Visual -->
+                <div class="relative" data-aos="fade-left" data-aos-delay="200">
+                    <div class="relative bg-gradient-to-br from-marqed-dark-light to-marqed-dark rounded-2xl border border-white/10 p-6 shadow-2xl">
+                        <!-- Terminal Header -->
+                        <div class="flex items-center gap-2 mb-4">
+                            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                            <span class="ml-4 text-white/40 text-sm">marqed-terminal</span>
+                        </div>
+
+                        <!-- Terminal Content -->
+                        <div class="font-mono text-sm space-y-3">
+                            <div class="flex items-start gap-2">
+                                <span class="text-marqed-orange">$</span>
+                                <span class="text-white/80">marqed analyze --legacy ./src</span>
+                            </div>
+                            <div class="text-marqed-blue">
+                                <i class="fas fa-spinner fa-spin mr-2"></i>
+                                Scanning 278 services...
+                            </div>
+                            <div class="pl-4 text-white/60">
+                                <div><i class="fas fa-check text-green-400 mr-2"></i>Found 15 legacy patterns</div>
+                                <div><i class="fas fa-check text-green-400 mr-2"></i>Detected 8 resource leaks</div>
+                                <div><i class="fas fa-check text-green-400 mr-2"></i>Identified 23 modernization opportunities</div>
+                            </div>
+                            <div class="flex items-start gap-2 mt-4">
+                                <span class="text-marqed-orange">$</span>
+                                <span class="text-white/80">marqed agent felix --task "modernize"</span>
+                            </div>
+                            <div class="text-green-400">
+                                <i class="fas fa-robot mr-2"></i>
+                                Felix Agent activated. Starting modernization workflow...
+                            </div>
+                        </div>
+
+                        <!-- Floating Elements -->
+                        <div class="absolute -top-4 -right-4 bg-gradient-to-br from-marqed-orange to-marqed-orange-dark rounded-xl p-3 shadow-lg float">
+                            <i class="fas fa-bolt text-white text-xl"></i>
+                        </div>
+                        <div class="absolute -bottom-4 -left-4 bg-gradient-to-br from-marqed-blue to-marqed-blue-dark rounded-xl p-3 shadow-lg float" style="animation-delay: -2s;">
+                            <i class="fas fa-code text-white text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Logo Carousel -->
+    <section class="py-16 border-y border-white/5 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6 mb-8">
+            <p class="text-center text-white/40 text-sm uppercase tracking-wider">Trusted by innovative teams worldwide</p>
+        </div>
+        <div class="relative">
+            <div class="logo-carousel">
+                <!-- Logos repeated for infinite scroll effect -->
+                <div class="flex items-center gap-16 px-8">
+                    <div class="text-white/30 text-2xl font-bold whitespace-nowrap hover:text-white/60 transition">TechCorp</div>
+                    <div class="text-white/30 text-2xl font-bold whitespace-nowrap hover:text-white/60 transition">InnovateLabs</div>
+                    <div class="text-white/30 text-2xl font-bold whitespace-nowrap hover:text-white/60 transition">DataFlow</div>
+                    <div class="text-white/30 text-2xl font-bold whitespace-nowrap hover:text-white/60 transition">CloudSync</div>
+                    <div class="text-white/30 text-2xl font-bold whitespace-nowrap hover:text-white/60 transition">DevOpsHub</div>
+                    <div class="text-white/30 text-2xl font-bold whitespace-nowrap hover:text-white/60 transition">CodeMasters</div>
+                    <div class="text-white/30 text-2xl font-bold whitespace-nowrap hover:text-white/60 transition">AITech</div>
+                    <div class="text-white/30 text-2xl font-bold whitespace-nowrap hover:text-white/60 transition">FutureSoft</div>
+                </div>
+                <div class="flex items-center gap-16 px-8">
+                    <div class="text-white/30 text-2xl font-bold whitespace-nowrap hover:text-white/60 transition">TechCorp</div>
+                    <div class="text-white/30 text-2xl font-bold whitespace-nowrap hover:text-white/60 transition">InnovateLabs</div>
+                    <div class="text-white/30 text-2xl font-bold whitespace-nowrap hover:text-white/60 transition">DataFlow</div>
+                    <div class="text-white/30 text-2xl font-bold whitespace-nowrap hover:text-white/60 transition">CloudSync</div>
+                    <div class="text-white/30 text-2xl font-bold whitespace-nowrap hover:text-white/60 transition">DevOpsHub</div>
+                    <div class="text-white/30 text-2xl font-bold whitespace-nowrap hover:text-white/60 transition">CodeMasters</div>
+                    <div class="text-white/30 text-2xl font-bold whitespace-nowrap hover:text-white/60 transition">AITech</div>
+                    <div class="text-white/30 text-2xl font-bold whitespace-nowrap hover:text-white/60 transition">FutureSoft</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problem/Solution Section -->
+    <section class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid lg:grid-cols-2 gap-16">
+                <!-- Problem -->
+                <div data-aos="fade-right">
+                    <div class="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-full px-4 py-2 mb-6">
+                        <i class="fas fa-exclamation-triangle text-red-400"></i>
+                        <span class="text-sm text-red-400">The Problem</span>
+                    </div>
+                    <h2 class="text-4xl font-bold mb-6">Traditional Development<br><span class="text-white/40">Can't Keep Up</span></h2>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3 text-white/60">
+                            <i class="fas fa-times-circle text-red-400 mt-1"></i>
+                            <span>Manual code reviews miss critical issues</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-white/60">
+                            <i class="fas fa-times-circle text-red-400 mt-1"></i>
+                            <span>Legacy modernization takes months or years</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-white/60">
+                            <i class="fas fa-times-circle text-red-400 mt-1"></i>
+                            <span>Technical debt accumulates silently</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-white/60">
+                            <i class="fas fa-times-circle text-red-400 mt-1"></i>
+                            <span>Resource leaks go undetected until production</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Solution -->
+                <div data-aos="fade-left">
+                    <div class="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-full px-4 py-2 mb-6">
+                        <i class="fas fa-check-circle text-green-400"></i>
+                        <span class="text-sm text-green-400">The MarQed Solution</span>
+                    </div>
+                    <h2 class="text-4xl font-bold mb-6"><span class="gradient-text-orange">AI-Powered</span><br>Development Platform</h2>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3 text-white/80">
+                            <i class="fas fa-check-circle text-green-400 mt-1"></i>
+                            <span>Op maat samengestelde AI agent teams analyseren elk aspect</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-white/80">
+                            <i class="fas fa-check-circle text-green-400 mt-1"></i>
+                            <span>Automated modernization workflows in days</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-white/80">
+                            <i class="fas fa-check-circle text-green-400 mt-1"></i>
+                            <span>Continuous quality gates prevent debt</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-white/80">
+                            <i class="fas fa-check-circle text-green-400 mt-1"></i>
+                            <span>8-category resource leak detection</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Agents Section -->
+    <section id="agents" class="py-24 relative">
+        <div class="glow-orb glow-orange w-[400px] h-[400px] top-1/2 left-0 -translate-y-1/2"></div>
+
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl lg:text-5xl font-bold mb-4">
+                    Uw <span class="gradient-text-orange">AI Agent Team</span>
+                </h2>
+                <p class="text-xl text-white/60 max-w-2xl mx-auto">
+                    Wij stellen een team samen van gespecialiseerde AI agents op basis van uw specifieke vraagstukken
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Lead Architect -->
+                <div class="agent-card" data-aos="fade-up" data-aos-delay="0">
+                    <div class="agent-avatar bg-gradient-to-br from-marqed-orange to-marqed-orange-dark">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Lead Architect</h3>
+                    <p class="text-white/60 text-sm mb-4">Orchestrates all other agents and manages complex workflows across your entire codebase</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="text-xs bg-white/10 px-2 py-1 rounded">Architecture</span>
+                        <span class="text-xs bg-white/10 px-2 py-1 rounded">Orchestration</span>
+                    </div>
+                </div>
+
+                <!-- Quality Analyst -->
+                <div class="agent-card" data-aos="fade-up" data-aos-delay="50">
+                    <div class="agent-avatar bg-gradient-to-br from-marqed-blue to-marqed-blue-dark">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Quality Analyst</h3>
+                    <p class="text-white/60 text-sm mb-4">Comprehensive code quality metrics, complexity analysis, and maintainability scoring</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="text-xs bg-white/10 px-2 py-1 rounded">Quality</span>
+                        <span class="text-xs bg-white/10 px-2 py-1 rounded">Metrics</span>
+                    </div>
+                </div>
+
+                <!-- Bug Hunter -->
+                <div class="agent-card" data-aos="fade-up" data-aos-delay="100">
+                    <div class="agent-avatar bg-gradient-to-br from-purple-500 to-purple-700">
+                        <i class="fas fa-bug"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Bug Hunter</h3>
+                    <p class="text-white/60 text-sm mb-4">Detects bugs, vulnerabilities, security issues, and potential runtime errors</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="text-xs bg-white/10 px-2 py-1 rounded">Security</span>
+                        <span class="text-xs bg-white/10 px-2 py-1 rounded">Bugs</span>
+                    </div>
+                </div>
+
+                <!-- Documentation Expert -->
+                <div class="agent-card" data-aos="fade-up" data-aos-delay="150">
+                    <div class="agent-avatar bg-gradient-to-br from-pink-500 to-pink-700">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Documentation Expert</h3>
+                    <p class="text-white/60 text-sm mb-4">Auto-generates and maintains API documentation, code comments, and technical specs</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="text-xs bg-white/10 px-2 py-1 rounded">Docs</span>
+                        <span class="text-xs bg-white/10 px-2 py-1 rounded">API Specs</span>
+                    </div>
+                </div>
+
+                <!-- Data Architect -->
+                <div class="agent-card" data-aos="fade-up" data-aos-delay="200">
+                    <div class="agent-avatar bg-gradient-to-br from-green-500 to-green-700">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Data Architect</h3>
+                    <p class="text-white/60 text-sm mb-4">Database optimization, schema analysis, and data migration planning</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="text-xs bg-white/10 px-2 py-1 rounded">Database</span>
+                        <span class="text-xs bg-white/10 px-2 py-1 rounded">Migration</span>
+                    </div>
+                </div>
+
+                <!-- Modernization Lead -->
+                <div class="agent-card" data-aos="fade-up" data-aos-delay="250">
+                    <div class="agent-avatar bg-gradient-to-br from-red-500 to-red-700">
+                        <i class="fas fa-code-branch"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Modernization Lead</h3>
+                    <p class="text-white/60 text-sm mb-4">Legacy code transformation, refactoring strategies, and technical debt reduction</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="text-xs bg-white/10 px-2 py-1 rounded">Legacy</span>
+                        <span class="text-xs bg-white/10 px-2 py-1 rounded">Refactor</span>
+                    </div>
+                </div>
+
+                <!-- Test Engineer -->
+                <div class="agent-card" data-aos="fade-up" data-aos-delay="300">
+                    <div class="agent-avatar bg-gradient-to-br from-yellow-500 to-yellow-700">
+                        <i class="fas fa-vial"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Test Engineer</h3>
+                    <p class="text-white/60 text-sm mb-4">Automated testing, coverage analysis, and test generation for all code paths</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="text-xs bg-white/10 px-2 py-1 rounded">Testing</span>
+                        <span class="text-xs bg-white/10 px-2 py-1 rounded">Coverage</span>
+                    </div>
+                </div>
+
+                <!-- Performance Analyst -->
+                <div class="agent-card" data-aos="fade-up" data-aos-delay="350">
+                    <div class="agent-avatar bg-gradient-to-br from-cyan-500 to-cyan-700">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Performance Analyst</h3>
+                    <p class="text-white/60 text-sm mb-4">Optimization recommendations, bottleneck detection, and resource usage analysis</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="text-xs bg-white/10 px-2 py-1 rounded">Performance</span>
+                        <span class="text-xs bg-white/10 px-2 py-1 rounded">Optimization</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-12" data-aos="fade-up">
+                <button class="btn-secondary">
+                    Ontdek onze Agent Teams <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Consensus Engine Section -->
+    <section id="ai-consensus-engine" class="py-24 relative overflow-hidden">
+        <!-- Animated background -->
+        <div class="absolute inset-0 opacity-30">
+            <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-marqed-blue/20 rounded-full blur-3xl animate-pulse"></div>
+            <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-marqed-orange/20 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
+            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-marqed-blue/10 rounded-full"></div>
+            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] border border-marqed-orange/10 rounded-full"></div>
+        </div>
+
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <div class="inline-flex items-center gap-2 bg-gradient-to-r from-marqed-blue/20 to-marqed-orange/20 border border-white/10 rounded-full px-4 py-2 mb-6">
+                    <i class="fas fa-brain text-marqed-blue"></i>
+                    <span class="text-sm text-white/80">Intelligente Besluitvorming</span>
+                </div>
+                <h2 class="text-4xl lg:text-6xl font-bold mb-6">
+                    <span class="gradient-text-blue">AI Consensus</span> <span class="gradient-text-orange">Engine</span>
+                </h2>
+                <p class="text-xl text-white/70 max-w-3xl mx-auto leading-relaxed">
+                    Onze revolutionaire <strong class="text-white">Control Cycle</strong> combineert meerdere AI-modellen
+                    in één krachtig besluitvormingsproces. Verschillende agents met verschillende LLM's
+                    werken samen, valideren elkaars werk en garanderen optimale resultaten.
+                </p>
+            </div>
+
+            <!-- Consensus Engine Visualization -->
+            <div class="grid lg:grid-cols-3 gap-8 mb-16">
+                <!-- Control Cycle -->
+                <div class="lg:col-span-2" data-aos="fade-right">
+                    <div class="glass-card p-8 h-full">
+                        <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
+                            <i class="fas fa-sync-alt text-marqed-blue"></i>
+                            Control Cycle Architectuur
+                        </h3>
+
+                        <!-- Cycle Diagram -->
+                        <div class="relative">
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                                <!-- LLM 1 -->
+                                <div class="text-center p-4 bg-gradient-to-br from-blue-500/20 to-blue-700/20 rounded-xl border border-blue-500/30">
+                                    <div class="w-12 h-12 mx-auto mb-3 bg-blue-500/30 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-robot text-blue-400"></i>
+                                    </div>
+                                    <div class="text-sm font-semibold text-blue-400">Ollama</div>
+                                    <div class="text-xs text-white/50">Code Analysis</div>
+                                </div>
+
+                                <!-- LLM 2 -->
+                                <div class="text-center p-4 bg-gradient-to-br from-green-500/20 to-green-700/20 rounded-xl border border-green-500/30">
+                                    <div class="w-12 h-12 mx-auto mb-3 bg-green-500/30 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-robot text-green-400"></i>
+                                    </div>
+                                    <div class="text-sm font-semibold text-green-400">OpenAI</div>
+                                    <div class="text-xs text-white/50">Reasoning</div>
+                                </div>
+
+                                <!-- LLM 3 -->
+                                <div class="text-center p-4 bg-gradient-to-br from-purple-500/20 to-purple-700/20 rounded-xl border border-purple-500/30">
+                                    <div class="w-12 h-12 mx-auto mb-3 bg-purple-500/30 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-robot text-purple-400"></i>
+                                    </div>
+                                    <div class="text-sm font-semibold text-purple-400">Anthropic</div>
+                                    <div class="text-xs text-white/50">Validation</div>
+                                </div>
+
+                                <!-- LLM 4 -->
+                                <div class="text-center p-4 bg-gradient-to-br from-orange-500/20 to-orange-700/20 rounded-xl border border-orange-500/30">
+                                    <div class="w-12 h-12 mx-auto mb-3 bg-orange-500/30 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-robot text-orange-400"></i>
+                                    </div>
+                                    <div class="text-sm font-semibold text-orange-400">Gemini</div>
+                                    <div class="text-xs text-white/50">Review</div>
+                                </div>
+                            </div>
+
+                            <!-- Connecting arrows -->
+                            <div class="flex justify-center items-center gap-2 mb-6">
+                                <div class="h-px flex-1 bg-gradient-to-r from-transparent via-marqed-blue to-transparent"></div>
+                                <i class="fas fa-arrows-rotate text-marqed-blue animate-spin-slow"></i>
+                                <div class="h-px flex-1 bg-gradient-to-r from-transparent via-marqed-blue to-transparent"></div>
+                            </div>
+
+                            <!-- Process Steps -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+                                    <div class="w-8 h-8 bg-marqed-blue/30 rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                                    <span class="text-sm text-white/70">Analyse & Voorstel</span>
+                                </div>
+                                <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+                                    <div class="w-8 h-8 bg-marqed-orange/30 rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                                    <span class="text-sm text-white/70">Cross-Validatie</span>
+                                </div>
+                                <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+                                    <div class="w-8 h-8 bg-green-500/30 rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                                    <span class="text-sm text-white/70">Consensus & Output</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Human in the Loop -->
+                <div data-aos="fade-left">
+                    <div class="glass-card p-8 h-full bg-gradient-to-br from-marqed-orange/10 to-marqed-blue/10 border-2 border-marqed-orange/30">
+                        <div class="text-center mb-6">
+                            <div class="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-marqed-orange to-marqed-orange-dark rounded-full flex items-center justify-center shadow-lg shadow-marqed-orange/30">
+                                <i class="fas fa-user-check text-3xl text-white"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold gradient-text-orange">Human in the Loop</h3>
+                        </div>
+
+                        <p class="text-white/70 text-center mb-6">
+                            <strong class="text-white">U behoudt altijd de controle.</strong>
+                            Kritieke beslissingen worden voorgelegd aan uw team voordat ze worden uitgevoerd.
+                        </p>
+
+                        <ul class="space-y-4">
+                            <li class="flex items-start gap-3">
+                                <i class="fas fa-shield-check text-marqed-orange mt-1"></i>
+                                <span class="text-sm text-white/70">Goedkeuring vereist voor code wijzigingen</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i class="fas fa-eye text-marqed-orange mt-1"></i>
+                                <span class="text-sm text-white/70">Volledige transparantie in besluitvorming</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i class="fas fa-undo text-marqed-orange mt-1"></i>
+                                <span class="text-sm text-white/70">Rollback mogelijkheid bij elke stap</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <i class="fas fa-comments text-marqed-orange mt-1"></i>
+                                <span class="text-sm text-white/70">Feedback loop voor continue verbetering</span>
+                            </li>
+                        </ul>
+
+                        <div class="mt-6 p-4 bg-marqed-orange/20 rounded-xl border border-marqed-orange/30">
+                            <p class="text-sm text-center text-marqed-orange-light">
+                                <i class="fas fa-quote-left mr-2"></i>
+                                AI assisteert, de mens beslist
+                                <i class="fas fa-quote-right ml-2"></i>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consensus Engine Benefits -->
+            <div class="grid md:grid-cols-4 gap-6" data-aos="fade-up">
+                <div class="text-center p-6 glass-card">
+                    <div class="text-4xl font-bold gradient-text-blue mb-2">7+</div>
+                    <div class="text-white/60 text-sm">LLM Providers</div>
+                </div>
+                <div class="text-center p-6 glass-card">
+                    <div class="text-4xl font-bold gradient-text-orange mb-2">99.2%</div>
+                    <div class="text-white/60 text-sm">Consensus Accuracy</div>
+                </div>
+                <div class="text-center p-6 glass-card">
+                    <div class="text-4xl font-bold gradient-text-blue mb-2">3x</div>
+                    <div class="text-white/60 text-sm">Foutreductie</div>
+                </div>
+                <div class="text-center p-6 glass-card">
+                    <div class="text-4xl font-bold gradient-text-orange mb-2">100%</div>
+                    <div class="text-white/60 text-sm">Menselijke Controle</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Workflows Section -->
+    <section id="workflows" class="py-24 bg-gradient-to-b from-transparent via-marqed-dark-light/50 to-transparent">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl lg:text-5xl font-bold mb-4">
+                    Powerful <span class="gradient-text-blue">Workflows</span>
+                </h2>
+                <p class="text-xl text-white/60 max-w-2xl mx-auto">
+                    15+ automated workflows for every stage of your development lifecycle
+                </p>
+            </div>
+
+            <!-- Workflow Tabs -->
+            <div class="flex flex-wrap justify-center gap-2 mb-12" data-aos="fade-up">
+                <button class="tab-btn active" data-tab="green-paper">Green Paper</button>
+                <button class="tab-btn" data-tab="brown-paper">Brown Paper</button>
+                <button class="tab-btn" data-tab="migration">Migration</button>
+                <button class="tab-btn" data-tab="quality">Quality Gate</button>
+            </div>
+
+            <!-- Tab Contents -->
+            <div class="tab-content active" id="green-paper" data-aos="fade-up">
+                <div class="grid lg:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h3 class="text-3xl font-bold mb-4 gradient-text-orange">Green Paper Workflow</h3>
+                        <p class="text-white/70 mb-6">
+                            Start new projects with AI-powered planning. Felix orchestrates the entire team
+                            to create comprehensive project blueprints, architecture decisions, and implementation plans.
+                        </p>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center gap-3">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span class="text-white/80">Automated requirements analysis</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span class="text-white/80">Architecture recommendations</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span class="text-white/80">Risk assessment and mitigation</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span class="text-white/80">Sprint planning with effort estimation</span>
+                            </li>
+                        </ul>
+                        <button class="btn-primary">Learn More</button>
+                    </div>
+                    <div class="feature-card">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center">
+                                <i class="fas fa-file-alt text-white"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold">Project Blueprint</h4>
+                                <p class="text-white/60 text-sm">Generated in minutes</p>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                <span class="text-white/80">Requirements</span>
+                                <span class="text-green-400"><i class="fas fa-check-circle"></i> Complete</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                <span class="text-white/80">Architecture</span>
+                                <span class="text-green-400"><i class="fas fa-check-circle"></i> Complete</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                <span class="text-white/80">Risk Analysis</span>
+                                <span class="text-marqed-orange"><i class="fas fa-spinner fa-spin"></i> In Progress</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-white/5 rounded-lg">
+                                <span class="text-white/80">Sprint Planning</span>
+                                <span class="text-white/40"><i class="fas fa-clock"></i> Pending</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="brown-paper" data-aos="fade-up">
+                <div class="grid lg:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h3 class="text-3xl font-bold mb-4 gradient-text-blue">Brown Paper Workflow</h3>
+                        <p class="text-white/70 mb-6">
+                            Analyze existing codebases with deep inspection. Our agents scan your entire
+                            project to identify patterns, technical debt, and modernization opportunities.
+                        </p>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center gap-3">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span class="text-white/80">278 services scanned automatically</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span class="text-white/80">Dependency mapping and analysis</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span class="text-white/80">Dead code detection</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span class="text-white/80">Resource leak identification</span>
+                            </li>
+                        </ul>
+                        <button class="btn-primary">Learn More</button>
+                    </div>
+                    <div class="feature-card">
+                        <div class="text-center p-8">
+                            <div class="w-32 h-32 mx-auto mb-6 rounded-full bg-gradient-to-br from-marqed-blue/20 to-marqed-blue-dark/20 flex items-center justify-center">
+                                <i class="fas fa-search text-5xl text-marqed-blue"></i>
+                            </div>
+                            <h4 class="text-2xl font-bold mb-2">Deep Analysis</h4>
+                            <p class="text-white/60">Scanning 113 API files, 278 services</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="migration" data-aos="fade-up">
+                <div class="grid lg:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h3 class="text-3xl font-bold mb-4 gradient-text-mixed">Migration Workflow</h3>
+                        <p class="text-white/70 mb-6">
+                            Execute modernization with confidence. Automated migration paths transform
+                            legacy code while maintaining business logic and ensuring zero downtime.
+                        </p>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center gap-3">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span class="text-white/80">75 gap analysis items tracked</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span class="text-white/80">6-phase modernization roadmap</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span class="text-white/80">Automated code transformation</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span class="text-white/80">Rollback safety nets</span>
+                            </li>
+                        </ul>
+                        <button class="btn-primary">Learn More</button>
+                    </div>
+                    <div class="feature-card">
+                        <div class="space-y-4">
+                            <h4 class="font-bold text-lg mb-4">Migration Progress</h4>
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-white/80">Phase 1: Analysis</span>
+                                    <span class="text-green-400">100%</span>
+                                </div>
+                                <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full" style="width: 100%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-white/80">Phase 2: Planning</span>
+                                    <span class="text-green-400">100%</span>
+                                </div>
+                                <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full" style="width: 100%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-white/80">Phase 3: Execution</span>
+                                    <span class="text-marqed-orange">67%</span>
+                                </div>
+                                <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+                                    <div class="h-full bg-gradient-to-r from-marqed-orange to-marqed-orange-dark rounded-full" style="width: 67%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-white/80">Phase 4: Validation</span>
+                                    <span class="text-white/40">0%</span>
+                                </div>
+                                <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+                                    <div class="h-full bg-white/20 rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="quality" data-aos="fade-up">
+                <div class="grid lg:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h3 class="text-3xl font-bold mb-4 gradient-text-orange">Quality Gate Workflow</h3>
+                        <p class="text-white/70 mb-6">
+                            Enforce quality standards automatically. Every commit, PR, and deployment
+                            passes through comprehensive quality checks powered by Quinn and Betty.
+                        </p>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center gap-3">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span class="text-white/80">97.8% test pass rate</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span class="text-white/80">2,557+ automated tests</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span class="text-white/80">Security vulnerability scanning</span>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <i class="fas fa-check text-green-400"></i>
+                                <span class="text-white/80">Performance regression detection</span>
+                            </li>
+                        </ul>
+                        <button class="btn-primary">Learn More</button>
+                    </div>
+                    <div class="feature-card">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="text-center p-4 bg-white/5 rounded-xl">
+                                <div class="text-3xl font-bold text-green-400 mb-1">97.8%</div>
+                                <div class="text-white/60 text-sm">Test Pass Rate</div>
+                            </div>
+                            <div class="text-center p-4 bg-white/5 rounded-xl">
+                                <div class="text-3xl font-bold text-marqed-blue mb-1">2,557</div>
+                                <div class="text-white/60 text-sm">Total Tests</div>
+                            </div>
+                            <div class="text-center p-4 bg-white/5 rounded-xl">
+                                <div class="text-3xl font-bold text-marqed-orange mb-1">0</div>
+                                <div class="text-white/60 text-sm">Critical Issues</div>
+                            </div>
+                            <div class="text-center p-4 bg-white/5 rounded-xl">
+                                <div class="text-3xl font-bold text-purple-400 mb-1">A+</div>
+                                <div class="text-white/60 text-sm">Security Score</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section class="py-24 relative">
+        <div class="glow-orb glow-blue w-[500px] h-[500px] top-0 right-0"></div>
+
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl lg:text-5xl font-bold mb-4">
+                    Everything You Need to <span class="gradient-text-mixed">Modernize</span>
+                </h2>
+                <p class="text-xl text-white/60 max-w-2xl mx-auto">
+                    A complete platform for legacy transformation and modern development
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="0">
+                    <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-marqed-orange/20 to-marqed-orange-dark/20 flex items-center justify-center mb-4">
+                        <i class="fas fa-robot text-2xl text-marqed-orange"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">AI Agent Teams</h3>
+                    <p class="text-white/60">Op maat samengestelde teams van gespecialiseerde agents voor uw specifieke uitdagingen.</p>
+                </div>
+
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="50">
+                    <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-marqed-blue/20 to-marqed-blue-dark/20 flex items-center justify-center mb-4">
+                        <i class="fas fa-code text-2xl text-marqed-blue"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">700+ API Endpoints</h3>
+                    <p class="text-white/60">Comprehensive REST API with full documentation and SDK support.</p>
+                </div>
+
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+                    <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-700/20 flex items-center justify-center mb-4">
+                        <i class="fas fa-brain text-2xl text-purple-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">7 LLM Providers</h3>
+                    <p class="text-white/60">Choose from Ollama, Groq, Gemini, OpenAI, Anthropic, Qwen, or Moonshot.</p>
+                </div>
+
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="150">
+                    <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500/20 to-green-700/20 flex items-center justify-center mb-4">
+                        <i class="fas fa-chart-line text-2xl text-green-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Klantenportaal</h3>
+                    <p class="text-white/60">Real-time inzicht in voortgang, resultaten en analyses van uw project.</p>
+                </div>
+
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+                    <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-red-500/20 to-red-700/20 flex items-center justify-center mb-4">
+                        <i class="fas fa-shield-alt text-2xl text-red-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Stability Analysis</h3>
+                    <p class="text-white/60">Resource leak detection across 8 categories for bulletproof code.</p>
+                </div>
+
+                <div class="feature-card" data-aos="fade-up" data-aos-delay="250">
+                    <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-cyan-500/20 to-cyan-700/20 flex items-center justify-center mb-4">
+                        <i class="fas fa-database text-2xl text-cyan-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">69 Migrations</h3>
+                    <p class="text-white/60">Comprehensive database migrations with full rollback support.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="py-24 relative overflow-hidden">
+        <div class="glow-orb glow-orange w-[300px] h-[300px] top-1/4 -left-20"></div>
+
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl lg:text-5xl font-bold mb-4">
+                    How <span class="gradient-text-blue">It Works</span>
+                </h2>
+                <p class="text-xl text-white/60 max-w-2xl mx-auto">
+                    Get started in minutes with our simple 4-step process
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Step 1 -->
+                <div class="relative" data-aos="fade-up" data-aos-delay="0">
+                    <div class="text-center">
+                        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-marqed-orange to-marqed-orange-dark flex items-center justify-center text-3xl font-bold shadow-lg shadow-marqed-orange/30">
+                            1
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Connect Your Repo</h3>
+                        <p class="text-white/60">Link your GitHub, GitLab, or Bitbucket repository in seconds</p>
+                    </div>
+                    <!-- Connector Line -->
+                    <div class="hidden lg:block absolute top-10 left-full w-full h-0.5 bg-gradient-to-r from-marqed-orange to-marqed-blue"></div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="relative" data-aos="fade-up" data-aos-delay="100">
+                    <div class="text-center">
+                        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-marqed-orange-mid to-marqed-blue flex items-center justify-center text-3xl font-bold shadow-lg shadow-marqed-blue/30">
+                            2
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">AI Analyzes Code</h3>
+                        <p class="text-white/60">Our agents scan your entire codebase for patterns and issues</p>
+                    </div>
+                    <div class="hidden lg:block absolute top-10 left-full w-full h-0.5 bg-gradient-to-r from-marqed-blue to-marqed-blue-mid"></div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="relative" data-aos="fade-up" data-aos-delay="200">
+                    <div class="text-center">
+                        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-marqed-blue to-marqed-blue-mid flex items-center justify-center text-3xl font-bold shadow-lg shadow-marqed-blue/30">
+                            3
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Get Actionable Insights</h3>
+                        <p class="text-white/60">Receive detailed reports with prioritized recommendations</p>
+                    </div>
+                    <div class="hidden lg:block absolute top-10 left-full w-full h-0.5 bg-gradient-to-r from-marqed-blue-mid to-marqed-blue-dark"></div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="relative" data-aos="fade-up" data-aos-delay="300">
+                    <div class="text-center">
+                        <div class="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-marqed-blue-mid to-marqed-blue-dark flex items-center justify-center text-3xl font-bold shadow-lg shadow-marqed-blue-dark/30">
+                            4
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Modernize & Deploy</h3>
+                        <p class="text-white/60">Execute automated transformations with confidence</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo Video Placeholder -->
+            <div class="mt-20 relative" data-aos="fade-up">
+                <div class="aspect-video max-w-4xl mx-auto rounded-2xl bg-gradient-to-br from-marqed-dark-light to-marqed-dark border border-white/10 overflow-hidden relative group cursor-pointer">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="w-24 h-24 rounded-full bg-gradient-to-br from-marqed-orange to-marqed-orange-dark flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-2xl shadow-marqed-orange/30">
+                            <i class="fas fa-play text-3xl ml-2"></i>
+                        </div>
+                    </div>
+                    <div class="absolute bottom-6 left-6">
+                        <p class="text-white/80 font-medium">Watch: 3-minute platform overview</p>
+                    </div>
+                    <!-- Decorative Grid -->
+                    <div class="absolute inset-0 opacity-10" style="background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 40px 40px;"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Integrations Section -->
+    <section id="integrations" class="py-24 bg-gradient-to-b from-transparent via-marqed-dark-light/30 to-transparent">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl lg:text-5xl font-bold mb-4">
+                    Seamless <span class="gradient-text-orange">Integrations</span>
+                </h2>
+                <p class="text-xl text-white/60 max-w-2xl mx-auto">
+                    Connect with your favorite tools and platforms
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6" data-aos="fade-up">
+                <!-- Integration Cards -->
+                <div class="integration-card bg-white/5 border border-white/10 rounded-xl p-6 text-center hover:bg-white/10 hover:border-marqed-orange/30 transition-all duration-300 group">
+                    <i class="fab fa-github text-4xl text-white/60 group-hover:text-white mb-3 transition"></i>
+                    <p class="text-sm text-white/60 group-hover:text-white/80">GitHub</p>
+                </div>
+                <div class="integration-card bg-white/5 border border-white/10 rounded-xl p-6 text-center hover:bg-white/10 hover:border-marqed-orange/30 transition-all duration-300 group">
+                    <i class="fab fa-gitlab text-4xl text-white/60 group-hover:text-orange-500 mb-3 transition"></i>
+                    <p class="text-sm text-white/60 group-hover:text-white/80">GitLab</p>
+                </div>
+                <div class="integration-card bg-white/5 border border-white/10 rounded-xl p-6 text-center hover:bg-white/10 hover:border-marqed-orange/30 transition-all duration-300 group">
+                    <i class="fab fa-bitbucket text-4xl text-white/60 group-hover:text-blue-500 mb-3 transition"></i>
+                    <p class="text-sm text-white/60 group-hover:text-white/80">Bitbucket</p>
+                </div>
+                <div class="integration-card bg-white/5 border border-white/10 rounded-xl p-6 text-center hover:bg-white/10 hover:border-marqed-orange/30 transition-all duration-300 group">
+                    <i class="fab fa-jira text-4xl text-white/60 group-hover:text-blue-400 mb-3 transition"></i>
+                    <p class="text-sm text-white/60 group-hover:text-white/80">Jira</p>
+                </div>
+                <div class="integration-card bg-white/5 border border-white/10 rounded-xl p-6 text-center hover:bg-white/10 hover:border-marqed-orange/30 transition-all duration-300 group">
+                    <i class="fab fa-slack text-4xl text-white/60 group-hover:text-purple-400 mb-3 transition"></i>
+                    <p class="text-sm text-white/60 group-hover:text-white/80">Slack</p>
+                </div>
+                <div class="integration-card bg-white/5 border border-white/10 rounded-xl p-6 text-center hover:bg-white/10 hover:border-marqed-orange/30 transition-all duration-300 group">
+                    <i class="fab fa-docker text-4xl text-white/60 group-hover:text-blue-400 mb-3 transition"></i>
+                    <p class="text-sm text-white/60 group-hover:text-white/80">Docker</p>
+                </div>
+                <div class="integration-card bg-white/5 border border-white/10 rounded-xl p-6 text-center hover:bg-white/10 hover:border-marqed-orange/30 transition-all duration-300 group">
+                    <i class="fab fa-aws text-4xl text-white/60 group-hover:text-yellow-500 mb-3 transition"></i>
+                    <p class="text-sm text-white/60 group-hover:text-white/80">AWS</p>
+                </div>
+                <div class="integration-card bg-white/5 border border-white/10 rounded-xl p-6 text-center hover:bg-white/10 hover:border-marqed-orange/30 transition-all duration-300 group">
+                    <i class="fab fa-microsoft text-4xl text-white/60 group-hover:text-blue-500 mb-3 transition"></i>
+                    <p class="text-sm text-white/60 group-hover:text-white/80">Azure</p>
+                </div>
+                <div class="integration-card bg-white/5 border border-white/10 rounded-xl p-6 text-center hover:bg-white/10 hover:border-marqed-orange/30 transition-all duration-300 group">
+                    <i class="fab fa-google text-4xl text-white/60 group-hover:text-red-400 mb-3 transition"></i>
+                    <p class="text-sm text-white/60 group-hover:text-white/80">GCP</p>
+                </div>
+                <div class="integration-card bg-white/5 border border-white/10 rounded-xl p-6 text-center hover:bg-white/10 hover:border-marqed-orange/30 transition-all duration-300 group">
+                    <i class="fab fa-jenkins text-4xl text-white/60 group-hover:text-red-500 mb-3 transition"></i>
+                    <p class="text-sm text-white/60 group-hover:text-white/80">Jenkins</p>
+                </div>
+                <div class="integration-card bg-white/5 border border-white/10 rounded-xl p-6 text-center hover:bg-white/10 hover:border-marqed-orange/30 transition-all duration-300 group">
+                    <i class="fas fa-database text-4xl text-white/60 group-hover:text-green-400 mb-3 transition"></i>
+                    <p class="text-sm text-white/60 group-hover:text-white/80">PostgreSQL</p>
+                </div>
+                <div class="integration-card bg-white/5 border border-white/10 rounded-xl p-6 text-center hover:bg-white/10 hover:border-marqed-orange/30 transition-all duration-300 group">
+                    <i class="fas fa-cube text-4xl text-white/60 group-hover:text-cyan-400 mb-3 transition"></i>
+                    <p class="text-sm text-white/60 group-hover:text-white/80">Kubernetes</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Use Cases Section -->
+    <section id="use-cases" class="py-24 relative">
+        <div class="glow-orb glow-blue w-[400px] h-[400px] top-1/2 right-0 -translate-y-1/2"></div>
+
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl lg:text-5xl font-bold mb-4">
+                    Built for <span class="gradient-text-mixed">Every Team</span>
+                </h2>
+                <p class="text-xl text-white/60 max-w-2xl mx-auto">
+                    From startups to enterprises, MarQed.ai adapts to your needs
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Use Case 1 -->
+                <div class="use-case-card bg-gradient-to-br from-marqed-dark-light/80 to-marqed-dark/80 border border-white/10 rounded-2xl p-8 hover:border-marqed-orange/30 transition-all duration-300" data-aos="fade-up" data-aos-delay="0">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-700/20 flex items-center justify-center mb-6">
+                        <i class="fas fa-building text-3xl text-blue-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Enterprise IT</h3>
+                    <p class="text-white/60 mb-6">Modernize decades of legacy systems while maintaining business continuity. Our agents handle legacy code, mainframe, and monolithic architectures.</p>
+                    <ul class="space-y-2">
+                        <li class="flex items-center gap-2 text-white/70 text-sm">
+                            <i class="fas fa-check text-green-400"></i> Legacy modernisatie
+                        </li>
+                        <li class="flex items-center gap-2 text-white/70 text-sm">
+                            <i class="fas fa-check text-green-400"></i> Code transformatie
+                        </li>
+                        <li class="flex items-center gap-2 text-white/70 text-sm">
+                            <i class="fas fa-check text-green-400"></i> Compliance automation
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Use Case 2 -->
+                <div class="use-case-card bg-gradient-to-br from-marqed-dark-light/80 to-marqed-dark/80 border border-white/10 rounded-2xl p-8 hover:border-marqed-orange/30 transition-all duration-300" data-aos="fade-up" data-aos-delay="100">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-700/20 flex items-center justify-center mb-6">
+                        <i class="fas fa-rocket text-3xl text-purple-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Startups & Scale-ups</h3>
+                    <p class="text-white/60 mb-6">Ship faster with AI-powered code reviews and automated quality gates. Scale your engineering team's output without adding headcount.</p>
+                    <ul class="space-y-2">
+                        <li class="flex items-center gap-2 text-white/70 text-sm">
+                            <i class="fas fa-check text-green-400"></i> Rapid MVP development
+                        </li>
+                        <li class="flex items-center gap-2 text-white/70 text-sm">
+                            <i class="fas fa-check text-green-400"></i> Technical debt prevention
+                        </li>
+                        <li class="flex items-center gap-2 text-white/70 text-sm">
+                            <i class="fas fa-check text-green-400"></i> Investor-ready code
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Use Case 3 -->
+                <div class="use-case-card bg-gradient-to-br from-marqed-dark-light/80 to-marqed-dark/80 border border-white/10 rounded-2xl p-8 hover:border-marqed-orange/30 transition-all duration-300" data-aos="fade-up" data-aos-delay="200">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-green-500/20 to-green-700/20 flex items-center justify-center mb-6">
+                        <i class="fas fa-university text-3xl text-green-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Financial Services</h3>
+                    <p class="text-white/60 mb-6">Meet regulatory requirements with automated compliance checks. Secure, auditable, and SOC2 compliant modernization workflows.</p>
+                    <ul class="space-y-2">
+                        <li class="flex items-center gap-2 text-white/70 text-sm">
+                            <i class="fas fa-check text-green-400"></i> Regulatory compliance
+                        </li>
+                        <li class="flex items-center gap-2 text-white/70 text-sm">
+                            <i class="fas fa-check text-green-400"></i> Audit trail generation
+                        </li>
+                        <li class="flex items-center gap-2 text-white/70 text-sm">
+                            <i class="fas fa-check text-green-400"></i> Security scanning
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Use Case 4 -->
+                <div class="use-case-card bg-gradient-to-br from-marqed-dark-light/80 to-marqed-dark/80 border border-white/10 rounded-2xl p-8 hover:border-marqed-orange/30 transition-all duration-300" data-aos="fade-up" data-aos-delay="300">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500/20 to-red-700/20 flex items-center justify-center mb-6">
+                        <i class="fas fa-heartbeat text-3xl text-red-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Healthcare</h3>
+                    <p class="text-white/60 mb-6">HIPAA-compliant code analysis and modernization. Protect patient data while upgrading critical healthcare systems.</p>
+                    <ul class="space-y-2">
+                        <li class="flex items-center gap-2 text-white/70 text-sm">
+                            <i class="fas fa-check text-green-400"></i> HIPAA compliance
+                        </li>
+                        <li class="flex items-center gap-2 text-white/70 text-sm">
+                            <i class="fas fa-check text-green-400"></i> PHI data protection
+                        </li>
+                        <li class="flex items-center gap-2 text-white/70 text-sm">
+                            <i class="fas fa-check text-green-400"></i> HL7/FHIR support
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Use Case 5 -->
+                <div class="use-case-card bg-gradient-to-br from-marqed-dark-light/80 to-marqed-dark/80 border border-white/10 rounded-2xl p-8 hover:border-marqed-orange/30 transition-all duration-300" data-aos="fade-up" data-aos-delay="400">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-yellow-500/20 to-yellow-700/20 flex items-center justify-center mb-6">
+                        <i class="fas fa-shopping-cart text-3xl text-yellow-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">E-Commerce</h3>
+                    <p class="text-white/60 mb-6">Optimize performance for peak traffic. Our agents identify bottlenecks and suggest scalability improvements.</p>
+                    <ul class="space-y-2">
+                        <li class="flex items-center gap-2 text-white/70 text-sm">
+                            <i class="fas fa-check text-green-400"></i> Performance optimization
+                        </li>
+                        <li class="flex items-center gap-2 text-white/70 text-sm">
+                            <i class="fas fa-check text-green-400"></i> Scalability planning
+                        </li>
+                        <li class="flex items-center gap-2 text-white/70 text-sm">
+                            <i class="fas fa-check text-green-400"></i> Payment security
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Use Case 6 -->
+                <div class="use-case-card bg-gradient-to-br from-marqed-dark-light/80 to-marqed-dark/80 border border-white/10 rounded-2xl p-8 hover:border-marqed-orange/30 transition-all duration-300" data-aos="fade-up" data-aos-delay="500">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-700/20 flex items-center justify-center mb-6">
+                        <i class="fas fa-code text-3xl text-cyan-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-3">Software Agencies</h3>
+                    <p class="text-white/60 mb-6">Deliver higher quality code faster. Use MarQed.ai across all client projects with multi-tenant support.</p>
+                    <ul class="space-y-2">
+                        <li class="flex items-center gap-2 text-white/70 text-sm">
+                            <i class="fas fa-check text-green-400"></i> Multi-project support
+                        </li>
+                        <li class="flex items-center gap-2 text-white/70 text-sm">
+                            <i class="fas fa-check text-green-400"></i> Client reporting
+                        </li>
+                        <li class="flex items-center gap-2 text-white/70 text-sm">
+                            <i class="fas fa-check text-green-400"></i> White-label options
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Table Section -->
+    <section id="comparison" class="py-24 bg-gradient-to-b from-transparent via-marqed-dark-light/20 to-transparent">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl lg:text-5xl font-bold mb-4">
+                    Why Choose <span class="gradient-text-orange">MarQed.ai</span>?
+                </h2>
+                <p class="text-xl text-white/60 max-w-2xl mx-auto">
+                    See how we compare to traditional approaches and competitors
+                </p>
+            </div>
+
+            <div class="overflow-x-auto" data-aos="fade-up">
+                <table class="w-full min-w-[800px]">
+                    <thead>
+                        <tr class="border-b border-white/10">
+                            <th class="py-4 px-6 text-left text-white/60 font-medium">Feature</th>
+                            <th class="py-4 px-6 text-center">
+                                <div class="inline-flex items-center gap-2 bg-gradient-to-r from-marqed-orange to-marqed-orange-dark px-4 py-2 rounded-lg">
+                                    <span class="font-bold">MarQed.ai</span>
+                                </div>
+                            </th>
+                            <th class="py-4 px-6 text-center text-white/60 font-medium">Traditional Tools</th>
+                            <th class="py-4 px-6 text-center text-white/60 font-medium">Manual Process</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                            <td class="py-4 px-6 text-white/80">AI-Powered Analysis</td>
+                            <td class="py-4 px-6 text-center"><i class="fas fa-check-circle text-2xl text-green-400"></i></td>
+                            <td class="py-4 px-6 text-center"><i class="fas fa-times-circle text-2xl text-white/20"></i></td>
+                            <td class="py-4 px-6 text-center"><i class="fas fa-times-circle text-2xl text-white/20"></i></td>
+                        </tr>
+                        <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                            <td class="py-4 px-6 text-white/80">Op maat samengestelde Agent Teams</td>
+                            <td class="py-4 px-6 text-center"><i class="fas fa-check-circle text-2xl text-green-400"></i></td>
+                            <td class="py-4 px-6 text-center"><i class="fas fa-times-circle text-2xl text-white/20"></i></td>
+                            <td class="py-4 px-6 text-center"><i class="fas fa-times-circle text-2xl text-white/20"></i></td>
+                        </tr>
+                        <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                            <td class="py-4 px-6 text-white/80">Automated Modernization</td>
+                            <td class="py-4 px-6 text-center"><i class="fas fa-check-circle text-2xl text-green-400"></i></td>
+                            <td class="py-4 px-6 text-center"><i class="fas fa-minus-circle text-2xl text-yellow-400"></i></td>
+                            <td class="py-4 px-6 text-center"><i class="fas fa-times-circle text-2xl text-white/20"></i></td>
+                        </tr>
+                        <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                            <td class="py-4 px-6 text-white/80">Resource Leak Detection</td>
+                            <td class="py-4 px-6 text-center"><i class="fas fa-check-circle text-2xl text-green-400"></i></td>
+                            <td class="py-4 px-6 text-center"><i class="fas fa-minus-circle text-2xl text-yellow-400"></i></td>
+                            <td class="py-4 px-6 text-center"><i class="fas fa-times-circle text-2xl text-white/20"></i></td>
+                        </tr>
+                        <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                            <td class="py-4 px-6 text-white/80">Klantenportaal met real-time inzicht</td>
+                            <td class="py-4 px-6 text-center"><i class="fas fa-check-circle text-2xl text-green-400"></i></td>
+                            <td class="py-4 px-6 text-center"><i class="fas fa-minus-circle text-2xl text-yellow-400"></i></td>
+                            <td class="py-4 px-6 text-center"><i class="fas fa-times-circle text-2xl text-white/20"></i></td>
+                        </tr>
+                        <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                            <td class="py-4 px-6 text-white/80">7 LLM Provider Support</td>
+                            <td class="py-4 px-6 text-center"><i class="fas fa-check-circle text-2xl text-green-400"></i></td>
+                            <td class="py-4 px-6 text-center"><i class="fas fa-times-circle text-2xl text-white/20"></i></td>
+                            <td class="py-4 px-6 text-center"><i class="fas fa-times-circle text-2xl text-white/20"></i></td>
+                        </tr>
+                        <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                            <td class="py-4 px-6 text-white/80">Setup Time</td>
+                            <td class="py-4 px-6 text-center text-green-400 font-bold">5 minutes</td>
+                            <td class="py-4 px-6 text-center text-yellow-400">Days</td>
+                            <td class="py-4 px-6 text-center text-red-400">Weeks</td>
+                        </tr>
+                        <tr class="hover:bg-white/5 transition">
+                            <td class="py-4 px-6 text-white/80">ROI Timeline</td>
+                            <td class="py-4 px-6 text-center text-green-400 font-bold">Week 1</td>
+                            <td class="py-4 px-6 text-center text-yellow-400">Months</td>
+                            <td class="py-4 px-6 text-center text-red-400">Never</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- What's New Section -->
+    <section id="whats-new" class="py-24 relative">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl lg:text-5xl font-bold mb-4">
+                    What's <span class="gradient-text-blue">New</span>
+                </h2>
+                <p class="text-xl text-white/60 max-w-2xl mx-auto">
+                    Latest updates and upcoming features
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Recent Update 1 -->
+                <div class="bg-gradient-to-br from-marqed-dark-light/60 to-marqed-dark/60 border border-white/10 rounded-2xl p-6 hover:border-green-400/30 transition-all duration-300" data-aos="fade-up" data-aos-delay="0">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="px-3 py-1 bg-green-400/20 text-green-400 text-xs font-bold rounded-full">NEW</span>
+                        <span class="text-white/40 text-sm">Jan 2026</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Stability Analysis Engine</h3>
+                    <p class="text-white/60 mb-4">Resource leak detection with 8 categories for bulletproof code analysis.</p>
+                    <a href="#" class="text-marqed-orange hover:text-marqed-orange-light transition flex items-center gap-2">
+                        Learn more <i class="fas fa-arrow-right text-sm"></i>
+                    </a>
+                </div>
+
+                <!-- Recent Update 2 -->
+                <div class="bg-gradient-to-br from-marqed-dark-light/60 to-marqed-dark/60 border border-white/10 rounded-2xl p-6 hover:border-blue-400/30 transition-all duration-300" data-aos="fade-up" data-aos-delay="100">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="px-3 py-1 bg-blue-400/20 text-blue-400 text-xs font-bold rounded-full">IMPROVED</span>
+                        <span class="text-white/40 text-sm">Dec 2025</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Brown Paper Workflow 2.0</h3>
+                    <p class="text-white/60 mb-4">Enhanced codebase scanning with 50% faster analysis and deeper dependency mapping.</p>
+                    <a href="#" class="text-marqed-blue hover:text-marqed-blue-light transition flex items-center gap-2">
+                        Learn more <i class="fas fa-arrow-right text-sm"></i>
+                    </a>
+                </div>
+
+                <!-- Recent Update 3 -->
+                <div class="bg-gradient-to-br from-marqed-dark-light/60 to-marqed-dark/60 border border-white/10 rounded-2xl p-6 hover:border-purple-400/30 transition-all duration-300" data-aos="fade-up" data-aos-delay="200">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="px-3 py-1 bg-purple-400/20 text-purple-400 text-xs font-bold rounded-full">COMING SOON</span>
+                        <span class="text-white/40 text-sm">Q1 2026</span>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">AI Code Generation</h3>
+                    <p class="text-white/60 mb-4">Let our agents write code for you based on your requirements and existing patterns.</p>
+                    <a href="#" class="text-purple-400 hover:text-purple-300 transition flex items-center gap-2">
+                        Join waitlist <i class="fas fa-arrow-right text-sm"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Roadmap Timeline -->
+            <div class="mt-16 relative" data-aos="fade-up">
+                <div class="absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-marqed-orange via-marqed-blue to-transparent -translate-x-1/2 hidden md:block"></div>
+
+                <div class="space-y-12 md:space-y-0">
+                    <!-- Roadmap Item 1 -->
+                    <div class="md:grid md:grid-cols-2 md:gap-8 relative">
+                        <div class="md:text-right md:pr-12">
+                            <div class="inline-block px-3 py-1 bg-marqed-orange/20 text-marqed-orange text-sm font-bold rounded-full mb-2">Q1 2026</div>
+                            <h4 class="text-lg font-bold mb-2">Phase 22-23: Core Modernization</h4>
+                            <p class="text-white/60 text-sm">Enhanced migration workflows, improved stability analysis, and new dashboard features.</p>
+                        </div>
+                        <div class="hidden md:block"></div>
+                        <div class="absolute left-1/2 top-2 w-4 h-4 bg-marqed-orange rounded-full -translate-x-1/2 hidden md:block"></div>
+                    </div>
+
+                    <!-- Roadmap Item 2 -->
+                    <div class="md:grid md:grid-cols-2 md:gap-8 relative md:pt-12">
+                        <div class="hidden md:block"></div>
+                        <div class="md:pl-12">
+                            <div class="inline-block px-3 py-1 bg-marqed-blue/20 text-marqed-blue text-sm font-bold rounded-full mb-2">Q2 2026</div>
+                            <h4 class="text-lg font-bold mb-2">Phase 24-25: AI Expansion</h4>
+                            <p class="text-white/60 text-sm">New AI agents for specialized domains, enhanced LLM integrations, and code generation capabilities.</p>
+                        </div>
+                        <div class="absolute left-1/2 top-14 w-4 h-4 bg-marqed-blue rounded-full -translate-x-1/2 hidden md:block"></div>
+                    </div>
+
+                    <!-- Roadmap Item 3 -->
+                    <div class="md:grid md:grid-cols-2 md:gap-8 relative md:pt-12">
+                        <div class="md:text-right md:pr-12">
+                            <div class="inline-block px-3 py-1 bg-purple-400/20 text-purple-400 text-sm font-bold rounded-full mb-2">Q3-Q4 2026</div>
+                            <h4 class="text-lg font-bold mb-2">Phase 26-29: Enterprise Scale</h4>
+                            <p class="text-white/60 text-sm">Multi-cloud deployment, enterprise SSO, advanced compliance features, and global CDN.</p>
+                        </div>
+                        <div class="hidden md:block"></div>
+                        <div class="absolute left-1/2 top-14 w-4 h-4 bg-purple-400 rounded-full -translate-x-1/2 hidden md:block"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security & Compliance Section -->
+    <section id="security" class="py-24 bg-gradient-to-b from-transparent via-marqed-dark-light/30 to-transparent">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl lg:text-5xl font-bold mb-4">
+                    Enterprise-Grade <span class="gradient-text-orange">Security</span>
+                </h2>
+                <p class="text-xl text-white/60 max-w-2xl mx-auto">
+                    Your code is safe with us. Built with security-first architecture.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16" data-aos="fade-up">
+                <!-- Security Badge 1 -->
+                <div class="text-center p-6 bg-white/5 border border-white/10 rounded-xl hover:border-green-400/30 transition">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-green-400/20 flex items-center justify-center">
+                        <i class="fas fa-shield-alt text-2xl text-green-400"></i>
+                    </div>
+                    <h4 class="font-bold mb-2">SOC 2 Type II</h4>
+                    <p class="text-white/60 text-sm">Certified compliant</p>
+                </div>
+
+                <!-- Security Badge 2 -->
+                <div class="text-center p-6 bg-white/5 border border-white/10 rounded-xl hover:border-blue-400/30 transition">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-400/20 flex items-center justify-center">
+                        <i class="fas fa-lock text-2xl text-blue-400"></i>
+                    </div>
+                    <h4 class="font-bold mb-2">End-to-End Encryption</h4>
+                    <p class="text-white/60 text-sm">AES-256 at rest & transit</p>
+                </div>
+
+                <!-- Security Badge 3 -->
+                <div class="text-center p-6 bg-white/5 border border-white/10 rounded-xl hover:border-purple-400/30 transition">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-400/20 flex items-center justify-center">
+                        <i class="fas fa-user-shield text-2xl text-purple-400"></i>
+                    </div>
+                    <h4 class="font-bold mb-2">GDPR Compliant</h4>
+                    <p class="text-white/60 text-sm">EU data protection</p>
+                </div>
+
+                <!-- Security Badge 4 -->
+                <div class="text-center p-6 bg-white/5 border border-white/10 rounded-xl hover:border-marqed-orange/30 transition">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-marqed-orange/20 flex items-center justify-center">
+                        <i class="fas fa-server text-2xl text-marqed-orange"></i>
+                    </div>
+                    <h4 class="font-bold mb-2">Self-Hosted Option</h4>
+                    <p class="text-white/60 text-sm">On-premise deployment</p>
+                </div>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-12 items-center" data-aos="fade-up">
+                <div>
+                    <h3 class="text-2xl font-bold mb-6">Your Code Never Leaves Your Control</h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-lg bg-green-400/20 flex items-center justify-center flex-shrink-0 mt-1">
+                                <i class="fas fa-check text-green-400"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold mb-1">Zero Data Retention</h4>
+                                <p class="text-white/60 text-sm">We never store your source code. Analysis happens in isolated, ephemeral containers.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-lg bg-green-400/20 flex items-center justify-center flex-shrink-0 mt-1">
+                                <i class="fas fa-check text-green-400"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold mb-1">Private LLM Options</h4>
+                                <p class="text-white/60 text-sm">Use Ollama for fully local AI processing. Your data never touches external servers.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-lg bg-green-400/20 flex items-center justify-center flex-shrink-0 mt-1">
+                                <i class="fas fa-check text-green-400"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold mb-1">Audit Logging</h4>
+                                <p class="text-white/60 text-sm">Complete audit trail of all actions. Export logs for compliance reporting.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-lg bg-green-400/20 flex items-center justify-center flex-shrink-0 mt-1">
+                                <i class="fas fa-check text-green-400"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold mb-1">Role-Based Access Control</h4>
+                                <p class="text-white/60 text-sm">Fine-grained permissions. Control who can access what, down to individual projects.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="relative">
+                    <div class="aspect-square max-w-md mx-auto relative">
+                        <!-- Security Visualization -->
+                        <div class="absolute inset-0 rounded-full border-2 border-dashed border-white/10 animate-spin" style="animation-duration: 30s;"></div>
+                        <div class="absolute inset-8 rounded-full border-2 border-dashed border-marqed-blue/30 animate-spin" style="animation-duration: 20s; animation-direction: reverse;"></div>
+                        <div class="absolute inset-16 rounded-full border-2 border-dashed border-marqed-orange/30 animate-spin" style="animation-duration: 15s;"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="w-32 h-32 rounded-2xl bg-gradient-to-br from-marqed-dark-light to-marqed-dark border border-white/20 flex items-center justify-center shadow-2xl">
+                                <i class="fas fa-lock text-4xl text-marqed-orange"></i>
+                            </div>
+                        </div>
+                        <!-- Floating security icons -->
+                        <div class="absolute top-4 left-1/2 -translate-x-1/2 w-10 h-10 rounded-lg bg-green-400/20 flex items-center justify-center">
+                            <i class="fas fa-shield-alt text-green-400"></i>
+                        </div>
+                        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 w-10 h-10 rounded-lg bg-blue-400/20 flex items-center justify-center">
+                            <i class="fas fa-key text-blue-400"></i>
+                        </div>
+                        <div class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-lg bg-purple-400/20 flex items-center justify-center">
+                            <i class="fas fa-fingerprint text-purple-400"></i>
+                        </div>
+                        <div class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-lg bg-marqed-orange/20 flex items-center justify-center">
+                            <i class="fas fa-eye-slash text-marqed-orange"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="py-24 relative">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl lg:text-5xl font-bold mb-4">
+                    Frequently Asked <span class="gradient-text-blue">Questions</span>
+                </h2>
+                <p class="text-xl text-white/60 max-w-2xl mx-auto">
+                    Everything you need to know about MarQed.ai
+                </p>
+            </div>
+
+            <div class="space-y-4" data-aos="fade-up">
+                <!-- FAQ Item 1 -->
+                <div class="faq-item border border-white/10 rounded-xl overflow-hidden">
+                    <button class="faq-toggle w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/5 transition">
+                        <span class="font-bold text-lg">Welke programmeertalen ondersteunt MarQed.ai?</span>
+                        <i class="fas fa-chevron-down text-marqed-orange transition-transform"></i>
+                    </button>
+                    <div class="faq-content px-6 pb-5 hidden">
+                        <p class="text-white/70">MarQed.ai ondersteunt alle gangbare programmeertalen - zowel moderne als legacy. Onze agents zijn getraind op miljoenen codebases en begrijpen taal-specifieke patronen, idiomen en best practices. Neem contact op voor specifieke vragen over uw tech stack.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 2 -->
+                <div class="faq-item border border-white/10 rounded-xl overflow-hidden">
+                    <button class="faq-toggle w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/5 transition">
+                        <span class="font-bold text-lg">How does the AI agent system work?</span>
+                        <i class="fas fa-chevron-down text-marqed-orange transition-transform"></i>
+                    </button>
+                    <div class="faq-content px-6 pb-5 hidden">
+                        <p class="text-white/70">Onze AI agents werken samen als een gecoordineerd team. Elk agent heeft een specifieke rol - van de Lead Architect die complexe workflows orkestreert, tot de Quality Analyst die code metrics beheert, tot de Bug Hunter die kwetsbaarheden detecteert. Wij stellen een team samen op basis van uw specifieke vraagstukken en uitdagingen. De agents communiceren via een gedeeld context systeem en kunnen worden aangepast aan uw team's specifieke behoeften en coding standards.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 3 -->
+                <div class="faq-item border border-white/10 rounded-xl overflow-hidden">
+                    <button class="faq-toggle w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/5 transition">
+                        <span class="font-bold text-lg">Is my code secure with MarQed.ai?</span>
+                        <i class="fas fa-chevron-down text-marqed-orange transition-transform"></i>
+                    </button>
+                    <div class="faq-content px-6 pb-5 hidden">
+                        <p class="text-white/70">Absolutely. Security is our top priority. We're SOC 2 Type II certified and GDPR compliant. Your code is processed in isolated, ephemeral containers and we never retain your source code. For maximum security, you can use our self-hosted option with Ollama for fully local AI processing - your code never leaves your infrastructure.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 4 -->
+                <div class="faq-item border border-white/10 rounded-xl overflow-hidden">
+                    <button class="faq-toggle w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/5 transition">
+                        <span class="font-bold text-lg">Can I use my own LLM provider?</span>
+                        <i class="fas fa-chevron-down text-marqed-orange transition-transform"></i>
+                    </button>
+                    <div class="faq-content px-6 pb-5 hidden">
+                        <p class="text-white/70">Yes! MarQed.ai supports 7 different LLM providers: Ollama (local/self-hosted), Groq, Google Gemini, OpenAI, Anthropic Claude, Qwen, and Moonshot. You can choose the provider that best fits your needs - whether that's cost, performance, or data privacy requirements. Switch between providers anytime without losing your configuration.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 5 -->
+                <div class="faq-item border border-white/10 rounded-xl overflow-hidden">
+                    <button class="faq-toggle w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/5 transition">
+                        <span class="font-bold text-lg">How long does it take to see results?</span>
+                        <i class="fas fa-chevron-down text-marqed-orange transition-transform"></i>
+                    </button>
+                    <div class="faq-content px-6 pb-5 hidden">
+                        <p class="text-white/70">Most teams see value within the first week. Initial codebase analysis typically completes in minutes to hours depending on size. The Brown Paper workflow gives you a comprehensive understanding of your codebase almost immediately. For legacy modernization projects, our customers report reducing their timeline from years to months.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 6 -->
+                <div class="faq-item border border-white/10 rounded-xl overflow-hidden">
+                    <button class="faq-toggle w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/5 transition">
+                        <span class="font-bold text-lg">Bieden jullie een gratis demo aan?</span>
+                        <i class="fas fa-chevron-down text-marqed-orange transition-transform"></i>
+                    </button>
+                    <div class="faq-content px-6 pb-5 hidden">
+                        <p class="text-white/70">Ja! Wij bieden een gratis demo aan waarin we een deel van uw codebase analyseren. U krijgt een eerste indruk van onze mogelijkheden en inzicht in bugs, security issues en de functionele structuur. Daarna ontvangt u een offerte voor de volledige analyse - zonder enige verplichting.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Newsletter Section -->
+    <section id="newsletter" class="py-24 bg-gradient-to-b from-transparent via-marqed-dark-light/30 to-transparent">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="bg-gradient-to-br from-marqed-dark-light to-marqed-dark border border-white/10 rounded-3xl p-12 relative overflow-hidden" data-aos="fade-up">
+                <!-- Background decoration -->
+                <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-marqed-orange/20 to-transparent rounded-full blur-3xl"></div>
+                <div class="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-marqed-blue/20 to-transparent rounded-full blur-3xl"></div>
+
+                <div class="relative z-10 text-center">
+                    <h2 class="text-3xl lg:text-4xl font-bold mb-4">
+                        Stay Updated with <span class="gradient-text-orange">MarQed.ai</span>
+                    </h2>
+                    <p class="text-white/60 mb-8 max-w-xl mx-auto">
+                        Get the latest updates on AI-powered development, new features, and best practices. No spam, unsubscribe anytime.
+                    </p>
+
+                    <form class="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto">
+                        <input
+                            type="email"
+                            placeholder="Enter your email"
+                            class="flex-1 px-6 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-marqed-orange/50 transition"
+                        >
+                        <button type="submit" class="btn-primary whitespace-nowrap">
+                            Subscribe <i class="fas fa-paper-plane ml-2"></i>
+                        </button>
+                    </form>
+
+                    <p class="text-white/40 text-sm mt-4">
+                        <i class="fas fa-lock mr-1"></i> We respect your privacy. Read our <a href="#" class="text-marqed-orange hover:underline">Privacy Policy</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="py-24 bg-gradient-to-b from-transparent via-marqed-dark-light/30 to-transparent">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl lg:text-5xl font-bold mb-4">
+                    Loved by <span class="gradient-text-orange">Developers</span>
+                </h2>
+                <p class="text-xl text-white/60 max-w-2xl mx-auto">
+                    See what teams are saying about MarQed.ai
+                </p>
+            </div>
+
+            <div class="testimonial-slider relative" data-aos="fade-up">
+                <div class="testimonial-slide active">
+                    <div class="max-w-3xl mx-auto text-center">
+                        <div class="text-6xl text-marqed-orange/30 mb-6">"</div>
+                        <p class="text-2xl text-white/90 mb-8 leading-relaxed">
+                            MarQed.ai transformed our legacy modernization project from a 2-year estimate to 4 months.
+                            The AI agents caught issues our team missed for years.
+                        </p>
+                        <div class="flex items-center justify-center gap-4">
+                            <div class="w-14 h-14 rounded-full bg-gradient-to-br from-marqed-orange to-marqed-orange-dark flex items-center justify-center text-xl font-bold">
+                                JD
+                            </div>
+                            <div class="text-left">
+                                <div class="font-bold">John Doe</div>
+                                <div class="text-white/60 text-sm">CTO, TechCorp</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="testimonial-slide">
+                    <div class="max-w-3xl mx-auto text-center">
+                        <div class="text-6xl text-marqed-blue/30 mb-6">"</div>
+                        <p class="text-2xl text-white/90 mb-8 leading-relaxed">
+                            The Brown Paper workflow gave us complete visibility into our 10-year-old codebase.
+                            We finally understood what we were dealing with.
+                        </p>
+                        <div class="flex items-center justify-center gap-4">
+                            <div class="w-14 h-14 rounded-full bg-gradient-to-br from-marqed-blue to-marqed-blue-dark flex items-center justify-center text-xl font-bold">
+                                JS
+                            </div>
+                            <div class="text-left">
+                                <div class="font-bold">Jane Smith</div>
+                                <div class="text-white/60 text-sm">VP Engineering, DataFlow</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="testimonial-slide">
+                    <div class="max-w-3xl mx-auto text-center">
+                        <div class="text-6xl text-purple-400/30 mb-6">"</div>
+                        <p class="text-2xl text-white/90 mb-8 leading-relaxed">
+                            97.8% test coverage and zero critical bugs in production since we adopted MarQed.ai.
+                            Quinn and Betty are like having two senior engineers on every PR.
+                        </p>
+                        <div class="flex items-center justify-center gap-4">
+                            <div class="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-xl font-bold">
+                                MJ
+                            </div>
+                            <div class="text-left">
+                                <div class="font-bold">Mike Johnson</div>
+                                <div class="text-white/60 text-sm">Lead Developer, CloudSync</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Dots -->
+                <div class="flex justify-center gap-3 mt-12">
+                    <button class="testimonial-dot w-3 h-3 rounded-full bg-white/30 hover:bg-marqed-orange transition active" data-slide="0"></button>
+                    <button class="testimonial-dot w-3 h-3 rounded-full bg-white/30 hover:bg-marqed-orange transition" data-slide="1"></button>
+                    <button class="testimonial-dot w-3 h-3 rounded-full bg-white/30 hover:bg-marqed-orange transition" data-slide="2"></button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section - Bug Fixing & Code Transparency -->
+    <section id="services" class="py-24 relative">
+        <div class="glow-orb glow-blue w-[400px] h-[400px] top-1/4 -right-20"></div>
+
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl lg:text-5xl font-bold mb-4">
+                    Onze <span class="gradient-text-orange">Diensten</span>
+                </h2>
+                <p class="text-xl text-white/60 max-w-2xl mx-auto">
+                    Van analyse tot implementatie - wij maken uw code inzichtelijk en toekomstbestendig
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                <!-- Bug Fixing Service -->
+                <div class="bg-gradient-to-br from-marqed-dark-light to-marqed-dark border border-white/10 rounded-2xl p-8 hover:border-purple-400/30 transition-all duration-300" data-aos="fade-up" data-aos-delay="0">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500/20 to-purple-700/20 flex items-center justify-center mb-6">
+                        <i class="fas fa-bug text-3xl text-purple-400"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Bug Fixing & Security</h3>
+                    <p class="text-white/60 mb-6">
+                        Onze AI agents scannen uw codebase op bugs, security vulnerabilities, memory leaks en potentiele runtime errors. Na de demo ontvangt u een offerte voor de volledige analyse.
+                    </p>
+                    <ul class="space-y-3 mb-6">
+                        <li class="flex items-center gap-3 text-white/80">
+                            <i class="fas fa-search text-purple-400"></i>
+                            <span>Automatische bug detectie</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-white/80">
+                            <i class="fas fa-shield-alt text-purple-400"></i>
+                            <span>Security vulnerability scanning</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-white/80">
+                            <i class="fas fa-memory text-purple-400"></i>
+                            <span>Resource leak detection (8 categorieen)</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-white/80">
+                            <i class="fas fa-file-alt text-purple-400"></i>
+                            <span>Gedetailleerd rapport met prioriteiten</span>
+                        </li>
+                    </ul>
+                    <div class="p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl">
+                        <p class="text-purple-300 text-sm"><i class="fas fa-info-circle mr-2"></i>Na analyse beslist u zelf of u de fixes wilt laten uitvoeren</p>
+                    </div>
+                </div>
+
+                <!-- Code Transparency Service -->
+                <div class="bg-gradient-to-br from-marqed-dark-light to-marqed-dark border border-white/10 rounded-2xl p-8 hover:border-marqed-blue/30 transition-all duration-300" data-aos="fade-up" data-aos-delay="100">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-marqed-blue/20 to-marqed-blue-dark/20 flex items-center justify-center mb-6">
+                        <i class="fas fa-eye text-3xl text-marqed-blue"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Functioneel Inzicht</h3>
+                    <p class="text-white/60 mb-6">
+                        Krijg volledig inzicht in wat uw source code doet. Wij extraheren <strong class="text-white">Epics, Features en User Stories</strong> direct uit uw codebase en identificeren de <strong class="text-white">Core Library</strong> - basisfuncties die door de hele applicatie worden hergebruikt.
+                    </p>
+                    <ul class="space-y-3 mb-6">
+                        <li class="flex items-center gap-3 text-white/80">
+                            <i class="fas fa-layer-group text-marqed-blue"></i>
+                            <span>Epics identificatie uit code structuur</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-white/80">
+                            <i class="fas fa-puzzle-piece text-marqed-blue"></i>
+                            <span>Features mapping naar functionaliteiten</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-white/80">
+                            <i class="fas fa-user-check text-marqed-blue"></i>
+                            <span>User Stories extractie uit business logic</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-white/80">
+                            <i class="fas fa-cubes text-marqed-orange"></i>
+                            <span><strong>Core Library detectie</strong> - basisfuncties die overal worden gebruikt</span>
+                        </li>
+                        <li class="flex items-center gap-3 text-white/80">
+                            <i class="fas fa-sitemap text-marqed-blue"></i>
+                            <span>Architectuur & dependency visualisatie</span>
+                        </li>
+                    </ul>
+                    <div class="p-4 bg-marqed-orange/10 border border-marqed-orange/20 rounded-xl mb-3">
+                        <p class="text-marqed-orange text-sm"><i class="fas fa-cube mr-2"></i><strong>Basic Structural Functionality:</strong> Wij herkennen herbruikbare componenten, utilities en shared services die de ruggengraat van uw applicatie vormen.</p>
+                    </div>
+                    <div class="p-4 bg-marqed-blue/10 border border-marqed-blue/20 rounded-xl">
+                        <p class="text-marqed-blue-light text-sm"><i class="fas fa-info-circle mr-2"></i>Perfect voor product backlog opbouw, overdracht en modernisatie trajecten</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section - Function Points -->
+    <section id="pricing" class="py-24 relative">
+        <div class="glow-orb glow-orange w-[400px] h-[400px] bottom-0 left-1/4"></div>
+
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl lg:text-5xl font-bold mb-4">
+                    Transparante <span class="gradient-text-blue">Pricing</span>
+                </h2>
+                <p class="text-xl text-white/60 max-w-3xl mx-auto">
+                    Profiteer van onze pilot aanbieding - transparante prijzen gebaseerd op het aantal regels code in uw project
+                </p>
+            </div>
+
+            <!-- Function Points Pricing Card -->
+            <div class="max-w-4xl mx-auto" data-aos="fade-up">
+                <div class="bg-gradient-to-br from-marqed-dark-light to-marqed-dark border-2 border-marqed-orange/30 rounded-3xl p-10 relative overflow-hidden">
+                    <!-- Background decoration -->
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-marqed-orange/10 to-transparent rounded-full blur-3xl"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 mb-10">
+                            <div>
+                                <div class="inline-flex items-center gap-2 bg-marqed-orange/20 text-marqed-orange px-4 py-2 rounded-full text-sm font-bold mb-4">
+                                    <i class="fas fa-calculator"></i>
+                                    Functiepunt-gebaseerde Pricing
+                                </div>
+                                <h3 class="text-3xl font-bold mb-2">Eenvoudig & Voorspelbaar</h3>
+                                <p class="text-white/60">Eenmalige kosten op basis van de omvang van uw project</p>
+                            </div>
+                            <div class="text-center lg:text-right">
+                                <div class="inline-block bg-green-500/20 text-green-400 text-sm font-bold px-3 py-1 rounded-full mb-3">PILOT AANBIEDING</div>
+                                <div class="text-4xl font-bold gradient-text-orange mb-2">&euro;1.500</div>
+                                <div class="text-white/60">voor de eerste 100.000 regels code</div>
+                                <div class="text-white/40 text-sm mt-1">&euro;1.000 per volgende 100.000 regels</div>
+                            </div>
+                        </div>
+
+                        <!-- Pilot Pricing Example -->
+                        <div class="bg-white/5 rounded-xl p-6 mb-10 border border-marqed-blue/20">
+                            <h4 class="font-bold mb-4 flex items-center gap-2">
+                                <i class="fas fa-calculator text-marqed-blue"></i>
+                                Rekenvoorbeeld
+                            </h4>
+                            <div class="grid md:grid-cols-3 gap-4 text-center">
+                                <div class="p-4 bg-white/5 rounded-lg">
+                                    <div class="text-2xl font-bold text-white mb-1">80K</div>
+                                    <div class="text-white/60 text-sm mb-2">regels code</div>
+                                    <div class="text-xl font-bold text-marqed-orange">&euro;1.500</div>
+                                </div>
+                                <div class="p-4 bg-white/5 rounded-lg">
+                                    <div class="text-2xl font-bold text-white mb-1">130K</div>
+                                    <div class="text-white/60 text-sm mb-2">regels code</div>
+                                    <div class="text-xl font-bold text-marqed-orange">&euro;2.500</div>
+                                </div>
+                                <div class="p-4 bg-white/5 rounded-lg">
+                                    <div class="text-2xl font-bold text-white mb-1">380K</div>
+                                    <div class="text-white/60 text-sm mb-2">regels code</div>
+                                    <div class="text-xl font-bold text-marqed-orange">&euro;4.500</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- How it works -->
+                        <div class="grid md:grid-cols-3 gap-6 mb-10">
+                            <div class="bg-white/5 rounded-xl p-6 text-center">
+                                <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-gradient-to-br from-marqed-orange/20 to-marqed-orange-dark/20 flex items-center justify-center">
+                                    <span class="text-xl font-bold text-marqed-orange">1</span>
+                                </div>
+                                <h4 class="font-bold mb-2">Gratis Demo</h4>
+                                <p class="text-white/60 text-sm">Wij demonstreren onze mogelijkheden op een deel van uw codebase</p>
+                            </div>
+                            <div class="bg-white/5 rounded-xl p-6 text-center">
+                                <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-gradient-to-br from-marqed-blue/20 to-marqed-blue-dark/20 flex items-center justify-center">
+                                    <span class="text-xl font-bold text-marqed-blue">2</span>
+                                </div>
+                                <h4 class="font-bold mb-2">Offerte op Maat</h4>
+                                <p class="text-white/60 text-sm">U ontvangt een gedetailleerd rapport en vaste prijsofferte</p>
+                            </div>
+                            <div class="bg-white/5 rounded-xl p-6 text-center">
+                                <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-gradient-to-br from-green-500/20 to-green-700/20 flex items-center justify-center">
+                                    <span class="text-xl font-bold text-green-400">3</span>
+                                </div>
+                                <h4 class="font-bold mb-2">U Beslist</h4>
+                                <p class="text-white/60 text-sm">Geen verplichtingen - u kiest of u verder wilt gaan</p>
+                            </div>
+                        </div>
+
+                        <!-- What's included -->
+                        <div class="border-t border-white/10 pt-8">
+                            <h4 class="font-bold mb-6 text-lg">Wat is inbegrepen in uw offerte:</h4>
+                            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-check-circle text-green-400"></i>
+                                    <span class="text-white/80">Complete code analyse</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-check-circle text-green-400"></i>
+                                    <span class="text-white/80">Bug detectie & fixes</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-check-circle text-green-400"></i>
+                                    <span class="text-white/80">Security scanning</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-check-circle text-green-400"></i>
+                                    <span class="text-white/80">Functionele documentatie</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-check-circle text-green-400"></i>
+                                    <span class="text-white/80">Architectuur visualisatie</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-check-circle text-green-400"></i>
+                                    <span class="text-white/80">Modernisatie advies</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-check-circle text-green-400"></i>
+                                    <span class="text-white/80">Klantenportaal</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-check-circle text-green-400"></i>
+                                    <span class="text-white/80">Maatwerk agent team</span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <i class="fas fa-check-circle text-green-400"></i>
+                                    <span class="text-white/80">Dedicated support</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CTA -->
+                        <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+                            <button class="btn-primary text-lg px-8 py-4">
+                                <i class="fas fa-calculator mr-2"></i> Gratis Demo Aanvragen
+                            </button>
+                            <button class="btn-secondary text-lg px-8 py-4">
+                                <i class="fas fa-phone mr-2"></i> Bel voor Advies
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Function Points Explanation -->
+            <div class="max-w-4xl mx-auto mt-16" data-aos="fade-up">
+                <div class="bg-white/5 border border-white/10 rounded-2xl p-8">
+                    <h4 class="text-xl font-bold mb-4 flex items-center gap-2">
+                        <i class="fas fa-question-circle text-marqed-orange"></i>
+                        Wat zijn functiepunten?
+                    </h4>
+                    <p class="text-white/70 mb-6">
+                        Functiepunten (Function Points) zijn een internationaal gestandaardiseerde meeteenheid voor de functionele omvang van software. Ze meten wat software <em>doet</em> vanuit gebruikersperspectief, onafhankelijk van de gebruikte technologie of programmeertaal.
+                    </p>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h5 class="font-bold mb-3 text-marqed-orange">Voordelen voor u:</h5>
+                            <ul class="space-y-2 text-white/70 text-sm">
+                                <li class="flex items-start gap-2">
+                                    <i class="fas fa-check text-green-400 mt-1"></i>
+                                    <span>Objectieve, meetbare eenheid</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i class="fas fa-check text-green-400 mt-1"></i>
+                                    <span>Voorspelbare kosten vooraf</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i class="fas fa-check text-green-400 mt-1"></i>
+                                    <span>Vergelijkbaar tussen projecten</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i class="fas fa-check text-green-400 mt-1"></i>
+                                    <span>Industrie standaard (ISO/IEC)</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h5 class="font-bold mb-3 text-marqed-blue">Typische projecten:</h5>
+                            <ul class="space-y-2 text-white/70 text-sm">
+                                <li class="flex items-start gap-2">
+                                    <i class="fas fa-cube text-marqed-blue mt-1"></i>
+                                    <span>Klein project: 50-100 FP (&#8364;15.000 - &#8364;30.000)</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i class="fas fa-cubes text-marqed-blue mt-1"></i>
+                                    <span>Medium project: 100-500 FP (&#8364;30.000 - &#8364;150.000)</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i class="fas fa-building text-marqed-blue mt-1"></i>
+                                    <span>Enterprise: 500+ FP (op aanvraag)</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-24 relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-r from-marqed-orange/10 via-transparent to-marqed-blue/10"></div>
+
+        <div class="max-w-4xl mx-auto px-6 text-center relative z-10" data-aos="fade-up">
+            <h2 class="text-4xl lg:text-5xl font-bold mb-6">
+                Klaar om uw <span class="gradient-text-orange">Codebase</span> te Transformeren?
+            </h2>
+            <p class="text-xl text-white/70 mb-10 max-w-2xl mx-auto">
+                Ontdek wat MarQed.ai voor uw legacy code kan betekenen.
+                Vraag vandaag nog een gratis demo aan.
+            </p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <button class="btn-primary text-lg px-8 py-4">
+                    <i class="fas fa-calculator mr-2"></i> Gratis Demo Aanvragen
+                </button>
+                <button class="btn-secondary text-lg px-8 py-4">
+                    <i class="fas fa-phone mr-2"></i> Neem Contact Op
+                </button>
+            </div>
+            <p class="text-white/40 text-sm mt-6">Geen verplichtingen. U beslist na de analyse of u verder wilt.</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-16 border-t border-white/10">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
+                <!-- Brand -->
+                <div class="lg:col-span-2">
+                    <a href="#" class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-marqed-orange to-marqed-orange-dark flex items-center justify-center">
+                            <span class="text-white font-bold text-xl">M</span>
+                        </div>
+                        <span class="text-2xl font-bold gradient-text-orange">MarQed.ai</span>
+                    </a>
+                    <p class="text-white/60 mb-6 max-w-sm">
+                        AI-powered platform for legacy modernization, code analysis, and automated software development.
+                    </p>
+                    <div class="flex gap-4">
+                        <a href="#" class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-white/60 hover:text-marqed-orange hover:bg-white/10 transition">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-white/60 hover:text-marqed-orange hover:bg-white/10 transition">
+                            <i class="fab fa-linkedin"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-white/60 hover:text-marqed-orange hover:bg-white/10 transition">
+                            <i class="fab fa-github"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-white/60 hover:text-marqed-orange hover:bg-white/10 transition">
+                            <i class="fab fa-discord"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Product -->
+                <div>
+                    <h4 class="font-bold mb-4">Product</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-white/60 hover:text-marqed-orange transition">Features</a></li>
+                        <li><a href="#" class="text-white/60 hover:text-marqed-orange transition">AI Agents</a></li>
+                        <li><a href="#" class="text-white/60 hover:text-marqed-orange transition">Workflows</a></li>
+                        <li><a href="#" class="text-white/60 hover:text-marqed-orange transition">Integrations</a></li>
+                        <li><a href="#" class="text-white/60 hover:text-marqed-orange transition">Pricing</a></li>
+                    </ul>
+                </div>
+
+                <!-- Resources -->
+                <div>
+                    <h4 class="font-bold mb-4">Resources</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-white/60 hover:text-marqed-orange transition">Documentation</a></li>
+                        <li><a href="#" class="text-white/60 hover:text-marqed-orange transition">API Reference</a></li>
+                        <li><a href="#" class="text-white/60 hover:text-marqed-orange transition">Blog</a></li>
+                        <li><a href="#" class="text-white/60 hover:text-marqed-orange transition">Changelog</a></li>
+                        <li><a href="#" class="text-white/60 hover:text-marqed-orange transition">Status</a></li>
+                    </ul>
+                </div>
+
+                <!-- Company -->
+                <div>
+                    <h4 class="font-bold mb-4">Company</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-white/60 hover:text-marqed-orange transition">About</a></li>
+                        <li><a href="#" class="text-white/60 hover:text-marqed-orange transition">Careers</a></li>
+                        <li><a href="#" class="text-white/60 hover:text-marqed-orange transition">Contact</a></li>
+                        <li><a href="#" class="text-white/60 hover:text-marqed-orange transition">Privacy</a></li>
+                        <li><a href="#" class="text-white/60 hover:text-marqed-orange transition">Terms</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Bottom Footer -->
+            <div class="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
+                <p class="text-white/40 text-sm">
+                    &copy; 2026 MarQed.ai. All rights reserved.
+                </p>
+                <div class="flex items-center gap-6">
+                    <a href="#" class="text-white/40 text-sm hover:text-white/60 transition">Privacy Policy</a>
+                    <a href="#" class="text-white/40 text-sm hover:text-white/60 transition">Terms of Service</a>
+                    <a href="#" class="text-white/40 text-sm hover:text-white/60 transition">Cookie Settings</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- AOS Animation Library -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 800,
+            easing: 'ease-out-cubic',
+            once: true,
+            offset: 50
+        });
+
+        // Navbar scroll effect
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('bg-marqed-dark/95', 'backdrop-blur-lg', 'shadow-lg');
+            } else {
+                navbar.classList.remove('bg-marqed-dark/95', 'backdrop-blur-lg', 'shadow-lg');
+            }
+        });
+
+        // Mobile menu
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileMenuClose = document.getElementById('mobileMenuClose');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+
+        mobileMenuToggle.addEventListener('click', () => {
+            mobileMenu.classList.add('open');
+            mobileOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        });
+
+        const closeMobileMenu = () => {
+            mobileMenu.classList.remove('open');
+            mobileOverlay.classList.remove('open');
+            document.body.style.overflow = '';
+        };
+
+        mobileMenuClose.addEventListener('click', closeMobileMenu);
+        mobileOverlay.addEventListener('click', closeMobileMenu);
+
+        // Tabs functionality
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.dataset.tab;
+
+                // Remove active class from all
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+
+                // Add active class to clicked
+                btn.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Testimonial slider
+        const testimonialSlides = document.querySelectorAll('.testimonial-slide');
+        const testimonialDots = document.querySelectorAll('.testimonial-dot');
+        let currentSlide = 0;
+
+        const showSlide = (index) => {
+            testimonialSlides.forEach(s => s.classList.remove('active'));
+            testimonialDots.forEach(d => d.classList.remove('active', 'bg-marqed-orange'));
+
+            testimonialSlides[index].classList.add('active');
+            testimonialDots[index].classList.add('active', 'bg-marqed-orange');
+            currentSlide = index;
+        };
+
+        testimonialDots.forEach((dot, index) => {
+            dot.addEventListener('click', () => showSlide(index));
+        });
+
+        // Auto-rotate testimonials
+        setInterval(() => {
+            const nextSlide = (currentSlide + 1) % testimonialSlides.length;
+            showSlide(nextSlide);
+        }, 5000);
+
+        // Counter animation
+        const animateCounters = () => {
+            const counters = document.querySelectorAll('[data-count]');
+
+            counters.forEach(counter => {
+                const target = parseInt(counter.dataset.count);
+                const duration = 2000;
+                const step = target / (duration / 16);
+                let current = 0;
+
+                const updateCounter = () => {
+                    current += step;
+                    if (current < target) {
+                        counter.textContent = Math.floor(current);
+                        requestAnimationFrame(updateCounter);
+                    } else {
+                        counter.textContent = target;
+                    }
+                };
+
+                // Start animation when element is in view
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            updateCounter();
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.5 });
+
+                observer.observe(counter);
+            });
+        };
+
+        animateCounters();
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    closeMobileMenu();
+                }
+            });
+        });
+
+        // FAQ Accordion
+        const faqToggles = document.querySelectorAll('.faq-toggle');
+
+        faqToggles.forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const faqItem = toggle.parentElement;
+                const faqContent = faqItem.querySelector('.faq-content');
+                const icon = toggle.querySelector('i');
+
+                // Close all other FAQ items
+                document.querySelectorAll('.faq-item').forEach(item => {
+                    if (item !== faqItem) {
+                        const content = item.querySelector('.faq-content');
+                        const itemIcon = item.querySelector('.faq-toggle i');
+                        content.classList.add('hidden');
+                        itemIcon.style.transform = 'rotate(0deg)';
+                    }
+                });
+
+                // Toggle current FAQ item
+                if (faqContent.classList.contains('hidden')) {
+                    faqContent.classList.remove('hidden');
+                    icon.style.transform = 'rotate(180deg)';
+                } else {
+                    faqContent.classList.add('hidden');
+                    icon.style.transform = 'rotate(0deg)';
+                }
+            });
+        });
+
+        // Video Modal Placeholder (for demo video)
+        const videoPlaceholder = document.querySelector('.aspect-video.cursor-pointer');
+        if (videoPlaceholder) {
+            videoPlaceholder.addEventListener('click', () => {
+                // In a real implementation, this would open a video modal
+                alert('Video demo zou hier worden getoond. Neem contact met ons op voor een live demo!');
+            });
+        }
+    </script>
+</body>
+</html>

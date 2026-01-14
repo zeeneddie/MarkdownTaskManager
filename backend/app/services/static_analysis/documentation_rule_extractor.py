@@ -19,7 +19,7 @@ from typing import List, Dict, Any, Optional, Tuple, Set
 from dataclasses import dataclass, field
 import logging
 
-from app.models.week131_research import (
+from app.models.research import (
     DocumentationRule,
     DocumentationExtractionResult,
     RuleType,

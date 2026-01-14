@@ -20,7 +20,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass, field
 import logging
 
-from app.models.week131_research import (
+from app.models.research import (
     LoadEstimationResult,
     ConnectionPoolConfig,
     SessionStateConfig,

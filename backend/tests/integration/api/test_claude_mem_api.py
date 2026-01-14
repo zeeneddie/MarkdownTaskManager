@@ -28,8 +28,7 @@ def mock_service():
 class TestSessionEndpoints:
     """Tests for session CRUD endpoints."""
 
-    @pytest.mark.asyncio
-    async def test_create_session_success(self, test_client, mock_service):
+    def test_create_session_success(self, sync_test_client, mock_service):
         """Test POST /api/claude-mem/sessions - success."""
         session_id = str(uuid4())
         mock_service.create_session.return_value = {
@@ -46,7 +45,7 @@ class TestSessionEndpoints:
             "created_at": datetime.now(timezone.utc).isoformat()
         }
 
-        response = test_client.post("/api/claude-mem/sessions", json={
+        response = sync_test_client.post("/api/claude-mem/sessions", json={
             "session_id": "test-session-001",
             "title": "Test Session",
             "token_budget": 4000
@@ -56,21 +55,21 @@ class TestSessionEndpoints:
         data = response.json()
         assert data["session_id"] == "test-session-001"
 
-    @pytest.mark.asyncio
-    async def test_create_session_duplicate_error(self, test_client, mock_service):
+    
+    def test_create_session_duplicate_error(self, sync_test_client, mock_service):
         """Test POST /api/claude-mem/sessions - duplicate error."""
         mock_service.create_session.return_value = {
             "error": "Session already exists"
         }
 
-        response = test_client.post("/api/claude-mem/sessions", json={
+        response = sync_test_client.post("/api/claude-mem/sessions", json={
             "session_id": "existing-session"
         })
 
         assert response.status_code == 400
 
-    @pytest.mark.asyncio
-    async def test_get_session_success(self, test_client, mock_service):
+    
+    def test_get_session_success(self, sync_test_client, mock_service):
         """Test GET /api/claude-mem/sessions/{session_id} - success."""
         session_id = str(uuid4())
         mock_service.get_session.return_value = {
@@ -87,23 +86,23 @@ class TestSessionEndpoints:
             "created_at": datetime.now(timezone.utc).isoformat()
         }
 
-        response = test_client.get("/api/claude-mem/sessions/test-session")
+        response = sync_test_client.get("/api/claude-mem/sessions/test-session")
 
         assert response.status_code == 200
         data = response.json()
         assert data["session_id"] == "test-session"
 
-    @pytest.mark.asyncio
-    async def test_get_session_not_found(self, test_client, mock_service):
+    
+    def test_get_session_not_found(self, sync_test_client, mock_service):
         """Test GET /api/claude-mem/sessions/{session_id} - not found."""
         mock_service.get_session.return_value = None
 
-        response = test_client.get("/api/claude-mem/sessions/nonexistent")
+        response = sync_test_client.get("/api/claude-mem/sessions/nonexistent")
 
         assert response.status_code == 404
 
-    @pytest.mark.asyncio
-    async def test_update_session_success(self, test_client, mock_service):
+    
+    def test_update_session_success(self, sync_test_client, mock_service):
         """Test PATCH /api/claude-mem/sessions/{session_id} - success."""
         session_id = str(uuid4())
         mock_service.update_session.return_value = {
@@ -120,7 +119,7 @@ class TestSessionEndpoints:
             "created_at": datetime.now(timezone.utc).isoformat()
         }
 
-        response = test_client.patch("/api/claude-mem/sessions/test-session", json={
+        response = sync_test_client.patch("/api/claude-mem/sessions/test-session", json={
             "title": "Updated Title",
             "token_budget": 8000
         })
@@ -129,15 +128,15 @@ class TestSessionEndpoints:
         data = response.json()
         assert data["token_budget"] == 8000
 
-    @pytest.mark.asyncio
-    async def test_delete_session_success(self, test_client, mock_service):
+    
+    def test_delete_session_success(self, sync_test_client, mock_service):
         """Test DELETE /api/claude-mem/sessions/{session_id} - success."""
         mock_service.delete_session.return_value = {
             "success": True,
             "session_id": "test-session"
         }
 
-        response = test_client.delete("/api/claude-mem/sessions/test-session")
+        response = sync_test_client.delete("/api/claude-mem/sessions/test-session")
 
         assert response.status_code == 200
 
@@ -149,8 +148,8 @@ class TestSessionEndpoints:
 class TestEndlessModeEndpoints:
     """Tests for endless mode endpoints."""
 
-    @pytest.mark.asyncio
-    async def test_enable_endless_mode(self, test_client, mock_service):
+    
+    def test_enable_endless_mode(self, sync_test_client, mock_service):
         """Test POST /api/claude-mem/sessions/{session_id}/endless/enable."""
         session_id = str(uuid4())
         mock_service.enable_endless_mode.return_value = {
@@ -167,14 +166,14 @@ class TestEndlessModeEndpoints:
             "created_at": datetime.now(timezone.utc).isoformat()
         }
 
-        response = test_client.post("/api/claude-mem/sessions/test-session/endless/enable")
+        response = sync_test_client.post("/api/claude-mem/sessions/test-session/endless/enable")
 
         assert response.status_code == 200
         data = response.json()
         assert data["endless_mode"] is True
 
-    @pytest.mark.asyncio
-    async def test_disable_endless_mode(self, test_client, mock_service):
+    
+    def test_disable_endless_mode(self, sync_test_client, mock_service):
         """Test POST /api/claude-mem/sessions/{session_id}/endless/disable."""
         session_id = str(uuid4())
         mock_service.disable_endless_mode.return_value = {
@@ -191,7 +190,7 @@ class TestEndlessModeEndpoints:
             "created_at": datetime.now(timezone.utc).isoformat()
         }
 
-        response = test_client.post("/api/claude-mem/sessions/test-session/endless/disable")
+        response = sync_test_client.post("/api/claude-mem/sessions/test-session/endless/disable")
 
         assert response.status_code == 200
         data = response.json()
@@ -205,8 +204,8 @@ class TestEndlessModeEndpoints:
 class TestObservationEndpoints:
     """Tests for observation capture endpoints."""
 
-    @pytest.mark.asyncio
-    async def test_capture_observation_success(self, test_client, mock_service):
+    
+    def test_capture_observation_success(self, sync_test_client, mock_service):
         """Test POST /api/claude-mem/observe - success."""
         obs_id = str(uuid4())
         mock_service.capture_observation.return_value = {
@@ -222,7 +221,7 @@ class TestObservationEndpoints:
             "created_at": datetime.now(timezone.utc).isoformat()
         }
 
-        response = test_client.post("/api/claude-mem/observe", json={
+        response = sync_test_client.post("/api/claude-mem/observe", json={
             "session_id": "test-session",
             "content": "Test observation",
             "observation_type": "insight"
@@ -232,8 +231,8 @@ class TestObservationEndpoints:
         data = response.json()
         assert data["session_id"] == "test-session"
 
-    @pytest.mark.asyncio
-    async def test_capture_observation_with_priority(self, test_client, mock_service):
+    
+    def test_capture_observation_with_priority(self, sync_test_client, mock_service):
         """Test POST /api/claude-mem/observe with priority."""
         obs_id = str(uuid4())
         mock_service.capture_observation.return_value = {
@@ -249,7 +248,7 @@ class TestObservationEndpoints:
             "created_at": datetime.now(timezone.utc).isoformat()
         }
 
-        response = test_client.post("/api/claude-mem/observe", json={
+        response = sync_test_client.post("/api/claude-mem/observe", json={
             "session_id": "test-session",
             "content": "Critical bug found",
             "observation_type": "error",
@@ -260,8 +259,8 @@ class TestObservationEndpoints:
         data = response.json()
         assert data["priority"] == "critical"
 
-    @pytest.mark.asyncio
-    async def test_tag_observation_success(self, test_client, mock_service):
+    
+    def test_tag_observation_success(self, sync_test_client, mock_service):
         """Test PATCH /api/claude-mem/observations/{id}/tags."""
         obs_id = uuid4()
         mock_service.tag_observation.return_value = {
@@ -277,21 +276,21 @@ class TestObservationEndpoints:
             "created_at": datetime.now(timezone.utc).isoformat()
         }
 
-        response = test_client.patch(f"/api/claude-mem/observations/{obs_id}/tags", json={
+        response = sync_test_client.patch(f"/api/claude-mem/observations/{obs_id}/tags", json={
             "tags": ["new-tag", "another"],
             "replace": False
         })
 
         assert response.status_code == 200
 
-    @pytest.mark.asyncio
-    async def test_get_observations_by_tags(self, test_client, mock_service):
+    
+    def test_get_observations_by_tags(self, sync_test_client, mock_service):
         """Test GET /api/claude-mem/sessions/{session_id}/observations."""
         mock_service.get_observations_by_tags.return_value = [
             {"id": str(uuid4()), "content": "Test", "tags": ["bugfix"]}
         ]
 
-        response = test_client.get("/api/claude-mem/sessions/test-session/observations?tags=bugfix")
+        response = sync_test_client.get("/api/claude-mem/sessions/test-session/observations?tags=bugfix")
 
         assert response.status_code == 200
 
@@ -303,8 +302,8 @@ class TestObservationEndpoints:
 class TestContextWindowEndpoints:
     """Tests for context window endpoints."""
 
-    @pytest.mark.asyncio
-    async def test_get_context_window_success(self, test_client, mock_service):
+    
+    def test_get_context_window_success(self, sync_test_client, mock_service):
         """Test POST /api/claude-mem/sessions/{session_id}/context."""
         context_id = str(uuid4())
         mock_service.get_context_window.return_value = {
@@ -318,7 +317,7 @@ class TestContextWindowEndpoints:
             "context_id": context_id
         }
 
-        response = test_client.post("/api/claude-mem/sessions/test-session/context", json={
+        response = sync_test_client.post("/api/claude-mem/sessions/test-session/context", json={
             "strategy": "recent",
             "include_summaries": True
         })
@@ -328,8 +327,8 @@ class TestContextWindowEndpoints:
         assert data["session_id"] == "test-session"
         assert "context_text" in data
 
-    @pytest.mark.asyncio
-    async def test_get_context_window_priority_strategy(self, test_client, mock_service):
+    
+    def test_get_context_window_priority_strategy(self, sync_test_client, mock_service):
         """Test context window with priority strategy."""
         context_id = str(uuid4())
         mock_service.get_context_window.return_value = {
@@ -343,7 +342,7 @@ class TestContextWindowEndpoints:
             "context_id": context_id
         }
 
-        response = test_client.post("/api/claude-mem/sessions/test-session/context", json={
+        response = sync_test_client.post("/api/claude-mem/sessions/test-session/context", json={
             "strategy": "priority"
         })
 
@@ -359,8 +358,8 @@ class TestContextWindowEndpoints:
 class TestSearchEndpoints:
     """Tests for search endpoints."""
 
-    @pytest.mark.asyncio
-    async def test_search_memories_success(self, test_client, mock_service):
+    
+    def test_search_memories_success(self, sync_test_client, mock_service):
         """Test POST /api/claude-mem/sessions/{session_id}/search."""
         mock_service.search_memories.return_value = {
             "session_id": "test-session",
@@ -372,7 +371,7 @@ class TestSearchEndpoints:
             ]
         }
 
-        response = test_client.post("/api/claude-mem/sessions/test-session/search", json={
+        response = sync_test_client.post("/api/claude-mem/sessions/test-session/search", json={
             "query": "authentication",
             "use_fts": True,
             "limit": 20
@@ -382,8 +381,8 @@ class TestSearchEndpoints:
         data = response.json()
         assert data["results_count"] == 2
 
-    @pytest.mark.asyncio
-    async def test_search_memories_with_filters(self, test_client, mock_service):
+    
+    def test_search_memories_with_filters(self, sync_test_client, mock_service):
         """Test search with tag and priority filters."""
         mock_service.search_memories.return_value = {
             "session_id": "test-session",
@@ -392,7 +391,7 @@ class TestSearchEndpoints:
             "results": [{"id": str(uuid4()), "content": "Bug found"}]
         }
 
-        response = test_client.post("/api/claude-mem/sessions/test-session/search", json={
+        response = sync_test_client.post("/api/claude-mem/sessions/test-session/search", json={
             "query": "bug",
             "tags_filter": ["bugfix"],
             "priority_filter": "high"
@@ -408,8 +407,8 @@ class TestSearchEndpoints:
 class TestCompressionEndpoints:
     """Tests for compression endpoints."""
 
-    @pytest.mark.asyncio
-    async def test_compress_memories_success(self, test_client, mock_service):
+    
+    def test_compress_memories_success(self, sync_test_client, mock_service):
         """Test POST /api/claude-mem/sessions/{session_id}/compress."""
         mock_service.compress_memories.return_value = {
             "session_id": "test-session",
@@ -418,7 +417,7 @@ class TestCompressionEndpoints:
             "tokens_saved": 500
         }
 
-        response = test_client.post("/api/claude-mem/sessions/test-session/compress", json={
+        response = sync_test_client.post("/api/claude-mem/sessions/test-session/compress", json={
             "older_than_hours": 24
         })
 
@@ -434,8 +433,8 @@ class TestCompressionEndpoints:
 class TestInjectContextEndpoints:
     """Tests for context injection endpoints."""
 
-    @pytest.mark.asyncio
-    async def test_inject_context_success(self, test_client, mock_service):
+    
+    def test_inject_context_success(self, sync_test_client, mock_service):
         """Test POST /api/claude-mem/sessions/{session_id}/inject."""
         mock_service.inject_context.return_value = {
             "session_id": "test-session",
@@ -444,7 +443,7 @@ class TestInjectContextEndpoints:
             "context_tokens": 100
         }
 
-        response = test_client.post("/api/claude-mem/sessions/test-session/inject", json={
+        response = sync_test_client.post("/api/claude-mem/sessions/test-session/inject", json={
             "prompt": "Help me debug this issue"
         })
 
@@ -452,14 +451,14 @@ class TestInjectContextEndpoints:
         data = response.json()
         assert "enhanced_prompt" in data
 
-    @pytest.mark.asyncio
-    async def test_inject_context_endless_mode_required(self, test_client, mock_service):
+    
+    def test_inject_context_endless_mode_required(self, sync_test_client, mock_service):
         """Test inject context fails when endless mode not enabled."""
         mock_service.inject_context.return_value = {
             "error": "Endless mode not enabled for this session"
         }
 
-        response = test_client.post("/api/claude-mem/sessions/test-session/inject", json={
+        response = sync_test_client.post("/api/claude-mem/sessions/test-session/inject", json={
             "prompt": "Test prompt"
         })
 
@@ -473,8 +472,8 @@ class TestInjectContextEndpoints:
 class TestStatisticsEndpoints:
     """Tests for statistics endpoints."""
 
-    @pytest.mark.asyncio
-    async def test_get_session_statistics_success(self, test_client, mock_service):
+    
+    def test_get_session_statistics_success(self, sync_test_client, mock_service):
         """Test GET /api/claude-mem/sessions/{session_id}/statistics."""
         mock_service.get_session_statistics.return_value = {
             "session_id": "test-session",
@@ -489,14 +488,14 @@ class TestStatisticsEndpoints:
             "token_budget": 4000
         }
 
-        response = test_client.get("/api/claude-mem/sessions/test-session/statistics")
+        response = sync_test_client.get("/api/claude-mem/sessions/test-session/statistics")
 
         assert response.status_code == 200
         data = response.json()
         assert data["observation_count"] == 50
 
-    @pytest.mark.asyncio
-    async def test_get_dashboard_data(self, test_client, mock_service):
+    
+    def test_get_dashboard_data(self, sync_test_client, mock_service):
         """Test GET /api/claude-mem/dashboard."""
         mock_service.get_dashboard_data.return_value = {
             "project_id": None,
@@ -509,7 +508,7 @@ class TestStatisticsEndpoints:
             ]
         }
 
-        response = test_client.get("/api/claude-mem/dashboard")
+        response = sync_test_client.get("/api/claude-mem/dashboard")
 
         assert response.status_code == 200
         data = response.json()
@@ -523,15 +522,15 @@ class TestStatisticsEndpoints:
 class TestCleanupEndpoints:
     """Tests for cleanup endpoints."""
 
-    @pytest.mark.asyncio
-    async def test_cleanup_old_sessions(self, test_client, mock_service):
+    
+    def test_cleanup_old_sessions(self, sync_test_client, mock_service):
         """Test DELETE /api/claude-mem/cleanup."""
         mock_service.cleanup_old_sessions.return_value = {
             "deleted_sessions": 3,
             "days_inactive": 30
         }
 
-        response = test_client.delete("/api/claude-mem/cleanup?days_inactive=30")
+        response = sync_test_client.delete("/api/claude-mem/cleanup?days_inactive=30")
 
         assert response.status_code == 200
         data = response.json()
@@ -545,30 +544,30 @@ class TestCleanupEndpoints:
 class TestValidation:
     """Tests for request validation."""
 
-    @pytest.mark.asyncio
-    async def test_invalid_token_budget_too_low(self, test_client, mock_service):
+    
+    def test_invalid_token_budget_too_low(self, sync_test_client, mock_service):
         """Test validation rejects token budget below minimum."""
-        response = test_client.post("/api/claude-mem/sessions", json={
+        response = sync_test_client.post("/api/claude-mem/sessions", json={
             "session_id": "test",
             "token_budget": 100  # Below minimum of 500
         })
 
         assert response.status_code == 422
 
-    @pytest.mark.asyncio
-    async def test_invalid_token_budget_too_high(self, test_client, mock_service):
+    
+    def test_invalid_token_budget_too_high(self, sync_test_client, mock_service):
         """Test validation rejects token budget above maximum."""
-        response = test_client.post("/api/claude-mem/sessions", json={
+        response = sync_test_client.post("/api/claude-mem/sessions", json={
             "session_id": "test",
             "token_budget": 50000  # Above maximum of 32000
         })
 
         assert response.status_code == 422
 
-    @pytest.mark.asyncio
-    async def test_invalid_priority_value(self, test_client, mock_service):
+    
+    def test_invalid_priority_value(self, sync_test_client, mock_service):
         """Test validation rejects invalid priority value."""
-        response = test_client.post("/api/claude-mem/observe", json={
+        response = sync_test_client.post("/api/claude-mem/observe", json={
             "session_id": "test",
             "content": "Test",
             "priority": "invalid"  # Not in allowed values
@@ -576,10 +575,10 @@ class TestValidation:
 
         assert response.status_code == 422
 
-    @pytest.mark.asyncio
-    async def test_invalid_strategy_value(self, test_client, mock_service):
+    
+    def test_invalid_strategy_value(self, sync_test_client, mock_service):
         """Test validation rejects invalid strategy value."""
-        response = test_client.post("/api/claude-mem/sessions/test/context", json={
+        response = sync_test_client.post("/api/claude-mem/sessions/test/context", json={
             "strategy": "invalid"  # Not in allowed values
         })
 

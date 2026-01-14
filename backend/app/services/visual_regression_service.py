@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
-from app.models.week134_testing import (
+from app.models.testing import (
     ComparisonResult,
     DiffRegion,
     ScreenshotTool,

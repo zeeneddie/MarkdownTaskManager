@@ -16,7 +16,7 @@ from app.services.runtime_analysis_service import (
     ExecutionTrace,
     EndpointUsage,
 )
-from app.models.week132_dead_code import (
+from app.models.dead_code import (
     APMProvider,
     RuntimeAnalysisResult,
 )

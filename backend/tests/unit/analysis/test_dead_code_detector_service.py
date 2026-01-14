@@ -10,7 +10,7 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 from app.services.dead_code_detector_service import DeadCodeDetectorService
-from app.models.week132_dead_code import (
+from app.models.dead_code import (
     DeadCodeItemType,
     DetectionMethod,
     RemovalRisk,

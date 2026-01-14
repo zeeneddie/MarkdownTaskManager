@@ -14,7 +14,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-from app.models.week132_dead_code import (
+from app.models.dead_code import (
     APMProvider,
     RuntimeAnalysisResult,
 )

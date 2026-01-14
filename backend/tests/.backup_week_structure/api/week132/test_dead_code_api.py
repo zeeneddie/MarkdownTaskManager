@@ -11,7 +11,7 @@ from unittest.mock import patch, MagicMock, AsyncMock
 from httpx import AsyncClient, ASGITransport
 
 from app.main import app
-from app.models.week132_dead_code import (
+from app.models.dead_code import (
     DeadCodeItemType,
     RemovalRisk,
     APMProvider,

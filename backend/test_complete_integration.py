@@ -21,8 +21,8 @@ from app.models.sprint import Base as SprintBase
 from app.models.user import Base as UserBase
 from app.models.green_paper import Base as GreenPaperBase, GreenPaperSession, Constitution, Specification
 from app.models.task_hierarchy import Epic, Feature, Story, Task
-from app.services.week11.task_generation_service import TaskGenerationService
-from app.services.week11.validation_service import HierarchyValidationService
+from app.services.task_generation.task_generation_service import TaskGenerationService
+from app.services.task_generation.validation_service import HierarchyValidationService
 from app.services.agent_service import AgentService
 
 

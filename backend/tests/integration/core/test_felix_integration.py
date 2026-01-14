@@ -91,7 +91,7 @@ class TestFelixTaskGeneration:
         """Test epic generation from specification."""
         # Call the API endpoint
         response = await client.post(
-            f"/api/week11/specifications/{test_specification.id}/epics",
+            f"/api/task-generation/specifications/{test_specification.id}/epics",
             json={
                 "options": {
                     "max_epics": 5,
@@ -135,7 +135,7 @@ class TestFelixTaskGeneration:
         """Test feature generation from epic."""
         # First generate epics
         epics_response = await client.post(
-            f"/api/week11/specifications/{test_specification.id}/epics",
+            f"/api/task-generation/specifications/{test_specification.id}/epics",
             json={"options": {"max_epics": 3}}
         )
         assert epics_response.status_code == 201
@@ -146,7 +146,7 @@ class TestFelixTaskGeneration:
 
         # Generate features from epic
         response = await client.post(
-            f"/api/week11/epics/{epic_id}/features",
+            f"/api/task-generation/epics/{epic_id}/features",
             json={
                 "options": {
                     "max_features": 7,
@@ -183,14 +183,14 @@ class TestFelixTaskGeneration:
         """Test story generation from feature."""
         # Generate epics → features
         epics_response = await client.post(
-            f"/api/week11/specifications/{test_specification.id}/epics",
+            f"/api/task-generation/specifications/{test_specification.id}/epics",
             json={"options": {"max_epics": 2}}
         )
         epics_data = epics_response.json()
         epic_id = uuid.UUID(epics_data["epics"][0]["id"])
 
         features_response = await client.post(
-            f"/api/week11/epics/{epic_id}/features",
+            f"/api/task-generation/epics/{epic_id}/features",
             json={"options": {"max_features": 3}}
         )
         features_data = features_response.json()
@@ -198,7 +198,7 @@ class TestFelixTaskGeneration:
 
         # Generate stories from feature
         response = await client.post(
-            f"/api/week11/features/{feature_id}/stories",
+            f"/api/task-generation/features/{feature_id}/stories",
             json={
                 "options": {
                     "max_stories": 5,
@@ -242,21 +242,21 @@ class TestFelixTaskGeneration:
         """Test task generation from story."""
         # Generate full hierarchy: epics → features → stories
         epics_response = await client.post(
-            f"/api/week11/specifications/{test_specification.id}/epics",
+            f"/api/task-generation/specifications/{test_specification.id}/epics",
             json={"options": {"max_epics": 2}}
         )
         epics_data = epics_response.json()
         epic_id = uuid.UUID(epics_data["epics"][0]["id"])
 
         features_response = await client.post(
-            f"/api/week11/epics/{epic_id}/features",
+            f"/api/task-generation/epics/{epic_id}/features",
             json={"options": {"max_features": 2}}
         )
         features_data = features_response.json()
         feature_id = uuid.UUID(features_data["features"][0]["id"])
 
         stories_response = await client.post(
-            f"/api/week11/features/{feature_id}/stories",
+            f"/api/task-generation/features/{feature_id}/stories",
             json={"options": {"max_stories": 2}}
         )
         stories_data = stories_response.json()
@@ -264,7 +264,7 @@ class TestFelixTaskGeneration:
 
         # Generate tasks from story
         response = await client.post(
-            f"/api/week11/stories/{story_id}/tasks",
+            f"/api/task-generation/stories/{story_id}/tasks",
             json={
                 "options": {
                     "max_tasks": 4,
@@ -301,7 +301,7 @@ class TestFelixTaskGeneration:
         """Test generating the complete task hierarchy."""
         # Step 1: Generate epics
         epics_response = await client.post(
-            f"/api/week11/specifications/{test_specification.id}/epics",
+            f"/api/task-generation/specifications/{test_specification.id}/epics",
             json={"options": {"max_epics": 3}}
         )
         assert epics_response.status_code == 201
@@ -313,7 +313,7 @@ class TestFelixTaskGeneration:
         for epic in epics_data["epics"]:
             epic_id = uuid.UUID(epic["id"])
             features_response = await client.post(
-                f"/api/week11/epics/{epic_id}/features",
+                f"/api/task-generation/epics/{epic_id}/features",
                 json={"options": {"max_features": 2}}
             )
             assert features_response.status_code == 201
@@ -325,7 +325,7 @@ class TestFelixTaskGeneration:
         # Step 3: Generate stories for first feature
         first_feature_id = uuid.UUID(all_features[0]["id"])
         stories_response = await client.post(
-            f"/api/week11/features/{first_feature_id}/stories",
+            f"/api/task-generation/features/{first_feature_id}/stories",
             json={"options": {"max_stories": 3}}
         )
         assert stories_response.status_code == 201
@@ -335,7 +335,7 @@ class TestFelixTaskGeneration:
         # Step 4: Generate tasks for first story
         first_story_id = uuid.UUID(stories_data["stories"][0]["id"])
         tasks_response = await client.post(
-            f"/api/week11/stories/{first_story_id}/tasks",
+            f"/api/task-generation/stories/{first_story_id}/tasks",
             json={"options": {"max_tasks": 3}}
         )
         assert tasks_response.status_code == 201
@@ -381,7 +381,7 @@ class TestFelixTaskGeneration:
         """Test GET endpoints for retrieving generated items."""
         # Generate some data first
         epics_response = await client.post(
-            f"/api/week11/specifications/{test_specification.id}/epics",
+            f"/api/task-generation/specifications/{test_specification.id}/epics",
             json={"options": {"max_epics": 2}}
         )
         epics_data = epics_response.json()
@@ -389,7 +389,7 @@ class TestFelixTaskGeneration:
 
         # Test: Get epics for specification
         response = await client.get(
-            f"/api/week11/specifications/{test_specification.id}/epics"
+            f"/api/task-generation/specifications/{test_specification.id}/epics"
         )
         assert response.status_code == 200
         data = response.json()
@@ -397,11 +397,11 @@ class TestFelixTaskGeneration:
 
         # Test: Get features for epic
         features_response = await client.post(
-            f"/api/week11/epics/{epic_id}/features",
+            f"/api/task-generation/epics/{epic_id}/features",
             json={"options": {"max_features": 3}}
         )
 
-        response = await client.get(f"/api/week11/epics/{epic_id}/features")
+        response = await client.get(f"/api/task-generation/epics/{epic_id}/features")
         assert response.status_code == 200
         data = response.json()
         assert len(data) >= 3
@@ -414,7 +414,7 @@ class TestFelixTaskGeneration:
         invalid_id = uuid.uuid4()
 
         response = await client.post(
-            f"/api/week11/specifications/{invalid_id}/epics",
+            f"/api/task-generation/specifications/{invalid_id}/epics",
             json={"options": {}}
         )
 
@@ -433,7 +433,7 @@ class TestFelixTaskGeneration:
         await db_session.commit()
 
         response = await client.post(
-            f"/api/week11/specifications/{test_specification.id}/epics",
+            f"/api/task-generation/specifications/{test_specification.id}/epics",
             json={"options": {}}
         )
 

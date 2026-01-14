@@ -348,7 +348,7 @@ from app.models.causality import (
     detect_causal_markers,
     classify_relation_type,
 )
-from app.models.week131_research import (
+from app.models.research import (
     # SQLAlchemy Models
     BackgroundJobModel,
     LoadEstimationModel,
@@ -371,7 +371,7 @@ from app.models.week131_research import (
     DocumentationRule,
     DocumentationExtractionResult,
 )
-from app.models.week132_dead_code import (
+from app.models.dead_code import (
     # SQLAlchemy Models
     DeadCodeAnalysisModel,
     DeadCodeItemModel,
@@ -395,7 +395,7 @@ from app.models.week132_dead_code import (
     LANGUAGE_EXTENSIONS,
     TOOL_CONFIDENCE,
 )
-from app.models.week134_testing import (
+from app.models.testing import (
     # SQLAlchemy Models
     CharacterizationTestModel,
     CharacterizationTestRunModel,

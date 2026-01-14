@@ -13,7 +13,7 @@ from app.services.code_coverage_analyzer_service import (
     CodeCoverageAnalyzerService,
     CoverageThresholds,
 )
-from app.models.week132_dead_code import (
+from app.models.dead_code import (
     CoverageSource,
     CodeCoverageResult,
     FileCoverage,

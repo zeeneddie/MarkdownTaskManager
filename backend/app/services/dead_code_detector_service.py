@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from app.models.week132_dead_code import (
+from app.models.dead_code import (
     AnalysisType,
     DeadCodeAnalysisResult,
     DeadCodeItem,

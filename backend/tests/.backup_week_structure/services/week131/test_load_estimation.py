@@ -13,7 +13,7 @@ from app.services.load_estimation_service import (
     DEFAULT_MAX_POOL_SIZE,
     DEFAULT_SESSION_TIMEOUT,
 )
-from app.models.week131_research import (
+from app.models.research import (
     SessionMode,
     CapacityBottleneck,
 )

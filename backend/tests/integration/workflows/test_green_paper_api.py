@@ -1,5 +1,5 @@
 """
-Week 10 Green Paper API Integration Tests
+Green Paper API Integration Tests
 
 Comprehensive tests for all 14 API endpoints:
 - Session Management (4 endpoints)
@@ -7,6 +7,7 @@ Comprehensive tests for all 14 API endpoints:
 - Specification Management (4 endpoints)
 - Search & Discovery (1 endpoint)
 
+API prefix: /api/green-paper
 NOTE: These tests require valid project items in the database.
 """
 
@@ -42,7 +43,7 @@ async def test_start_session_success(client: AsyncClient, test_project):
     project_id = test_project.id
 
     response = await client.post(
-        "/api/week10/sessions",
+        "/api/green-paper/sessions",
         json={
             "project_id": project_id,
             "metadata": {"initiated_by": "test_user"}
@@ -66,14 +67,14 @@ async def test_get_session_success(client: AsyncClient, test_project):
 
     # Create session
     create_response = await client.post(
-        "/api/week10/sessions",
+        "/api/green-paper/sessions",
         json={"project_id": project_id, "metadata": {}}
     )
     assert create_response.status_code == 201, f"Session creation failed: {create_response.text}"
     session_id = create_response.json()["session_id"]
 
     # Get session
-    response = await client.get(f"/api/week10/sessions/{session_id}")
+    response = await client.get(f"/api/green-paper/sessions/{session_id}")
 
     assert response.status_code == 200
     data = response.json()
@@ -91,7 +92,7 @@ async def test_submit_answer_success(client: AsyncClient, test_project):
 
     # Create session
     create_response = await client.post(
-        "/api/week10/sessions",
+        "/api/green-paper/sessions",
         json={"project_id": project_id, "metadata": {}}
     )
     assert create_response.status_code == 201, f"Session creation failed: {create_response.text}"
@@ -99,7 +100,7 @@ async def test_submit_answer_success(client: AsyncClient, test_project):
 
     # Submit answer
     response = await client.post(
-        f"/api/week10/sessions/{session_id}/answers",
+        f"/api/green-paper/sessions/{session_id}/answers",
         json={
             "question_number": 1,
             "answer": "We are building a comprehensive task management system with AI-powered assistance.",
@@ -118,7 +119,7 @@ async def test_submit_answer_success(client: AsyncClient, test_project):
 @pytest.mark.asyncio
 async def test_health_check(client: AsyncClient):
     """Test green paper workflow health check"""
-    response = await client.get("/api/week10/health")
+    response = await client.get("/api/green-paper/health")
 
     assert response.status_code == 200
     data = response.json()

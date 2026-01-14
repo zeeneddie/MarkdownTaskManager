@@ -1981,9 +1981,21 @@ async def get_metrics(session_id: str):
         estimation = phase5.get('estimation_result', {})
         risk = phase5.get('risk_assessment', {})
 
+        # Week 144: SIG metrics from Phase 1
+        sig_metrics = phase1.get('sig_metrics', {})
+
         return {
             "session_id": session_id,
             "has_metrics": bool(code_analysis),
+
+            # Week 144: SIG Top 10 Quality Ratings
+            "sig_top10": {
+                "overall_rating": sig_metrics.get('overall_rating', 0),
+                "overall_stars": sig_metrics.get('overall_stars', '☆☆☆☆☆'),
+                "ratings": sig_metrics.get('ratings', {}),
+                "volume": sig_metrics.get('volume', {}),
+                "findings_summary": sig_metrics.get('findings_summary', {}),
+            },
 
             # Complexity metrics
             "complexity": {

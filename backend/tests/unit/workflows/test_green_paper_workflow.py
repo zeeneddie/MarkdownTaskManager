@@ -13,7 +13,7 @@ from datetime import datetime
 from uuid import uuid4
 from unittest.mock import Mock, patch, AsyncMock
 
-from app.services.week10.green_paper_service import GreenPaperService
+from app.services.green_paper.green_paper_service import GreenPaperService
 from app.services.agent_service import AgentService
 from app.models.project import Project
 from app.models.green_paper import GreenPaperSession, Constitution, Specification

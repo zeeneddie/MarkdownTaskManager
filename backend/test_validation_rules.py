@@ -4,7 +4,7 @@ Test hierarchy validation rules
 Demonstrates all validation capabilities
 """
 import asyncio
-from app.services.week11.validation_service import HierarchyValidationService
+from app.services.task_generation.validation_service import HierarchyValidationService
 
 
 async def test_validation_rules():

@@ -13,8 +13,8 @@ from datetime import datetime
 
 from app.services.workflow_tool_integration_service import (
     WorkflowToolIntegrationService,
-    WorkflowGhostCrewWeek90,
-    WorkflowBigAGIWeek90,
+    WorkflowGhostCrewIntegration,
+    WorkflowBigAGIIntegration,
 )
 
 

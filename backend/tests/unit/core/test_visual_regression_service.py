@@ -13,7 +13,7 @@ from PIL import Image
 import io
 
 from app.services.visual_regression_service import VisualRegressionService
-from app.models.week134_testing import (
+from app.models.testing import (
     ComparisonResult,
     VisualRegressionResult,
     DiffRegion,

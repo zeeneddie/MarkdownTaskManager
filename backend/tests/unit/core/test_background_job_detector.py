@@ -13,7 +13,7 @@ from app.services.background_job_detector_service import (
     DIRECTORY_PATTERNS,
     CODE_PATTERNS,
 )
-from app.models.week131_research import (
+from app.models.research import (
     JobType,
     TriggerType,
     DetectionMethod,

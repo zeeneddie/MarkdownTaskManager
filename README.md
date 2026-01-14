@@ -5,14 +5,20 @@ A multi-stack AI agent platform for automated software development, legacy moder
 ## Features
 
 - **11 AI Agents** - Specialized agents for architecture, quality, testing, documentation, and more
+- **Confucius Orchestrator (Fase 23.5)** - Central agent orchestration with PIV loop and quality gates
+- **Context Engineering (Fase 23)** - Reference-on-demand system with 60-80% token reduction
 - **15+ Workflows** - Green Paper, Brown Paper, migrations, features, bugs, maintenance, stability analysis
-- **720+ API Endpoints** - Comprehensive REST API for all platform functions
-- **35+ Dashboards** - Quality, sprints, evolution, estimation, stability, and more
+- **117 API Route Files** - Comprehensive REST API with 780+ endpoints (including v2 API + Confucius)
+- **40 Dashboards** - Quality, sprints, evolution, estimation, stability, and more
+- **285 Services** - Business logic and analysis engines
 - **7 LLM Providers** - Ollama, Groq, Gemini, OpenAI, Anthropic, Qwen, Moonshot
 - **5 Extraction Tiers** - Free to Premium with increasing accuracy
 - **Stability Analysis** - ASP resource leak detection with 8 categories
-- **Legacy Modernization** - 75 gap analysis items across 6 phases (Week 151-232)
-- **69 Database Migrations** - Comprehensive data model for all features
+- **Legacy Modernization** - 75 gap analysis items across 6 phases (Week 155-244)
+- **v2 API (Fase 21.5)** - Decoupled Migration/Quality endpoints with AnalysisContract
+- **FP Methodology (Fase 22)** - IFPUG/NESMA compliant Function Point estimation
+- **71 Database Migrations** - Comprehensive data model for all features
+- **97.8% Test Pass Rate** - 2,700+ tests with comprehensive coverage
 
 ## Quick Start
 
@@ -52,17 +58,51 @@ open http://localhost:8000
 ┌─────────────────────────────────────────────────────────────┐
 │                    MARQED AI PLATFORM                        │
 ├─────────────────────────────────────────────────────────────┤
+│                  CONFUCIUS ORCHESTRATOR                      │
+│  ┌─────────────┐ ┌────────────┐ ┌─────────────────────────┐ │
+│  │ Extensions  │ │ Quality    │ │ Workflow Orchestrators  │ │
+│  │ (11 Agents) │ │ Gates+PIV  │ │ (4 Types + SSE Stream)  │ │
+│  └─────────────┘ └────────────┘ └─────────────────────────┘ │
+├─────────────────────────────────────────────────────────────┤
 │  AGENTS: Felix Quinn Betty Eliza Diana Marcus Tessa Miguel  │
 │          Peter Paul Vicky                                    │
 ├─────────────────────────────────────────────────────────────┤
-│  WORKFLOWS: GREEN_PAPER | BROWN_PAPER | MIGRATION | FEATURE │
-│             STABILITY | QUALITY_GATE | ESTIMATION            │
+│  WORKFLOWS: GREEN_PAPER | BROWN_PAPER | MIGRATION | QUALITY │
+│             STABILITY | ESTIMATION | FEATURE                 │
 ├─────────────────────────────────────────────────────────────┤
 │  ANALYSIS: Resource Leaks | Security | Performance | Code   │
 ├─────────────────────────────────────────────────────────────┤
 │  STACK: FastAPI + PostgreSQL + ChromaDB + Ollama            │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+### Domain Separation (v2 Architecture)
+
+```
+              +-------------------------+
+              |  Shared Infrastructure  |
+              |  (Stability, Metrics)   |
+              +-----------+-------------+
+                          |
+    +---------------------+---------------------+
+    |                     |                     |
+    v                     v                     v
++--------+          +----------+          +---------+
+| BROWN  |          | MIGRATION|          | QUALITY |
+| PAPER  |          | (Exec)   |          | (Valid) |
++--------+          +----------+          +---------+
+    |                     |                     |
+    +----------+----------+----------+----------+
+               |                     |
+               v                     v
+    +-------------------------------------+
+    |       ANALYSIS CONTRACT             |
+    | { analysis_id, domains, modules,    |
+    |   stability, epics, business_rules }|
+    +-------------------------------------+
+```
+
+**Key Principle:** Brown Paper and Migration are 100% separated, connected only via the AnalysisContract interface.
 
 ## Services
 
@@ -80,9 +120,13 @@ open http://localhost:8000
 | [Quick Start](.project/QUICKSTART.md) | Fast bootstrap guide |
 | [Architecture](.project/ARCHITECTURE.md) | Technical architecture |
 | [Agents](.project/AGENTS.md) | AI agent specifications |
-| [Current Phase](docs/roadmap/phases-current.md) | Week 144 progress |
-| [Planned Phases](docs/roadmap/phases-planned.md) | Fase 22-29 roadmap |
+| [Current Phase](docs/roadmap/phases-current.md) | Week 155 progress |
+| [Planned Phases](docs/roadmap/phases-planned.md) | Fase 23.6-29 roadmap |
+| [Confucius Orchestrator](docs/architecture/confucius-orchestrator-integration-plan.md) | Central agent orchestration (Fase 23.5) |
+| Context Engineering | Reference-on-demand token optimization (Fase 23 COMPLETE) |
 | [GAP Analysis](docs/roadmap/gap-analysis-complete-roadmap.md) | 75-item legacy modernization roadmap |
+| [Workflow Separation](docs/architecture/workflow-separation-plan.md) | Brown Paper/Migration/Quality separation (COMPLETE) |
+| [FP Methodology](docs/roadmap/phases/fase-22-fp-methodology.md) | IFPUG/NESMA Function Point methodology (COMPLETE) |
 
 ## Project Structure
 
@@ -90,12 +134,12 @@ open http://localhost:8000
 MarkdownTaskManager/
 ├── backend/               # FastAPI application
 │   ├── app/              # Application code
-│   │   ├── api/          # API routes (700+ endpoints)
+│   │   ├── api/          # API routes (113 files, 700+ endpoints)
 │   │   ├── models/       # SQLAlchemy models
-│   │   └── services/     # Business logic (170+ services)
-│   ├── tests/            # Test suite
-│   └── alembic/          # Database migrations
-├── frontend/             # HTML dashboards (32)
+│   │   └── services/     # Business logic (278 services)
+│   ├── tests/            # Test suite (2,557+ tests)
+│   └── alembic/          # Database migrations (69)
+├── frontend/             # HTML dashboards (40)
 ├── scripts/              # Utility scripts
 │   └── cicd/             # CI/CD pipeline
 ├── .project/             # Project documentation

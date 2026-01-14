@@ -14,7 +14,7 @@ from sqlalchemy.pool import NullPool
 
 from app.models.green_paper import Base as GreenPaperBase, Specification
 from app.models.item import Base as ItemBase
-from app.services.week11.task_generation_service import TaskGenerationService
+from app.services.task_generation.task_generation_service import TaskGenerationService
 from app.services.agent_service import AgentService
 
 

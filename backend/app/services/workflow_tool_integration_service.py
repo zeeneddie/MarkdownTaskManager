@@ -1928,12 +1928,12 @@ WorkflowToolIntegrationService.maintenance_security_scan = WorkflowGhostCrewInte
 
 
 # =========================================================================
-# GHOSTCREW WEEK 90 EXTENSIONS
+# GHOSTCREW INTEGRATION EXTENSIONS
 # =========================================================================
 
-class WorkflowGhostCrewWeek90:
+class WorkflowGhostCrewIntegration:
     """
-    Week 90 GhostCrew extensions for additional workflows:
+    GhostCrew integration extensions for additional workflows:
     - GREEN_PAPER: Greenfield security audit for new project architecture
     - TESTING: Security scan of test files and fixtures
     - ENHANCEMENT: Security scan for enhancement changes
@@ -2371,26 +2371,26 @@ class WorkflowGhostCrewWeek90:
         return priorities[:10]  # Top 10 priorities
 
 
-# Add Week 90 GhostCrew methods to main service
-WorkflowToolIntegrationService.ghostcrew_greenfield_audit = WorkflowGhostCrewWeek90.ghostcrew_greenfield_audit
-WorkflowToolIntegrationService.ghostcrew_test_security = WorkflowGhostCrewWeek90.ghostcrew_test_security
-WorkflowToolIntegrationService.ghostcrew_enhancement_scan = WorkflowGhostCrewWeek90.ghostcrew_enhancement_scan
-WorkflowToolIntegrationService.ghostcrew_quality_security = WorkflowGhostCrewWeek90.ghostcrew_quality_security
-WorkflowToolIntegrationService._extract_architecture_context = WorkflowGhostCrewWeek90._extract_architecture_context
-WorkflowToolIntegrationService._generate_greenfield_checklist = WorkflowGhostCrewWeek90._generate_greenfield_checklist
-WorkflowToolIntegrationService._count_severities = WorkflowGhostCrewWeek90._count_severities
-WorkflowToolIntegrationService._build_quality_security_matrix = WorkflowGhostCrewWeek90._build_quality_security_matrix
-WorkflowToolIntegrationService._prioritize_improvements = WorkflowGhostCrewWeek90._prioritize_improvements
-WorkflowToolIntegrationService._deduplicate_findings = WorkflowGhostCrewWeek90._deduplicate_findings
+# Add GhostCrew integration methods to main service
+WorkflowToolIntegrationService.ghostcrew_greenfield_audit = WorkflowGhostCrewIntegration.ghostcrew_greenfield_audit
+WorkflowToolIntegrationService.ghostcrew_test_security = WorkflowGhostCrewIntegration.ghostcrew_test_security
+WorkflowToolIntegrationService.ghostcrew_enhancement_scan = WorkflowGhostCrewIntegration.ghostcrew_enhancement_scan
+WorkflowToolIntegrationService.ghostcrew_quality_security = WorkflowGhostCrewIntegration.ghostcrew_quality_security
+WorkflowToolIntegrationService._extract_architecture_context = WorkflowGhostCrewIntegration._extract_architecture_context
+WorkflowToolIntegrationService._generate_greenfield_checklist = WorkflowGhostCrewIntegration._generate_greenfield_checklist
+WorkflowToolIntegrationService._count_severities = WorkflowGhostCrewIntegration._count_severities
+WorkflowToolIntegrationService._build_quality_security_matrix = WorkflowGhostCrewIntegration._build_quality_security_matrix
+WorkflowToolIntegrationService._prioritize_improvements = WorkflowGhostCrewIntegration._prioritize_improvements
+WorkflowToolIntegrationService._deduplicate_findings = WorkflowGhostCrewIntegration._deduplicate_findings
 
 
 # =========================================================================
-# BIGAGI WEEK 90 EXTENSIONS
+# BIGAGI INTEGRATION EXTENSIONS
 # =========================================================================
 
-class WorkflowBigAGIWeek90:
+class WorkflowBigAGIIntegration:
     """
-    Week 90 BigAGI extensions for architecture validation:
+    BigAGI integration extensions for architecture validation:
     - GREEN_PAPER: Multi-model validation of architecture decisions
     - BROWN_PAPER: Multi-model consensus on migration strategy
     - NEW_FEATURE: Multi-model validation of feature design
@@ -2780,15 +2780,15 @@ class WorkflowBigAGIWeek90:
         return feedback
 
 
-# Add Week 90 BigAGI methods to main service
-WorkflowToolIntegrationService.bigagi_validate_architecture = WorkflowBigAGIWeek90.bigagi_validate_architecture
-WorkflowToolIntegrationService.bigagi_validate_migration_plan = WorkflowBigAGIWeek90.bigagi_validate_migration_plan
-WorkflowToolIntegrationService.bigagi_validate_feature_design = WorkflowBigAGIWeek90.bigagi_validate_feature_design
-WorkflowToolIntegrationService._get_architecture_next_steps = WorkflowBigAGIWeek90._get_architecture_next_steps
-WorkflowToolIntegrationService._format_migration_plan = WorkflowBigAGIWeek90._format_migration_plan
-WorkflowToolIntegrationService._get_migration_actions = WorkflowBigAGIWeek90._get_migration_actions
-WorkflowToolIntegrationService._format_feature_design = WorkflowBigAGIWeek90._format_feature_design
-WorkflowToolIntegrationService._extract_design_feedback = WorkflowBigAGIWeek90._extract_design_feedback
+# Add BigAGI integration methods to main service
+WorkflowToolIntegrationService.bigagi_validate_architecture = WorkflowBigAGIIntegration.bigagi_validate_architecture
+WorkflowToolIntegrationService.bigagi_validate_migration_plan = WorkflowBigAGIIntegration.bigagi_validate_migration_plan
+WorkflowToolIntegrationService.bigagi_validate_feature_design = WorkflowBigAGIIntegration.bigagi_validate_feature_design
+WorkflowToolIntegrationService._get_architecture_next_steps = WorkflowBigAGIIntegration._get_architecture_next_steps
+WorkflowToolIntegrationService._format_migration_plan = WorkflowBigAGIIntegration._format_migration_plan
+WorkflowToolIntegrationService._get_migration_actions = WorkflowBigAGIIntegration._get_migration_actions
+WorkflowToolIntegrationService._format_feature_design = WorkflowBigAGIIntegration._format_feature_design
+WorkflowToolIntegrationService._extract_design_feedback = WorkflowBigAGIIntegration._extract_design_feedback
 
 
 # =========================================================================

@@ -13,7 +13,7 @@ from app.services.static_analysis.documentation_rule_extractor import (
     RFC_2119_KEYWORDS,
     CONDITIONAL_PATTERNS,
 )
-from app.models.week131_research import RuleType
+from app.models.research import RuleType
 
 
 @pytest.fixture

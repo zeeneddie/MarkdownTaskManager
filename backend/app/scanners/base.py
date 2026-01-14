@@ -92,6 +92,7 @@ class ScanMetrics:
     test_coverage: Optional[float] = None
     file_type_breakdown: Dict[str, int] = field(default_factory=dict)
     module_breakdown: Dict[str, Dict[str, int]] = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -104,7 +105,8 @@ class ScanMetrics:
             "duplication_percentage": self.duplication_percentage,
             "test_coverage": self.test_coverage,
             "file_type_breakdown": self.file_type_breakdown,
-            "module_breakdown": self.module_breakdown
+            "module_breakdown": self.module_breakdown,
+            "metadata": self.metadata
         }
 
 

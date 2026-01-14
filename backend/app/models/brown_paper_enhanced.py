@@ -75,6 +75,8 @@ class Phase1Result:
     # Week 136-137 additions (Fase 24: Data Architecture)
     data_lineage_result: Optional[Dict[str, Any]] = None  # DataLineageResult.to_dict()
     erd_generation_result: Optional[Dict[str, Any]] = None  # ERDGeneratorResult.to_dict()
+    # Week 144 additions: SIG Top 10 Quality Metrics
+    sig_metrics: Optional[Dict[str, Any]] = None  # SIG Top 10 ratings + findings
     duration_ms: int = 0
     success: bool = True
     errors: List[str] = field(default_factory=list)

@@ -11,7 +11,7 @@ from datetime import datetime
 from unittest.mock import AsyncMock, patch, MagicMock
 
 from app.services.characterization_test_service import CharacterizationTestService
-from app.models.week134_testing import (
+from app.models.testing import (
     ComparisonResult,
     DiffType,
     FieldDifference,

@@ -182,7 +182,7 @@ class BrownPaperEpic(Base):
     features = Column(JSONB, nullable=False, default=[])
 
     # Link to actual Epic in task hierarchy (after approval)
-    linked_epic_id = Column(String(50), ForeignKey("task_epics.id", ondelete="SET NULL"), nullable=True)
+    linked_epic_id = Column(UUID(as_uuid=True), ForeignKey("task_epics.id", ondelete="SET NULL"), nullable=True)
 
     # Status
     status = Column(String(20), default="draft")  # draft, approved, linked

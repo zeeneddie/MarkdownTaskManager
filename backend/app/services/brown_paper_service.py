@@ -31,7 +31,7 @@ from enum import Enum
 import uuid
 import json
 
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import AsyncSessionLocal
 
@@ -59,6 +59,8 @@ from app.services.application_registry_service import (
 from app.models.brown_paper import (
     BrownPaperSession as BrownPaperSessionDB,
     BrownPaperAnalysis as BrownPaperAnalysisDB,
+    BrownPaperConstitution as BrownPaperConstitutionDB,
+    BrownPaperEpic as BrownPaperEpicDB,
     BrownPaperSessionStatus as DBSessionStatus,
 )
 from app.services.brown_paper_estimation_service import (
@@ -550,6 +552,246 @@ class BrownPaperService:
         except Exception as e:
             logger.error(f"Failed to persist analysis to database: {e}", exc_info=True)
             # Don't raise - continue with in-memory data
+
+    async def _persist_constitution_to_db(
+        self,
+        session_id: str,
+        constitution: Dict[str, Any],
+        status: str = "review"
+    ) -> bool:
+        """
+        Persist constitution to database.
+
+        Returns:
+            True on success, False on failure.
+        """
+        try:
+            async with AsyncSessionLocal() as db:
+                result = await db.execute(
+                    select(BrownPaperConstitutionDB).where(
+                        BrownPaperConstitutionDB.session_id == uuid.UUID(session_id)
+                    )
+                )
+                db_constitution = result.scalar_one_or_none()
+
+                # Extract full metadata from constitution
+                const_metadata = constitution.get("metadata", {})
+                generation_metadata = {
+                    "generated_from": const_metadata.get("generated_from"),
+                    "application_id": const_metadata.get("application_id"),
+                    "domains_analyzed": const_metadata.get("domains_analyzed"),
+                    "modules_analyzed": const_metadata.get("modules_analyzed"),
+                    "generated_at": const_metadata.get("generated_at"),
+                    "persisted_at": datetime.utcnow().isoformat(),
+                }
+
+                # Generate markdown version
+                content_markdown = self._constitution_to_markdown(constitution)
+
+                if db_constitution:
+                    db_constitution.content_json = constitution
+                    db_constitution.content_markdown = content_markdown
+                    db_constitution.status = status
+                    db_constitution.generation_metadata = generation_metadata
+                    db_constitution.updated_at = datetime.utcnow()
+                else:
+                    db_constitution = BrownPaperConstitutionDB(
+                        session_id=uuid.UUID(session_id),
+                        content_json=constitution,
+                        content_markdown=content_markdown,
+                        status=status,
+                        generation_metadata=generation_metadata,
+                    )
+                    db.add(db_constitution)
+
+                await db.commit()
+                logger.info(f"Persisted constitution for session {session_id} to database")
+                return True
+
+        except Exception as e:
+            logger.error(f"Failed to persist constitution to database: {e}", exc_info=True)
+            return False
+
+    async def _persist_epics_to_db(
+        self,
+        session_id: str,
+        epics: List[Dict[str, Any]]
+    ) -> bool:
+        """
+        Persist epics to database.
+
+        Returns:
+            True on success, False on failure.
+        """
+        try:
+            async with AsyncSessionLocal() as db:
+                result = await db.execute(
+                    select(BrownPaperConstitutionDB).where(
+                        BrownPaperConstitutionDB.session_id == uuid.UUID(session_id)
+                    )
+                )
+                db_constitution = result.scalar_one_or_none()
+
+                if not db_constitution:
+                    logger.warning(f"No constitution found for session {session_id}; skipping epic persistence")
+                    return False
+
+                await db.execute(
+                    delete(BrownPaperEpicDB).where(
+                        BrownPaperEpicDB.constitution_id == db_constitution.id
+                    )
+                )
+
+                db_epics = []
+                for epic in epics:
+                    metadata = epic.get("metadata", {})
+                    db_epics.append(
+                        BrownPaperEpicDB(
+                            constitution_id=db_constitution.id,
+                            epic_number=epic.get("id", ""),
+                            name=epic.get("name", "Untitled Epic"),
+                            description=epic.get("description"),
+                            priority=epic.get("priority", 1),
+                            complexity=epic.get("complexity", "medium"),
+                            # Use explicit domain field with fallback to name for backwards compat
+                            source_domain=epic.get("domain", epic.get("name")),
+                            source_modules=metadata.get("modules", []),
+                            source_entities=metadata.get("entities", []),
+                            features=epic.get("features", []),
+                            status="draft",
+                        )
+                    )
+
+                if db_epics:
+                    db.add_all(db_epics)
+
+                await db.commit()
+                logger.info(f"Persisted {len(db_epics)} epics for session {session_id} to database")
+                return True
+
+        except Exception as e:
+            logger.error(f"Failed to persist epics to database: {e}", exc_info=True)
+            return False
+
+    def _constitution_to_markdown(self, constitution: Dict[str, Any]) -> str:
+        """
+        Convert constitution JSON to markdown format.
+
+        Args:
+            constitution: Constitution dict with sections like mission_vision, core_principles, etc.
+
+        Returns:
+            Rendered markdown string.
+        """
+        lines = ["# Project Constitution", ""]
+
+        # Mission & Vision
+        mission_vision = constitution.get("mission_vision", {})
+        if mission_vision:
+            lines.append("## Mission & Vision")
+            lines.append("")
+            if mission_vision.get("mission"):
+                lines.append(f"**Mission:** {mission_vision['mission']}")
+                lines.append("")
+            if mission_vision.get("vision"):
+                lines.append(f"**Vision:** {mission_vision['vision']}")
+                lines.append("")
+
+        # Core Principles
+        principles = constitution.get("core_principles", [])
+        if principles:
+            lines.append("## Core Principles")
+            lines.append("")
+            for principle in principles:
+                if isinstance(principle, dict):
+                    lines.append(f"### {principle.get('name', 'Principle')}")
+                    lines.append(principle.get("description", ""))
+                    lines.append("")
+                else:
+                    lines.append(f"- {principle}")
+            lines.append("")
+
+        # Key Requirements
+        requirements = constitution.get("key_requirements", [])
+        if requirements:
+            lines.append("## Key Requirements")
+            lines.append("")
+            for req in requirements:
+                if isinstance(req, dict):
+                    lines.append(f"- **{req.get('category', 'Requirement')}:** {req.get('description', '')}")
+                else:
+                    lines.append(f"- {req}")
+            lines.append("")
+
+        # Constraints
+        constraints = constitution.get("constraints", [])
+        if constraints:
+            lines.append("## Constraints & Limitations")
+            lines.append("")
+            for constraint in constraints:
+                if isinstance(constraint, dict):
+                    lines.append(f"- **{constraint.get('type', 'Constraint')}:** {constraint.get('description', '')}")
+                else:
+                    lines.append(f"- {constraint}")
+            lines.append("")
+
+        # Risks
+        risks = constitution.get("risks", [])
+        if risks:
+            lines.append("## Risks & Mitigations")
+            lines.append("")
+            for risk in risks:
+                if isinstance(risk, dict):
+                    lines.append(f"### {risk.get('name', 'Risk')}")
+                    lines.append(f"**Impact:** {risk.get('impact', 'Unknown')}")
+                    lines.append(f"**Mitigation:** {risk.get('mitigation', 'None specified')}")
+                    lines.append("")
+                else:
+                    lines.append(f"- {risk}")
+            lines.append("")
+
+        # Scope
+        scope = constitution.get("scope", {})
+        if scope:
+            lines.append("## Scope Definition")
+            lines.append("")
+            if scope.get("in_scope"):
+                lines.append("### In Scope")
+                for item in scope["in_scope"]:
+                    lines.append(f"- {item}")
+                lines.append("")
+            if scope.get("out_of_scope"):
+                lines.append("### Out of Scope")
+                for item in scope["out_of_scope"]:
+                    lines.append(f"- {item}")
+                lines.append("")
+
+        # Success Criteria
+        criteria = constitution.get("success_criteria", [])
+        if criteria:
+            lines.append("## Success Criteria")
+            lines.append("")
+            for criterion in criteria:
+                if isinstance(criterion, dict):
+                    lines.append(f"- **{criterion.get('metric', 'Criterion')}:** {criterion.get('target', '')}")
+                else:
+                    lines.append(f"- {criterion}")
+            lines.append("")
+
+        # Metadata
+        metadata = constitution.get("metadata", {})
+        if metadata:
+            lines.append("---")
+            lines.append("")
+            lines.append("*Generated by Brown Paper Analysis*")
+            if metadata.get("generated_at"):
+                lines.append(f"*Date: {metadata['generated_at']}*")
+            if metadata.get("domains_analyzed"):
+                lines.append(f"*Domains analyzed: {metadata['domains_analyzed']}*")
+            if metadata.get("modules_analyzed"):
+                lines.append(f"*Modules analyzed: {metadata['modules_analyzed']}*")
+
+        return "\n".join(lines)
 
     # ========================================================================
     # MAIN ANALYSIS FLOW
@@ -1475,6 +1717,12 @@ class BrownPaperService:
         session.status = BrownPaperStatus.REVIEW
         session.updated_at = datetime.utcnow()
 
+        await self._persist_constitution_to_db(
+            session_id=session_id,
+            constitution=constitution,
+            status=session.status.value,
+        )
+
         return constitution
 
     def _generate_mission_vision(
@@ -1680,6 +1928,7 @@ class BrownPaperService:
             epic = {
                 "id": f"EPIC-{len(epics)+1:03d}",
                 "name": domain.name,
+                "domain": domain.name,  # Explicit domain field for clarity in persistence
                 "description": domain.description,
                 "priority": domain.priority,
                 "complexity": domain.complexity,
@@ -1688,6 +1937,7 @@ class BrownPaperService:
                 "metadata": {
                     "modules": domain.modules,
                     "entities": domain.entities,
+                    "domain_name": domain.name,  # Also in metadata for completeness
                     "generated_at": datetime.utcnow().isoformat(),
                 }
             }
@@ -1726,6 +1976,15 @@ class BrownPaperService:
 
         analysis.epics = epics
         session.updated_at = datetime.utcnow()
+
+        if analysis.constitution:
+            await self._persist_constitution_to_db(
+                session_id=session_id,
+                constitution=analysis.constitution,
+                status=session.status.value if hasattr(session.status, "value") else session.status,
+            )
+
+        await self._persist_epics_to_db(session_id, epics)
 
         return epics
 
@@ -2122,6 +2381,81 @@ class BrownPaperService:
             "status": "pending",
             "note": "ERD generated in Phase 2 after domain extraction"
         }
+
+        # Week 144: SIG Top 10 Quality Metrics (Fase 21+)
+        try:
+            from app.scanners.dotnet.dotnet_scanner import DotNetVolumeScanner, DotNetDuplicationScanner
+            from app.scanners.metrics.complexity_analyzer import ComplexityAnalyzer
+            from app.scanners.metrics.interfacing_analyzer import InterfacingAnalyzer
+            from app.scanners.metrics.coupling_analyzer import CouplingAnalyzer
+            from app.scanners.metrics.balance_analyzer import BalanceAnalyzer
+            from app.scanners.metrics.duplication_analyzer import DuplicationAnalyzer
+            from app.scanners.metrics.comments_analyzer import CommentsAnalyzer
+
+            sig_results = {
+                "ratings": {},
+                "overall_rating": 0,
+                "volume": {},
+                "findings_summary": {
+                    "total": 0,
+                    "critical": 0,
+                    "high": 0,
+                    "medium": 0,
+                    "low": 0,
+                },
+            }
+
+            # Run SIG analyzers
+            analyzers = {
+                "volume": DotNetVolumeScanner(project_path),
+                "complexity": ComplexityAnalyzer(project_path),
+                "interfacing": InterfacingAnalyzer(project_path),
+                "coupling": CouplingAnalyzer(project_path),
+                "balance": BalanceAnalyzer(project_path),
+                "duplication": DuplicationAnalyzer(project_path),
+                "comments": CommentsAnalyzer(project_path),
+            }
+
+            ratings = []
+            for name, analyzer in analyzers.items():
+                try:
+                    scan_result = await analyzer.scan()
+                    if scan_result.success and scan_result.metrics:
+                        metadata = scan_result.metrics.metadata or {}
+                        rating = metadata.get("rating")
+                        if rating:
+                            sig_results["ratings"][name] = {
+                                "rating": rating,
+                                "stars": "★" * rating + "☆" * (5 - rating),
+                            }
+                            ratings.append(rating)
+                        if name == "volume":
+                            sig_results["volume"] = {
+                                "files_scanned": scan_result.metrics.files_scanned,
+                                "lines_of_code": scan_result.metrics.lines_of_code,
+                                "code_lines": scan_result.metrics.code_lines,
+                            }
+                        if scan_result.findings:
+                            sig_results["findings_summary"]["total"] += len(scan_result.findings)
+                            for f in scan_result.findings:
+                                sev = f.severity.value
+                                if sev in sig_results["findings_summary"]:
+                                    sig_results["findings_summary"][sev] += 1
+                except Exception as sig_err:
+                    logger.warning(f"SIG {name} analyzer failed: {sig_err}")
+
+            if ratings:
+                sig_results["overall_rating"] = round(sum(ratings) / len(ratings), 1)
+                sig_results["overall_stars"] = "★" * int(sig_results["overall_rating"]) + "☆" * (5 - int(sig_results["overall_rating"]))
+
+            result.sig_metrics = sig_results
+            logger.info(
+                f"SIG metrics: {len(ratings)} analyzers, overall rating: {sig_results.get('overall_rating', 0)}/5, "
+                f"{sig_results['findings_summary']['total']} findings"
+            )
+        except Exception as e:
+            logger.warning(f"SIG metrics failed: {e}")
+            result.errors.append(f"SIGMetrics: {e}")
 
         result.duration_ms = int((time.time() - start_time) * 1000)
         result.success = len(result.errors) == 0 or result.dependency_graph or result.code_analysis
