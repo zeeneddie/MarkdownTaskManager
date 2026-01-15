@@ -2,7 +2,7 @@
 
 **Project:** MarQed AI Agent Software Platform
 **Last Updated:** Week 158 (2026-01-15)
-**Total Phases:** 31+ | **Timeline:** Week 144-244
+**Total Phases:** 33+ | **Timeline:** Week 144-244
 
 ---
 
@@ -30,7 +30,9 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 ├── Fase 26: AI & Automation (12 items)
 ├── Fase 27: Testing Excellence (8 items)
 ├── Fase 28: Advanced Integrations (10 items)
-└── Fase GAP-29: Innovation & Scale (9 items)
+├── Fase GAP-29: Innovation & Scale (9 items)
+├── Fase 32: Ralph Wiggum Autonomous Loop (Week 175-180) 🆕
+└── Fase 33: DevStats Developer Metrics (Week 179-184) 🆕
 ```
 
 ---
@@ -208,6 +210,71 @@ See: [gap-analysis-complete-roadmap.md](docs/roadmap/gap-analysis-complete-roadm
 
 ---
 
+## Fase 32: Ralph Wiggum Autonomous Loop (Week 175-180)
+
+**Status:** PLANNED
+**Priority:** HIGH (ROI 8.5)
+**Effort:** 160 uur (~5 weken)
+
+Implementatie van de Ralph Wiggum techniek voor autonomous overnight coding met iteratieve loops en git-based state management.
+
+| Component | Description |
+|-----------|-------------|
+| **RalphLoopService** | Autonomous execution loop met configurable iterations |
+| **GuardrailsService** | File-based lesson learning (.marqed/guardrails.md) |
+| **CompletionDetector** | Dual-gate exit logic, checkbox tracking |
+| **CircuitBreaker** | Stuck detection, cost limits, token rotation |
+| **CourseCorrectionService** | Dead-end detection, 5 Whys methodology |
+
+**Production Harness (Cole Medin):**
+
+| Component | Description |
+|-----------|-------------|
+| **InitializationAgent** | Context gathering before work starts |
+| **StructuredProgressTracker** | Rich metrics beyond "files changed" |
+| **StageApprovalWorkflow** | Human approval between stages |
+| **RollbackService** | Git reset, regression testing |
+| **MemoryCompressionService** | Context handoff between runs |
+| **MultiPhaseValidationPipeline** | 8-phase validation (syntax → docs) |
+
+**Key Features:**
+- Overnight autonomous coding (uren onbeheerd draaien)
+- Git als geheugen (fresh context bij token overflow)
+- Guardrails file voor cross-context learning
+- Human-in-loop approval at stage boundaries
+- Error recovery with automated rollback
+
+See: [docs/roadmap/phases/fase-32-ralph-wiggum-loop.md](docs/roadmap/phases/fase-32-ralph-wiggum-loop.md)
+
+---
+
+## Fase 33: DevStats Developer Metrics (Week 179-184)
+
+**Status:** PLANNED
+**Priority:** MEDIUM-HIGH (ROI 7.0)
+**Effort:** 152 uur (~4-5 weken)
+
+Developer contribution analytics dashboard gebaseerd op CNCF DevStats en GrimoireLab concepten.
+
+| Component | Description |
+|-----------|-------------|
+| **GitDataCollector** | GitHub/GitLab API integration |
+| **ContributionAnalyzer** | Per-developer, per-release statistics |
+| **BusFactorCalculator** | Code ownership risk analysis |
+| **ReleaseCorrelator** | Contributions per release/sprint |
+| **D3Visualizations** | Heatmaps, charts, contribution graphs |
+
+**Key Metrics:**
+- Contribution frequency per developer over time
+- Release impact (% bijdrage per release)
+- PR cycle time (open → merge duration)
+- Bus factor (kennisconcentratie risico)
+- Code churn (lines added/removed ratio)
+
+See: [docs/roadmap/phases/fase-33-devstats-dashboard.md](docs/roadmap/phases/fase-33-devstats-dashboard.md)
+
+---
+
 ## Design Principles
 
 1. **Small, Specialized Analyzers** - COBOL items (B2, B3, B4) blijven apart: kwaliteit boven snelheid
@@ -223,10 +290,12 @@ See: [gap-analysis-complete-roadmap.md](docs/roadmap/gap-analysis-complete-roadm
 | Document | Description |
 |----------|-------------|
 | [phases-current.md](docs/roadmap/phases-current.md) | Week 144 status |
-| [phases-planned.md](docs/roadmap/phases-planned.md) | Fase 22-29 details |
+| [phases-planned.md](docs/roadmap/phases-planned.md) | Fase 22-33 details |
 | [phases-completed.md](docs/roadmap/phases-completed.md) | Fase 1-21 archive |
 | [gap-analysis-complete-roadmap.md](docs/roadmap/gap-analysis-complete-roadmap.md) | Full 75-item specs |
 | [workflow-separation-plan.md](docs/architecture/workflow-separation-plan.md) | Brown Paper/Migration/Quality separation |
+| [fase-32-ralph-wiggum-loop.md](docs/roadmap/phases/fase-32-ralph-wiggum-loop.md) | Ralph Wiggum autonomous loop |
+| [fase-33-devstats-dashboard.md](docs/roadmap/phases/fase-33-devstats-dashboard.md) | DevStats developer metrics |
 
 ---
 
@@ -249,9 +318,11 @@ See: [gap-analysis-complete-roadmap.md](docs/roadmap/gap-analysis-complete-roadm
 | **Visual Dependency Graph (E1)** | 158 | D3.js/Cytoscape/DOT/Mermaid, 35 tests ✅ |
 | **Context-Aware Docs (J1)** | 158 | AST parsing, multi-format export, 34 tests ✅ |
 | **Secret Detection (K3)** | 157 | 50+ patterns, entropy detection ✅ |
-| **COBOL Support** | 175 | B1 Analyzer complete |
-| **LLM Collaboration** | 191 | B12 Framework active |
-| **Full Platform** | 244 | All 75 items complete |
+| **Ralph Wiggum Loop (Fase 32)** | 178 | Autonomous agent execution, guardrails, overnight coding |
+| **DevStats Dashboard (Fase 33)** | 184 | Git contribution analytics, release tracking, bus factor |
+| **COBOL Support** | 185 | B1 Analyzer complete |
+| **LLM Collaboration** | 195 | B12 Framework active |
+| **Full Platform** | 250 | All 75+ items complete |
 
 ---
 

@@ -67,6 +67,13 @@
 | **28** | 215-226 | GAP Advanced Integrations | 10 | [gap-phases.md](phases/gap-phases.md#fase-28) |
 | **GAP-29** | 227-244 | GAP Innovation & Scale | 9 | [gap-phases.md](phases/gap-phases.md#fase-gap-29) |
 
+### New Phases (Week 175-184) 🆕
+
+| Fase | Week | Title | Priority | ROI | Detail |
+|------|------|-------|----------|-----|--------|
+| **32** | 175-180 | Ralph Wiggum Autonomous Loop | HIGH | 8.5 | [fase-32-ralph-wiggum-loop.md](phases/fase-32-ralph-wiggum-loop.md) |
+| **33** | 179-184 | DevStats Developer Metrics | MEDIUM-HIGH | 7.0 | [fase-33-devstats-dashboard.md](phases/fase-33-devstats-dashboard.md) |
+
 ### Future Enhancements (Week 233+)
 
 | Fase | Week | Title | Status | Detail |
@@ -105,11 +112,13 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 ├── Week 158: Fase 24-E1 Visual Dependency Graph ✅ COMPLETE (D3.js/Cytoscape/DOT/Mermaid, 35 tests)
 ├── Week 158: Fase 24-J1 Context-Aware Documentation ✅ COMPLETE (AST parsing, multi-format, 34 tests)
 ├── Week 157-174: Fase 24 - Quick Wins & Foundation (15 items) 🔄 IN PROGRESS (9/15 done)
-├── Week 175-190: Fase 25 - Core Platform Enhancement (18 items)
-├── Week 191-204: Fase 26 - AI & Automation (12 items)
-├── Week 205-214: Fase 27 - Testing Excellence (8 items)
-├── Week 215-226: Fase 28 - Advanced Integrations (10 items)
-└── Week 227-244: Fase GAP-29 - Innovation & Scale (9 items)
+├── Week 175-180: Fase 32 - Ralph Wiggum Autonomous Loop 🆕 PLANNED
+├── Week 179-184: Fase 33 - DevStats Developer Metrics 🆕 PLANNED
+├── Week 185-200: Fase 25 - Core Platform Enhancement (18 items)
+├── Week 201-214: Fase 26 - AI & Automation (12 items)
+├── Week 215-224: Fase 27 - Testing Excellence (8 items)
+├── Week 225-236: Fase 28 - Advanced Integrations (10 items)
+└── Week 237-254: Fase GAP-29 - Innovation & Scale (9 items)
 ```
 
 ---
@@ -126,9 +135,11 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 | Stage Council Review | 23.6 | ~120 | 4 | ✅ COMPLETE |
 | CWE Security Scanners | 31 | ~40 | 1 | ✅ COMPLETE |
 | Legacy Quickscan | 24-A1 | ~16 | 1 | ✅ COMPLETE |
+| **Ralph Wiggum Loop** | 32 | ~160 | 5 | 🆕 PLANNED |
+| **DevStats Dashboard** | 33 | ~152 | 5 | 🆕 PLANNED |
 | GAP Analysis (Rest) | 24-29 | ~1484 | 80 | 🔄 IN PROGRESS |
 | Future | 30 | 72 | 2 | PLANNED |
-| **Total** | **15 phases** | **~1980** | **~100** | |
+| **Total** | **17 phases** | **~2292** | **~110** | |
 
 ---
 
@@ -208,5 +219,7 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 | [fase-29-quality-impact-mapping.md](phases/fase-29-quality-impact-mapping.md) | Quality-to-functionality linking |
 | [fase-30-llm-council-improvements.md](phases/fase-30-llm-council-improvements.md) | Streaming, timeouts, tracking |
 | [fase-31-cwe-security-scanners.md](phases/fase-31-cwe-security-scanners.md) | CWE Top 25 security scanning |
+| [fase-32-ralph-wiggum-loop.md](phases/fase-32-ralph-wiggum-loop.md) | 🆕 Ralph Wiggum autonomous coding loop |
+| [fase-33-devstats-dashboard.md](phases/fase-33-devstats-dashboard.md) | 🆕 DevStats developer metrics dashboard |
 | [gap-phases.md](phases/gap-phases.md) | GAP Analysis Fasen 24-29 |
 | [technical-debt-backlog.md](phases/technical-debt-backlog.md) | Tech debt & Falcon H1R |
