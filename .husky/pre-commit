@@ -6,7 +6,7 @@
 
 echo "Running quality gate checks on staged files..."
 
-cd backend/agents || exit 1
+cd agents || exit 1
 
 # Run the quality check script
 npx ts-node scripts/pre-commit-quality-check.ts
