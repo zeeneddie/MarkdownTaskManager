@@ -41,6 +41,9 @@ class ScannerType(str, Enum):
     CUSTOM_ASP = "custom_asp"
     CUSTOM_COBOL = "custom_cobol"
     CUSTOM_SQL = "custom_sql"
+    SECRET_SCANNER = "secret_scanner"  # K3: Secret Detection (Fase 24)
+    OWASP_SCANNER = "owasp_scanner"  # K1: OWASP Top 10 Integration (Fase 24)
+    CVE_SCANNER = "cve_scanner"  # K2: CVE Database Integration (Fase 24)
 
 
 # CWE Top 25 (2023) mapping for quick reference

@@ -21,6 +21,8 @@ from .adapters.bandit_adapter import BanditAdapter
 from .adapters.gosec_adapter import GosecAdapter
 from .adapters.trivy_adapter import TrivyAdapter
 from .adapters.asp_scanner import ClassicASPScanner
+from .adapters.secret_scanner import SecretScanner
+from .adapters.owasp_scanner import OWASPScanner
 
 logger = logging.getLogger(__name__)
 
@@ -69,31 +71,32 @@ EXTENSION_TO_LANGUAGE = {
 }
 
 # Scanners appropriate for each language
+# SecretScanner and OWASPScanner are included for all languages
 LANGUAGE_SCANNERS: Dict[str, List[Type[BaseScanner]]] = {
     # Languages covered by OpenGrep
-    "python": [OpenGrepAdapter, BanditAdapter],
-    "javascript": [OpenGrepAdapter],
-    "typescript": [OpenGrepAdapter],
-    "go": [OpenGrepAdapter, GosecAdapter],
-    "java": [OpenGrepAdapter],
-    "kotlin": [OpenGrepAdapter],
-    "scala": [OpenGrepAdapter],
-    "csharp": [OpenGrepAdapter],
-    "ruby": [OpenGrepAdapter],
-    "php": [OpenGrepAdapter],
-    "rust": [OpenGrepAdapter],
-    "swift": [OpenGrepAdapter],
-    "c": [OpenGrepAdapter],
-    "cpp": [OpenGrepAdapter],
+    "python": [OpenGrepAdapter, BanditAdapter, SecretScanner, OWASPScanner],
+    "javascript": [OpenGrepAdapter, SecretScanner, OWASPScanner],
+    "typescript": [OpenGrepAdapter, SecretScanner, OWASPScanner],
+    "go": [OpenGrepAdapter, GosecAdapter, SecretScanner, OWASPScanner],
+    "java": [OpenGrepAdapter, SecretScanner, OWASPScanner],
+    "kotlin": [OpenGrepAdapter, SecretScanner, OWASPScanner],
+    "scala": [OpenGrepAdapter, SecretScanner, OWASPScanner],
+    "csharp": [OpenGrepAdapter, SecretScanner, OWASPScanner],
+    "ruby": [OpenGrepAdapter, SecretScanner, OWASPScanner],
+    "php": [OpenGrepAdapter, SecretScanner, OWASPScanner],
+    "rust": [OpenGrepAdapter, SecretScanner, OWASPScanner],
+    "swift": [OpenGrepAdapter, SecretScanner, OWASPScanner],
+    "c": [OpenGrepAdapter, SecretScanner, OWASPScanner],
+    "cpp": [OpenGrepAdapter, SecretScanner, OWASPScanner],
     # Legacy languages (custom scanners)
-    "asp": [ClassicASPScanner],
-    "vbscript": [ClassicASPScanner],
-    # Config languages
-    "terraform": [OpenGrepAdapter, TrivyAdapter],
-    "yaml": [OpenGrepAdapter, TrivyAdapter],
-    "json": [OpenGrepAdapter],
-    "xml": [OpenGrepAdapter],
-    "html": [OpenGrepAdapter],
+    "asp": [ClassicASPScanner, SecretScanner, OWASPScanner],
+    "vbscript": [ClassicASPScanner, SecretScanner, OWASPScanner],
+    # Config languages (high priority for secrets)
+    "terraform": [OpenGrepAdapter, TrivyAdapter, SecretScanner, OWASPScanner],
+    "yaml": [OpenGrepAdapter, TrivyAdapter, SecretScanner, OWASPScanner],
+    "json": [OpenGrepAdapter, SecretScanner, OWASPScanner],
+    "xml": [OpenGrepAdapter, SecretScanner, OWASPScanner],
+    "html": [OpenGrepAdapter, SecretScanner, OWASPScanner],
 }
 
 
@@ -136,6 +139,8 @@ class SecurityScanOrchestrator:
             (ScannerType.GOSEC, GosecAdapter),
             (ScannerType.TRIVY, TrivyAdapter),
             (ScannerType.CUSTOM_ASP, ClassicASPScanner),
+            (ScannerType.SECRET_SCANNER, SecretScanner),  # K3: Secret Detection
+            (ScannerType.OWASP_SCANNER, OWASPScanner),  # K1: OWASP Top 10
         ]
 
         for scanner_type, scanner_class in scanner_classes:

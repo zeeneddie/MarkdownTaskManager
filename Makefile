@@ -97,6 +97,11 @@ start:
 		uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload; \
 	fi
 
+start-bg:
+	@echo "$(BLUE)Starting MarQed AI Platform (background)...$(NC)"
+	@$(SCRIPTS_DIR)/start.sh --no-browser > /dev/null 2>&1 || true
+	@echo "$(GREEN)Services starting in background. Check: curl http://localhost:8000/api/health$(NC)"
+
 stop:
 	@echo "$(BLUE)Stopping MarQed AI Platform...$(NC)"
 	@if [ -f "$(SCRIPTS_DIR)/stop.sh" ]; then \

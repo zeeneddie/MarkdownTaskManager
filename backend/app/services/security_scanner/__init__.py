@@ -2,6 +2,7 @@
 Security Scanner Service Module.
 
 Fase 31: CWE Top 25 Security Scanner Suite.
+Fase 24 K3: Secret Detection Scanner.
 
 A language-agnostic security scanning orchestrator that integrates
 multiple open-source scanners with unified SARIF-based output.
@@ -12,6 +13,7 @@ Supported Scanners:
 - Gosec (Go) - Apache 2.0
 - Trivy (Dependencies) - Apache 2.0
 - Custom ASP Scanner (Classic ASP/VBScript)
+- Secret Scanner (K3) - 50+ patterns, entropy detection
 
 All external tools are fully open source and extensible.
 """
@@ -52,6 +54,12 @@ from .adapters import (
     GosecAdapter,
     TrivyAdapter,
     ClassicASPScanner,
+    # Secret Scanner (K3 - Fase 24)
+    SecretScanner,
+    SecretPattern,
+    SecretType,
+    FalsePositiveFilter,
+    EntropyAnalyzer,
     # Factories
     create_opengrep_adapter,
     create_bandit_adapter,
@@ -99,6 +107,12 @@ __all__ = [
     "GosecAdapter",
     "TrivyAdapter",
     "ClassicASPScanner",
+    # Secret Scanner (K3 - Fase 24)
+    "SecretScanner",
+    "SecretPattern",
+    "SecretType",
+    "FalsePositiveFilter",
+    "EntropyAnalyzer",
     # Factories
     "create_opengrep_adapter",
     "create_bandit_adapter",
