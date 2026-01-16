@@ -61,6 +61,7 @@ class QuinnExtension(BaseAgentExtension):
         )
         self._quality_service = None
         self._security_service = None
+        self._security_service_type = None  # "orchestrator" or "legacy"
 
     def _get_quality_service(self):
         """Lazy load quality service."""
@@ -75,15 +76,29 @@ class QuinnExtension(BaseAgentExtension):
         return self._quality_service
 
     def _get_security_service(self):
-        """Lazy load security service."""
+        """Lazy load security orchestrator (Fase 37 integration)."""
         if self._security_service is None:
             try:
-                from app.services.migration_security_service import (
-                    MigrationSecurityService,
+                # Fase 37: Use SecurityScanOrchestrator for full scanner suite
+                from app.services.security_scanner import (
+                    SecurityScanOrchestrator,
+                    create_security_orchestrator,
                 )
-                self._security_service = MigrationSecurityService()
+                self._security_service = create_security_orchestrator()
+                self._security_service_type = "orchestrator"
+                logger.info("SecurityScanOrchestrator initialized for Quinn")
             except ImportError as e:
-                logger.warning(f"Could not import MigrationSecurityService: {e}")
+                logger.warning(f"Could not import SecurityScanOrchestrator: {e}")
+                # Fallback to MigrationSecurityService
+                try:
+                    from app.services.migration_security_service import (
+                        MigrationSecurityService,
+                    )
+                    self._security_service = MigrationSecurityService()
+                    self._security_service_type = "legacy"
+                    logger.warning("Falling back to MigrationSecurityService")
+                except ImportError as e2:
+                    logger.warning(f"Could not import MigrationSecurityService: {e2}")
         return self._security_service
 
     async def on_input_messages(
@@ -249,14 +264,97 @@ class QuinnExtension(BaseAgentExtension):
         return results
 
     async def _security_review(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute security review."""
+        """Execute security review using SecurityScanOrchestrator (Fase 37)."""
+        from pathlib import Path
+
         service = self._get_security_service()
-        if service and hasattr(service, "scan"):
+        if not service:
+            return {"issues": [], "risk_level": "unknown", "error": "No security service available"}
+
+        # Check if we're using the new orchestrator
+        if self._security_service_type == "orchestrator":
             try:
-                return await service.scan(context)
+                # Extract project path from context
+                project_path = context.get("project_path") or context.get("source_path")
+                if not project_path:
+                    return {"issues": [], "error": "No project path provided"}
+
+                # Run security scan with orchestrator
+                report = await service.scan(Path(project_path))
+
+                # Format findings for Quinn output
+                issues = [
+                    {
+                        "id": f.id,
+                        "title": f.title,
+                        "severity": f.severity.value,
+                        "cwe_id": f.cwe_ids[0] if f.cwe_ids else None,
+                        "cwe_ids": f.cwe_ids,
+                        "category": f.category,
+                        "file": f.location.file_path,
+                        "line": f.location.start_line,
+                        "description": f.description,
+                        "scanner": f.scanner.value,
+                        "is_cwe_top_25": f.is_cwe_top_25,
+                    }
+                    for f in report.all_findings
+                ]
+
+                summary = {
+                    "total": report.total_findings,
+                    "critical": report.total_critical,
+                    "high": report.total_high,
+                    "by_severity": report.get_severity_summary(),
+                    "scanners_used": [s.value for s in report.scanners_used],
+                    "languages_detected": list(report.languages_detected),
+                }
+
+                return {
+                    "issues": issues,
+                    "summary": summary,
+                    "cwe_coverage": report.cwe_coverage,
+                    "cwe_top_25_coverage": report.cwe_top_25_coverage,
+                    "risk_level": self._calculate_risk_level(report),
+                    "scan_type": "orchestrator",
+                }
+
             except Exception as e:
-                logger.warning(f"Security scan failed: {e}")
+                logger.error(f"SecurityScanOrchestrator scan failed: {e}")
+                return {"issues": [], "error": str(e), "risk_level": "unknown"}
+
+        # Fallback for legacy MigrationSecurityService
+        try:
+            if hasattr(service, "scan"):
+                return await service.scan(context)
+            elif hasattr(service, "analyze_directory"):
+                # Legacy sync method
+                project_path = context.get("project_path") or context.get("source_path")
+                if project_path:
+                    result = service.analyze_directory(directory=project_path)
+                    return {"issues": result.get("findings", []), "risk_level": "medium"}
+        except Exception as e:
+            logger.warning(f"Legacy security scan failed: {e}")
+
         return {"issues": [], "risk_level": "unknown"}
+
+    def _calculate_risk_level(self, report) -> str:
+        """Calculate risk level from security report (Fase 37)."""
+        critical = report.total_critical
+        high = report.total_high
+        severity_summary = report.get_severity_summary()
+        medium = severity_summary.get("medium", 0)
+
+        # Risk scoring
+        if critical > 0:
+            return "critical"
+        elif high >= 5:
+            return "high"
+        elif high >= 1 or medium >= 10:
+            return "medium"
+        elif report.total_findings > 0:
+            return "low"
+        else:
+            return "none"
 
     async def _compliance_review(self, context: Dict[str, Any]) -> Dict[str, Any]:
         """Execute compliance review."""

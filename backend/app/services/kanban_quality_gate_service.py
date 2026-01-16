@@ -40,6 +40,20 @@ except ImportError:
     AntiPatternDetector = None
     AntiPatternType = None
 
+# Fase 37: SecurityScanOrchestrator integration
+try:
+    from app.services.security_scanner import (
+        SecurityScanOrchestrator,
+        create_security_orchestrator,
+        ScannerType,
+    )
+    SECURITY_ORCHESTRATOR_AVAILABLE = True
+except ImportError:
+    SECURITY_ORCHESTRATOR_AVAILABLE = False
+    SecurityScanOrchestrator = None
+    create_security_orchestrator = None
+    ScannerType = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -285,6 +299,14 @@ class KanbanQualityGateService:
         self._antipattern_detector = AntiPatternDetector() if ANTIPATTERN_AVAILABLE else None
         if self._antipattern_detector:
             logger.info("AntiPatternDetector integrated into quality gates")
+        # Fase 37: Initialize SecurityScanOrchestrator
+        self._security_orchestrator = None
+        if SECURITY_ORCHESTRATOR_AVAILABLE:
+            try:
+                self._security_orchestrator = create_security_orchestrator()
+                logger.info("SecurityScanOrchestrator integrated into quality gates (Fase 37)")
+            except Exception as e:
+                logger.warning(f"Could not initialize SecurityScanOrchestrator: {e}")
 
     async def validate_lane_transition(
         self,
@@ -322,6 +344,16 @@ class KanbanQualityGateService:
 
         # Execute validations
         results: List[ValidationResult] = []
+
+        # Fase 37: Run actual security scanning for IN_REVIEW lane
+        if to_lane == KanbanLane.IN_REVIEW and self._security_orchestrator:
+            security_results = await self._run_security_checks(item_data, project_id)
+            if security_results:
+                # Use orchestrator results for security rules, skip individual checks
+                security_rule_ids = {r.rule_id for r in security_results}
+                rules_to_run = [r for r in rules_to_run if r.id not in security_rule_ids]
+                results.extend(security_results)
+
         for rule in rules_to_run:
             result = await self._execute_validation(rule, item_data, project_config)
             results.append(result)
@@ -519,6 +551,118 @@ class KanbanQualityGateService:
             "blocking_count": sum(1 for r in results if not r.passed and r.blocking),
             "timestamp": datetime.utcnow().isoformat(),
         }
+
+    # ========================================================================
+    # FASE 37: SECURITY SCANNING INTEGRATION
+    # ========================================================================
+
+    async def _run_security_checks(
+        self,
+        item_data: Dict[str, Any],
+        project_id: Optional[int] = None
+    ) -> List[ValidationResult]:
+        """
+        Run actual security scanning for sec-001 through sec-010.
+        Uses SecurityScanOrchestrator for real CWE detection (Fase 37).
+        """
+        from pathlib import Path
+
+        results = []
+
+        # Get changed files or project path from item data
+        changed_files = item_data.get("changed_files", [])
+        project_path = item_data.get("project_path")
+
+        if not changed_files and not project_path:
+            return results
+
+        if not self._security_orchestrator:
+            logger.warning("SecurityScanOrchestrator not available for quality gate")
+            return results
+
+        try:
+            # Scan project or changed files
+            target_path = Path(project_path) if project_path else Path(changed_files[0]).parent
+            report = await self._security_orchestrator.scan(target_path)
+
+            # CWE to rule mapping for sec-001 through sec-010
+            cwe_rule_mapping = {
+                "CWE-89": "sec-001",   # SQL Injection
+                "CWE-79": "sec-002",   # XSS
+                "CWE-352": "sec-003",  # CSRF
+                "CWE-287": "sec-004",  # Authentication
+                "CWE-862": "sec-005",  # Authorization
+                "CWE-798": "sec-006",  # Hardcoded Secrets
+                "CWE-1104": "sec-007", # Vulnerable Dependencies
+                "CWE-20": "sec-008",   # Input Validation
+                "CWE-319": "sec-009",  # Secure Communication
+                "CWE-532": "sec-010",  # Log Security
+            }
+
+            # Group findings by CWE/rule
+            findings_by_rule: Dict[str, List] = {}
+            for finding in report.all_findings:
+                for cwe_id in finding.cwe_ids:
+                    normalized_cwe = cwe_id.upper()
+                    if not normalized_cwe.startswith("CWE-"):
+                        normalized_cwe = f"CWE-{normalized_cwe}"
+                    if normalized_cwe in cwe_rule_mapping:
+                        rule_id = cwe_rule_mapping[normalized_cwe]
+                        if rule_id not in findings_by_rule:
+                            findings_by_rule[rule_id] = []
+                        findings_by_rule[rule_id].append(finding)
+
+            # Create validation results for each security rule
+            security_rules = [r for r in VALIDATION_RULES if r.category == ValidationCategory.SECURITY]
+            for rule in security_rules:
+                rule_findings = findings_by_rule.get(rule.id, [])
+
+                passed = len(rule_findings) == 0
+                severity = rule.severity.value
+
+                # Upgrade severity if critical findings
+                if rule_findings:
+                    if any(f.severity.value == "critical" for f in rule_findings):
+                        severity = "critical"
+                    elif any(f.severity.value == "high" for f in rule_findings):
+                        severity = "high"
+
+                details = {
+                    "findings": [
+                        {
+                            "file": f.location.file_path,
+                            "line": f.location.start_line,
+                            "title": f.title,
+                            "scanner": f.scanner.value,
+                            "cwe_ids": f.cwe_ids,
+                        }
+                        for f in rule_findings[:5]  # Limit to 5 examples
+                    ],
+                    "total_count": len(rule_findings),
+                    "scan_type": "orchestrator",
+                }
+
+                results.append(ValidationResult(
+                    rule_id=rule.id,
+                    rule_name=rule.name,
+                    category=rule.category.value,
+                    passed=passed,
+                    severity=severity,
+                    message=f"Found {len(rule_findings)} issues" if not passed else "No issues found",
+                    details=details,
+                    blocking=rule.blocking and not passed,
+                ))
+
+            logger.info(
+                f"Security checks complete: {len(report.all_findings)} total findings, "
+                f"{len([r for r in results if not r.passed])} rules failed"
+            )
+
+            return results
+
+        except Exception as e:
+            logger.error(f"Security checks failed: {e}")
+            return results
 
     # ========================================================================
     # VALIDATION IMPLEMENTATIONS

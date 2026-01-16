@@ -1002,11 +1002,13 @@ Respond in JSON format:
             )
 
     async def _run_security_phase(self, assessment: ProjectAssessment) -> PhaseResult:
-        """Phase 4: Security Analysis (Quinn)
+        """Phase 4: Security Analysis (Quinn) - Full Scanner Suite
 
-        Week 113 Fix: Now properly calls MigrationSecurityService.analyze_directory()
-        instead of non-existent scan_security() method.
+        Fase 37: Upgraded to use SecurityScanOrchestrator (9 scanners, 150+ CWEs)
+        instead of MigrationSecurityService (~30 OWASP patterns).
         """
+        from pathlib import Path
+
         start_time = datetime.utcnow()
 
         self._log_verbose("security", "INPUT", "Starting security analysis phase", {
@@ -1015,29 +1017,162 @@ Respond in JSON format:
         })
 
         try:
-            # Use MigrationSecurityService for OWASP pattern scanning
-            self._log_verbose("security", "STEP", "Initializing MigrationSecurityService")
+            # Fase 37: Use SecurityScanOrchestrator for comprehensive scanning
+            from app.services.security_scanner import (
+                SecurityScanOrchestrator,
+                create_security_orchestrator,
+            )
+
+            orchestrator = create_security_orchestrator()
+            self._log_verbose("security", "STEP", "Running SecurityScanOrchestrator (9 scanners)")
+
+            # Run full security scan
+            report = await orchestrator.scan(Path(assessment.directory_path))
+
+            self._log_verbose("security", "STEP", f"Scan complete", {
+                "findings_count": report.total_findings,
+                "scanners_used": [s.value for s in report.scanners_used],
+                "languages_detected": list(report.languages_detected),
+                "cwe_coverage": len(report.cwe_coverage)
+            })
+
+            # Map findings to assessment format
+            findings_list = []
+            for finding in report.all_findings:
+                findings_list.append({
+                    "id": finding.id,
+                    "rule_id": finding.rule_id,
+                    "scanner": finding.scanner.value,
+                    "title": finding.title,
+                    "description": finding.description,
+                    "severity": finding.severity.value,
+                    "category": finding.category,
+                    "cwe_ids": finding.cwe_ids,
+                    "is_cwe_top_25": finding.is_cwe_top_25,
+                    "file_path": finding.location.file_path,
+                    "line_number": finding.location.start_line,
+                    "code_snippet": finding.location.snippet[:200] if finding.location.snippet else "",
+                })
+
+            # Get severity counts
+            severity_summary = report.get_severity_summary()
+
+            # Update assessment with findings
+            assessment.security_findings = findings_list
+            assessment.security_finding_count = len(findings_list)
+            assessment.security_critical_count = report.total_critical
+            assessment.security_high_count = report.total_high
+            assessment.security_medium_count = severity_summary.get("medium", 0)
+            assessment.security_low_count = severity_summary.get("low", 0)
+
+            # Store scanner metadata (Fase 37)
+            assessment.security_scanners_used = [s.value for s in report.scanners_used]
+            assessment.security_languages_detected = list(report.languages_detected)
+            assessment.security_cwe_coverage = report.cwe_coverage
+
+            # Calculate risk score based on findings
+            risk = (
+                report.total_critical * 10 +
+                report.total_high * 5 +
+                severity_summary.get("medium", 0) * 2 +
+                severity_summary.get("low", 0) * 0.5
+            )
+            assessment.security_risk_score = min(100, risk)
+
+            # Grade calculation
+            if risk <= 10:
+                assessment.security_grade = "A"
+            elif risk <= 25:
+                assessment.security_grade = "B"
+            elif risk <= 50:
+                assessment.security_grade = "C"
+            elif risk <= 75:
+                assessment.security_grade = "D"
+            else:
+                assessment.security_grade = "F"
+
+            # Extract focus areas from findings
+            focus_areas = list(set(f.category for f in report.all_findings if f.category))[:5]
+            priority_files = list(set(f.location.file_path for f in report.all_findings))[:10]
+
+            # Store Quinn context for detailed review
+            assessment.security_findings.append({
+                "_quinn_context": {
+                    "summary": f"{len(findings_list)} findings from {len(report.scanners_used)} scanners",
+                    "focus_areas": focus_areas,
+                    "priority_files": priority_files,
+                    "recommended_tools": [s.value for s in report.scanners_used],
+                    "cwe_top_25_coverage": list(report.cwe_top_25_coverage.keys()),
+                }
+            })
+
+            duration = (datetime.utcnow() - start_time).seconds
+
+            logger.info(f"Security scan completed: {len(findings_list)} findings, grade {assessment.security_grade}")
+
+            result = PhaseResult(
+                success=True,
+                phase_name="security",
+                data={
+                    "findings": findings_list,
+                    "grade": assessment.security_grade,
+                    "risk_score": assessment.security_risk_score,
+                    "scanners_used": [s.value for s in report.scanners_used],
+                    "cwe_coverage": report.cwe_coverage,
+                },
+                duration_seconds=duration,
+                items_processed=assessment.file_count or 0,
+                items_found=len(findings_list)
+            )
+
+            self._log_verbose("security", "OUTPUT", "Security analysis complete", {
+                "grade": assessment.security_grade,
+                "risk_score": assessment.security_risk_score,
+                "findings": len(findings_list),
+                "critical": assessment.security_critical_count,
+                "high": assessment.security_high_count,
+                "medium": assessment.security_medium_count,
+                "low": assessment.security_low_count,
+                "scanners_used": len(report.scanners_used),
+            }, duration_ms=duration * 1000)
+
+            return result
+
+        except ImportError as e:
+            # Fallback to MigrationSecurityService (legacy)
+            logger.warning(f"SecurityScanOrchestrator not available: {e}, falling back to legacy")
+            return await self._run_security_phase_legacy(assessment, start_time)
+
+        except Exception as e:
+            self._log_verbose("security", "ERROR", f"Security analysis failed: {str(e)}")
+            logger.error(f"Security phase failed: {e}")
+            return PhaseResult(
+                success=False,
+                phase_name="security",
+                data={},
+                error=str(e)
+            )
+
+    async def _run_security_phase_legacy(
+        self,
+        assessment: ProjectAssessment,
+        start_time: datetime
+    ) -> PhaseResult:
+        """Legacy security phase using MigrationSecurityService (pre-Fase 37)."""
+        try:
             from app.services.migration_security_service import (
                 get_migration_security_service,
                 SecuritySeverity
             )
             security_service = get_migration_security_service()
 
-            # Run actual security analysis on the directory
-            self._log_verbose("security", "STEP", "Running OWASP pattern scanning")
+            self._log_verbose("security", "STEP", "Running legacy OWASP pattern scanning")
             security_result = security_service.analyze_directory(
                 directory=assessment.directory_path,
-                stacks=None,  # Auto-detect stacks
+                stacks=None,
                 severity_threshold=SecuritySeverity.LOW
             )
 
-            self._log_verbose("security", "STEP", f"Security scan complete", {
-                "findings_count": len(security_result.findings),
-                "files_scanned": security_result.files_scanned,
-                "risk_score": security_result.risk_score.total_score
-            })
-
-            # Map findings to assessment format
             findings_list = []
             for finding in security_result.findings:
                 findings_list.append({
@@ -1063,7 +1198,6 @@ Respond in JSON format:
             assessment.security_risk_score = security_result.risk_score.total_score
             assessment.owasp_coverage = security_result.risk_score.owasp_coverage
 
-            # Calculate grade based on risk score
             risk = security_result.risk_score.total_score
             if risk <= 20:
                 assessment.security_grade = "A"
@@ -1076,7 +1210,6 @@ Respond in JSON format:
             else:
                 assessment.security_grade = "F"
 
-            # Store Quinn context for detailed review
             assessment.security_findings.append({
                 "_quinn_context": {
                     "summary": security_result.quinn_context.summary,
@@ -1088,9 +1221,7 @@ Respond in JSON format:
 
             duration = (datetime.utcnow() - start_time).seconds
 
-            logger.info(f"Security scan completed: {len(findings_list)} findings, grade {assessment.security_grade}")
-
-            result = PhaseResult(
+            return PhaseResult(
                 success=True,
                 phase_name="security",
                 data={
@@ -1105,21 +1236,8 @@ Respond in JSON format:
                 items_found=len(findings_list)
             )
 
-            self._log_verbose("security", "OUTPUT", "Security analysis complete", {
-                "grade": assessment.security_grade,
-                "risk_score": assessment.security_risk_score,
-                "findings": len(findings_list),
-                "critical": assessment.security_critical_count,
-                "high": assessment.security_high_count,
-                "medium": assessment.security_medium_count,
-                "low": assessment.security_low_count
-            }, duration_ms=duration * 1000)
-
-            return result
-
         except Exception as e:
-            self._log_verbose("security", "ERROR", f"Security analysis failed: {str(e)}")
-            logger.error(f"Security phase failed: {e}")
+            logger.error(f"Legacy security phase failed: {e}")
             return PhaseResult(
                 success=False,
                 phase_name="security",

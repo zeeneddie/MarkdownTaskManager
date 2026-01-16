@@ -134,6 +134,16 @@ class MigrationOrchestrator(WorkflowOrchestrator):
                 max_iterations=3,
                 depends_on=["validate_answers"],
             ),
+            # Fase 37: Security analysis stage for migration assessment
+            WorkflowStage(
+                name="security_analysis",
+                description="Analyze security risks in legacy codebase",
+                agents=["Quinn"],  # Security specialist
+                required=True,
+                quality_threshold=0.80,
+                max_iterations=2,
+                depends_on=["technical_analysis"],
+            ),
             WorkflowStage(
                 name="generate_specification",
                 description="Generate comprehensive migration specification",
@@ -142,7 +152,7 @@ class MigrationOrchestrator(WorkflowOrchestrator):
                 parallel_agents=True,
                 quality_threshold=0.85,
                 max_iterations=3,
-                depends_on=["technical_analysis"],
+                depends_on=["security_analysis"],  # Fase 37: Now depends on security analysis
             ),
             WorkflowStage(
                 name="generate_tasks",
@@ -189,6 +199,10 @@ class MigrationOrchestrator(WorkflowOrchestrator):
 
             elif stage.name == "technical_analysis":
                 agent_results = await self._execute_technical_analysis(context)
+
+            # Fase 37: Security analysis stage
+            elif stage.name == "security_analysis":
+                agent_results = await self._execute_security_analysis(context)
 
             elif stage.name == "generate_specification":
                 agent_results = await self._execute_specification(context)
@@ -285,6 +299,123 @@ class MigrationOrchestrator(WorkflowOrchestrator):
             )
             if miguel_result.success:
                 results.update(miguel_result.output)
+
+        return results
+
+    # Fase 37: Security analysis stage
+    async def _execute_security_analysis(
+        self,
+        context: WorkflowContext,
+    ) -> Dict[str, Any]:
+        """Execute security analysis for migration assessment."""
+        from pathlib import Path
+
+        source_path = context.input_data.get("source_path") or context.shared_data.get("source_path")
+
+        results = {
+            "findings": [],
+            "summary": {},
+            "legacy_specific": [],
+            "migration_blockers": [],
+            "quinn_recommendations": [],
+        }
+
+        # Get Quinn for security review
+        extensions = await self.get_agents_for_stage(
+            WorkflowStage("security_analysis", "", ["Quinn"]),
+            context,
+        )
+
+        try:
+            # Use SecurityScanOrchestrator for comprehensive scanning
+            from app.services.security_scanner import create_security_orchestrator
+
+            orchestrator = create_security_orchestrator()
+
+            if source_path:
+                report = await orchestrator.scan(Path(source_path))
+
+                # Separate legacy-specific findings
+                legacy_scanners = ["asp_scanner", "custom_asp", "owasp_scanner"]
+                legacy_findings = [
+                    f for f in report.all_findings
+                    if f.scanner.value in legacy_scanners
+                ]
+                modern_findings = [
+                    f for f in report.all_findings
+                    if f.scanner.value not in legacy_scanners
+                ]
+
+                results["findings"] = [
+                    {
+                        "id": f.id,
+                        "title": f.title,
+                        "severity": f.severity.value,
+                        "category": f.category,
+                        "cwe_ids": f.cwe_ids,
+                        "file": f.location.file_path,
+                        "line": f.location.start_line,
+                        "scanner": f.scanner.value,
+                    }
+                    for f in report.all_findings
+                ]
+
+                results["summary"] = {
+                    "total_findings": report.total_findings,
+                    "critical": report.total_critical,
+                    "high": report.total_high,
+                    "legacy_findings": len(legacy_findings),
+                    "modern_findings": len(modern_findings),
+                    "scanners_used": [s.value for s in report.scanners_used],
+                    "cwe_top_25_coverage": list(report.cwe_top_25_coverage.keys()),
+                }
+
+                results["legacy_specific"] = [
+                    {
+                        "id": f.id,
+                        "title": f.title,
+                        "severity": f.severity.value,
+                        "cwe_ids": f.cwe_ids,
+                    }
+                    for f in legacy_findings
+                ]
+
+                results["migration_blockers"] = [
+                    {
+                        "id": f.id,
+                        "title": f.title,
+                        "file": f.location.file_path,
+                        "cwe_ids": f.cwe_ids,
+                    }
+                    for f in report.all_findings
+                    if f.severity.value == "critical"
+                ]
+
+        except ImportError as e:
+            logger.warning(f"SecurityScanOrchestrator not available: {e}")
+        except Exception as e:
+            logger.error(f"Security scan failed: {e}")
+
+        # Get Quinn to review and provide recommendations
+        quinn = extensions[0] if extensions else None
+        if quinn:
+            quinn_result = await quinn.run_full_lifecycle(
+                task="Review security findings for migration planning",
+                context={
+                    "legacy_findings": len(results.get("legacy_specific", [])),
+                    "modern_findings": results["summary"].get("modern_findings", 0),
+                    "total_findings": results["summary"].get("total_findings", 0),
+                    "critical_count": results["summary"].get("critical", 0),
+                    "source_path": source_path,
+                    "review_type": "migration_security",
+                },
+                entry_id=f"{context.workflow_id}-security-analysis",
+            )
+            if quinn_result.success:
+                results["quinn_recommendations"] = quinn_result.output.get("recommendations", [])
+
+        # Store in shared data for specification generation
+        context.shared_data["security_analysis"] = results
 
         return results
 

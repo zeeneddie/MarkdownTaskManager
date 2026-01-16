@@ -14,6 +14,99 @@ import { agents } from '../configs/agents';
 import QualityGateService from '../services/qualityGateService';
 
 // ============================================================================
+// FASE 37: SECURITY SCANNER INTEGRATION
+// ============================================================================
+
+/**
+ * Interface for SecurityScanOrchestrator response
+ */
+interface SecurityScanResult {
+  project_path: string;
+  scanners_used: string[];
+  languages_detected: string[];
+  summary: {
+    total_findings: number;
+    critical: number;
+    high: number;
+    by_severity: Record<string, number>;
+    by_scanner: Record<string, number>;
+  };
+  cwe_coverage: Record<string, number>;
+  findings: Array<{
+    id: string;
+    rule_id: string;
+    title: string;
+    description: string;
+    severity: string;
+    scanner: string;
+    location: {
+      file: string;
+      start_line: number;
+      end_line: number;
+      snippet?: string;
+    };
+    cwe_ids: string[];
+    is_cwe_top_25: boolean;
+    category?: string;
+  }>;
+}
+
+/**
+ * Call Python backend SecurityScanOrchestrator (Fase 37)
+ */
+async function executeSecurityScan(projectPath: string): Promise<SecurityScanResult | null> {
+  try {
+    console.log('🔒 Running SecurityScanOrchestrator via backend API...');
+
+    const response = await fetch('http://localhost:8000/api/security/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        project_path: projectPath,
+        scan_type: 'full',
+        include_dependencies: true,
+      }),
+    });
+
+    if (!response.ok) {
+      console.warn(`Security scan API returned ${response.status}`);
+      return null;
+    }
+
+    const result: SecurityScanResult = await response.json();
+    console.log(`🔒 Security scan complete: ${result.summary?.total_findings || 0} findings`);
+    return result;
+  } catch (error) {
+    console.warn(`Security scan failed: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Convert security scan findings to analysis findings format
+ */
+function mapSecurityScanToFindings(scanResult: SecurityScanResult): Finding[] {
+  return scanResult.findings.map((f, index) => ({
+    id: f.id || `SEC-${String(index + 1).padStart(3, '0')}`,
+    category: 'security' as const,
+    severity: f.severity === 'critical' ? 'critical' :
+              f.severity === 'high' ? 'high' :
+              f.severity === 'medium' ? 'medium' : 'low',
+    title: f.title,
+    description: f.description,
+    location: f.location ? `${f.location.file}:${f.location.start_line}` : 'Unknown',
+    recommendation: `Fix ${f.cwe_ids?.join(', ') || 'security issue'} - ${f.description}`,
+    estimatedEffort: f.severity === 'critical' ? 3 : f.severity === 'high' ? 2 : 1,
+    riskIfNotFixed: f.severity === 'critical' || f.severity === 'high' ? 'high' : 'medium',
+    autoFixable: false,
+    // Fase 37: Include CWE data
+    cweIds: f.cwe_ids,
+    isCweTop25: f.is_cwe_top_25,
+    scanner: f.scanner,
+  }));
+}
+
+// ============================================================================
 // TYPES & INTERFACES
 // ============================================================================
 
@@ -172,6 +265,10 @@ export interface Finding {
   riskIfNotFixed: 'high' | 'medium' | 'low';
   autoFixable: boolean;
   bestPractice?: string;  // SIG-TOP-10 #X or SOLID: Principle Name
+  // Fase 37: Security scanner metadata
+  cweIds?: string[];      // CWE identifiers (e.g., ['CWE-89', 'CWE-79'])
+  isCweTop25?: boolean;   // Is this a CWE Top 25 vulnerability?
+  scanner?: string;       // Which scanner detected this (e.g., 'opengrep', 'bandit')
 }
 
 // Stage 2: Prioritization types
@@ -305,9 +402,28 @@ async function executeAnalysisStage(
     thresholds: request.thresholds
   });
 
+  // Fase 37: Run SecurityScanOrchestrator when security focus is enabled
+  let securityScanFindings: Finding[] = [];
+  let securityIssueCounts = { critical: 0, high: 0, medium: 0, low: 0 };
+
+  if (!request.focusAreas || request.focusAreas.includes('security')) {
+    const projectPath = request.modulePath || request.targetFiles?.[0] || '.';
+    const securityScanResult = await executeSecurityScan(projectPath);
+
+    if (securityScanResult) {
+      securityScanFindings = mapSecurityScanToFindings(securityScanResult);
+      securityIssueCounts = {
+        critical: securityScanResult.summary?.critical || 0,
+        high: securityScanResult.summary?.high || 0,
+        medium: securityScanResult.summary?.by_severity?.medium || 0,
+        low: securityScanResult.summary?.by_severity?.low || 0,
+      };
+      console.log(`   ✓ SecurityScanOrchestrator: ${securityScanFindings.length} security findings`);
+    }
+  }
+
   // TODO: In production, also execute:
   // - npm audit / pip-audit for dependency vulnerabilities
-  // - OWASP ZAP / Bandit for security
   // - Clinic.js / py-spy for performance
   // - Jest / pytest for test coverage
   //
@@ -326,7 +442,8 @@ async function executeAnalysisStage(
       longMethods: 5,
       largeClasses: 2
     },
-    securityIssues: {
+    // Fase 37: Use real security scan results when available
+    securityIssues: securityScanFindings.length > 0 ? securityIssueCounts : {
       critical: 0,
       high: 3,
       medium: 7,
@@ -405,7 +522,9 @@ async function executeAnalysisStage(
         autoFixable: false
       },
       // Best practice findings from Quality Gate Service
-      ...qualityGateResult.findings
+      ...qualityGateResult.findings,
+      // Fase 37: Add real security scan findings when available
+      ...securityScanFindings
     ]
   };
 

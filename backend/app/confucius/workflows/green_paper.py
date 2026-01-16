@@ -138,6 +138,16 @@ class GreenPaperOrchestrator(WorkflowOrchestrator):
                 max_iterations=3,
                 depends_on=["requirements_constitution", "ux_design"],
             ),
+            # Fase 37: Security requirements review stage
+            WorkflowStage(
+                name="security_requirements",
+                description="Review architecture security requirements",
+                agents=["Quinn"],  # Security specialist
+                required=True,
+                quality_threshold=0.80,
+                max_iterations=2,
+                depends_on=["architecture_design"],
+            ),
             WorkflowStage(
                 name="implementation_planning",
                 description="Create implementation roadmap and sprints",
@@ -146,7 +156,7 @@ class GreenPaperOrchestrator(WorkflowOrchestrator):
                 parallel_agents=True,
                 quality_threshold=0.80,
                 max_iterations=2,
-                depends_on=["architecture_design"],
+                depends_on=["security_requirements"],  # Fase 37: Now depends on security review
             ),
             WorkflowStage(
                 name="quality_review",
@@ -180,6 +190,10 @@ class GreenPaperOrchestrator(WorkflowOrchestrator):
 
             elif stage.name == "architecture_design":
                 agent_results = await self._execute_architecture(context)
+
+            # Fase 37: Security requirements review
+            elif stage.name == "security_requirements":
+                agent_results = await self._execute_security_requirements(context)
 
             elif stage.name == "implementation_planning":
                 agent_results = await self._execute_planning(context)
@@ -368,6 +382,74 @@ class GreenPaperOrchestrator(WorkflowOrchestrator):
             )
             if felix_result.success:
                 results.update(felix_result.output)
+
+        return results
+
+    # Fase 37: Security requirements review stage
+    async def _execute_security_requirements(
+        self,
+        context: WorkflowContext,
+    ) -> Dict[str, Any]:
+        """Execute security requirements review for new project."""
+        architecture = context.shared_data.get("architecture_design_result", {})
+        requirements = context.shared_data.get("requirements_constitution_result", {})
+        project_name = context.shared_data.get("project_name", "")
+
+        # Extract tech stack from architecture
+        tech_stack = architecture.get("technology_stack", [])
+
+        extensions = await self.get_agents_for_stage(
+            WorkflowStage("security_requirements", "", ["Quinn"]),
+            context,
+        )
+
+        results = {
+            "security_requirements": {
+                "authentication": [],
+                "authorization": [],
+                "data_protection": [],
+                "input_validation": [],
+                "logging_audit": [],
+                "dependency_policy": {},
+                "recommended_scanners": [],
+                "cwe_focus_areas": [],
+            },
+            "passes_gate": True,
+        }
+
+        quinn = extensions[0] if extensions else None
+        if quinn:
+            quinn_result = await quinn.run_full_lifecycle(
+                task=f"Review security requirements for new {', '.join(tech_stack) if tech_stack else 'unknown'} project architecture",
+                context={
+                    "architecture": architecture,
+                    "tech_stack": tech_stack,
+                    "requirements": requirements,
+                    "review_type": "security_requirements",
+                    "project_path": context.input_data.get("project_path"),
+                },
+                entry_id=f"{context.workflow_id}-security-requirements",
+            )
+            if quinn_result.success:
+                output = quinn_result.output
+                results["security_requirements"].update({
+                    "authentication": output.get("auth_requirements", []),
+                    "authorization": output.get("authz_requirements", []),
+                    "data_protection": output.get("data_requirements", []),
+                    "input_validation": output.get("input_requirements", []),
+                    "logging_audit": output.get("logging_requirements", []),
+                    "dependency_policy": output.get("dependency_policy", {}),
+                    "recommended_scanners": output.get("recommended_scanners", []),
+                    "cwe_focus_areas": output.get("cwe_focus", []),
+                })
+                results["passes_gate"] = output.get("passes_gate", True)
+
+                # Also store security issues if any
+                if output.get("security_issues"):
+                    results["security_issues"] = output.get("security_issues", [])
+
+        # Store in shared data for Diana and other agents
+        context.shared_data["security_requirements"] = results["security_requirements"]
 
         return results
 

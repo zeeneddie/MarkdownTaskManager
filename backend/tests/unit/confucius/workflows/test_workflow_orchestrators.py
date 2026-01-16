@@ -277,10 +277,11 @@ class TestMigrationOrchestrator:
         """Test getting workflow stages."""
         stages = orchestrator.get_stages()
 
-        assert len(stages) == 6
+        assert len(stages) == 7  # Fase 37: Added security_analysis stage
         stage_names = [s.name for s in stages]
         assert "validate_answers" in stage_names
         assert "technical_analysis" in stage_names
+        assert "security_analysis" in stage_names  # Fase 37
         assert "generate_specification" in stage_names
         assert "generate_tasks" in stage_names
         assert "estimate_effort" in stage_names
@@ -344,12 +345,13 @@ class TestGreenPaperOrchestrator:
         """Test getting workflow stages."""
         stages = orchestrator.get_stages()
 
-        assert len(stages) == 6
+        assert len(stages) == 7  # Fase 37: Added security_requirements stage
         stage_names = [s.name for s in stages]
         assert "validate_vision" in stage_names
         assert "requirements_constitution" in stage_names
         assert "ux_design" in stage_names
         assert "architecture_design" in stage_names
+        assert "security_requirements" in stage_names  # Fase 37
         assert "implementation_planning" in stage_names
         assert "quality_review" in stage_names
 
