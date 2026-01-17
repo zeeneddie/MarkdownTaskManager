@@ -16,7 +16,7 @@ import tempfile
 import json
 from pathlib import Path
 from unittest.mock import patch, MagicMock, AsyncMock
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.services.security_scanner.adapters.cve_scanner import (
     CVEScanner,
@@ -121,8 +121,8 @@ class TestCVERecord:
             cve_id="CVE-TEST",
             title="Test",
             description="Test",
-            published_date=datetime.utcnow(),
-            last_modified=datetime.utcnow(),
+            published_date=datetime.now(timezone.utc),
+            last_modified=datetime.now(timezone.utc),
             cvss_scores=[
                 CVSSScore(version=CVSSVersion.V2, base_score=6.0, vector_string="", severity="MEDIUM"),
                 CVSSScore(version=CVSSVersion.V3_1, base_score=8.5, vector_string="", severity="HIGH"),
@@ -141,8 +141,8 @@ class TestCVERecord:
             cve_id="CVE-TEST",
             title="Test",
             description="Test",
-            published_date=datetime.utcnow(),
-            last_modified=datetime.utcnow(),
+            published_date=datetime.now(timezone.utc),
+            last_modified=datetime.now(timezone.utc),
             cvss_scores=[
                 CVSSScore(version=CVSSVersion.V3_1, base_score=7.5, vector_string="", severity="HIGH"),
             ],
@@ -155,8 +155,8 @@ class TestCVERecord:
             cve_id="CVE-TEST",
             title="Test",
             description="Test",
-            published_date=datetime.utcnow(),
-            last_modified=datetime.utcnow(),
+            published_date=datetime.now(timezone.utc),
+            last_modified=datetime.now(timezone.utc),
             cvss_scores=[
                 CVSSScore(version=CVSSVersion.V3_1, base_score=5.0, vector_string="", severity="MEDIUM"),
             ],
@@ -169,8 +169,8 @@ class TestCVERecord:
             cve_id="CVE-TEST",
             title="Test",
             description="Test",
-            published_date=datetime.utcnow(),
-            last_modified=datetime.utcnow(),
+            published_date=datetime.now(timezone.utc),
+            last_modified=datetime.now(timezone.utc),
         )
         assert cve.severity == Severity.MEDIUM  # Default
 

@@ -13,7 +13,7 @@ Date: 2026-01-15
 """
 
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -117,8 +117,8 @@ def sample_security_report(sample_findings):
     return SecurityReport(
         project_path="/project",
         scan_results=[scan_result],
-        started_at=datetime.utcnow(),
-        completed_at=datetime.utcnow(),
+        started_at=datetime.now(timezone.utc),
+        completed_at=datetime.now(timezone.utc),
         languages_detected={"python"},
         scanners_used={ScannerType.OPENGREP},
     )
@@ -281,7 +281,7 @@ class TestRiskHeatMap:
         """Test D3.js format export."""
         heat_map = RiskHeatMap(
             project_path="/project/myapp",
-            generated_at=datetime.utcnow(),
+            generated_at=datetime.now(timezone.utc),
             overall_risk=RiskScore.from_score(45),
             total_files=5,
             total_findings=10,
@@ -403,7 +403,7 @@ class TestRiskHeatMapService:
         """Test recommendation generation."""
         heat_map = RiskHeatMap(
             project_path="/project",
-            generated_at=datetime.utcnow(),
+            generated_at=datetime.now(timezone.utc),
             overall_risk=RiskScore.from_score(75),
             total_files=10,
             total_findings=20,
@@ -476,8 +476,8 @@ class TestEdgeCases:
         empty_report = SecurityReport(
             project_path="/empty",
             scan_results=[],
-            started_at=datetime.utcnow(),
-            completed_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(timezone.utc),
         )
 
         heat_map = service.generate_heat_map(empty_report)
@@ -509,8 +509,8 @@ class TestEdgeCases:
                     files_scanned=1,
                 )
             ],
-            started_at=datetime.utcnow(),
-            completed_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(timezone.utc),
         )
 
         heat_map = service.generate_heat_map(report)

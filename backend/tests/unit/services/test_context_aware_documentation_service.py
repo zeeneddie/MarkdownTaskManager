@@ -14,7 +14,7 @@ Date: 2026-01-15
 
 import pytest
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -597,7 +597,7 @@ async def update_user(user_id: int):
         project_doc = ProjectDocumentation(
             project_name="TestProject",
             project_path="/project",
-            generated_at=datetime.utcnow(),
+            generated_at=datetime.now(timezone.utc),
             modules=[
                 ModuleDocumentation(
                     module_name="app.main",
@@ -699,7 +699,7 @@ class TestEdgeCases:
         project_doc = ProjectDocumentation(
             project_name="Test",
             project_path="/test",
-            generated_at=datetime.utcnow(),
+            generated_at=datetime.now(timezone.utc),
             documentation_coverage=0.5,
         )
 

@@ -16,7 +16,7 @@ Date: 2026-01-15
 import pytest
 import json
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -105,7 +105,7 @@ def sample_visual_graph(sample_node, sample_edge):
         clusters=[cluster],
         config=VisualGraphConfig(),
         metadata={
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "project_path": "/project",
         },
     )
