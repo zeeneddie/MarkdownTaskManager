@@ -8,7 +8,7 @@ into a consistent internal representation.
 from typing import Dict, Any, Optional, List, Set
 from dataclasses import dataclass, field
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 import hashlib
 
 
@@ -49,6 +49,8 @@ class ScannerType(str, Enum):
     CRYPTO_ERROR = "crypto_error"  # Fase 36: Cryptographic error detector
     CONTROL_FLOW_LOGIC = "control_flow_logic"  # Fase 36: Control flow and logic error detector
     BOOLEAN_LOGIC = "boolean_logic"  # Fase 36: Boolean logic error detector
+    MEMORY_SAFETY = "memory_safety"  # Fase 38: Memory safety detector (CWE-787, 416, 125, 119)
+    CONCURRENCY_ERROR = "concurrency_error"  # Fase 38: Concurrency/race condition detector (CWE-362)
 
 
 # CWE Top 25 (2023) mapping for quick reference
@@ -125,7 +127,7 @@ class SecurityFinding:
     suggested_fixes: List[SuggestedFix] = field(default_factory=list)
 
     # Metadata
-    detected_at: datetime = field(default_factory=datetime.utcnow)
+    detected_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     raw_data: Optional[Dict[str, Any]] = None  # Original scanner output
     tags: Set[str] = field(default_factory=set)
 

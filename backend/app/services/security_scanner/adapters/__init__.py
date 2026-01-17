@@ -107,6 +107,21 @@ from .boolean_logic_detector import (
     create_boolean_logic_detector,
 )
 
+# Fase 38: Memory Safety & Concurrency Scanners
+from .memory_safety_detector import (
+    MemorySafetyDetector,
+    MemorySafetyRule,
+    MEMORY_SAFETY_RULES,
+    create_memory_safety_detector,
+)
+
+from .concurrency_error_detector import (
+    ConcurrencyErrorDetector,
+    ConcurrencyRule,
+    CONCURRENCY_RULES,
+    create_concurrency_error_detector,
+)
+
 
 __all__ = [
     # Base classes
@@ -181,4 +196,14 @@ __all__ = [
     "BooleanLogicRule",
     "BOOLEAN_LOGIC_RULES",
     "create_boolean_logic_detector",
+    # Fase 38: Memory Safety Detector
+    "MemorySafetyDetector",
+    "MemorySafetyRule",
+    "MEMORY_SAFETY_RULES",
+    "create_memory_safety_detector",
+    # Fase 38: Concurrency Error Detector
+    "ConcurrencyErrorDetector",
+    "ConcurrencyRule",
+    "CONCURRENCY_RULES",
+    "create_concurrency_error_detector",
 ]
