@@ -9,7 +9,7 @@ import asyncio
 import logging
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Set, Type
-from datetime import datetime
+from datetime import datetime, timezone
 from collections import defaultdict
 
 from .models.findings import (
@@ -255,7 +255,7 @@ class SecurityScanOrchestrator:
         Returns:
             SecurityReport with all findings
         """
-        started_at = datetime.utcnow()
+        started_at = datetime.now(timezone.utc)
 
         # Detect languages if not provided
         if languages is None:
@@ -277,7 +277,7 @@ class SecurityScanOrchestrator:
                 project_path=str(target_path),
                 scan_results=[],
                 started_at=started_at,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(timezone.utc),
                 languages_detected=languages,
                 scanners_used=set(),
             )
@@ -303,7 +303,7 @@ class SecurityScanOrchestrator:
                 scan_results.append(result)
                 scanners_used.add(result.scanner)
 
-        completed_at = datetime.utcnow()
+        completed_at = datetime.now(timezone.utc)
 
         return SecurityReport(
             project_path=str(target_path),

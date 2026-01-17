@@ -13,7 +13,7 @@ import shutil
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Set
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ..models.findings import (
     SecurityFinding, ScanResult, Severity, ScannerType, Location, SuggestedFix,
@@ -224,7 +224,7 @@ class ExternalCLIScanner(BaseScanner):
                 f"Please install it or add it to PATH."
             )
 
-        started_at = datetime.utcnow()
+        started_at = datetime.now(timezone.utc)
         errors = []
         warnings = []
 
@@ -280,7 +280,7 @@ class ExternalCLIScanner(BaseScanner):
             # Count scanned files
             files_scanned = self._count_files(target_path)
 
-            completed_at = datetime.utcnow()
+            completed_at = datetime.now(timezone.utc)
             duration_ms = int((completed_at - started_at).total_seconds() * 1000)
 
             return ScanResult(
@@ -352,7 +352,7 @@ class CustomPatternScanner(BaseScanner):
         """Execute pattern-based scan."""
         import re
 
-        started_at = datetime.utcnow()
+        started_at = datetime.now(timezone.utc)
         findings = []
         files_scanned = 0
         errors = []
@@ -412,7 +412,7 @@ class CustomPatternScanner(BaseScanner):
                 errors.append(f"Error scanning {file_path}: {e}")
                 logger.error(f"Error scanning {file_path}: {e}")
 
-        completed_at = datetime.utcnow()
+        completed_at = datetime.now(timezone.utc)
         duration_ms = int((completed_at - started_at).total_seconds() * 1000)
 
         return ScanResult(

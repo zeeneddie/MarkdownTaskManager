@@ -14,7 +14,7 @@ import json
 import logging
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Set, Tuple
@@ -383,12 +383,12 @@ class CVEDatabaseService:
         try:
             published_date = datetime.fromisoformat(published.replace("Z", "+00:00"))
         except:
-            published_date = datetime.utcnow()
+            published_date = datetime.now(timezone.utc)
 
         try:
             modified_date = datetime.fromisoformat(modified.replace("Z", "+00:00"))
         except:
-            modified_date = datetime.utcnow()
+            modified_date = datetime.now(timezone.utc)
 
         # Parse references
         references = []
@@ -446,12 +446,12 @@ class CVEDatabaseService:
         try:
             published_date = datetime.fromisoformat(published.replace("Z", "+00:00"))
         except:
-            published_date = datetime.utcnow()
+            published_date = datetime.now(timezone.utc)
 
         try:
             modified_date = datetime.fromisoformat(modified.replace("Z", "+00:00"))
         except:
-            modified_date = datetime.utcnow()
+            modified_date = datetime.now(timezone.utc)
 
         # Parse references
         references = [ref.get("url", "") for ref in data.get("references", [])]
@@ -547,7 +547,7 @@ class CVEScanner(CustomPatternScanner):
         Returns:
             Scan result with findings
         """
-        started_at = datetime.utcnow()
+        started_at = datetime.now(timezone.utc)
         config = config or {}
 
         # Parse dependencies from lock files
@@ -578,7 +578,7 @@ class CVEScanner(CustomPatternScanner):
 
             files_scanned += 1
 
-        completed_at = datetime.utcnow()
+        completed_at = datetime.now(timezone.utc)
         duration_ms = int((completed_at - started_at).total_seconds() * 1000)
 
         return ScanResult(
@@ -901,7 +901,7 @@ class CVEScanner(CustomPatternScanner):
             medium_count=medium,
             low_count=low,
             cve_sources_used=["OSV", "NVD"],
-            scan_timestamp=datetime.utcnow(),
+            scan_timestamp=datetime.now(timezone.utc),
             cache_status="active",
             ecosystem_breakdown=ecosystem_breakdown,
             top_vulnerabilities=[

@@ -188,9 +188,9 @@ class TrivyAdapter(ExternalCLIScanner):
         """
         import tempfile
         import asyncio
-        from datetime import datetime
+        from datetime import datetime, timezone
 
-        started_at = datetime.utcnow()
+        started_at = datetime.now(timezone.utc)
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".sarif", delete=False) as tmp:
             output_path = Path(tmp.name)
@@ -225,7 +225,7 @@ class TrivyAdapter(ExternalCLIScanner):
             sarif_log = parser.parse_file(output_path)
             findings = parser.to_security_findings(sarif_log)
 
-            completed_at = datetime.utcnow()
+            completed_at = datetime.now(timezone.utc)
             duration_ms = int((completed_at - started_at).total_seconds() * 1000)
 
             return ScanResult(

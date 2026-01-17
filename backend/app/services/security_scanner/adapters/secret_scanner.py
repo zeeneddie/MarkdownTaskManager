@@ -876,9 +876,9 @@ class SecretScanner(CustomPatternScanner):
         - Entropy-based detection
         - Confidence scoring
         """
-        from datetime import datetime
+        from datetime import datetime, timezone
 
-        started_at = datetime.utcnow()
+        started_at = datetime.now(timezone.utc)
         findings = []
         files_scanned = 0
         errors = []
@@ -967,7 +967,7 @@ class SecretScanner(CustomPatternScanner):
                 errors.append(f"Error scanning {file_path}: {e}")
                 logger.error(f"Error scanning {file_path}: {e}")
 
-        completed_at = datetime.utcnow()
+        completed_at = datetime.now(timezone.utc)
         duration_ms = int((completed_at - started_at).total_seconds() * 1000)
 
         # Deduplicate findings
