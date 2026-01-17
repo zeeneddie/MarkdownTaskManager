@@ -20,7 +20,7 @@ import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Set
-from datetime import datetime
+from datetime import datetime, timezone
 
 from ..models.findings import (
     SecurityFinding, ScanResult, Severity, ScannerType, Location, SuggestedFix,
@@ -743,7 +743,7 @@ class CryptoErrorDetector(BaseScanner):
         config: Optional[Dict[str, Any]] = None,
     ) -> ScanResult:
         """Execute cryptographic security scan."""
-        started_at = datetime.utcnow()
+        started_at = datetime.now(timezone.utc)
         findings = []
         files_scanned = 0
         errors = []
@@ -823,7 +823,7 @@ class CryptoErrorDetector(BaseScanner):
                 errors.append(f"Error scanning {file_path}: {e}")
                 logger.error(f"Error scanning {file_path}: {e}")
 
-        completed_at = datetime.utcnow()
+        completed_at = datetime.now(timezone.utc)
         duration_ms = int((completed_at - started_at).total_seconds() * 1000)
 
         return ScanResult(
