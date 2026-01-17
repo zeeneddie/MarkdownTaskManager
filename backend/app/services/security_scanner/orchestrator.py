@@ -23,6 +23,12 @@ from .adapters.trivy_adapter import TrivyAdapter
 from .adapters.asp_scanner import ClassicASPScanner
 from .adapters.secret_scanner import SecretScanner
 from .adapters.owasp_scanner import OWASPScanner
+from .adapters.generic_security_scanner import GenericSecurityScanner
+from .adapters.code_quality_scanner import CodeQualityScanner
+# Fase 36: Logic & Crypto Scanners
+from .adapters.crypto_error_detector import CryptoErrorDetector
+from .adapters.control_flow_logic_detector import ControlFlowLogicDetector
+from .adapters.boolean_logic_detector import BooleanLogicDetector
 
 logger = logging.getLogger(__name__)
 
@@ -30,24 +36,27 @@ logger = logging.getLogger(__name__)
 # Language detection by file extension
 EXTENSION_TO_LANGUAGE = {
     # Python
-    ".py": "python", ".pyw": "python",
+    ".py": "python", ".pyw": "python", ".pyx": "python",
     # JavaScript/TypeScript
-    ".js": "javascript", ".jsx": "javascript", ".mjs": "javascript",
+    ".js": "javascript", ".jsx": "javascript", ".mjs": "javascript", ".cjs": "javascript",
     ".ts": "typescript", ".tsx": "typescript",
+    ".vue": "javascript", ".svelte": "javascript",
     # Go
     ".go": "go",
     # Ruby
-    ".rb": "ruby", ".erb": "ruby",
+    ".rb": "ruby", ".erb": "ruby", ".rake": "ruby", ".gemspec": "ruby",
     # PHP
-    ".php": "php",
+    ".php": "php", ".phtml": "php", ".php3": "php", ".php4": "php", ".php5": "php",
     # Java
-    ".java": "java",
+    ".java": "java", ".jsp": "java", ".jspx": "java",
     # Kotlin
     ".kt": "kotlin", ".kts": "kotlin",
     # Scala
-    ".scala": "scala",
+    ".scala": "scala", ".sc": "scala",
     # C#
-    ".cs": "csharp",
+    ".cs": "csharp", ".cshtml": "csharp", ".razor": "csharp",
+    # VB.NET
+    ".vb": "vbnet", ".aspx": "vbnet", ".ascx": "vbnet", ".asmx": "vbnet", ".ashx": "vbnet",
     # C/C++
     ".c": "c", ".h": "c", ".cpp": "cpp", ".hpp": "cpp",
     # Rust
@@ -71,32 +80,34 @@ EXTENSION_TO_LANGUAGE = {
 }
 
 # Scanners appropriate for each language
-# SecretScanner and OWASPScanner are included for all languages
+# SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner, and Fase 36 scanners are included for relevant languages
 LANGUAGE_SCANNERS: Dict[str, List[Type[BaseScanner]]] = {
-    # Languages covered by OpenGrep
-    "python": [OpenGrepAdapter, BanditAdapter, SecretScanner, OWASPScanner],
-    "javascript": [OpenGrepAdapter, SecretScanner, OWASPScanner],
-    "typescript": [OpenGrepAdapter, SecretScanner, OWASPScanner],
-    "go": [OpenGrepAdapter, GosecAdapter, SecretScanner, OWASPScanner],
-    "java": [OpenGrepAdapter, SecretScanner, OWASPScanner],
-    "kotlin": [OpenGrepAdapter, SecretScanner, OWASPScanner],
-    "scala": [OpenGrepAdapter, SecretScanner, OWASPScanner],
-    "csharp": [OpenGrepAdapter, SecretScanner, OWASPScanner],
-    "ruby": [OpenGrepAdapter, SecretScanner, OWASPScanner],
-    "php": [OpenGrepAdapter, SecretScanner, OWASPScanner],
-    "rust": [OpenGrepAdapter, SecretScanner, OWASPScanner],
-    "swift": [OpenGrepAdapter, SecretScanner, OWASPScanner],
-    "c": [OpenGrepAdapter, SecretScanner, OWASPScanner],
-    "cpp": [OpenGrepAdapter, SecretScanner, OWASPScanner],
+    # Languages covered by OpenGrep + Generic Security Scanner + Code Quality Scanner + Fase 36 Scanners
+    "python": [OpenGrepAdapter, BanditAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector],
+    "javascript": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector],
+    "typescript": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector],
+    "go": [OpenGrepAdapter, GosecAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector],
+    "java": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector],
+    "kotlin": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner],
+    "scala": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner],
+    "csharp": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector],
+    "ruby": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector],
+    "php": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector],
+    "rust": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner],
+    "swift": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner],
+    "c": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector],
+    "cpp": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector],
+    # VB.NET (new - for .aspx, .vb files)
+    "vbnet": [ClassicASPScanner, SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner],
     # Legacy languages (custom scanners)
-    "asp": [ClassicASPScanner, SecretScanner, OWASPScanner],
-    "vbscript": [ClassicASPScanner, SecretScanner, OWASPScanner],
+    "asp": [ClassicASPScanner, SecretScanner, OWASPScanner, GenericSecurityScanner],
+    "vbscript": [ClassicASPScanner, SecretScanner, OWASPScanner, GenericSecurityScanner],
     # Config languages (high priority for secrets)
-    "terraform": [OpenGrepAdapter, TrivyAdapter, SecretScanner, OWASPScanner],
-    "yaml": [OpenGrepAdapter, TrivyAdapter, SecretScanner, OWASPScanner],
-    "json": [OpenGrepAdapter, SecretScanner, OWASPScanner],
-    "xml": [OpenGrepAdapter, SecretScanner, OWASPScanner],
-    "html": [OpenGrepAdapter, SecretScanner, OWASPScanner],
+    "terraform": [OpenGrepAdapter, TrivyAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner],
+    "yaml": [OpenGrepAdapter, TrivyAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner],
+    "json": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner],
+    "xml": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner],
+    "html": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner],
 }
 
 
@@ -141,6 +152,12 @@ class SecurityScanOrchestrator:
             (ScannerType.CUSTOM_ASP, ClassicASPScanner),
             (ScannerType.SECRET_SCANNER, SecretScanner),  # K3: Secret Detection
             (ScannerType.OWASP_SCANNER, OWASPScanner),  # K1: OWASP Top 10
+            (ScannerType.GENERIC_SECURITY, GenericSecurityScanner),  # CVD-2025-001: Generic multi-language
+            (ScannerType.CODE_QUALITY, CodeQualityScanner),  # Code quality: Common programming mistakes
+            # Fase 36: Logic & Crypto Scanners
+            (ScannerType.CRYPTO_ERROR, CryptoErrorDetector),  # Cryptographic vulnerability detection
+            (ScannerType.CONTROL_FLOW_LOGIC, ControlFlowLogicDetector),  # Control flow and logic errors
+            (ScannerType.BOOLEAN_LOGIC, BooleanLogicDetector),  # Boolean logic and comparison errors
         ]
 
         for scanner_type, scanner_class in scanner_classes:

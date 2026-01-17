@@ -44,6 +44,11 @@ class ScannerType(str, Enum):
     SECRET_SCANNER = "secret_scanner"  # K3: Secret Detection (Fase 24)
     OWASP_SCANNER = "owasp_scanner"  # K1: OWASP Top 10 Integration (Fase 24)
     CVE_SCANNER = "cve_scanner"  # K2: CVE Database Integration (Fase 24)
+    GENERIC_SECURITY = "generic_security"  # Generic multi-language security scanner (CVD-2025-001)
+    CODE_QUALITY = "code_quality"  # Code quality scanner (common programming mistakes)
+    CRYPTO_ERROR = "crypto_error"  # Fase 36: Cryptographic error detector
+    CONTROL_FLOW_LOGIC = "control_flow_logic"  # Fase 36: Control flow and logic error detector
+    BOOLEAN_LOGIC = "boolean_logic"  # Fase 36: Boolean logic error detector
 
 
 # CWE Top 25 (2023) mapping for quick reference

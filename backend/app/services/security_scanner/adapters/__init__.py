@@ -67,6 +67,46 @@ from .cve_scanner import (
     create_cve_scanner,
 )
 
+from .generic_security_scanner import (
+    GenericSecurityScanner,
+    GenericSecurityRule,
+    LanguagePattern,
+    LanguageDefinition,
+    GENERIC_SECURITY_RULES,
+    SUPPORTED_LANGUAGES,
+    create_generic_security_scanner,
+)
+
+from .code_quality_scanner import (
+    CodeQualityScanner,
+    CodeQualityRule,
+    QualityCategory,
+    CODE_QUALITY_RULES,
+    create_code_quality_scanner,
+)
+
+# Fase 36: Logic & Crypto Scanners
+from .crypto_error_detector import (
+    CryptoErrorDetector,
+    CryptoRule,
+    CRYPTO_RULES,
+    create_crypto_error_detector,
+)
+
+from .control_flow_logic_detector import (
+    ControlFlowLogicDetector,
+    ControlFlowRule,
+    CONTROL_FLOW_RULES,
+    create_control_flow_logic_detector,
+)
+
+from .boolean_logic_detector import (
+    BooleanLogicDetector,
+    BooleanLogicRule,
+    BOOLEAN_LOGIC_RULES,
+    create_boolean_logic_detector,
+)
+
 
 __all__ = [
     # Base classes
@@ -112,4 +152,33 @@ __all__ = [
     "VulnerabilityMatch",
     "CVECoverageReport",
     "create_cve_scanner",
+    # Generic Multi-Language Security (CVD-2025-001)
+    "GenericSecurityScanner",
+    "GenericSecurityRule",
+    "LanguagePattern",
+    "LanguageDefinition",
+    "GENERIC_SECURITY_RULES",
+    "SUPPORTED_LANGUAGES",
+    "create_generic_security_scanner",
+    # Code Quality Scanner (Common Programming Mistakes)
+    "CodeQualityScanner",
+    "CodeQualityRule",
+    "QualityCategory",
+    "CODE_QUALITY_RULES",
+    "create_code_quality_scanner",
+    # Fase 36: Crypto Error Detector
+    "CryptoErrorDetector",
+    "CryptoRule",
+    "CRYPTO_RULES",
+    "create_crypto_error_detector",
+    # Fase 36: Control Flow Logic Detector
+    "ControlFlowLogicDetector",
+    "ControlFlowRule",
+    "CONTROL_FLOW_RULES",
+    "create_control_flow_logic_detector",
+    # Fase 36: Boolean Logic Detector
+    "BooleanLogicDetector",
+    "BooleanLogicRule",
+    "BOOLEAN_LOGIC_RULES",
+    "create_boolean_logic_detector",
 ]
