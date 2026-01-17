@@ -32,6 +32,9 @@ from .adapters.boolean_logic_detector import BooleanLogicDetector
 # Fase 38: Memory Safety & Concurrency Scanners
 from .adapters.memory_safety_detector import MemorySafetyDetector
 from .adapters.concurrency_error_detector import ConcurrencyErrorDetector
+# Fase 39: Web Security & Path Security Scanners
+from .adapters.web_security_detector import WebSecurityDetector
+from .adapters.path_security_detector import PathSecurityDetector
 
 logger = logging.getLogger(__name__)
 
@@ -83,23 +86,23 @@ EXTENSION_TO_LANGUAGE = {
 }
 
 # Scanners appropriate for each language
-# SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner, Fase 36 and Fase 38 scanners are included for relevant languages
+# SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner, Fase 36, 38, 39 scanners are included for relevant languages
 LANGUAGE_SCANNERS: Dict[str, List[Type[BaseScanner]]] = {
-    # Languages covered by OpenGrep + Generic Security Scanner + Code Quality Scanner + Fase 36 + Fase 38 Scanners
-    "python": [OpenGrepAdapter, BanditAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector, ConcurrencyErrorDetector],
-    "javascript": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector],
-    "typescript": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector],
-    "go": [OpenGrepAdapter, GosecAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector, ConcurrencyErrorDetector],
-    "java": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector, ConcurrencyErrorDetector],
+    # Languages covered by OpenGrep + Generic Security Scanner + Code Quality Scanner + Fase 36 + Fase 38 + Fase 39 Scanners
+    "python": [OpenGrepAdapter, BanditAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector, ConcurrencyErrorDetector, WebSecurityDetector, PathSecurityDetector],
+    "javascript": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector, WebSecurityDetector, PathSecurityDetector],
+    "typescript": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector, WebSecurityDetector, PathSecurityDetector],
+    "go": [OpenGrepAdapter, GosecAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector, ConcurrencyErrorDetector, PathSecurityDetector],
+    "java": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector, ConcurrencyErrorDetector, WebSecurityDetector, PathSecurityDetector],
     "kotlin": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner],
     "scala": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner],
-    "csharp": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector],
-    "ruby": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector],
-    "php": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector],
+    "csharp": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector, WebSecurityDetector, PathSecurityDetector],
+    "ruby": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector, WebSecurityDetector, PathSecurityDetector],
+    "php": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector, WebSecurityDetector, PathSecurityDetector],
     "rust": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, MemorySafetyDetector],
     "swift": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner],
-    "c": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector, MemorySafetyDetector, ConcurrencyErrorDetector],
-    "cpp": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector, MemorySafetyDetector, ConcurrencyErrorDetector],
+    "c": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector, MemorySafetyDetector, ConcurrencyErrorDetector, PathSecurityDetector],
+    "cpp": [OpenGrepAdapter, SecretScanner, OWASPScanner, GenericSecurityScanner, CryptoErrorDetector, ControlFlowLogicDetector, BooleanLogicDetector, MemorySafetyDetector, ConcurrencyErrorDetector, PathSecurityDetector],
     # VB.NET (new - for .aspx, .vb files)
     "vbnet": [ClassicASPScanner, SecretScanner, OWASPScanner, GenericSecurityScanner, CodeQualityScanner],
     # Legacy languages (custom scanners)
@@ -164,6 +167,9 @@ class SecurityScanOrchestrator:
             # Fase 38: Memory Safety & Concurrency Scanners
             (ScannerType.MEMORY_SAFETY, MemorySafetyDetector),  # Buffer overflow, use-after-free (CWE-787, 416, 125, 119)
             (ScannerType.CONCURRENCY_ERROR, ConcurrencyErrorDetector),  # Race conditions, deadlock (CWE-362)
+            # Fase 39: Web Security & Path Security Scanners
+            (ScannerType.WEB_SECURITY, WebSecurityDetector),  # Prototype pollution, CSV injection, invalid quantity (CWE-1321, 1236, 1284)
+            (ScannerType.PATH_SECURITY, PathSecurityDetector),  # DLL hijack, unquoted path, ReDoS (CWE-427, 428, 1333)
         ]
 
         for scanner_type, scanner_class in scanner_classes:

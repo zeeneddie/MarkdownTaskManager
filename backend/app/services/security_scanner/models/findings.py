@@ -51,6 +51,8 @@ class ScannerType(str, Enum):
     BOOLEAN_LOGIC = "boolean_logic"  # Fase 36: Boolean logic error detector
     MEMORY_SAFETY = "memory_safety"  # Fase 38: Memory safety detector (CWE-787, 416, 125, 119)
     CONCURRENCY_ERROR = "concurrency_error"  # Fase 38: Concurrency/race condition detector (CWE-362)
+    WEB_SECURITY = "web_security"  # Fase 39: Web security (CWE-1321, 1236, 1284)
+    PATH_SECURITY = "path_security"  # Fase 39: Path security (CWE-427, 428, 1333)
 
 
 # CWE Top 25 (2023) mapping for quick reference

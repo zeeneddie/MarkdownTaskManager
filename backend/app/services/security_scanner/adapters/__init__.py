@@ -122,6 +122,21 @@ from .concurrency_error_detector import (
     create_concurrency_error_detector,
 )
 
+# Fase 39: Web Security & Path Security Scanners
+from .web_security_detector import (
+    WebSecurityDetector,
+    WebSecurityRule,
+    WEB_SECURITY_RULES,
+    create_web_security_detector,
+)
+
+from .path_security_detector import (
+    PathSecurityDetector,
+    PathSecurityRule,
+    PATH_SECURITY_RULES,
+    create_path_security_detector,
+)
+
 
 __all__ = [
     # Base classes
@@ -206,4 +221,14 @@ __all__ = [
     "ConcurrencyRule",
     "CONCURRENCY_RULES",
     "create_concurrency_error_detector",
+    # Fase 39: Web Security Detector
+    "WebSecurityDetector",
+    "WebSecurityRule",
+    "WEB_SECURITY_RULES",
+    "create_web_security_detector",
+    # Fase 39: Path Security Detector
+    "PathSecurityDetector",
+    "PathSecurityRule",
+    "PATH_SECURITY_RULES",
+    "create_path_security_detector",
 ]
