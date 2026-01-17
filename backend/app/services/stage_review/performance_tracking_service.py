@@ -7,7 +7,7 @@ Handles database storage of review sessions and performance analytics.
 
 import logging
 from typing import Dict, List, Optional, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from dataclasses import dataclass, field
 
 from .types import (
@@ -157,7 +157,7 @@ class PerformanceTrackingService:
             ),
             "duration_ms": result.metrics.get("duration_ms", 0),
             "improvement_applied": result.improved_artifact is not None,
-            "created_at": result.created_at or datetime.utcnow(),
+            "created_at": result.created_at or datetime.now(timezone.utc),
             "issues": [self._serialize_issue(i) for i in result.issues],
         }
 
@@ -389,7 +389,7 @@ class PerformanceTrackingService:
         Returns:
             Overall performance report
         """
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
 
         # Filter sessions by date
         recent_sessions = [
@@ -457,7 +457,7 @@ class PerformanceTrackingService:
             best_performing_model=best_model,
             worst_performing_stage=worst_stage,
             period_start=cutoff,
-            period_end=datetime.utcnow(),
+            period_end=datetime.now(timezone.utc),
         )
 
     def _serialize_issue(self, issue: ConsolidatedIssue) -> Dict[str, Any]:

@@ -13,7 +13,7 @@ import io
 import logging
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
@@ -105,7 +105,7 @@ class VisualRegressionService:
             result=ComparisonResult.NEW_BASELINE,
             viewport_width=viewport_width,
             viewport_height=viewport_height,
-            executed_at=datetime.utcnow(),
+            executed_at=datetime.now(timezone.utc),
         )
 
         try:
@@ -132,7 +132,7 @@ class VisualRegressionService:
             self._baselines[test_id] = {
                 "path": str(baseline_path),
                 "url": url,
-                "captured_at": datetime.utcnow().isoformat(),
+                "captured_at": datetime.now(timezone.utc).isoformat(),
                 "viewport": {"width": viewport_width, "height": viewport_height},
             }
 
@@ -190,7 +190,7 @@ class VisualRegressionService:
             threshold=threshold,
             viewport_width=viewport_width,
             viewport_height=viewport_height,
-            executed_at=datetime.utcnow(),
+            executed_at=datetime.now(timezone.utc),
         )
 
         # Get baseline path

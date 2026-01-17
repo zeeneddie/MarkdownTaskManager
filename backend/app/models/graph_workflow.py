@@ -3,7 +3,7 @@ Week 88: Graph Workflow Integration Models
 
 SQLAlchemy models for graph-based workflow integration and portal feature requests.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 from sqlalchemy import Column, String, Integer, Float, DateTime, Text, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID, JSONB
@@ -50,8 +50,8 @@ class PortalFeatureRequest(Base):
     sprint_id = Column(Integer, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, onupdate=lambda: datetime.now(timezone.utc))
     completed_at = Column(DateTime, nullable=True)
 
     # Relationships
@@ -99,7 +99,7 @@ class GraphAnalysisCache(Base):
     entity_type = Column(String(50), nullable=True)
     result = Column(JSONB, nullable=False)
     metrics = Column(JSONB, nullable=True)
-    computed_at = Column(DateTime, default=lambda: datetime.utcnow())
+    computed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     expires_at = Column(DateTime, nullable=True)
     cache_hit_count = Column(Integer, default=0)
 
@@ -137,7 +137,7 @@ class WorkflowGraphIntegration(Base):
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     duration_ms = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     project = relationship("Project", backref="graph_integrations")

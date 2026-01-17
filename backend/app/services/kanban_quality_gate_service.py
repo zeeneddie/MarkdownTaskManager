@@ -11,7 +11,7 @@ Features:
 - Blocking vs non-blocking validation modes
 """
 from typing import Optional, Dict, Any, List, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from dataclasses import dataclass
 import logging
@@ -549,7 +549,7 @@ class KanbanQualityGateService:
             "by_category": by_category,
             "by_severity": by_severity,
             "blocking_count": sum(1 for r in results if not r.passed and r.blocking),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     # ========================================================================

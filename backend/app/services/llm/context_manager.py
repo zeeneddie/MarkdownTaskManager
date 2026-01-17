@@ -12,7 +12,7 @@ Manages LLM context windows efficiently by:
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any, Tuple
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 import hashlib
 import json
 
@@ -33,7 +33,7 @@ class ContextItem:
     source: str
     priority: ContextPriority
     tokens: int
-    timestamp: datetime = field(default_factory=lambda: datetime.utcnow())
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     relevance_score: float = 1.0
     compressed: bool = False
     cache_key: Optional[str] = None

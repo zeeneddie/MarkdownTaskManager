@@ -22,7 +22,7 @@ Date: 2025-11-24
 from typing import List, Dict, Any, Optional, Callable, Awaitable
 from dataclasses import dataclass, field
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 import asyncio
 import logging
 
@@ -265,7 +265,7 @@ class AgentValidationLoopService:
         Returns:
             ValidationLoopResult with final status and all attempts
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         attempts: List[ValidationAttempt] = []
         current_code = initial_code
         total_errors_fixed = 0
@@ -302,7 +302,7 @@ class AgentValidationLoopService:
             # Create attempt record
             attempt = ValidationAttempt(
                 iteration=iteration,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 code_hash=hash(current_code),
                 validation_result=validation_result,
                 gate_result=gate_result,
@@ -314,7 +314,7 @@ class AgentValidationLoopService:
             # Check if passed
             if gate_result.passed:
                 attempts.append(attempt)
-                duration = (datetime.utcnow() - start_time).total_seconds()
+                duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
                 logger.info(f"Validation PASSED after {iteration} iteration(s)")
 
@@ -349,7 +349,7 @@ class AgentValidationLoopService:
                 break
 
         # Max iterations reached
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
         logger.warning(f"Validation FAILED after {max_iterations} iterations")
 

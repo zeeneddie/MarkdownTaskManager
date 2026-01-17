@@ -240,7 +240,7 @@ Be realistic and thorough. If the feature is simple, impacts can be "none" or "l
             tokens_used=tokens_used,
             # Cache
             is_stale=False,
-            expires_at=datetime.utcnow() + timedelta(hours=self.CACHE_HOURS),
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=self.CACHE_HOURS),
         )
 
         self.db.add(preview)

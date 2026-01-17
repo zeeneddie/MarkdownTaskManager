@@ -4,7 +4,7 @@ MultiFileProjectParser - Parse nested markdown structure into Python objects
 
 from pathlib import Path
 from typing import Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 import yaml
 import logging
@@ -34,7 +34,7 @@ class MultiFileProjectParser:
             "features": [],
             "stories": [],
             "tasks": [],
-            "parse_time": datetime.utcnow()
+            "parse_time": datetime.now(timezone.utc)
         }
 
         # Parse all epics

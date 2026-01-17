@@ -113,7 +113,7 @@ class FeedbackLoopService:
 
         if request:
             request.status = FeedbackRequestStatus.RESPONDED.value
-            request.responded_at = datetime.utcnow()
+            request.responded_at = datetime.now(timezone.utc)
             request.feedback_id = feedback.id
 
     async def create_feedback_request(
@@ -159,7 +159,7 @@ class FeedbackLoopService:
             trigger_event=trigger_event,
             message=message or f"We'd love to hear your thoughts on the recently delivered feature!",
             status=FeedbackRequestStatus.PENDING.value,
-            expires_at=datetime.utcnow() + timedelta(days=expires_in_days),
+            expires_at=datetime.now(timezone.utc) + timedelta(days=expires_in_days),
         )
 
         self.db.add(request)
@@ -188,7 +188,7 @@ class FeedbackLoopService:
             return {"success": False, "error": f"Request is not pending (status: {request.status})"}
 
         request.status = FeedbackRequestStatus.SENT.value
-        request.sent_at = datetime.utcnow()
+        request.sent_at = datetime.now(timezone.utc)
 
         await self.db.commit()
 
@@ -317,7 +317,7 @@ class FeedbackLoopService:
 
         feedback.status = new_status
         feedback.reviewed_by = reviewed_by
-        feedback.reviewed_at = datetime.utcnow()
+        feedback.reviewed_at = datetime.now(timezone.utc)
         if action_taken:
             feedback.action_taken = action_taken
 
@@ -336,7 +336,7 @@ class FeedbackLoopService:
         days: int = 30,
     ) -> Dict[str, Any]:
         """Get feedback statistics."""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(timezone.utc) - timedelta(days=days)
 
         query = select(FeatureFeedback).where(
             FeatureFeedback.created_at >= since
@@ -392,7 +392,7 @@ class FeedbackLoopService:
             select(FeedbackRequest).where(
                 and_(
                     FeedbackRequest.status == FeedbackRequestStatus.SENT.value,
-                    FeedbackRequest.expires_at < datetime.utcnow(),
+                    FeedbackRequest.expires_at < datetime.now(timezone.utc),
                 )
             )
         )

@@ -10,7 +10,7 @@ Status Flow: draft → analysis → planned → in_progress → in_review → do
 from sqlalchemy import Column, String, Integer, Text, DateTime, ForeignKey, Boolean, Float
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from app.database import Base
 
@@ -113,7 +113,7 @@ class Bug(Base):
     source_reference = Column(String(500), nullable=True)  # URL or ticket reference
 
     # Dates
-    reported_at = Column(DateTime, default=lambda: datetime.utcnow())
+    reported_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     confirmed_at = Column(DateTime, nullable=True)
     analysis_started_at = Column(DateTime, nullable=True)
     analysis_completed_at = Column(DateTime, nullable=True)
@@ -122,8 +122,8 @@ class Bug(Base):
     verified_at = Column(DateTime, nullable=True)
     due_date = Column(DateTime, nullable=True)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Import metadata (for bugs imported from markdown)
     imported_from = Column(String(500), nullable=True)  # Original file path
@@ -148,7 +148,7 @@ class BugComment(Base):
     old_status = Column(String(20), nullable=True)
     new_status = Column(String(20), nullable=True)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationship
     bug = relationship("Bug", backref="comments")

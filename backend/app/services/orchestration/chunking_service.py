@@ -35,7 +35,7 @@ Usage:
 import logging
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Iterator, Callable
@@ -86,7 +86,7 @@ class Chunk:
     dependencies: List[UUID] = field(default_factory=list)
     result: Optional[Any] = None
     error: Optional[str] = None
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: Optional[datetime] = None
 
 
@@ -123,7 +123,7 @@ class ReassemblyResult:
     failed_chunks: int
     combined_result: Any
     metadata: Dict[str, Any]
-    reassembled_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    reassembled_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class ChunkingService:
@@ -185,7 +185,7 @@ class ChunkingService:
             total_chunks=0,
             chunks=[],
             config=config.__dict__,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
 
         # Generate chunks based on strategy
@@ -264,7 +264,7 @@ class ChunkingService:
             total_chunks=0,
             chunks=[],
             config=config.__dict__,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
 
         all_chunks = []
@@ -355,7 +355,7 @@ class ChunkingService:
 
         chunk.status = ChunkStatus.COMPLETED
         chunk.result = result
-        chunk.completed_at = datetime.utcnow()
+        chunk.completed_at = datetime.now(timezone.utc)
 
         # Update session
         session = self._sessions.get(chunk.session_id)
@@ -382,7 +382,7 @@ class ChunkingService:
 
         chunk.status = ChunkStatus.FAILED
         chunk.error = error
-        chunk.completed_at = datetime.utcnow()
+        chunk.completed_at = datetime.now(timezone.utc)
 
         # Update session
         session = self._sessions.get(chunk.session_id)

@@ -9,7 +9,7 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Any, Tuple
 
@@ -191,7 +191,7 @@ class TechnologyDetector(BaseAnalyzer):
         return "technology_detector"
 
     async def analyze(self, config: QuickscanConfig) -> QuickscanResult:
-        started = datetime.utcnow()
+        started = datetime.now(timezone.utc)
         errors = []
 
         try:
@@ -272,7 +272,7 @@ class TechnologyDetector(BaseAnalyzer):
                 detection_confidence=round(confidence, 2),
             )
 
-            duration = (datetime.utcnow() - started).total_seconds()
+            duration = (datetime.now(timezone.utc) - started).total_seconds()
             return QuickscanResult(
                 analyzer_name=self.name,
                 success=True,
@@ -283,7 +283,7 @@ class TechnologyDetector(BaseAnalyzer):
         except Exception as e:
             logger.error(f"Technology detection failed: {e}")
             errors.append(str(e))
-            duration = (datetime.utcnow() - started).total_seconds()
+            duration = (datetime.now(timezone.utc) - started).total_seconds()
             return QuickscanResult(
                 analyzer_name=self.name,
                 success=False,
@@ -317,7 +317,7 @@ class ComplexityAnalyzer(BaseAnalyzer):
         return "complexity_analyzer"
 
     async def analyze(self, config: QuickscanConfig) -> QuickscanResult:
-        started = datetime.utcnow()
+        started = datetime.now(timezone.utc)
         errors = []
 
         try:
@@ -399,7 +399,7 @@ class ComplexityAnalyzer(BaseAnalyzer):
                 high_complexity_files=[f[0] for f in high_complexity_files[:10]],
             )
 
-            duration = (datetime.utcnow() - started).total_seconds()
+            duration = (datetime.now(timezone.utc) - started).total_seconds()
             return QuickscanResult(
                 analyzer_name=self.name,
                 success=True,
@@ -410,7 +410,7 @@ class ComplexityAnalyzer(BaseAnalyzer):
         except Exception as e:
             logger.error(f"Complexity analysis failed: {e}")
             errors.append(str(e))
-            duration = (datetime.utcnow() - started).total_seconds()
+            duration = (datetime.now(timezone.utc) - started).total_seconds()
             return QuickscanResult(
                 analyzer_name=self.name,
                 success=False,
@@ -467,7 +467,7 @@ class SecurityAnalyzer(BaseAnalyzer):
         return "security_analyzer"
 
     async def analyze(self, config: QuickscanConfig) -> QuickscanResult:
-        started = datetime.utcnow()
+        started = datetime.now(timezone.utc)
         errors = []
 
         try:
@@ -532,7 +532,7 @@ class SecurityAnalyzer(BaseAnalyzer):
                 security_risks=security_risks,
             )
 
-            duration = (datetime.utcnow() - started).total_seconds()
+            duration = (datetime.now(timezone.utc) - started).total_seconds()
             return QuickscanResult(
                 analyzer_name=self.name,
                 success=True,
@@ -543,7 +543,7 @@ class SecurityAnalyzer(BaseAnalyzer):
         except Exception as e:
             logger.error(f"Security analysis failed: {e}")
             errors.append(str(e))
-            duration = (datetime.utcnow() - started).total_seconds()
+            duration = (datetime.now(timezone.utc) - started).total_seconds()
 
             # Return minimal assessment on error
             return QuickscanResult(
@@ -584,7 +584,7 @@ class EffortEstimator(BaseAnalyzer):
     }
 
     async def analyze(self, config: QuickscanConfig) -> QuickscanResult:
-        started = datetime.utcnow()
+        started = datetime.now(timezone.utc)
         errors = []
 
         try:
@@ -646,7 +646,7 @@ class EffortEstimator(BaseAnalyzer):
                 ],
             )
 
-            duration = (datetime.utcnow() - started).total_seconds()
+            duration = (datetime.now(timezone.utc) - started).total_seconds()
             return QuickscanResult(
                 analyzer_name=self.name,
                 success=True,
@@ -657,7 +657,7 @@ class EffortEstimator(BaseAnalyzer):
         except Exception as e:
             logger.error(f"Effort estimation failed: {e}")
             errors.append(str(e))
-            duration = (datetime.utcnow() - started).total_seconds()
+            duration = (datetime.now(timezone.utc) - started).total_seconds()
             return QuickscanResult(
                 analyzer_name=self.name,
                 success=False,

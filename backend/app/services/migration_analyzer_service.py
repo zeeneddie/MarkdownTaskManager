@@ -19,7 +19,7 @@ import os
 import asyncio
 import logging
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List, Set
 from uuid import UUID
 from enum import Enum
@@ -299,7 +299,7 @@ class MigrationAnalyzerService:
         try:
             # Update status to running
             analysis.status = AnalysisStatus.RUNNING
-            analysis.started_at = datetime.utcnow()
+            analysis.started_at = datetime.now(timezone.utc)
             await self.db.commit()
 
             # Phase 1: Detection
@@ -321,7 +321,7 @@ class MigrationAnalyzerService:
             analysis.status = AnalysisStatus.COMPLETED
             analysis.current_phase = AnalysisPhase.COMPLETED
             analysis.progress_percent = 100
-            analysis.completed_at = datetime.utcnow()
+            analysis.completed_at = datetime.now(timezone.utc)
             await self.db.commit()
 
             logger.info(f"Analysis {analysis_id} completed successfully")

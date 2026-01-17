@@ -14,7 +14,7 @@ Date: 2025-11-22
 from fastapi import APIRouter, HTTPException, status, Depends, BackgroundTasks
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field, ConfigDict
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 from app.services.ml_training_service import (
@@ -202,7 +202,7 @@ async def train_model_background(
             "model_type": model_type,
             "estimation_type": estimation_type,
             "metrics": result.metrics,
-            "completed_at": datetime.utcnow().isoformat()
+            "completed_at": datetime.now(timezone.utc).isoformat()
         }
 
     except Exception as e:

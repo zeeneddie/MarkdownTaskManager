@@ -13,7 +13,7 @@ import logging
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 
 from .brown_paper_integration import (
     BrownPaperStabilityIntegration,
@@ -250,7 +250,7 @@ class StabilityQualityGateService:
         )
 
         result.evaluation_time_ms = int((time.time() - start_time) * 1000)
-        result.evaluated_at = datetime.utcnow()
+        result.evaluated_at = datetime.now(timezone.utc)
 
         return result
 

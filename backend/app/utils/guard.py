@@ -16,7 +16,7 @@ Usage:
 """
 
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Collection, Optional, TypeVar, Union
 from uuid import UUID
 
@@ -408,7 +408,7 @@ class Guard:
         Raises:
             GuardError: If date is in the past
         """
-        ref = reference or datetime.utcnow()
+        ref = reference or datetime.now(timezone.utc)
         if value < ref:
             raise GuardError("cannot be in the past", parameter_name)
         return value
@@ -433,7 +433,7 @@ class Guard:
         Raises:
             GuardError: If date is in the future
         """
-        ref = reference or datetime.utcnow()
+        ref = reference or datetime.now(timezone.utc)
         if value > ref:
             raise GuardError("cannot be in the future", parameter_name)
         return value

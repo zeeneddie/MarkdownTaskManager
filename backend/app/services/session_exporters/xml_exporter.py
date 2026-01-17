@@ -5,7 +5,7 @@ Week 61: Enhanced Observability Integration
 """
 
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime, timezone
 from xml.dom import minidom
 from app.services.session_exporters.base import BaseSessionExporter, SessionData
 
@@ -45,7 +45,7 @@ class XMLSessionExporter(BaseSessionExporter):
         root = ET.Element("cctrace")
         root.set("xmlns", self.NAMESPACE)
         root.set("version", "1.0")
-        root.set("exported", datetime.utcnow().isoformat())
+        root.set("exported", datetime.now(timezone.utc).isoformat())
 
         # Session info
         self._add_session_element(root, session_data)

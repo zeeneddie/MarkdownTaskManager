@@ -12,7 +12,7 @@ import json
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Set, Tuple
@@ -518,7 +518,7 @@ class VisualDependencyGraphService:
 
         # Build metadata
         metadata = {
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "project_path": dep_result.project_path if dep_result.project_path else "",
             "total_modules": len(dep_result.modules),
             "total_edges": len(dep_result.edges),

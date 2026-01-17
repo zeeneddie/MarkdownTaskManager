@@ -12,7 +12,7 @@ Models:
 - BudgetConfig: Cost management settings
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 from uuid import UUID
 from decimal import Decimal
@@ -52,7 +52,7 @@ class ThinkingBlock(Base):
     signature = Column(String(256), nullable=True)  # Claude native cryptographic signature
     token_count = Column(Integer, default=0)
     sequence_number = Column(Integer, default=0)  # Order within message
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
         Index('ix_thinking_blocks_session', 'session_id'),
@@ -172,7 +172,7 @@ class MessageRelationship(Base):
     has_tool_calls = Column(Boolean, default=False)
     token_input = Column(Integer, default=0)
     token_output = Column(Integer, default=0)
-    timestamp = Column(DateTime, default=lambda: datetime.utcnow())
+    timestamp = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
         Index('ix_message_relationships_session', 'session_id'),
@@ -226,7 +226,7 @@ class SessionExport(Base):
     total_cost_cents = Column(Numeric(10, 4), default=0)
     include_thinking = Column(Boolean, default=True)
     include_tools = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     created_by = Column(String(100), nullable=True)
 
     __table_args__ = (
@@ -279,8 +279,8 @@ class BudgetConfig(Base):
     fallback_chain = Column(JSONB, default=list)  # ["opus", "sonnet", "ollama"]
     is_active = Column(Boolean, default=True)
     project_id = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         return {

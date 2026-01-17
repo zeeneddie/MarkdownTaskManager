@@ -12,7 +12,7 @@ Analyzes relationships between business rules to detect:
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set, Tuple, Any
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 from collections import defaultdict
 
@@ -49,7 +49,7 @@ class RuleDependency:
     confidence: float  # 0.0 to 1.0
     reason: str
     shared_elements: List[str] = field(default_factory=list)
-    detected_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    detected_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         return {

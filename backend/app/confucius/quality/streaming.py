@@ -7,7 +7,7 @@ updates during PIV (Plan-Implement-Validate) iteration cycles.
 
 from typing import Dict, Any, AsyncIterator, Optional, Callable, Awaitable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import asyncio
 import json
@@ -297,7 +297,7 @@ class QualityProgressContext:
 
     async def __aenter__(self) -> "QualityProgressContext":
         """Enter context - emit start event."""
-        self._started_at = datetime.utcnow()
+        self._started_at = datetime.now(timezone.utc)
         await self._stream.emit(
             StreamEventType.TASK_STARTED,
             self._entry_id,
@@ -312,7 +312,7 @@ class QualityProgressContext:
         """Exit context - emit complete/fail event."""
         duration_ms = None
         if self._started_at:
-            duration_ms = (datetime.utcnow() - self._started_at).total_seconds() * 1000
+            duration_ms = (datetime.now(timezone.utc) - self._started_at).total_seconds() * 1000
 
         if exc_type is not None:
             self._failed = True

@@ -15,7 +15,7 @@ Features:
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 from ..config import ConfuciusConfig
@@ -135,8 +135,8 @@ class HierarchicalMemory:
             session = SessionMemory(
                 session_id=session_id,
                 project_id=project_id,
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
+                updated_at=datetime.now(timezone.utc),
             )
         else:
             session = SessionMemory.create(project_id)

@@ -9,7 +9,7 @@ Endpoints for:
 """
 
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -454,7 +454,7 @@ async def resolve_compliance_violation(
         raise HTTPException(status_code=404, detail="Violation not found")
 
     violation.resolved = True
-    violation.resolved_at = datetime.utcnow()
+    violation.resolved_at = datetime.now(timezone.utc)
     violation.resolved_by = resolved_by
 
     db.commit()
@@ -501,7 +501,7 @@ async def resolve_conflict(
 
     conflict.resolution = request.resolution
     conflict.resolved_by = request.resolved_by
-    conflict.resolved_at = datetime.utcnow()
+    conflict.resolved_at = datetime.now(timezone.utc)
     conflict.resolution_notes = request.resolution_notes
 
     db.commit()

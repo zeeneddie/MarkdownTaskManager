@@ -10,7 +10,7 @@ Inspired by: https://github.com/jimmc414/cctrace
 """
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Type
 from sqlalchemy.orm import Session
 
@@ -433,7 +433,7 @@ class CCTraceService:
             db_export.content = content
             db_export.file_path = file_path
             db_export.export_status = "completed"
-            db_export.completed_at = datetime.utcnow()
+            db_export.completed_at = datetime.now(timezone.utc)
             self.db.flush()
 
         return db_export

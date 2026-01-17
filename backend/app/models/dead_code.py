@@ -5,7 +5,7 @@ SQLAlchemy models and dataclasses for dead code detection,
 runtime analysis, and code coverage mapping.
 """
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
@@ -122,8 +122,8 @@ class DeadCodeAnalysisModel(Base):
     duration_ms = Column(Integer, default=0)
     success = Column(Boolean, default=True)
     errors = Column(JSONB, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
     items = relationship("DeadCodeItemModel", back_populates="analysis", cascade="all, delete-orphan")
@@ -152,7 +152,7 @@ class DeadCodeItemModel(Base):
     last_accessed = Column(DateTime, nullable=True)
     call_count = Column(Integer, nullable=True)
     suggested_action = Column(String(50), nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     analysis = relationship("DeadCodeAnalysisModel", back_populates="items")
@@ -188,8 +188,8 @@ class RuntimeAnalysisModel(Base):
     duration_ms = Column(Integer, default=0)
     success = Column(Boolean, default=True)
     errors = Column(JSONB, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class CodeCoverageAnalysisModel(Base):
@@ -218,8 +218,8 @@ class CodeCoverageAnalysisModel(Base):
     duration_ms = Column(Integer, default=0)
     success = Column(Boolean, default=True)
     errors = Column(JSONB, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 # ============================================================================

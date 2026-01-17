@@ -78,8 +78,8 @@ class BoostAllowance(Base):
     tier = Column(String(20), default=CustomerTier.STANDARD.value)
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
     boosts = relationship("PriorityBoost", back_populates="allowance")
@@ -133,7 +133,7 @@ class PriorityBoost(Base):
     completed_at = Column(DateTime, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     allowance = relationship("BoostAllowance", back_populates="boosts")
@@ -172,7 +172,7 @@ class FeatureDuplicate(Base):
     merge_target_id = Column(Integer, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     def is_high_confidence(self, threshold: float = 0.85) -> bool:
         """Check if this is a high-confidence duplicate."""
@@ -229,8 +229,8 @@ class FeatureImpactPreview(Base):
     expires_at = Column(DateTime, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     def has_breaking_changes(self) -> bool:
         """Check if this feature has breaking changes."""

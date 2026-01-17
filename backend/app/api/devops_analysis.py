@@ -10,7 +10,7 @@ from typing import Optional, List, Literal
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field, HttpUrl, field_validator, ConfigDict
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.database import get_db
 from app.models.devops_analysis import (
@@ -211,7 +211,7 @@ async def run_github_analysis(
     except Exception as e:
         analysis.status = "failed"
         analysis.error_message = str(e)
-        analysis.completed_at = datetime.utcnow()
+        analysis.completed_at = datetime.now(timezone.utc)
         db.commit()
     finally:
         await service.close()
@@ -246,7 +246,7 @@ async def run_azure_analysis(
     except Exception as e:
         analysis.status = "failed"
         analysis.error_message = str(e)
-        analysis.completed_at = datetime.utcnow()
+        analysis.completed_at = datetime.now(timezone.utc)
         db.commit()
     finally:
         await service.close()

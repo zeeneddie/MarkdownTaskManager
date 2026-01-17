@@ -268,7 +268,7 @@ class TechnicalDebtService:
         Returns:
             TechnicalDebtSnapshot with all detected items
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         # Use specified path or default
         scan_path = Path(project_path) if project_path else self.project_path
@@ -310,7 +310,7 @@ class TechnicalDebtService:
                     self._scanner_versions[scanner] = result.version
 
         # Calculate duration
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
         # Create snapshot
         snapshot = await self._create_snapshot(
@@ -374,7 +374,7 @@ class TechnicalDebtService:
                 self._scanner_versions[scanner_name] = result.scanner_version
 
         # Calculate duration
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
         # Create snapshot
         snapshot = await self._create_snapshot(
@@ -470,7 +470,7 @@ class TechnicalDebtService:
 
     async def _run_ruff(self) -> ScanResult:
         """Run ruff linter on Python files"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         items = []
 
         try:
@@ -496,7 +496,7 @@ class TechnicalDebtService:
                 for finding in findings:
                     items.append(self._parse_ruff_finding(finding))
 
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             return ScanResult(
                 source=DetectionSource.SCANNER_RUFF,
                 items=items,
@@ -514,7 +514,7 @@ class TechnicalDebtService:
                 error="ruff not installed"
             )
         except Exception as e:
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             return ScanResult(
                 source=DetectionSource.SCANNER_RUFF,
                 items=[],
@@ -549,7 +549,7 @@ class TechnicalDebtService:
 
     async def _run_bandit(self) -> ScanResult:
         """Run bandit security scanner on Python files"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         items = []
 
         try:
@@ -574,7 +574,7 @@ class TechnicalDebtService:
                 for finding in data.get("results", []):
                     items.append(self._parse_bandit_finding(finding))
 
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             return ScanResult(
                 source=DetectionSource.SCANNER_BANDIT,
                 items=items,
@@ -592,7 +592,7 @@ class TechnicalDebtService:
                 error="bandit not installed"
             )
         except Exception as e:
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             return ScanResult(
                 source=DetectionSource.SCANNER_BANDIT,
                 items=[],
@@ -636,7 +636,7 @@ class TechnicalDebtService:
 
     async def _run_eslint(self) -> ScanResult:
         """Run ESLint on TypeScript/JavaScript files"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         items = []
 
         # Check if there's a TypeScript/JS project
@@ -667,7 +667,7 @@ class TechnicalDebtService:
                             message
                         ))
 
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             return ScanResult(
                 source=DetectionSource.SCANNER_ESLINT,
                 items=items,
@@ -676,7 +676,7 @@ class TechnicalDebtService:
             )
 
         except Exception as e:
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             return ScanResult(
                 source=DetectionSource.SCANNER_ESLINT,
                 items=[],
@@ -718,7 +718,7 @@ class TechnicalDebtService:
 
     async def _run_coverage(self) -> ScanResult:
         """Get test coverage metrics"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         items = []
 
         try:
@@ -757,7 +757,7 @@ class TechnicalDebtService:
                             }
                         })
 
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             return ScanResult(
                 source=DetectionSource.SCANNER_COVERAGE,
                 items=items,
@@ -766,7 +766,7 @@ class TechnicalDebtService:
             )
 
         except Exception as e:
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             return ScanResult(
                 source=DetectionSource.SCANNER_COVERAGE,
                 items=[],
@@ -1167,7 +1167,7 @@ class TechnicalDebtService:
         # Check if plan is complete
         if plan.items_completed >= plan.total_items:
             plan.status = "completed"
-            plan.completed_at = datetime.utcnow()
+            plan.completed_at = datetime.now(timezone.utc)
 
         await self.db.commit()
         await self.db.refresh(plan)
@@ -1217,7 +1217,7 @@ class TechnicalDebtService:
 
         # Update item status
         item.status = DebtStatus.RESOLVED
-        item.resolved_at = datetime.utcnow()
+        item.resolved_at = datetime.now(timezone.utc)
         item.resolved_by = resolved_by_agent or resolved_by_human
         item.resolution_notes = notes
         item.resolution_commit = commit_hash
@@ -1247,7 +1247,7 @@ class TechnicalDebtService:
         - No critical security issues
         - Debt ratio must be < 10%
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         # Run a quick scan
         snapshot = await self.scan_codebase(
@@ -1297,7 +1297,7 @@ class TechnicalDebtService:
                     blocking_issues.append(f"{score} security issues found")
 
         # Create result
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
         result = QualityGateResult(
             trigger="check",
@@ -1333,7 +1333,7 @@ class TechnicalDebtService:
         project_id: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """Get debt metrics trend over time"""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(timezone.utc) - timedelta(days=days)
 
         query = select(TechnicalDebtSnapshot).where(
             TechnicalDebtSnapshot.timestamp >= since
@@ -1382,7 +1382,7 @@ class TechnicalDebtService:
 
         # Get resolution stats
         resolved_query = select(func.count(DebtResolution.id)).where(
-            DebtResolution.completed_at >= datetime.utcnow() - timedelta(days=30)
+            DebtResolution.completed_at >= datetime.now(timezone.utc) - timedelta(days=30)
         )
         resolved_result = await self.db.execute(resolved_query)
         resolved_count = resolved_result.scalar() or 0

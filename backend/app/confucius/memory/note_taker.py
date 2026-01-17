@@ -10,7 +10,7 @@ Provides cross-session learning through structured note-taking:
 
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import uuid
 import logging
@@ -61,7 +61,7 @@ class Note:
             context_tags=context_tags or [],
             quality_score=quality_score,
             session_id=session_id,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
 
     def to_dict(self) -> Dict[str, Any]:

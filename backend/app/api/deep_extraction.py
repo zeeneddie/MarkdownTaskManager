@@ -1626,7 +1626,7 @@ async def resolve_static_llm_conflict(
     - human_rejected_both: Reject both results
     """
     from sqlalchemy import select
-    from datetime import datetime
+    from datetime import datetime, timezone
     from app.models.deep_extraction import (
         StaticLLMConflict,
         StaticLLMConflictStatus,
@@ -1662,7 +1662,7 @@ async def resolve_static_llm_conflict(
     # Update conflict
     conflict.status = StaticLLMConflictStatus.RESOLVED.value
     conflict.resolution = resolution
-    conflict.resolved_at = datetime.utcnow()
+    conflict.resolved_at = datetime.now(timezone.utc)
     conflict.resolved_by = resolved_by
     conflict.resolution_notes = notes
 
@@ -1737,7 +1737,7 @@ async def bulk_resolve_static_llm_conflicts(
     ]
     """
     from sqlalchemy import select
-    from datetime import datetime
+    from datetime import datetime, timezone
     from app.models.deep_extraction import (
         StaticLLMConflict,
         StaticLLMConflictStatus,
@@ -1771,7 +1771,7 @@ async def bulk_resolve_static_llm_conflicts(
             # Update conflict
             conflict.status = StaticLLMConflictStatus.RESOLVED.value
             conflict.resolution = resolution
-            conflict.resolved_at = datetime.utcnow()
+            conflict.resolved_at = datetime.now(timezone.utc)
             conflict.resolved_by = resolved_by
             conflict.resolution_notes = notes
 

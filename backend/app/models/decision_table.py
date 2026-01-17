@@ -9,7 +9,7 @@ Date: 2026-01-01
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
@@ -156,7 +156,7 @@ class DecisionTable:
     business_rule_ids: List[str] = field(default_factory=list)  # Linked rules
     statistics: Optional[DecisionTableStatistics] = None
     confidence: float = 1.0
-    extracted_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    extracted_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     extracted_by: str = "DecisionTableExtractorService"
 
     def to_dict(self) -> Dict[str, Any]:
@@ -250,7 +250,7 @@ class DecisionTableExtractionResult:
     errors: List[str] = field(default_factory=list)
 
     # Timing
-    started_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: Optional[datetime] = None
     duration_seconds: float = 0.0
 

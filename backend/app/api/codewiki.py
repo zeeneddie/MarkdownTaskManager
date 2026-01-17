@@ -10,7 +10,7 @@ Endpoints for:
 - Agent context retrieval
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel, Field, ConfigDict
@@ -483,7 +483,7 @@ async def health_check():
         "status": "healthy",
         "service": "codewiki",
         "version": "1.0",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 

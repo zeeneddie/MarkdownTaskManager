@@ -113,8 +113,8 @@ class RuntimeAnalysisService:
         result = RuntimeAnalysisResult(
             project_path=str(project_path),
             apm_provider=apm_config.provider if apm_config else APMProvider.NONE,
-            analysis_period_start=datetime.utcnow() - timedelta(days=analysis_days),
-            analysis_period_end=datetime.utcnow(),
+            analysis_period_start=datetime.now(timezone.utc) - timedelta(days=analysis_days),
+            analysis_period_end=datetime.now(timezone.utc),
         )
 
         if not project_path.exists():

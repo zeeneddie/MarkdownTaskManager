@@ -7,7 +7,7 @@ retry logic, iteration tracking, and improvement strategies.
 
 from typing import Dict, Any, List, Optional, Callable, Awaitable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import logging
 import asyncio
@@ -253,7 +253,7 @@ class IterationController:
         attempt = IterationAttempt(
             iteration=iter_context.current_iteration,
             status=IterationStatus.IMPLEMENTING,
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
         )
         iter_context.attempts.append(attempt)
 
@@ -319,7 +319,7 @@ class IterationController:
             attempt.status = IterationStatus.FAILED
             attempt.error = str(e)
 
-        attempt.completed_at = datetime.utcnow()
+        attempt.completed_at = datetime.now(timezone.utc)
         return attempt
 
     def _select_strategy(

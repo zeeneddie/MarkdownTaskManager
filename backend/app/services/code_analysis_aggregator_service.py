@@ -16,7 +16,7 @@ Integration Points:
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
 import asyncio
@@ -146,7 +146,7 @@ class AggregatedAnalysis:
     """
     project_id: int
     repository_path: str
-    analysis_timestamp: datetime = field(default_factory=lambda: datetime.utcnow())
+    analysis_timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     duration_ms: int = 0
 
     # Analysis profiles

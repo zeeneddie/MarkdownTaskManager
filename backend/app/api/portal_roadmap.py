@@ -349,12 +349,12 @@ async def update_analysis_entry(
 
     # If marking as completed, set analyzed_at
     if update_data.get("status") == "completed" and entry.status != "completed":
-        update_data["analyzed_at"] = datetime.utcnow()
+        update_data["analyzed_at"] = datetime.now(timezone.utc)
 
     for field, value in update_data.items():
         setattr(entry, field, value)
 
-    entry.updated_at = datetime.utcnow()
+    entry.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(entry)
 
@@ -383,7 +383,7 @@ async def start_analysis(
 
     entry.status = "analyzing"
     entry.analyzed_by = agent_name
-    entry.updated_at = datetime.utcnow()
+    entry.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(entry)
 
@@ -409,11 +409,11 @@ async def complete_analysis(
         raise HTTPException(status_code=404, detail="Analysis queue entry not found")
 
     entry.status = "completed"
-    entry.analyzed_at = datetime.utcnow()
+    entry.analyzed_at = datetime.now(timezone.utc)
     entry.analysis_result = analysis_result
     if agent_name:
         entry.analyzed_by = agent_name
-    entry.updated_at = datetime.utcnow()
+    entry.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(entry)
 
@@ -591,14 +591,14 @@ async def update_release(
 
     # Handle status change to "released"
     if update_data.get("status") == "released" and release.status != "released":
-        update_data["released_at"] = datetime.utcnow()
+        update_data["released_at"] = datetime.now(timezone.utc)
         if not update_data.get("actual_date"):
             update_data["actual_date"] = date.today()
 
     for field, value in update_data.items():
         setattr(release, field, value)
 
-    release.updated_at = datetime.utcnow()
+    release.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(release)
 
@@ -867,7 +867,7 @@ async def update_roadmap_item(
     for field, value in update_data.items():
         setattr(item, field, value)
 
-    item.updated_at = datetime.utcnow()
+    item.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(item)
 
@@ -919,7 +919,7 @@ async def move_roadmap_item(
     if display_order is not None:
         item.display_order = display_order
 
-    item.updated_at = datetime.utcnow()
+    item.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(item)
 
@@ -1173,7 +1173,7 @@ async def update_public_roadmap(
     for field, value in update_data.items():
         setattr(roadmap, field, value)
 
-    roadmap.updated_at = datetime.utcnow()
+    roadmap.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(roadmap)
 

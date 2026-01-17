@@ -67,7 +67,7 @@ class GraphWorkflowIntegrationService:
         Returns:
             Impact report with affected modules, ripple effects, risk score
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         # Check cache first
         cache_key = f"impact:{','.join(sorted(changes[:5]))}"
@@ -154,7 +154,7 @@ class GraphWorkflowIntegrationService:
             "risk_score": risk_score,
             "risk_level": self._risk_level(risk_score),
             "recommendations": self._impact_recommendations(risk_score, unique_affected),
-            "analysis_timestamp": datetime.utcnow().isoformat(),
+            "analysis_timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     # ==================== Dependency Check ====================
@@ -182,7 +182,7 @@ class GraphWorkflowIntegrationService:
         Returns:
             Dependency report with upstream/downstream deps, circular detection
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         cache_key = f"deps:{entity_id}:{entity_type}"
         cached = self._get_cached_result(project_id, "dependency_check", cache_key)
@@ -250,7 +250,7 @@ class GraphWorkflowIntegrationService:
             "dependency_depth": self._calculate_dependency_depth(upstream),
             "fan_in": len(downstream),  # How many entities depend on this
             "fan_out": len(upstream),    # How many entities this depends on
-            "analysis_timestamp": datetime.utcnow().isoformat(),
+            "analysis_timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     # ==================== Coupling Metrics ====================
@@ -276,7 +276,7 @@ class GraphWorkflowIntegrationService:
         Returns:
             Coupling metrics with instability, abstractness, distance from main sequence
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         cache_key = f"coupling:{module_filter or 'all'}"
         cached = self._get_cached_result(project_id, "coupling_metrics", cache_key)
@@ -366,7 +366,7 @@ class GraphWorkflowIntegrationService:
             "unstable_modules": [m for m in module_metrics if m["instability"] > 0.7][:10],
             "module_metrics": module_metrics[:50],
             "recommendations": self._coupling_recommendations(module_metrics),
-            "analysis_timestamp": datetime.utcnow().isoformat(),
+            "analysis_timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     # ==================== Test Coverage Map ====================
@@ -392,7 +392,7 @@ class GraphWorkflowIntegrationService:
         Returns:
             Coverage map with test-to-source mappings, gaps, recommendations
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         cache_key = f"coverage:{source_filter or 'all'}"
         cached = self._get_cached_result(project_id, "test_coverage_map", cache_key)
@@ -476,7 +476,7 @@ class GraphWorkflowIntegrationService:
             "uncovered_files": uncovered[:30],
             "critical_gaps": self._identify_critical_gaps(uncovered, project_id),
             "recommendations": self._coverage_recommendations(coverage_percentage, uncovered),
-            "analysis_timestamp": datetime.utcnow().isoformat(),
+            "analysis_timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     # ==================== Enhancement Scope ====================
@@ -502,7 +502,7 @@ class GraphWorkflowIntegrationService:
         Returns:
             Scope report with affected files, estimated effort, boundaries
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         cache_key = f"scope:{feature_id}"
         cached = self._get_cached_result(project_id, "enhancement_scope", cache_key)
@@ -585,7 +585,7 @@ class GraphWorkflowIntegrationService:
             "safe_to_modify": internal_entities[:20],
             "requires_caution": [b["entity"] for b in boundary_entities][:10],
             "recommendations": self._scope_recommendations(boundary_entities, scope_size),
-            "analysis_timestamp": datetime.utcnow().isoformat(),
+            "analysis_timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     # ==================== Workflow Integration ====================
@@ -669,7 +669,7 @@ class GraphWorkflowIntegrationService:
             "session_id": session_id,
             "integrations_run": list(results.keys()),
             "results": results,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     # ==================== Statistics ====================
@@ -680,7 +680,7 @@ class GraphWorkflowIntegrationService:
         days: int = 7,
     ) -> Dict[str, Any]:
         """Get statistics on graph integration usage."""
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
 
         query = self.db.query(WorkflowGraphIntegration)
         if project_id:
@@ -712,7 +712,7 @@ class GraphWorkflowIntegrationService:
             "average_duration_ms": round(total_duration / len(integrations)) if integrations else 0,
             "by_integration_type": type_counts,
             "by_workflow_type": workflow_counts,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     # ==================== Cache Management ====================
@@ -729,7 +729,7 @@ class GraphWorkflowIntegrationService:
                 GraphAnalysisCache.project_id == project_id,
                 GraphAnalysisCache.analysis_type == analysis_type,
                 GraphAnalysisCache.entity_id == entity_id,
-                GraphAnalysisCache.expires_at > datetime.utcnow(),
+                GraphAnalysisCache.expires_at > datetime.now(timezone.utc),
             )
         ).first()
 
@@ -748,7 +748,7 @@ class GraphWorkflowIntegrationService:
     ) -> None:
         """Cache analysis result."""
         ttl_hours = self.CACHE_TTL.get(analysis_type, 1)
-        expires_at = datetime.utcnow() + timedelta(hours=ttl_hours)
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=ttl_hours)
 
         # Delete old cache entry if exists
         self.db.query(GraphAnalysisCache).filter(
@@ -783,7 +783,7 @@ class GraphWorkflowIntegrationService:
         error: str = None,
     ) -> None:
         """Track integration execution."""
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
         duration_ms = int((end_time - start_time).total_seconds() * 1000)
 
         integration = WorkflowGraphIntegration(

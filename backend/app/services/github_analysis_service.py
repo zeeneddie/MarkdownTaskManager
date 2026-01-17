@@ -135,7 +135,7 @@ class GitHubAnalysisService:
             max_prs=request.max_prs,
             include_forks=request.include_forks,
             status="running",
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
         )
         self.db.add(analysis)
         self.db.commit()
@@ -188,7 +188,7 @@ class GitHubAnalysisService:
             await self._generate_insights(analysis)
 
             analysis.status = "completed"
-            analysis.completed_at = datetime.utcnow()
+            analysis.completed_at = datetime.now(timezone.utc)
 
         except Exception as e:
             logger.error(f"Analysis failed for {request.repository_url}: {e}")
@@ -231,7 +231,7 @@ class GitHubAnalysisService:
             "last_commit": None,
         })
 
-        since = datetime.utcnow() - timedelta(days=lookback_days)
+        since = datetime.now(timezone.utc) - timedelta(days=lookback_days)
         page = 1
         commits_processed = 0
 

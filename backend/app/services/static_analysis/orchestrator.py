@@ -14,7 +14,7 @@ Part of Fase 15: Hybrid Static-LLM Extraction Pipeline
 
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 import asyncio
 import logging
 from uuid import uuid4
@@ -179,7 +179,7 @@ class StaticAnalysisOrchestrator:
             StaticAnalysisResult with all component results
         """
         analysis_id = str(uuid4())
-        started_at = datetime.utcnow()
+        started_at = datetime.now(timezone.utc)
 
         logger.info(f"Starting static analysis {analysis_id} for project {project_id}")
         logger.info(f"Analyzing {len(files)} files")
@@ -283,7 +283,7 @@ class StaticAnalysisOrchestrator:
         # Categorize findings by confidence
         self._categorize_findings(result)
 
-        result.completed_at = datetime.utcnow()
+        result.completed_at = datetime.now(timezone.utc)
 
         logger.info(f"Completed static analysis {analysis_id}")
         logger.info(f"Found {len(result.business_rules.rules) if result.business_rules else 0} business rules")

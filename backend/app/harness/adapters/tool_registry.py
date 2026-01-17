@@ -16,7 +16,7 @@ import logging
 import importlib
 from typing import Dict, Any, List, Optional, Callable, Awaitable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 import functools
@@ -802,7 +802,7 @@ class MarQedToolRegistry(BaseAdapter, ToolRegistryProtocol):
         """Log tool execution for audit."""
         self._audit_log.append({
             "audit_id": audit_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "agent_id": request.agent_id,
             "session_id": request.session_id,
             "tool_name": request.tool_name,

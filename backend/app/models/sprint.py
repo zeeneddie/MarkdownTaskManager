@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Integer, Text, DateTime
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database import Base
 
 class Sprint(Base):
@@ -17,8 +17,8 @@ class Sprint(Base):
     completed_sp = Column(Integer, default=0)
     capacity = Column(Integer, default=50)  # Max story points per sprint
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     def __repr__(self):
         return f"<Sprint(id={self.id}, name='{self.name}', status='{self.status}')>"

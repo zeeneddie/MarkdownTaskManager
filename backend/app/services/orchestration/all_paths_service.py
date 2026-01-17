@@ -17,7 +17,7 @@ Source: https://gregorriegler.com/2025/07/12/augmented-coding-pattern-language.h
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Any, Callable
 from uuid import UUID, uuid4
@@ -77,7 +77,7 @@ class TestResults:
     coverage: Optional[float] = None
     duration_seconds: float = 0.0
     details: List[Dict[str, Any]] = field(default_factory=list)
-    executed_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    executed_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -187,7 +187,7 @@ class AllPathsService:
         Returns:
             Created PrototypingSession
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Validate and normalize criteria weights
         used_criteria = criteria or self.DEFAULT_CRITERIA.copy()
@@ -244,7 +244,7 @@ class AllPathsService:
         if len(session.variations) >= session.max_variations:
             raise RuntimeError(f"Maximum variations ({session.max_variations}) reached")
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         variation = Variation(
             id=uuid4(),
@@ -298,7 +298,7 @@ class AllPathsService:
 
         variation.implementation = implementation
         variation.status = VariationStatus.READY
-        variation.updated_at = datetime.utcnow()
+        variation.updated_at = datetime.now(timezone.utc)
 
         if strengths:
             variation.strengths = strengths
@@ -329,13 +329,13 @@ class AllPathsService:
             raise ValueError(f"Variation {variation_id} not found")
 
         variation.status = VariationStatus.TESTING
-        variation.updated_at = datetime.utcnow()
+        variation.updated_at = datetime.now(timezone.utc)
 
         # Update session status
         session = self._sessions.get(variation.session_id)
         if session:
             session.status = SessionStatus.TESTING
-            session.updated_at = datetime.utcnow()
+            session.updated_at = datetime.now(timezone.utc)
 
         if test_function:
             results = test_function()
@@ -351,7 +351,7 @@ class AllPathsService:
             )
 
         variation.test_results = results
-        variation.updated_at = datetime.utcnow()
+        variation.updated_at = datetime.now(timezone.utc)
 
         logger.info(f"Ran tests on variation {variation_id}: {results.passed} passed, {results.failed} failed")
 
@@ -400,7 +400,7 @@ class AllPathsService:
             for c in session.evaluation_criteria
         )
         variation.status = VariationStatus.EVALUATED
-        variation.updated_at = datetime.utcnow()
+        variation.updated_at = datetime.now(timezone.utc)
 
         logger.info(f"Evaluated variation {variation_id}: total score = {variation.total_score:.1f}")
 
@@ -421,7 +421,7 @@ class AllPathsService:
             raise ValueError(f"Session {session_id} not found")
 
         session.status = SessionStatus.EVALUATING
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
 
         results = {}
         for variation in session.variations:
@@ -445,7 +445,7 @@ class AllPathsService:
             raise ValueError(f"Session {session_id} not found")
 
         session.status = SessionStatus.COMPARING
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
 
         # Ensure all variations are evaluated
         for variation in session.variations:
@@ -501,7 +501,7 @@ class AllPathsService:
             score_breakdown=score_breakdown,
             criteria_summary=criteria_summary,
             recommendation=recommendation,
-            generated_at=datetime.utcnow()
+            generated_at=datetime.now(timezone.utc)
         )
 
         logger.info(f"Generated comparison report for session {session_id}")
@@ -546,8 +546,8 @@ class AllPathsService:
 
         session.winner_id = winner.id
         session.status = SessionStatus.COMPLETED
-        session.completed_at = datetime.utcnow()
-        session.updated_at = datetime.utcnow()
+        session.completed_at = datetime.now(timezone.utc)
+        session.updated_at = datetime.now(timezone.utc)
 
         logger.info(f"Selected winner for session {session_id}: variation {winner.id}")
 
@@ -585,7 +585,7 @@ class AllPathsService:
             category=category,
             content=content,
             applicability=applicability,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
 
         session.learnings.append(learning)

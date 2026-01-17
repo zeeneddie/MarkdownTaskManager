@@ -12,7 +12,7 @@ Uses few-shot templates per technology stack for domain-specific extraction.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
@@ -95,7 +95,7 @@ class ExtractedStory:
 
     # Extraction info
     extracted_by: str = ""  # LLM that extracted this
-    extracted_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    extracted_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
@@ -234,7 +234,7 @@ class HierarchicalExtractionResult:
 
     # Status
     tier: ExtractionTier = ExtractionTier.FREE
-    started_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: Optional[datetime] = None
     errors: List[str] = field(default_factory=list)
 
@@ -1112,7 +1112,7 @@ class HierarchicalStoryExtractionService:
             logger.exception("Hierarchical extraction failed")
             result.errors.append(str(e))
 
-        result.completed_at = datetime.utcnow()
+        result.completed_at = datetime.now(timezone.utc)
         result.total_duration_ms = int((time.time() - start_time) * 1000)
 
         return result

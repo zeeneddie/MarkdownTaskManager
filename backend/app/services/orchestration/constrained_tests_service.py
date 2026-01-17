@@ -16,7 +16,7 @@ Source: https://gregorriegler.com/2025/07/12/augmented-coding-pattern-language.h
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Any, Union
 from uuid import UUID, uuid4
@@ -162,7 +162,7 @@ class ConstrainedTestsService:
         Returns:
             Parsed TestSpecification
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Parse YAML
         try:
@@ -229,7 +229,7 @@ class ConstrainedTestsService:
 
         result = self._validate_specification(spec)
         spec.validation_result = result
-        spec.updated_at = datetime.utcnow()
+        spec.updated_at = datetime.now(timezone.utc)
 
         return result
 
@@ -276,7 +276,7 @@ class ConstrainedTestsService:
             language=language,
             code=code,
             framework=framework,
-            generated_at=datetime.utcnow(),
+            generated_at=datetime.now(timezone.utc),
         )
 
         if spec_id not in self._generated_tests:

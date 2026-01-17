@@ -13,7 +13,7 @@ import uuid
 import hashlib
 import logging
 from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from dataclasses import dataclass, field
 
 from app.harness.core.protocols import (
@@ -342,7 +342,7 @@ class MarQedContextManager(BaseAdapter, ContextManagerProtocol):
             tags=tags or [],
             priority=priority,
             token_count=self._estimate_tokens(observation),
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
         self._memories[session_id].append(entry)
 
@@ -384,7 +384,7 @@ class MarQedContextManager(BaseAdapter, ContextManagerProtocol):
         if task_layer:
             # Check TTL
             if task_layer.ttl_seconds:
-                age = (datetime.utcnow() - task_layer.created_at).total_seconds()
+                age = (datetime.now(timezone.utc) - task_layer.created_at).total_seconds()
                 if age > task_layer.ttl_seconds:
                     # Expired, clear it
                     del self._task_contexts[session_id]
@@ -468,7 +468,7 @@ class MarQedContextManager(BaseAdapter, ContextManagerProtocol):
         original_tokens = sum(m.token_count for m in memories)
 
         # Keep top priority and recent memories
-        cutoff = datetime.utcnow() - timedelta(hours=1)
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=1)
         keep_count = max(5, int(len(memories) * compression_ratio))
 
         # Sort by priority and recency

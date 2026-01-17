@@ -13,7 +13,7 @@ Maps Non-Functional Requirements to architectural components:
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set, Any, Tuple
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 import json
 
@@ -569,7 +569,7 @@ class NFRArchitectureMapper:
             "mappings": [m.to_dict() for m in self.mappings],
             "coverage_summary": self.get_coverage_summary(),
             "gap_analysis": self.get_gap_analysis(),
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat()
         }, indent=2, default=str)
 
     def _to_markdown(self) -> str:

@@ -16,7 +16,7 @@ Source: https://gregorriegler.com/2025/07/12/augmented-coding-pattern-language.h
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Any
 from uuid import UUID, uuid4
@@ -76,8 +76,8 @@ class IterationTracker:
     restart_count: int
     restart_recommended: bool
     last_checkpoint: Optional[str] = None
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
-    updated_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -132,7 +132,7 @@ class HappyDeleteService:
         Returns:
             Created IterationTracker
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         tracker = IterationTracker(
             id=uuid4(),
             task_id=task_id,
@@ -189,12 +189,12 @@ class HappyDeleteService:
             productive=productive,
             productivity_level=productivity_level,
             reason=reason,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             changes_made=changes_made,
             metrics=metrics or {},
         )
         tracker.iterations.append(iteration)
-        tracker.updated_at = datetime.utcnow()
+        tracker.updated_at = datetime.now(timezone.utc)
 
         # Update streaks and counts
         if productive and productivity_level == ProductivityLevel.PRODUCTIVE:
@@ -270,7 +270,7 @@ class HappyDeleteService:
         restart_event = RestartEvent(
             id=uuid4(),
             tracker_id=tracker.id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             restart_type=self._determine_restart_type(tracker)[0],
             command_used=self._generate_restart_command(tracker, RestartType.HARD),
             iterations_discarded=len(tracker.iterations),
@@ -284,7 +284,7 @@ class HappyDeleteService:
         tracker.unproductive_streak = 0
         tracker.restart_recommended = False
         tracker.restart_count += 1
-        tracker.updated_at = datetime.utcnow()
+        tracker.updated_at = datetime.now(timezone.utc)
 
         if new_checkpoint:
             tracker.last_checkpoint = new_checkpoint

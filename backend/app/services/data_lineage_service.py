@@ -16,7 +16,7 @@ Date: 2026-01-01
 
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from dataclasses import asdict
 
@@ -119,7 +119,7 @@ class DataLineageService:
                 node_count=len(graph.nodes),
                 edge_count=len(graph.edges),
                 field_mapping_count=len(graph.field_mappings),
-                updated_at=datetime.utcnow()
+                updated_at=datetime.now(timezone.utc)
             )
         )
         await self.db.commit()
@@ -792,7 +792,7 @@ class DataLineageService:
                 source_path=n.get("source_path"),
                 source_line=n.get("source_line"),
                 metadata=n.get("metadata", {}),
-                created_at=datetime.fromisoformat(n["created_at"]) if n.get("created_at") else datetime.utcnow()
+                created_at=datetime.fromisoformat(n["created_at"]) if n.get("created_at") else datetime.now(timezone.utc)
             )
             for n in data.get("nodes", [])
         ]

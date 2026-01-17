@@ -65,9 +65,9 @@ class EvolutionMetricsService:
             - best_variant: Top performing variant
         """
         if not start_date:
-            start_date = datetime.utcnow() - timedelta(days=30)
+            start_date = datetime.now(timezone.utc) - timedelta(days=30)
         if not end_date:
-            end_date = datetime.utcnow()
+            end_date = datetime.now(timezone.utc)
 
         # Get all experiments for this agent in date range
         result = await self.db.execute(
@@ -192,7 +192,7 @@ class EvolutionMetricsService:
             - average_value: Mean across period
             - std_dev: Standard deviation
         """
-        start_date = datetime.utcnow() - timedelta(days=days)
+        start_date = datetime.now(timezone.utc) - timedelta(days=days)
 
         # Get all results for agent in period
         result = await self.db.execute(
@@ -309,7 +309,7 @@ class EvolutionMetricsService:
         else:
             raise ValueError(f"Invalid period: {period}")
 
-        start_date = datetime.utcnow() - timedelta(days=days)
+        start_date = datetime.now(timezone.utc) - timedelta(days=days)
 
         # Get all results for agent
         result = await self.db.execute(
@@ -400,7 +400,7 @@ class EvolutionMetricsService:
         Returns:
             Dict with comparison data per agent
         """
-        start_date = datetime.utcnow() - timedelta(days=days)
+        start_date = datetime.now(timezone.utc) - timedelta(days=days)
 
         comparison = {}
 
@@ -476,7 +476,7 @@ class EvolutionMetricsService:
             Agent: {agent_id}
             Milestone: {milestone_type}
             Description: {description}
-            Date: {datetime.utcnow().isoformat()}
+            Date: {datetime.now(timezone.utc).isoformat()}
 
             Metrics:
             {self._format_metrics(metrics)}
@@ -488,11 +488,11 @@ class EvolutionMetricsService:
                 metadatas=[{
                     "agent_id": agent_id,
                     "milestone_type": milestone_type,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "experiment_id": str(experiment_id) if experiment_id else None,
                     **metrics
                 }],
-                ids=[f"{agent_id}_{milestone_type}_{datetime.utcnow().timestamp()}"]
+                ids=[f"{agent_id}_{milestone_type}_{datetime.now(timezone.utc).timestamp()}"]
             )
 
             return True

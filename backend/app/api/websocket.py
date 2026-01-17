@@ -12,7 +12,7 @@ Uses FastAPI WebSocket with connection manager pattern.
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from typing import Dict, List, Set, Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import asyncio
 import json
@@ -119,7 +119,7 @@ class ConnectionManager:
         await websocket.accept()
 
         # Store connection info
-        self.connected_at[websocket] = datetime.utcnow()
+        self.connected_at[websocket] = datetime.now(timezone.utc)
         self.client_info[websocket] = {
             "client_id": client_id,
             "channels": channels,
@@ -176,7 +176,7 @@ class ConnectionManager:
         """
         try:
             # Add timestamp to message
-            message["timestamp"] = datetime.utcnow().isoformat()
+            message["timestamp"] = datetime.now(timezone.utc).isoformat()
             await websocket.send_json(message)
         except Exception as e:
             logger.error(f"Error sending personal message: {e}")
@@ -200,7 +200,7 @@ class ConnectionManager:
             "type": event_type,
             "channel": channel.value,
             "data": data,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
         # Get connections for this channel
@@ -245,7 +245,7 @@ class ConnectionManager:
         return [
             {
                 **info,
-                "duration_seconds": (datetime.utcnow() - self.connected_at[ws]).total_seconds()
+                "duration_seconds": (datetime.now(timezone.utc) - self.connected_at[ws]).total_seconds()
             }
             for ws, info in self.client_info.items()
         ]
@@ -496,7 +496,7 @@ async def get_websocket_status():
             "scheduler": manager.get_connection_count(Channel.SCHEDULER),
             "quality": manager.get_connection_count(Channel.QUALITY)
         },
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 

@@ -6,7 +6,7 @@ Week 77: Creates various report formats from analysis results.
 
 import logging
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 from io import StringIO
 import json
@@ -77,7 +77,7 @@ class LayeredReportingService:
             report_type="executive_summary",
             format=format,
             content=content,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         self.db.add(report)
         self.db.commit()
@@ -87,7 +87,7 @@ class LayeredReportingService:
             "type": "executive_summary",
             "format": format,
             "content": content,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat()
         }
 
     async def generate_technical_report(
@@ -105,7 +105,7 @@ class LayeredReportingService:
             report_type="technical_deep_dive",
             format="markdown",
             content=content,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         self.db.add(report)
         self.db.commit()
@@ -115,7 +115,7 @@ class LayeredReportingService:
             "type": "technical_deep_dive",
             "format": "markdown",
             "content": content,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat()
         }
 
     async def generate_improvement_backlog(
@@ -143,7 +143,7 @@ class LayeredReportingService:
             report_type="improvement_backlog",
             format=format,
             content=content,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         self.db.add(report)
         self.db.commit()
@@ -154,7 +154,7 @@ class LayeredReportingService:
             "format": format,
             "content": content,
             "item_count": len(improvements),
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat()
         }
 
     async def generate_migration_roadmap(
@@ -177,7 +177,7 @@ class LayeredReportingService:
             format="markdown",
             content=content,
             metadata={"roadmap": roadmap},
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         self.db.add(report)
         self.db.commit()
@@ -187,7 +187,7 @@ class LayeredReportingService:
             "type": "migration_roadmap",
             "roadmap": roadmap,
             "content": content,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat()
         }
 
     async def generate_swot_presentation(
@@ -211,7 +211,7 @@ class LayeredReportingService:
             format="html",
             content=content,
             metadata={"slides": slides},
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         self.db.add(report)
         self.db.commit()
@@ -221,7 +221,7 @@ class LayeredReportingService:
             "type": "swot_presentation",
             "slides": slides,
             "content": content,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat()
         }
 
     async def _gather_session_data(self, session_id: UUID) -> Dict[str, Any]:

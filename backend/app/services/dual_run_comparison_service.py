@@ -11,7 +11,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional, Set
 from uuid import uuid4
 
@@ -126,7 +126,7 @@ class DualRunComparisonService:
             "field_mappings": field_mappings or {},
             "time_tolerance_ms": time_tolerance_ms,
             "is_active": True,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
         self._statistics[comparison_id] = DualRunStatistics()
 
@@ -164,7 +164,7 @@ class DualRunComparisonService:
                 result=ComparisonResult.ERROR,
                 correlation_id=correlation_id or str(uuid4()),
                 new_error=f"Session {comparison_id} not found",
-                executed_at=datetime.utcnow(),
+                executed_at=datetime.now(timezone.utc),
             )
 
         session = self._sessions[comparison_id]
@@ -177,7 +177,7 @@ class DualRunComparisonService:
             request_method=method,
             result=ComparisonResult.MISMATCH,
             correlation_id=correlation_id,
-            executed_at=datetime.utcnow(),
+            executed_at=datetime.now(timezone.utc),
         )
 
         legacy_config: SystemConfig = session["legacy"]
@@ -389,7 +389,7 @@ class DualRunComparisonService:
         """Stop a comparison session."""
         if comparison_id in self._sessions:
             self._sessions[comparison_id]["is_active"] = False
-            self._sessions[comparison_id]["stopped_at"] = datetime.utcnow().isoformat()
+            self._sessions[comparison_id]["stopped_at"] = datetime.now(timezone.utc).isoformat()
             return True
         return False
 

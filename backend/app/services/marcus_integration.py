@@ -12,7 +12,7 @@ Uses Ollama qwen2.5-coder:7b for local LLM processing.
 """
 
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import asyncio
 import logging
@@ -265,7 +265,7 @@ class MarcusAgent:
                             "focus_area": focus_area.value,
                             "analysis": result,
                             "raw_response": response_text,
-                            "timestamp": datetime.utcnow().isoformat()
+                            "timestamp": datetime.now(timezone.utc).isoformat()
                         }
                 except json.JSONDecodeError:
                     pass
@@ -276,7 +276,7 @@ class MarcusAgent:
                     "focus_area": focus_area.value,
                     "analysis": {"raw": response_text},
                     "raw_response": response_text,
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
 
             else:
@@ -311,8 +311,8 @@ class MarcusAgent:
         Returns:
             Comprehensive scan results
         """
-        scan_id = f"marcus_scan_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
-        start_time = datetime.utcnow()
+        scan_id = f"marcus_scan_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+        start_time = datetime.now(timezone.utc)
 
         logger.info(f"Starting maintenance scan {scan_id} with scope {scope.value}")
 
@@ -332,7 +332,7 @@ class MarcusAgent:
         if not await self.check_availability():
             results["status"] = "failed"
             results["error"] = "Marcus agent not available"
-            results["end_time"] = datetime.utcnow().isoformat()
+            results["end_time"] = datetime.now(timezone.utc).isoformat()
             return results
 
         # Run analysis for each focus area
@@ -374,9 +374,9 @@ class MarcusAgent:
         # Compile final results
         results["findings"] = all_findings
         results["status"] = "completed"
-        results["end_time"] = datetime.utcnow().isoformat()
+        results["end_time"] = datetime.now(timezone.utc).isoformat()
         results["duration_seconds"] = (
-            datetime.utcnow() - start_time
+            datetime.now(timezone.utc) - start_time
         ).total_seconds()
         results["total_findings"] = len(all_findings)
 
@@ -530,7 +530,7 @@ async def run_scheduled_maintenance(
     try:
         from app.api.websocket import broadcast_scan_started
         await broadcast_scan_started(
-            scan_id=f"scheduled_{datetime.utcnow().isoformat()}",
+            scan_id=f"scheduled_{datetime.now(timezone.utc).isoformat()}",
             scope=scope,
             focus_areas=focus_areas
         )
@@ -575,5 +575,5 @@ async def check_marcus_status() -> Dict[str, Any]:
         "llm": marcus.config["llm"],
         "available": is_available,
         "specialties": marcus.config["specialties"],
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }

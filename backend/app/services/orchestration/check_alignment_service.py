@@ -35,7 +35,7 @@ Usage:
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Any
 from uuid import UUID, uuid4
@@ -73,7 +73,7 @@ class AlignmentCheck:
     suggestions: List[str] = field(default_factory=list)
     drift_type: Optional[DriftType] = None
     context: Dict[str, Any] = field(default_factory=dict)
-    checked_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    checked_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -111,7 +111,7 @@ class DriftReport:
     drift_types: List[DriftType]
     drift_severity: float  # 0.0-1.0
     recommendations: List[str]
-    generated_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    generated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class CheckAlignmentService:
@@ -216,8 +216,8 @@ class CheckAlignmentService:
             goal=goal,
             sub_goals=sub_goals or [],
             actions=[],
-            created_at=datetime.utcnow(),
-            last_activity=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
+            last_activity=datetime.now(timezone.utc),
         )
         self._sessions[session.id] = session
         logger.info(f"Created alignment session {session.id} for goal: {goal[:50]}...")
@@ -259,10 +259,10 @@ class CheckAlignmentService:
             alignment_score=check.alignment_score,
             level=check.level,
             context=context or {},
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
         session.actions.append(record)
-        session.last_activity = datetime.utcnow()
+        session.last_activity = datetime.now(timezone.utc)
 
         # Update average alignment
         total_score = sum(a.alignment_score for a in session.actions)

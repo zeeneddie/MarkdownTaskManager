@@ -12,7 +12,7 @@ Enhances business rule extraction by using LLM to:
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any, Tuple
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 import json
 
@@ -54,7 +54,7 @@ class ExtractedRule:
     domain_terms: List[str] = field(default_factory=list)
     compliance_tags: List[str] = field(default_factory=list)
     dependencies: List[str] = field(default_factory=list)
-    timestamp: datetime = field(default_factory=lambda: datetime.utcnow())
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         return {

@@ -10,7 +10,7 @@ import hashlib
 import re
 import logging
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any, Callable, Awaitable
 
 from .types import (
@@ -122,7 +122,7 @@ class StageReviewService:
             return self._review_cache[artifact_hash]
 
         logger.info(f"Starting {stage_type} review for session {session_id}")
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         # Round 1: Multi-model review
         round1_result = await self._execute_review_round(
@@ -182,7 +182,7 @@ class StageReviewService:
             config=config,
         )
 
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
         duration_ms = int((end_time - start_time).total_seconds() * 1000)
 
         result = ReviewResult(
@@ -199,7 +199,7 @@ class StageReviewService:
                 "round1_issues": len(round1_result.consolidated_issues),
                 "final_issues": len(final_issues),
             },
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
 
         # Cache result
@@ -304,7 +304,7 @@ class StageReviewService:
     ) -> ModelReviewResult:
         """Query a single model for review."""
 
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             if self.llm_provider:
@@ -318,7 +318,7 @@ class StageReviewService:
                 # Mock response for testing
                 review_text = self._generate_mock_review(model_name)
 
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             response_time_ms = int((end_time - start_time).total_seconds() * 1000)
 
             # Parse issues from response

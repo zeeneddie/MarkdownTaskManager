@@ -18,7 +18,7 @@ Date: 2026-01-01
 import logging
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple
 from uuid import uuid4
@@ -116,7 +116,7 @@ class ExtractedStateMachine:
     entity: Optional[str] = None
     statistics: Optional[ExtractedStateMachineStatistics] = None
     confidence: float = 1.0
-    extracted_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    extracted_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def get_state_names(self) -> List[str]:
         """Get list of state names"""
@@ -294,7 +294,7 @@ class StateMachineExtractionResult:
     warnings: List[str] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
 
-    started_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: Optional[datetime] = None
     duration_seconds: float = 0.0
 
@@ -397,7 +397,7 @@ class StateMachineExtractorService:
         result = StateMachineExtractionResult(
             session_id=session_id,
             project_id=project_id,
-            started_at=datetime.utcnow()
+            started_at=datetime.now(timezone.utc)
         )
         self._sessions[session_id] = result
         logger.info(f"Created state machine extraction session: {session_id}")
@@ -448,7 +448,7 @@ class StateMachineExtractorService:
                 m.confidence for m in result.machines
             ) / len(result.machines)
 
-        result.completed_at = datetime.utcnow()
+        result.completed_at = datetime.now(timezone.utc)
         result.duration_seconds = (
             result.completed_at - result.started_at
         ).total_seconds()

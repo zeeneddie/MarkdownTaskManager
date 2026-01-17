@@ -15,7 +15,7 @@ Based on:
 import re
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any, Tuple
 from uuid import UUID, uuid4
 
@@ -605,7 +605,7 @@ class CiRAService:
             id=uuid4(),
             project_id=project_id,
             extraction_id=extraction_id,
-            name=name or f"Causality Analysis {datetime.utcnow().isoformat()}",
+            name=name or f"Causality Analysis {datetime.now(timezone.utc).isoformat()}",
             description=description,
             status=CausalSessionStatus.PENDING.value,
             source_type=source_type,

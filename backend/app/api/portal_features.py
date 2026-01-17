@@ -14,7 +14,7 @@ from sqlalchemy import select, update, func, and_
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, EmailStr, Field
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import re
 import markdown
@@ -430,7 +430,7 @@ async def cast_vote(
         else:
             # Different vote type - update vote
             existing_vote.vote_type = vote.vote_type
-            existing_vote.updated_at = datetime.utcnow()
+            existing_vote.updated_at = datetime.now(timezone.utc)
             action = "updated"
             vote_id = str(existing_vote.id)
     else:
@@ -713,7 +713,7 @@ async def _update_vote_aggregates(
 
     # Calculate hot score
     hot_score = PortalFeatureVoteAggregate.calculate_hot_score(
-        upvotes, downvotes, created_at or datetime.utcnow()
+        upvotes, downvotes, created_at or datetime.now(timezone.utc)
     )
 
     # Upsert aggregate
@@ -729,8 +729,8 @@ async def _update_vote_aggregates(
         aggregate.total_votes = total_votes
         aggregate.score = score
         aggregate.hot_score = hot_score
-        aggregate.last_vote_at = datetime.utcnow()
-        aggregate.computed_at = datetime.utcnow()
+        aggregate.last_vote_at = datetime.now(timezone.utc)
+        aggregate.computed_at = datetime.now(timezone.utc)
     else:
         aggregate = PortalFeatureVoteAggregate(
             feature_request_id=feature_request_id,
@@ -739,7 +739,7 @@ async def _update_vote_aggregates(
             total_votes=total_votes,
             score=score,
             hot_score=hot_score,
-            last_vote_at=datetime.utcnow(),
+            last_vote_at=datetime.now(timezone.utc),
         )
         db.add(aggregate)
 
@@ -991,7 +991,7 @@ async def update_comment(
     )
     comment.mentions = _extract_mentions(update_data.content) or None
     comment.is_edited = True
-    comment.updated_at = datetime.utcnow()
+    comment.updated_at = datetime.now(timezone.utc)
 
     await db.commit()
 
@@ -1037,7 +1037,7 @@ async def delete_comment(
         await db.delete(comment)
     else:
         comment.is_deleted = True
-        comment.deleted_at = datetime.utcnow()
+        comment.deleted_at = datetime.now(timezone.utc)
         comment.content = "[deleted]"
         comment.content_html = "<p>[deleted]</p>"
 

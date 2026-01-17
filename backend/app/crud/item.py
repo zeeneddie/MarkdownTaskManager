@@ -3,7 +3,7 @@ from sqlalchemy import select, func, and_
 from sqlalchemy.orm import selectinload
 from app.models.item import Item, ItemType
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Generic CRUD operations
 
@@ -80,14 +80,14 @@ async def update_item(db: AsyncSession, item_id: str, update_data: dict) -> Opti
         if key in valid_columns:
             setattr(item, key, value)
 
-    item.updated_at = datetime.utcnow()
+    item.updated_at = datetime.now(timezone.utc)
 
     # Handle status changes
     if "status" in update_data and update_data["status"] != old_status:
         if update_data["status"] == "IN_PROGRESS" and not item.started_at:
-            item.started_at = datetime.utcnow()
+            item.started_at = datetime.now(timezone.utc)
         elif update_data["status"] == "COMPLETED" and not item.completed_at:
-            item.completed_at = datetime.utcnow()
+            item.completed_at = datetime.now(timezone.utc)
 
     await db.commit()
     await db.refresh(item)
@@ -141,7 +141,7 @@ async def aggregate_story_points(db: AsyncSession, parent_id: str):
 
     parent.sp_total = total_sp
     parent.sp_completed = completed_sp
-    parent.updated_at = datetime.utcnow()
+    parent.updated_at = datetime.now(timezone.utc)
 
     await db.commit()
 
@@ -245,7 +245,7 @@ async def move_item(db: AsyncSession, item_id: str, new_parent_id: str) -> Optio
         return None
 
     item.parent_id = new_parent_id
-    item.updated_at = datetime.utcnow()
+    item.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(item)
 
@@ -286,7 +286,7 @@ async def assign_to_sprint(db: AsyncSession, item_id: str, sprint_id: int, order
 
     item.sprint_id = sprint_id
     item.sprint_order = order
-    item.updated_at = datetime.utcnow()
+    item.updated_at = datetime.now(timezone.utc)
 
     await db.commit()
     await db.refresh(item)
@@ -300,7 +300,7 @@ async def unassign_from_sprint(db: AsyncSession, item_id: str) -> Optional[Item]
 
     item.sprint_id = None
     item.sprint_order = None
-    item.updated_at = datetime.utcnow()
+    item.updated_at = datetime.now(timezone.utc)
 
     await db.commit()
     await db.refresh(item)

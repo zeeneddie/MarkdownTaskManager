@@ -26,7 +26,7 @@ Features:
 import json
 import re
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any, Set
@@ -99,7 +99,7 @@ class StateEntry:
     """
     state: str
     phase: StatePhase
-    timestamp: datetime = field(default_factory=lambda: datetime.utcnow())
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     description: str = ""
     markers: List[StateMarker] = field(default_factory=list)
     context: Dict[str, Any] = field(default_factory=dict)
@@ -130,8 +130,8 @@ class ProcessState:
     iterations: Dict[str, int] = field(default_factory=dict)
     total_iterations: Dict[str, int] = field(default_factory=dict)
     history: List[StateEntry] = field(default_factory=list)
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
-    updated_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     active_markers: Set[StateMarker] = field(default_factory=set)
     context: Dict[str, Any] = field(default_factory=dict)
 
@@ -182,7 +182,7 @@ class ProcessState:
         if new_state in self.pending:
             self.pending.remove(new_state)
 
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
 
         return entry
 
@@ -825,7 +825,7 @@ class StateIndicatorService:
         """
         checkpoint = {
             "checkpoint_id": checkpoint_id,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "state": state.to_dict(),
         }
 

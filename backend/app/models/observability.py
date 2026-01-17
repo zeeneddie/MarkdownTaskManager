@@ -38,8 +38,8 @@ class LLMProvider(Base):
     is_local = Column(Boolean, default=False)
     is_active = Column(Boolean, default=True)
     config = Column(JSONB, default=dict)  # Provider-specific settings
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
         Index('ix_llm_providers_type_tier', 'provider_type', 'tier'),
@@ -96,7 +96,7 @@ class AgentAction(Base):
     error = Column(Text)  # Error message if failed
     confidence_score = Column(Numeric(3, 2))  # 0.00 - 1.00
     extra_data = Column(JSONB, default=dict)  # Additional context
-    created_at = Column(DateTime, default=lambda: datetime.utcnow(), index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
 
     __table_args__ = (
         Index('ix_agent_actions_created_at_agent', 'created_at', 'agent_id'),
@@ -153,7 +153,7 @@ class DecisionTrace(Base):
     selection_rationale = Column(Text)  # Why this option
     outcome = Column(String(50))  # success, failure, skipped
     outcome_details = Column(JSONB)  # Additional outcome info
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
         Index('ix_decision_traces_task_seq', 'task_id', 'sequence_number'),
@@ -200,8 +200,8 @@ class AgentPerformanceDaily(Base):
     total_tokens_output = Column(Integer, default=0)
     total_cost_cents = Column(Numeric(10, 2), default=0)
     avg_confidence = Column(Numeric(3, 2))  # Average confidence score
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Note: date column already has index=True, no need for explicit Index
 

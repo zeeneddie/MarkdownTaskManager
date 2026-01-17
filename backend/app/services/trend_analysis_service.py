@@ -165,7 +165,7 @@ class TrendAnalysisService:
                 forecasts=[],
                 anomalies=[],
                 recommendations=["Need at least 7 days of data for trend analysis"],
-                analysis_date=datetime.utcnow()
+                analysis_date=datetime.now(timezone.utc)
             )
 
         # Extract success rates
@@ -198,7 +198,7 @@ class TrendAnalysisService:
             forecasts=forecasts,
             anomalies=anomalies,
             recommendations=recommendations,
-            analysis_date=datetime.utcnow()
+            analysis_date=datetime.now(timezone.utc)
         )
 
     def _detect_trend(
@@ -353,7 +353,7 @@ class TrendAnalysisService:
                 confidence_level=confidence,
                 trend_direction=trend_type,
                 expected_change=expected_change,
-                forecast_date=datetime.utcnow() + timedelta(days=days)
+                forecast_date=datetime.now(timezone.utc) + timedelta(days=days)
             ))
 
         return forecasts
@@ -392,7 +392,7 @@ class TrendAnalysisService:
                 anomalies.append(PerformanceAnomaly(
                     agent_id=agent_id,
                     anomaly_type=AnomalyType.SUDDEN_DROP,
-                    detected_at=datetime.utcnow() - timedelta(days=len(values)-i),
+                    detected_at=datetime.now(timezone.utc) - timedelta(days=len(values)-i),
                     severity=severity,
                     current_value=values[i],
                     expected_value=values[i-1],
@@ -411,7 +411,7 @@ class TrendAnalysisService:
                 anomalies.append(PerformanceAnomaly(
                     agent_id=agent_id,
                     anomaly_type=AnomalyType.OSCILLATION,
-                    detected_at=datetime.utcnow(),
+                    detected_at=datetime.now(timezone.utc),
                     severity="MEDIUM",
                     current_value=values[-1],
                     expected_value=mean,
@@ -428,7 +428,7 @@ class TrendAnalysisService:
                 anomalies.append(PerformanceAnomaly(
                     agent_id=agent_id,
                     anomaly_type=AnomalyType.PLATEAU,
-                    detected_at=datetime.utcnow(),
+                    detected_at=datetime.now(timezone.utc),
                     severity="LOW",
                     current_value=values[-1],
                     expected_value=mean,

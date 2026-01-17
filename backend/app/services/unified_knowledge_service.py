@@ -12,7 +12,7 @@ Combines multiple knowledge sources:
 Provides unified query interface for agents.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Tuple
 import logging
 from enum import Enum
@@ -93,7 +93,7 @@ class UnifiedKnowledgeService:
             "sources_queried": [],
             "results": [],
             "metadata": {
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "total_results": 0,
             }
         }
@@ -296,7 +296,7 @@ class UnifiedKnowledgeService:
         context = {
             "agent": agent_name,
             "project_id": project_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "sections": [],
         }
 

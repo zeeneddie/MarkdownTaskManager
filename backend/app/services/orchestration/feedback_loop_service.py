@@ -14,7 +14,7 @@ Source: https://gregorriegler.com/2025/07/12/augmented-coding-pattern-language.h
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Any, Callable
 from uuid import UUID, uuid4
@@ -152,7 +152,7 @@ class FeedbackLoopService:
             )
             success_criteria.append(criterion)
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         loop = FeedbackLoop(
             id=uuid4(),
             task_id=task_id,
@@ -180,7 +180,7 @@ class FeedbackLoopService:
             raise ValueError(f"Loop {loop_id} is not in CREATED status")
 
         loop.status = LoopStatus.RUNNING
-        loop.updated_at = datetime.utcnow()
+        loop.updated_at = datetime.now(timezone.utc)
 
         logger.info(f"Started feedback loop {loop_id}")
         return loop
@@ -214,7 +214,7 @@ class FeedbackLoopService:
             loop.status = LoopStatus.RUNNING
 
         loop.current_iteration += 1
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Update criteria with results
         criteria_results: Dict[UUID, bool] = {}
@@ -330,7 +330,7 @@ class FeedbackLoopService:
             raise ValueError(f"Loop {loop_id} is already completed")
 
         loop.status = LoopStatus.CANCELLED
-        loop.completed_at = datetime.utcnow()
+        loop.completed_at = datetime.now(timezone.utc)
         loop.updated_at = loop.completed_at
         if reason:
             loop.metadata["cancel_reason"] = reason
@@ -343,7 +343,7 @@ class FeedbackLoopService:
         loop = self._get_loop(loop_id)
 
         loop.status = LoopStatus.FAILED
-        loop.completed_at = datetime.utcnow()
+        loop.completed_at = datetime.now(timezone.utc)
         loop.updated_at = loop.completed_at
         loop.metadata["failure_reason"] = reason
 

@@ -24,7 +24,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_, and_
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
 import logging
@@ -550,27 +550,27 @@ async def move_item(
         item.blocked_reason = request.blocked_reason
     elif not is_blocked:
         item.blocked_reason = None
-    item.updated_at = datetime.utcnow()
+    item.updated_at = datetime.now(timezone.utc)
 
     # Item-type specific updates
     if request.item_type == ItemType.STORY:
         if request.target_lane == KanbanLane.DONE:
-            item.completed_at = datetime.utcnow()
+            item.completed_at = datetime.now(timezone.utc)
 
     elif request.item_type == ItemType.BUG:
         # Bug-specific timestamps based on status
         if new_status == "analysis":
-            item.analysis_started_at = datetime.utcnow()
+            item.analysis_started_at = datetime.now(timezone.utc)
         elif new_status == "in_progress":
-            item.fix_started_at = datetime.utcnow()
+            item.fix_started_at = datetime.now(timezone.utc)
         elif new_status == "testing":
-            item.fixed_at = datetime.utcnow()
+            item.fixed_at = datetime.now(timezone.utc)
         elif request.target_lane == KanbanLane.DONE:
-            item.verified_at = datetime.utcnow()
+            item.verified_at = datetime.now(timezone.utc)
 
     else:  # TASK
         if request.target_lane == KanbanLane.DONE:
-            item.completed_at = datetime.utcnow()
+            item.completed_at = datetime.now(timezone.utc)
 
     await db.commit()
 
@@ -604,7 +604,7 @@ async def move_item(
             "item_type": request.item_type.value,
             "from_lane": old_lane.value,
             "to_lane": actual_target_lane,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "suggested_agents": event_result.get("suggested_agents", []),
             "retry_count": event_result.get("retry_count", 0),
             "escalated": event_result.get("escalate", False)
@@ -716,7 +716,7 @@ async def update_item(
             item.blocked_reason = request.blocked_reason
             item.is_blocked = bool(request.blocked_reason)
 
-    item.updated_at = datetime.utcnow()
+    item.updated_at = datetime.now(timezone.utc)
     await db.commit()
 
     # Broadcast update
@@ -727,7 +727,7 @@ async def update_item(
             "event": "kanban_item_updated",
             "item_id": item_id,
             "item_type": item_type.value,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     )
 
@@ -1065,7 +1065,7 @@ async def create_bug(
         source_reference=request.source_reference,
         tags=request.tags,
         acceptance_criteria=request.acceptance_criteria,
-        reported_at=datetime.utcnow(),
+        reported_at=datetime.now(timezone.utc),
     )
 
     db.add(bug)
@@ -1081,7 +1081,7 @@ async def create_bug(
             "bug_id": str(bug.id),
             "bug_number": bug.bug_number,
             "title": bug.title,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     )
 

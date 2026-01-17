@@ -8,7 +8,7 @@ REST API endpoints for Claude Code Project Management:
 - Task Recommendations: Intelligent prioritization
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 
@@ -731,7 +731,7 @@ async def decompose_prd(
             total_story_points=result.total_story_points,
             total_function_points=result.total_function_points,
             processing_time_ms=result.processing_time_ms,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             epics=result.epics,
             features=result.features,
             stories=result.stories,

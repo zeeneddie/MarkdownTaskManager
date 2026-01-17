@@ -600,7 +600,7 @@ class AgentEvolutionService:
             key_decisions=key_decisions,
             duration=duration,
             quality_score=quality_score,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             metadata={
                 'task_id': task_id,
                 'attribution_score': attribution.total_score
@@ -642,7 +642,7 @@ class AgentEvolutionService:
                 learning_goal=f"Improve handling of: {gap['failure_type']}",
                 expected_difficulty=Complexity.MEDIUM,
                 knowledge_gap=gap['gap'],
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             learning_tasks.append(task)
 
@@ -657,7 +657,7 @@ class AgentEvolutionService:
                 learning_goal=f"Gain experience in: {area['work_type'].value}",
                 expected_difficulty=Complexity.LOW,
                 knowledge_gap=area['gap'],
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             learning_tasks.append(task)
 
@@ -672,7 +672,7 @@ class AgentEvolutionService:
                 learning_goal=edge_case['goal'],
                 expected_difficulty=Complexity.HIGH,
                 knowledge_gap="Edge case handling",
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             learning_tasks.append(task)
 
@@ -778,7 +778,7 @@ class AgentEvolutionService:
         days: int = 30
     ) -> PerformanceMetrics:
         """Get performance metrics for an agent"""
-        period_end = datetime.utcnow()
+        period_end = datetime.now(timezone.utc)
         period_start = period_end - timedelta(days=days)
 
         # Get experiences for the period

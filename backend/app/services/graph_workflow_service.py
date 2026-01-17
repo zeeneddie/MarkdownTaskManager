@@ -34,7 +34,7 @@ CodeWiki Integration:
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from uuid import UUID
 from enum import Enum
@@ -127,7 +127,7 @@ class GraphWorkflowService:
             "workflow_type": workflow_type,
             "project_id": project_id,
             "changes_analyzed": len(changes),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "affected_entities": [],
             "affected_files": set(),
             "impact_summary": {
@@ -332,7 +332,7 @@ class GraphWorkflowService:
             "workflow_type": "BUG",
             "project_id": project_id,
             "entity_name": entity_name,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "entity_found": False,
             "upstream_dependencies": [],  # What this entity depends on
             "downstream_dependents": [],  # What depends on this entity
@@ -475,7 +475,7 @@ class GraphWorkflowService:
         result = {
             "workflow_type": "QUALITY_AUDIT",
             "project_id": project_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "coupling_summary": {},
             "high_coupling_modules": [],
             "circular_dependencies": [],
@@ -637,7 +637,7 @@ class GraphWorkflowService:
         result = {
             "workflow_type": "TESTING",
             "project_id": project_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "test_files": [],
             "tested_entities": [],
             "untested_entities": [],
@@ -794,7 +794,7 @@ class GraphWorkflowService:
             "workflow_type": "ENHANCEMENT",
             "project_id": project_id,
             "feature_name": feature_name,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "scope_analysis": {
                 "entities_in_scope": [],
                 "files_affected": [],
@@ -1045,7 +1045,7 @@ class GraphWorkflowService:
         result = {
             "project_id": project_id,
             "repo_path": repo_path,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "graph_sync": {},
             "codewiki_analysis": {},
         }
@@ -1108,7 +1108,7 @@ class GraphWorkflowService:
         result = {
             "project_id": project_id,
             "workflow_type": workflow_type,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "graph_context": {},
             "codewiki_context": {},
         }

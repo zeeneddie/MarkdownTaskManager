@@ -21,7 +21,7 @@ import asyncio
 import json
 import hashlib
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any, Callable, Awaitable, Union
@@ -158,7 +158,7 @@ class TaskChain:
     tasks: List[ChainTask] = field(default_factory=list)
     status: ChainStatus = ChainStatus.IDLE
     results: Dict[str, TaskResult] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     context: Dict[str, Any] = field(default_factory=dict)
@@ -345,7 +345,7 @@ class TaskchainService:
             The created TaskChain
         """
         chain_id = hashlib.md5(
-            f"{name}:{datetime.utcnow().isoformat()}".encode()
+            f"{name}:{datetime.now(timezone.utc).isoformat()}".encode()
         ).hexdigest()[:12]
 
         chain = TaskChain(
@@ -379,7 +379,7 @@ class TaskchainService:
             The executed chain with results
         """
         chain.status = ChainStatus.RUNNING
-        chain.started_at = datetime.utcnow()
+        chain.started_at = datetime.now(timezone.utc)
         chain.context.update(initial_input or {})
 
         await self._fire_hook("on_chain_start", chain)
@@ -399,7 +399,7 @@ class TaskchainService:
             chain.status = ChainStatus.FAILED
             chain.error = str(e)
 
-        chain.completed_at = datetime.utcnow()
+        chain.completed_at = datetime.now(timezone.utc)
         await self._fire_hook("on_chain_complete", chain)
 
         self._save_chain(chain)
@@ -451,7 +451,7 @@ class TaskchainService:
         result = TaskResult(
             task_id=task.id,
             success=False,
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
         )
 
         # Get input from dependencies
@@ -503,7 +503,7 @@ class TaskchainService:
             if attempt < task.max_retries:
                 await asyncio.sleep(task.retry_delay_ms / 1000)
 
-        result.completed_at = datetime.utcnow()
+        result.completed_at = datetime.now(timezone.utc)
         if result.started_at:
             result.duration_ms = int(
                 (result.completed_at - result.started_at).total_seconds() * 1000

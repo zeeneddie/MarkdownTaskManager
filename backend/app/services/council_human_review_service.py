@@ -14,7 +14,7 @@ Phases:
 """
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 from uuid import UUID, uuid4
 
@@ -138,13 +138,13 @@ class CouncilHumanReviewService:
 
             try:
                 # Call LLM Council service for generation
-                start_time = datetime.utcnow()
+                start_time = datetime.now(timezone.utc)
                 content = await self._generate_from_provider(
                     provider["name"],
                     prompt,
                     context
                 )
-                end_time = datetime.utcnow()
+                end_time = datetime.now(timezone.utc)
 
                 response = CouncilProviderResponse(
                     id=uuid4(),
@@ -554,7 +554,7 @@ Average scores: {avg_scores}
             raise ValueError("No consensus found")
 
         # Mark as approved
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         consensus.is_approved = True
         consensus.approved_at = now
 
@@ -610,7 +610,7 @@ Average scores: {avg_scores}
             raise ValueError(f"Session {session_id} not found")
 
         session.status = SessionStatus.REJECTED.value
-        session.rejected_at = datetime.utcnow()
+        session.rejected_at = datetime.now(timezone.utc)
         session.rejected_by = rejected_by
         session.rejection_reason = reason
 

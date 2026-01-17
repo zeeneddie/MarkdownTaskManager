@@ -10,7 +10,7 @@ Provides:
 - Endless mode support
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional, Set, Tuple
 from uuid import UUID
 import re
@@ -114,7 +114,7 @@ class ClaudeMemService:
             endless_mode=False,
             compression_ratio=self._default_compression_ratio,
             session_data={},
-            last_activity=datetime.utcnow()
+            last_activity=datetime.now(timezone.utc)
         )
 
         self.db.add(session)
@@ -160,7 +160,7 @@ class ClaudeMemService:
             if field in allowed_fields:
                 setattr(session, field, value)
 
-        session.last_activity = datetime.utcnow()
+        session.last_activity = datetime.now(timezone.utc)
         await self.db.commit()
         await self.db.refresh(session)
 
@@ -328,7 +328,7 @@ class ClaudeMemService:
         session = result.scalar_one_or_none()
 
         if session:
-            session.last_activity = datetime.utcnow()
+            session.last_activity = datetime.now(timezone.utc)
             await self.db.commit()
 
     # =========================================================================
@@ -523,7 +523,7 @@ class ClaudeMemService:
         )
 
         # Get old observations
-        cutoff = datetime.utcnow() - timedelta(hours=older_than_hours)
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=older_than_hours)
         stmt = select(ClaudeMemObservation).where(
             and_(
                 ClaudeMemObservation.session_id == session_id,
@@ -926,7 +926,7 @@ class ClaudeMemService:
         days_inactive: int = 30
     ) -> Dict[str, Any]:
         """Clean up sessions inactive for specified days."""
-        cutoff = datetime.utcnow() - timedelta(days=days_inactive)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days_inactive)
 
         stmt = select(ClaudeMemSession).where(
             ClaudeMemSession.last_activity < cutoff

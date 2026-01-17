@@ -16,7 +16,7 @@ Source: https://gregorriegler.com/2025/07/12/augmented-coding-pattern-language.h
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Any
 from uuid import UUID, uuid4
@@ -170,7 +170,7 @@ class CanaryService:
         Returns:
             Created or updated CanarySignal
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Check for existing signal of same type at same path
         existing = self._find_existing_signal(code_path, signal_type)
@@ -332,7 +332,7 @@ class CanaryService:
 
         # Determine trend (simplified - would need historical data for real trend)
         trend = "stable"
-        recent_signals = [s for s in signals if (datetime.utcnow() - s.last_seen).days < 7]
+        recent_signals = [s for s in signals if (datetime.now(timezone.utc) - s.last_seen).days < 7]
         if len(recent_signals) > len(signals) * 0.5:
             trend = "degrading"
         elif len(recent_signals) < len(signals) * 0.2:
@@ -448,7 +448,7 @@ class CanaryService:
             signals=[signal.id],
             description=f"{refactoring_type.value} to address {signal.signal_type.value}",
             suggested_approach=signal.recommendation,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
 
         self._candidates[candidate.id] = candidate

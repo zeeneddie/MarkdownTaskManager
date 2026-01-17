@@ -10,7 +10,7 @@ Week 52: Implements 3-stage consensus process
 import re
 import asyncio
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 import aiohttp
 from sqlalchemy import select
@@ -95,7 +95,7 @@ class LLMCouncilService:
             decision_type=decision_type,
             agent_id=agent_id,
             status="pending",
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
 
         self.db.add(session)
@@ -287,7 +287,7 @@ class LLMCouncilService:
                         response_text=response_text,
                         confidence=confidence,
                         reasoning=reasoning,
-                        created_at=datetime.utcnow()
+                        created_at=datetime.now(timezone.utc)
                     )
 
                     self.db.add(council_response)
@@ -604,7 +604,7 @@ COMMENTS: [Your explanation]
                         clarity_score=scores["clarity"],
                         feasibility_score=scores["feasibility"],
                         comments=scores.get("comments"),
-                        created_at=datetime.utcnow()
+                        created_at=datetime.now(timezone.utc)
                     )
 
                     self.db.add(review)
@@ -764,14 +764,14 @@ KEY CONSIDERATIONS: [Important points to remember]
                         consensus_level=consensus_level,
                         dissenting_opinions=dissenting_opinions if dissenting_opinions else None,
                         synthesis_reasoning=reasoning,
-                        created_at=datetime.utcnow()
+                        created_at=datetime.now(timezone.utc)
                     )
 
                     self.db.add(decision)
 
                     # Update session status
                     session.status = "complete"
-                    session.completed_at = datetime.utcnow()
+                    session.completed_at = datetime.now(timezone.utc)
 
                     await self.db.commit()
                     await self.db.refresh(decision)

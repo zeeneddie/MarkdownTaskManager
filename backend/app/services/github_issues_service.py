@@ -8,7 +8,7 @@ Supports creating, updating, and syncing issues with local task management.
 import os
 import asyncio
 import aiohttp
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any, Tuple
 from uuid import UUID
 import uuid
@@ -244,7 +244,7 @@ class GitHubIssuesService:
                     created += 1
 
                 sync_record.sync_status = SyncStatus.SYNCED.value
-                sync_record.last_synced_at = datetime.utcnow()
+                sync_record.last_synced_at = datetime.now(timezone.utc)
                 sync_record.sync_error = None
 
             except Exception as e:
@@ -330,7 +330,7 @@ class GitHubIssuesService:
             github_url=issue["html_url"],
             sync_direction=SyncDirection.LOCAL_TO_GITHUB.value,
             sync_status=SyncStatus.SYNCED.value,
-            last_synced_at=datetime.utcnow(),
+            last_synced_at=datetime.now(timezone.utc),
             github_updated_at=datetime.fromisoformat(
                 issue["updated_at"].replace("Z", "+00:00")
             )
@@ -462,7 +462,7 @@ class GitHubIssuesService:
         elif resolution == "use_local":
             await self._update_github_issue(repo, issue_number, sync_record)
             sync_record.sync_status = SyncStatus.SYNCED.value
-            sync_record.last_synced_at = datetime.utcnow()
+            sync_record.last_synced_at = datetime.now(timezone.utc)
             await self.db.commit()
 
         else:
@@ -606,7 +606,7 @@ class GitHubIssuesService:
             local_task_type=task_type,
             sync_direction=SyncDirection.GITHUB_TO_LOCAL.value,
             sync_status=SyncStatus.SYNCED.value,
-            last_synced_at=datetime.utcnow(),
+            last_synced_at=datetime.now(timezone.utc),
             github_updated_at=datetime.fromisoformat(
                 issue["updated_at"].replace("Z", "+00:00")
             )
@@ -636,7 +636,7 @@ class GitHubIssuesService:
         sync_record.github_updated_at = datetime.fromisoformat(
             issue["updated_at"].replace("Z", "+00:00")
         )
-        sync_record.last_synced_at = datetime.utcnow()
+        sync_record.last_synced_at = datetime.now(timezone.utc)
         sync_record.sync_status = SyncStatus.SYNCED.value
         sync_record.sync_error = None
 

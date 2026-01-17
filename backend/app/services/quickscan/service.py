@@ -6,7 +6,7 @@ Fase 24 - A1: Main orchestrator for 15-minute legacy assessment.
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
@@ -62,7 +62,7 @@ class LegacyQuickscanService:
         Returns:
             QuickscanReport with all analysis results and recommendation
         """
-        started = datetime.utcnow()
+        started = datetime.now(timezone.utc)
         report = QuickscanReport(
             project_name=config.project_name,
             project_path=str(config.project_path),
@@ -116,7 +116,7 @@ class LegacyQuickscanService:
         self._generate_findings(report)
 
         # Finalize
-        report.completed_at = datetime.utcnow()
+        report.completed_at = datetime.now(timezone.utc)
         report.duration_seconds = (report.completed_at - started).total_seconds()
 
         logger.info(

@@ -9,7 +9,7 @@ Based on the CCA paper's three-scope memory architecture:
 
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import uuid
 
@@ -48,7 +48,7 @@ class MemoryNode:
             scope=scope,
             content=content,
             metadata=metadata or {},
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             parent_id=parent_id,
         )
 
@@ -85,25 +85,25 @@ class SessionMemory:
         """Add an insight to session memory."""
         self.insights.append({
             **insight,
-            "added_at": datetime.utcnow().isoformat(),
+            "added_at": datetime.now(timezone.utc).isoformat(),
         })
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
 
     def add_pattern(self, pattern: Dict[str, Any]) -> None:
         """Add a pattern to session memory."""
         self.patterns.append({
             **pattern,
-            "added_at": datetime.utcnow().isoformat(),
+            "added_at": datetime.now(timezone.utc).isoformat(),
         })
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
 
     def add_decision(self, decision: Dict[str, Any]) -> None:
         """Add a decision to session memory."""
         self.decisions.append({
             **decision,
-            "added_at": datetime.utcnow().isoformat(),
+            "added_at": datetime.now(timezone.utc).isoformat(),
         })
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
@@ -157,7 +157,7 @@ class EntryMemory:
         """Mark entry as complete."""
         self.quality_score = quality_score
         self.results_summary = results_summary
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(timezone.utc)
 
     def add_runnable(self, runnable_id: str) -> None:
         """Link a runnable memory to this entry."""

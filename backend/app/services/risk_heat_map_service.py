@@ -12,7 +12,7 @@ import logging
 import math
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Set, Tuple
@@ -370,7 +370,7 @@ class RiskHeatMapService:
 
         return RiskHeatMap(
             project_path=project_path,
-            generated_at=datetime.utcnow(),
+            generated_at=datetime.now(timezone.utc),
             overall_risk=overall_risk,
             total_files=len(file_risks),
             total_findings=len(all_findings),

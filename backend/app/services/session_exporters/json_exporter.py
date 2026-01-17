@@ -5,7 +5,7 @@ Week 61: Enhanced Observability Integration
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from app.services.session_exporters.base import BaseSessionExporter, SessionData
 
@@ -61,7 +61,7 @@ class JSONSessionExporter(BaseSessionExporter):
         """Build export data structure."""
         data = {
             "cctrace_version": "1.0",
-            "export_timestamp": datetime.utcnow().isoformat(),
+            "export_timestamp": datetime.now(timezone.utc).isoformat(),
             "session": {
                 "id": session_data.session_id,
                 "created_at": session_data.created_at.isoformat() if session_data.created_at else None,

@@ -8,7 +8,7 @@ escalation, and alternative resolution paths.
 
 from typing import Dict, Any, List, Optional, Callable, Awaitable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import logging
 import json
@@ -542,7 +542,7 @@ class EscalationService:
         if not ticket:
             return False
 
-        ticket.resolved_at = datetime.utcnow()
+        ticket.resolved_at = datetime.now(timezone.utc)
         ticket.resolution = resolution
         ticket.resolved_by = resolved_by
 

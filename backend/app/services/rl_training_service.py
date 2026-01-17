@@ -126,7 +126,7 @@ class State:
     """RL state representation"""
     features: Dict[str, float]
     context: Dict[str, Any] = field(default_factory=dict)
-    timestamp: datetime = field(default_factory=lambda: datetime.utcnow())
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_vector(self) -> List[float]:
         """Convert to feature vector"""
@@ -498,12 +498,12 @@ class RLTrainingService:
         # Create training run
         training_run = RLTrainingRun(
             environment_id=environment_id,
-            run_name=run_name or f"{environment.name}_{algorithm}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            run_name=run_name or f"{environment.name}_{algorithm}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
             algorithm=algorithm,
             hyperparameters=hyperparameters or TrainingConfig().__dict__,
             training_config=training_config or {},
             status="pending",
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
 
         self.db.add(training_run)
@@ -532,10 +532,10 @@ class RLTrainingService:
         training_run.status = status
 
         if status == "running" and not training_run.started_at:
-            training_run.started_at = datetime.utcnow()
+            training_run.started_at = datetime.now(timezone.utc)
 
         if status in ["completed", "failed", "cancelled"]:
-            training_run.completed_at = datetime.utcnow()
+            training_run.completed_at = datetime.now(timezone.utc)
             if training_run.started_at:
                 training_run.duration_seconds = int(
                     (training_run.completed_at - training_run.started_at).total_seconds()
@@ -547,7 +547,7 @@ class RLTrainingService:
         if metrics:
             history = training_run.metrics_history or []
             history.append({
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 **metrics
             })
             training_run.metrics_history = history
@@ -867,7 +867,7 @@ class RLTrainingService:
         days: int = 30
     ) -> List[Dict[str, Any]]:
         """Get performance trend for an agent"""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(timezone.utc) - timedelta(days=days)
 
         result = await self.db.execute(
             select(RLAgentPerformance)
@@ -886,7 +886,7 @@ class RLTrainingService:
         days: int = 30
     ) -> Dict[str, Any]:
         """Get summary of agent performance"""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(timezone.utc) - timedelta(days=days)
 
         result = await self.db.execute(
             select(
@@ -937,7 +937,7 @@ class RLTrainingService:
         transitions = []
         action_counts: Dict[str, int] = {}
         reward_breakdown: Dict[str, float] = {}
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         # Initialize state
         state = State(
@@ -1013,7 +1013,7 @@ class RLTrainingService:
             state = next_state
             step += 1
 
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
         duration_ms = int((end_time - start_time).total_seconds() * 1000)
 
         return EpisodeResult(
@@ -1196,7 +1196,7 @@ class RLTrainingService:
                 RLAgentPerformance.agent_type,
                 func.avg(RLAgentPerformance.metric_value).label("avg_performance")
             )
-            .where(RLAgentPerformance.recorded_at >= datetime.utcnow() - timedelta(days=7))
+            .where(RLAgentPerformance.recorded_at >= datetime.now(timezone.utc) - timedelta(days=7))
             .group_by(RLAgentPerformance.agent_type)
         )
         agent_performance = {row[0]: float(row[1]) for row in recent_perf}
@@ -1210,7 +1210,7 @@ class RLTrainingService:
             "total_episodes": total_episodes,
             "active_policies": active_policies,
             "agent_performance_7d": agent_performance,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
 

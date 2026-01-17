@@ -13,7 +13,7 @@ import logging
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 from .detector_service import (
     ResourceLeakDetectorService,
@@ -155,7 +155,7 @@ class BrownPaperStabilityIntegration:
         if not detector.get_registered_languages():
             logger.warning("No stability detectors registered")
             return StabilityIntegrationResult(
-                analyzed_at=datetime.utcnow(),
+                analyzed_at=datetime.now(timezone.utc),
                 analysis_time_ms=int((time.time() - start_time) * 1000),
             )
 
@@ -175,7 +175,7 @@ class BrownPaperStabilityIntegration:
             # Convert to integration result
             result = self._convert_report_to_result(stability_report)
             result.analysis_time_ms = int((time.time() - start_time) * 1000)
-            result.analyzed_at = datetime.utcnow()
+            result.analyzed_at = datetime.now(timezone.utc)
 
             logger.info(
                 f"Stability analysis complete: {result.total_findings} findings, "
@@ -187,7 +187,7 @@ class BrownPaperStabilityIntegration:
         except Exception as e:
             logger.error(f"Stability analysis failed: {e}", exc_info=True)
             return StabilityIntegrationResult(
-                analyzed_at=datetime.utcnow(),
+                analyzed_at=datetime.now(timezone.utc),
                 analysis_time_ms=int((time.time() - start_time) * 1000),
             )
 

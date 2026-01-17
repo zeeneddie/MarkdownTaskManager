@@ -39,7 +39,7 @@ Usage:
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Any, Callable
 from uuid import UUID, uuid4
@@ -101,7 +101,7 @@ class DecisionPoint:
     selected_option: Optional[str] = None
     human_reasoning: Optional[str] = None
     status: str = "pending"  # pending, decided, skipped
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     decided_at: Optional[datetime] = None
 
 
@@ -114,7 +114,7 @@ class CollaborationEvent:
     description: str
     actor: str  # human, ai
     data: Dict[str, Any]
-    timestamp: datetime = field(default_factory=lambda: datetime.utcnow())
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -149,7 +149,7 @@ class CollaborationReport:
     pending_decisions: int
     collaboration_score: float  # 0.0-1.0
     recommendations: List[str]
-    generated_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    generated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class ActivePartnerService:
@@ -202,8 +202,8 @@ class ActivePartnerService:
             decision_points=[],
             events=[],
             feedback=[],
-            created_at=datetime.utcnow(),
-            last_activity=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
+            last_activity=datetime.now(timezone.utc),
         )
         self._sessions[session.id] = session
 
@@ -274,7 +274,7 @@ class ActivePartnerService:
         self._decision_points[decision.id] = decision
         session.decision_points.append(decision)
         session.total_decisions += 1
-        session.last_activity = datetime.utcnow()
+        session.last_activity = datetime.now(timezone.utc)
 
         # Change mode to paused if human decision required
         if handoff_reason in self.HUMAN_REQUIRED_REASONS:
@@ -319,13 +319,13 @@ class ActivePartnerService:
         decision.selected_option = selected_option
         decision.human_reasoning = reasoning
         decision.status = "decided"
-        decision.decided_at = datetime.utcnow()
+        decision.decided_at = datetime.now(timezone.utc)
 
         # Update session stats
         session = self._sessions.get(decision.session_id)
         if session:
             session.human_decisions += 1
-            session.last_activity = datetime.utcnow()
+            session.last_activity = datetime.now(timezone.utc)
 
             # Check if human overrode AI recommendation
             if decision.ai_recommendation and selected_option != decision.ai_recommendation:
@@ -372,7 +372,7 @@ class ActivePartnerService:
             raise ValueError(f"Session {session_id} not found")
 
         session.ai_decisions += 1
-        session.last_activity = datetime.utcnow()
+        session.last_activity = datetime.now(timezone.utc)
 
         self._record_event(
             session_id,
@@ -406,10 +406,10 @@ class ActivePartnerService:
             "type": feedback_type,
             "content": content,
             "context": context or {},
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
         session.feedback.append(feedback)
-        session.last_activity = datetime.utcnow()
+        session.last_activity = datetime.now(timezone.utc)
 
         self._record_event(
             session_id,
@@ -454,7 +454,7 @@ class ActivePartnerService:
             raise ValueError(f"Session {session_id} not found")
 
         # Calculate metrics
-        duration = (datetime.utcnow() - session.created_at).total_seconds() / 60
+        duration = (datetime.now(timezone.utc) - session.created_at).total_seconds() / 60
 
         # AI recommendation acceptance rate
         decisions_with_rec = [d for d in session.decision_points
@@ -544,7 +544,7 @@ class ActivePartnerService:
         """Internal method to change mode and record event."""
         old_mode = session.mode
         session.mode = new_mode
-        session.last_activity = datetime.utcnow()
+        session.last_activity = datetime.now(timezone.utc)
 
         self._record_event(
             session.id,

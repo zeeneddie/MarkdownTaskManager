@@ -24,7 +24,7 @@ import re
 import json
 import hashlib
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any, Set, Callable
@@ -136,19 +136,19 @@ class ProcessNode:
     def mark_started(self) -> None:
         """Mark node as in progress."""
         self.status = NodeStatus.IN_PROGRESS
-        self.entry_time = datetime.utcnow()
+        self.entry_time = datetime.now(timezone.utc)
         self.execution_count += 1
 
     def mark_completed(self, output: Optional[Dict[str, Any]] = None) -> None:
         """Mark node as completed."""
         self.status = NodeStatus.COMPLETED
-        self.exit_time = datetime.utcnow()
+        self.exit_time = datetime.now(timezone.utc)
         self.output = output
 
     def mark_failed(self, error: str) -> None:
         """Mark node as failed."""
         self.status = NodeStatus.FAILED
-        self.exit_time = datetime.utcnow()
+        self.exit_time = datetime.now(timezone.utc)
         self.error_message = error
 
 
@@ -168,7 +168,7 @@ class NavigationState:
     visited_nodes: List[str] = field(default_factory=list)
     context: Dict[str, Any] = field(default_factory=dict)
     checkpoints: Dict[str, Dict[str, Any]] = field(default_factory=dict)
-    started_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     iteration_counts: Dict[str, int] = field(default_factory=dict)
     max_iterations: int = 10
     max_depth: int = 50
@@ -202,7 +202,7 @@ class NavigationState:
             "visited_nodes": self.visited_nodes.copy(),
             "context": self.context.copy(),
             "iteration_counts": self.iteration_counts.copy(),
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         }
 
     def restore_checkpoint(self, checkpoint_id: str) -> bool:
@@ -484,7 +484,7 @@ class HATEOAGService:
         )
 
         # Store state
-        state_id = f"{process_id}_{datetime.utcnow().timestamp()}"
+        state_id = f"{process_id}_{datetime.now(timezone.utc).timestamp()}"
         self._states[state_id] = state
 
         # Mark start node
@@ -615,7 +615,7 @@ class HATEOAGService:
         if current:
             current.checkpoint_data = {
                 "state_context": state.context.copy(),
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat(),
             }
 
         self._fire_hook("on_checkpoint", state, current, checkpoint_id)

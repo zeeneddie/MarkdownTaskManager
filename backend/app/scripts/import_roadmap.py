@@ -23,7 +23,7 @@ Author: Claude Code (Week 58)
 import asyncio
 import re
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from dataclasses import dataclass, field
@@ -254,7 +254,7 @@ async def create_specification_for_brownpaper(
         current_question=6,
         total_questions=6,
         progress_percentage=100,
-        generation_metadata={"source": "roadmap_import", "imported_at": datetime.utcnow().isoformat()},
+        generation_metadata={"source": "roadmap_import", "imported_at": datetime.now(timezone.utc).isoformat()},
     )
     db.add(session)
 

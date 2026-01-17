@@ -9,7 +9,7 @@ Date: 2025-11-25
 """
 
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from pydantic import BaseModel, Field, ConfigDict
@@ -451,7 +451,7 @@ async def get_performance_trends(
         return TrendsResponse(
             agents=agent_responses,
             time_range=time_range.value,
-            generated_at=datetime.utcnow()
+            generated_at=datetime.now(timezone.utc)
         )
 
     except Exception as e:

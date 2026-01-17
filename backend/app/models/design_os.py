@@ -14,7 +14,7 @@ SQLAlchemy models for Design-First methodology:
 from sqlalchemy import Column, String, Integer, Boolean, Text, DateTime, ForeignKey, Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 import enum
 
@@ -101,8 +101,8 @@ class DesignTokens(Base):
     preset_id = Column(String(100), nullable=True)
 
     # Metadata
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     created_by = Column(String(100), nullable=True)
 
     def to_dict(self):
@@ -172,8 +172,8 @@ class ApplicationShell(Base):
     # Tier
     tier = Column(String(20), default=DesignTier.PROFESSIONAL.value)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     def to_dict(self):
         return {
@@ -219,7 +219,7 @@ class SampleDataSet(Base):
     # Tier
     tier = Column(String(20), default=DesignTier.STANDARD.value)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     created_by = Column(String(100), nullable=True)
 
     def to_dict(self):
@@ -284,8 +284,8 @@ class UISpecification(Base):
     # Status
     status = Column(String(50), default=SpecStatus.DRAFT.value)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     created_by = Column(String(100), nullable=True)
 
     # Relationships
@@ -381,7 +381,7 @@ class ScreenWireframe(Base):
     # Tier
     tier = Column(String(20), default=DesignTier.PROFESSIONAL.value)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     created_by = Column(String(100), nullable=True)
 
     # Relationships
@@ -439,7 +439,7 @@ class ImplementationPrompt(Base):
     times_used = Column(Integer, default=0)
     last_used_at = Column(DateTime, nullable=True)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     def to_dict(self):
         return {
@@ -482,7 +482,7 @@ class DesignTokenPreset(Base):
     # Is system preset (not deletable)
     is_system = Column(Boolean, default=False)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     def to_dict(self):
         return {

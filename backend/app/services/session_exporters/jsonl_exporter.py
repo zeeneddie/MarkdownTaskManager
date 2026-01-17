@@ -11,7 +11,7 @@ JSONL format is ideal for:
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, List
 from app.services.session_exporters.base import BaseSessionExporter, SessionData
 
@@ -58,7 +58,7 @@ class JSONLSessionExporter(BaseSessionExporter):
             "provider": session_data.provider,
             "model": session_data.model,
             "metadata": session_data.metadata,
-            "export_timestamp": datetime.utcnow().isoformat(),
+            "export_timestamp": datetime.now(timezone.utc).isoformat(),
         }))
 
         # Metrics record
@@ -162,7 +162,7 @@ class JSONLStreamExporter:
             "provider": provider,
             "model": model,
             "metadata": metadata or {},
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         })
 
     def emit_thinking_block(
@@ -185,7 +185,7 @@ class JSONLStreamExporter:
             "signature": signature,
             "content_hash": content_hash,
             "extra_data": extra_data or {},
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         })
         self._sequence += 1
         return record
@@ -210,7 +210,7 @@ class JSONLStreamExporter:
             "duration_ms": duration_ms,
             "success": success,
             "error": error,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         })
         self._sequence += 1
         return record
@@ -231,7 +231,7 @@ class JSONLStreamExporter:
             "parent_id": parent_id,
             "role": role,
             "content": content,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         })
         self._sequence += 1
         return record
@@ -250,7 +250,7 @@ class JSONLStreamExporter:
             "total_tokens": total_tokens,
             "total_cost": total_cost,
             "duration_ms": duration_ms,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         })
 
     def _serialize(self, obj: dict) -> str:

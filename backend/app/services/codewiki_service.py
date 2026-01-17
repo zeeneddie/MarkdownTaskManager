@@ -19,7 +19,7 @@ import os
 import re
 import subprocess
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 import logging
@@ -151,7 +151,7 @@ class CodeWikiService:
 
         # Update status
         analysis.status = CodeWikiAnalysisStatus.SCANNING
-        analysis.started_at = datetime.utcnow()
+        analysis.started_at = datetime.now(timezone.utc)
         self.db.commit()
 
         try:
@@ -172,7 +172,7 @@ class CodeWikiService:
 
             # Complete
             analysis.status = CodeWikiAnalysisStatus.COMPLETED
-            analysis.completed_at = datetime.utcnow()
+            analysis.completed_at = datetime.now(timezone.utc)
             if analysis.started_at:
                 analysis.duration_seconds = int(
                     (analysis.completed_at - analysis.started_at).total_seconds()
@@ -266,7 +266,7 @@ class CodeWikiService:
             "children": modules,
             "metadata": {
                 "generated_by": "marqed_fallback",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         }
 
@@ -786,7 +786,7 @@ Modules needing documentation: {', '.join(m.name for m in modules if not m.descr
         if context:
             # Update usage stats
             context.times_used = (context.times_used or 0) + 1
-            context.last_used_at = datetime.utcnow()
+            context.last_used_at = datetime.now(timezone.utc)
             self.db.commit()
 
         return context

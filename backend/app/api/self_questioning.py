@@ -207,7 +207,7 @@ async def health_check():
         "status": "healthy",
         "service": "self-questioning",
         "version": "1.0.0",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -244,7 +244,7 @@ async def create_session(request: TrainingSessionCreate):
         agent_name=request.config.agent_name,
         status=SessionStatus.RUNNING,
         config=request.config,
-        started_at=datetime.utcnow(),
+        started_at=datetime.now(timezone.utc),
         questions_generated=0,
         tasks_generated=0,
         edge_cases_discovered=0,
@@ -287,7 +287,7 @@ async def cancel_session(session_id: str):
 
     if session.status == SessionStatus.RUNNING:
         session.status = SessionStatus.CANCELLED
-        session.completed_at = datetime.utcnow()
+        session.completed_at = datetime.now(timezone.utc)
 
     return {"message": f"Session {session_id} cancelled", "status": session.status}
 
@@ -330,7 +330,7 @@ async def get_all_metrics():
             ))
 
     return AllAgentMetrics(
-        generated_at=datetime.utcnow(),
+        generated_at=datetime.now(timezone.utc),
         total_sessions=len(_sessions),
         total_questions_generated=sum(len(q) for q in _questions.values()),
         total_tasks_completed=sum(s.metrics.tasks_completed for s in _sessions.values()),
@@ -494,7 +494,7 @@ async def _simulate_session_execution(session: TrainingSessionResponse):
         session.recommendations.append(f"Review {tasks_failed} failed tasks for patterns")
 
     session.status = SessionStatus.COMPLETED
-    session.completed_at = datetime.utcnow()
+    session.completed_at = datetime.now(timezone.utc)
 
     # Store generated questions
     _questions[session.agent_name.value] = _generate_mock_questions(session.agent_name)
@@ -513,7 +513,7 @@ def _generate_mock_questions(agent_name: AgentName) -> List[SelfQuestion]:
             question=question,
             context=f"{agent_name.value} performance area",
             priority=10 - i,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             metadata={"triggered_by": "performance_analysis"}
         ))
 
@@ -593,7 +593,7 @@ def _get_recommended_focus(agent_name: AgentName) -> str:
 
 def _calculate_next_run(frequency: ScheduleFrequency) -> datetime:
     """Calculate next run time based on frequency"""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     if frequency == ScheduleFrequency.DAILY:
         return now + timedelta(days=1)

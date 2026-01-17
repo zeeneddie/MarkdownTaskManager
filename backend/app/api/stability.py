@@ -9,7 +9,7 @@
 # - GET /api/stability/trends/{project_id} - Get trend data
 
 from typing import List, Optional
-from datetime import datetime, date
+from datetime import datetime, timezone, date
 
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from pydantic import BaseModel, Field
@@ -460,7 +460,7 @@ async def update_finding_status(
         finding.notes = notes
 
     if new_status == "fixed":
-        finding.fixed_at = datetime.utcnow()
+        finding.fixed_at = datetime.now(timezone.utc)
 
     db.commit()
 

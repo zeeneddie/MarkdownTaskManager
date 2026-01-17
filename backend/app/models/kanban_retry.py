@@ -4,7 +4,7 @@ Kanban Retry Tracking Models
 Week 58: Models for tracking Build ↔ Test lane transitions
 and agent actions for learning and escalation.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 from typing import Optional, Dict, Any
 from enum import Enum
@@ -43,7 +43,7 @@ class KanbanRetryLog(Base):
     result = Column(String(20), nullable=False, default="pending")
     agent_used = Column(String(50), nullable=True)
     analysis = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -80,7 +80,7 @@ class KanbanAgentAction(Base):
     success = Column(Boolean, nullable=False, default=False)
     details = Column(JSONB, nullable=True)
     duration_ms = Column(Integer, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         return {

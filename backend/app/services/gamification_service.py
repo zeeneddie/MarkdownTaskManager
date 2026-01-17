@@ -318,7 +318,7 @@ class GamificationService:
                     id=uuid4(),
                     customer_id=customer_id,
                     badge_id=badge.id,
-                    earned_at=datetime.utcnow(),
+                    earned_at=datetime.now(timezone.utc),
                     earned_for=f"Met criteria: {badge.criteria_target} >= {badge.criteria_value}",
                     progress_snapshot=user_stats,
                 )
@@ -388,7 +388,7 @@ class GamificationService:
             id=uuid4(),
             customer_id=customer_id,
             badge_id=badge.id,
-            earned_at=datetime.utcnow(),
+            earned_at=datetime.now(timezone.utc),
             earned_for=reason or "Manually awarded",
         )
         self.db.add(user_badge)

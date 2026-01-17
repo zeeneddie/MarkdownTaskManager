@@ -47,7 +47,7 @@ Workflow Integration:
 import asyncio
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -105,7 +105,7 @@ class SecurityGateResult:
     quinn_assessment: Optional[str] = None
     can_deploy: bool = False
     requires_review: bool = False
-    timestamp: datetime = field(default_factory=lambda: datetime.utcnow())
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
@@ -325,11 +325,11 @@ class SecurityWorkflowService:
 
         # Create a mock scan result
         scan_result = ScanResult(
-            scan_id=f"pr-scan-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+            scan_id=f"pr-scan-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
             project_path=base_path,
             scan_type="pr_scan",
-            started_at=datetime.utcnow(),
-            completed_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(timezone.utc),
             status="completed",
             vulnerabilities=all_vulnerabilities
         )
@@ -379,7 +379,7 @@ class SecurityWorkflowService:
             "interval_minutes": interval_minutes,
             "initial_scan_result": result.to_dict(),
             "next_scan_at": (
-                datetime.utcnow().isoformat()
+                datetime.now(timezone.utc).isoformat()
             ),
             "status": "active"
         }

@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Any, Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 from enum import Enum
 
@@ -329,7 +329,7 @@ async def scan_codebase(
         )
         return ScanResponse(
             snapshot_id=0,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             total_items=0,
             total_principal=0,
             debt_ratio=0,
@@ -787,9 +787,9 @@ async def update_plan_status(
 
     plan.status = status
     if status == "active" and not plan.start_date:
-        plan.start_date = datetime.utcnow()
+        plan.start_date = datetime.now(timezone.utc)
     elif status == "completed":
-        plan.completed_at = datetime.utcnow()
+        plan.completed_at = datetime.now(timezone.utc)
 
     await db.commit()
     await db.refresh(plan)

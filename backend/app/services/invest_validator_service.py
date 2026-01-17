@@ -18,7 +18,7 @@ Also validates SMART criteria for tasks:
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any, Tuple
 from enum import Enum
 from uuid import uuid4
@@ -101,7 +101,7 @@ class INVESTValidationResult:
     validation_level: ValidationLevel = ValidationLevel.STANDARD
 
     # Metadata
-    validated_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    validated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     errors: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -156,7 +156,7 @@ class SMARTValidationResult:
 
     overall_score: float = 0.0
     is_valid: bool = False
-    validated_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    validated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         return {

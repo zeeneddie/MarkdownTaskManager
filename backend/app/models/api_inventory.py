@@ -10,7 +10,7 @@ Date: 2026-01-01
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 
@@ -221,7 +221,7 @@ class APIInventorySession:
     session_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     project_id: str = ""
     name: str = ""
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     status: str = "created"  # created, scanning, completed, error
     error_message: Optional[str] = None
 
@@ -231,7 +231,7 @@ class APIInventoryResult:
     """Complete result of API inventory extraction."""
     session_id: str
     project_id: str
-    scan_date: datetime = field(default_factory=lambda: datetime.utcnow())
+    scan_date: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     internal_endpoints: List[Endpoint] = field(default_factory=list)
     external_apis: List[ExternalAPI] = field(default_factory=list)
     frameworks_detected: List[FrameworkDetection] = field(default_factory=list)

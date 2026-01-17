@@ -9,7 +9,7 @@ Features:
 - Stack templates (IoT, Mobile, Security, etc.)
 - Specialist agent support per project
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 from typing import Optional, Dict, Any, List
 from enum import Enum
@@ -232,8 +232,8 @@ class ProjectAgentConfig(Base):
     # Quality gate config reference (links to QualityGateConfig)
     quality_gate_config_id = Column(UUID(as_uuid=True), nullable=True)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     created_by = Column(String(100), nullable=True)
 
     # Relationships
@@ -322,8 +322,8 @@ class ProjectLaneConfig(Base):
     max_retries = Column(Integer, default=3)
     escalate_on_max_retries = Column(Boolean, default=True)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationship
     project_config = relationship("ProjectAgentConfig", back_populates="lane_configs")

@@ -16,7 +16,7 @@ Source: https://gregorriegler.com/2025/07/12/augmented-coding-pattern-language.h
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Any, Callable
 from uuid import UUID, uuid4
@@ -191,7 +191,7 @@ class InstructionSandwichService:
             instructions=instruction_objs,
             reminders=reminders,
             strategy=strategy,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             metadata=metadata or {}
         )
 
@@ -228,7 +228,7 @@ class InstructionSandwichService:
             pending_reminders=[],
             last_reminder_at=None,
             violation_streak=0,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
 
         self._contexts[session_id] = context
@@ -308,7 +308,7 @@ class InstructionSandwichService:
                 reminders.append(text)
 
                 reminder.show_count += 1
-                reminder.last_shown = datetime.utcnow()
+                reminder.last_shown = datetime.now(timezone.utc)
 
         # Adaptive: add more reminders if compliance is low
         if instruction_set.strategy == RepetitionStrategy.ADAPTIVE:
@@ -330,7 +330,7 @@ class InstructionSandwichService:
                             reminders.append(reminder_text)
 
         context.pending_reminders = reminders
-        context.last_reminder_at = datetime.utcnow() if reminders else context.last_reminder_at
+        context.last_reminder_at = datetime.now(timezone.utc) if reminders else context.last_reminder_at
 
         return reminders
 
@@ -408,7 +408,7 @@ class InstructionSandwichService:
             instruction_id=instruction.id,
             instruction_index=instruction_index,
             complied=complied,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             context=context
         )
         self._compliance_history[instruction_set.id].append(event)

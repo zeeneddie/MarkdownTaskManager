@@ -29,7 +29,7 @@ Cross-Workflow Features:
 import logging
 from typing import Dict, Any, Optional, List
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -285,7 +285,7 @@ class WorkflowToolIntegrationService:
                 "source": "green_paper_constitution",
                 "constitution_id": constitution_id,
                 "auto_triggered": True,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
 
             # Call CCPM to decompose
@@ -819,7 +819,7 @@ class WorkflowToolIntegrationService:
                 "analysis_id": analysis_id,
                 "migration_type": analysis_content.get("migration_strategy", {}).get("type", "unknown"),
                 "auto_triggered": True,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
 
             # Call CCPM to decompose

@@ -13,7 +13,7 @@ Integrates with existing projects API and agent system.
 from fastapi import APIRouter, HTTPException, status
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import uuid
 
@@ -265,7 +265,7 @@ async def start_wizard_session(request: WizardStartRequest):
 
     wizard_sessions[session_id] = {
         "template": request.template,
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(timezone.utc),
         "steps": {},
         "completed": False
     }
@@ -378,7 +378,7 @@ async def complete_wizard(request: WizardCompleteRequest):
             workflow=request.workflow,
             agents_assigned=agents,
             quality_gates_enabled=gate_count,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             message=f"Project '{request.name}' created successfully with {request.workflow} workflow"
         )
 
@@ -392,7 +392,7 @@ async def complete_wizard(request: WizardCompleteRequest):
             workflow=request.workflow,
             agents_assigned=WORKFLOW_AGENTS.get(request.workflow, []),
             quality_gates_enabled=QUALITY_GATE_COUNTS.get(request.qualityGates, 5),
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             message=f"Project '{request.name}' created (mock mode)"
         )
 

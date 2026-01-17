@@ -185,7 +185,7 @@ class CCPMOrchestrator:
             decomposition.total_function_points = hierarchy.get("total_function_points", 0.0)
             decomposition.status = DecompositionStatus.COMPLETED.value
             decomposition.processing_time_ms = int((time.time() - start_time) * 1000)
-            decomposition.completed_at = datetime.utcnow()
+            decomposition.completed_at = datetime.now(timezone.utc)
 
             await self.db.commit()
             await self.db.refresh(decomposition)
@@ -320,7 +320,7 @@ class CCPMOrchestrator:
             raise ValueError(f"Recommendation {recommendation_id} not found")
 
         recommendation.status = RecommendationStatus.ACCEPTED.value
-        recommendation.accepted_at = datetime.utcnow()
+        recommendation.accepted_at = datetime.now(timezone.utc)
         recommendation.accepted_by = accepted_by
 
         await self.db.commit()
@@ -590,7 +590,7 @@ Respond with ONLY the JSON, no additional text."""
             urgency_score=urgency_score,
             complexity_score=complexity_score,
             status=RecommendationStatus.PENDING.value,
-            expires_at=datetime.utcnow() + timedelta(days=7)
+            expires_at=datetime.now(timezone.utc) + timedelta(days=7)
         )
 
         self.db.add(recommendation)

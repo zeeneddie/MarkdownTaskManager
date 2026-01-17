@@ -12,7 +12,7 @@ Generates:
 
 from pathlib import Path
 from typing import Dict, List, Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 import json
 import logging
@@ -249,7 +249,7 @@ class ProjectExportService:
 
         content = f"""# Project Summary
 
-**Generated**: {datetime.utcnow().isoformat()}
+**Generated**: {datetime.now(timezone.utc).isoformat()}
 **Extraction Tier**: {session.tier}
 **Source Path**: {session.source_path}
 **Total Files Analyzed**: {session.total_files}

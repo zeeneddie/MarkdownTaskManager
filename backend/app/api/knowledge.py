@@ -10,7 +10,7 @@ Endpoints for:
 - Index management
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel, Field
@@ -395,5 +395,5 @@ async def knowledge_health_check():
                 "available": True,  # Always available (DB-based)
             },
         },
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }

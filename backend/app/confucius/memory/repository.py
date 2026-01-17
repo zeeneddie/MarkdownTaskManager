@@ -9,7 +9,7 @@ Provides database persistence for hierarchical memory:
 """
 
 from typing import List, Optional, Dict, Any
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from sqlalchemy import select, delete, and_, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -86,7 +86,7 @@ class MemoryRepository:
             db_session.patterns = session.patterns
             db_session.decisions = session.decisions
             db_session.preferences = session.preferences
-            db_session.updated_at = datetime.utcnow()
+            db_session.updated_at = datetime.now(timezone.utc)
         else:
             # Create new
             db_session = ConfuciusSession(
@@ -361,7 +361,7 @@ class MemoryRepository:
 
     async def cleanup_old_entries(self, retention_days: int = 30) -> int:
         """Delete entries older than retention period."""
-        cutoff = datetime.utcnow() - timedelta(days=retention_days)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
 
         result = await self.db.execute(
             delete(ConfuciusEntry).where(ConfuciusEntry.created_at < cutoff)
@@ -374,7 +374,7 @@ class MemoryRepository:
 
     async def cleanup_old_runnables(self, retention_days: int = 7) -> int:
         """Delete runnables older than retention period."""
-        cutoff = datetime.utcnow() - timedelta(days=retention_days)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
 
         result = await self.db.execute(
             delete(ConfuciusRunnable).where(ConfuciusRunnable.created_at < cutoff)

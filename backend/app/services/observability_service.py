@@ -81,7 +81,7 @@ class ObservabilityService:
         provider = await self.get_provider_by_name(name)
         if provider:
             provider.is_active = is_active
-            provider.updated_at = datetime.utcnow()
+            provider.updated_at = datetime.now(timezone.utc)
             await self.db.commit()
             await self.db.refresh(provider)
         return provider
@@ -300,7 +300,7 @@ class ObservabilityService:
                 perf.total_tokens_output = row.total_tokens_output or 0
                 perf.total_cost_cents = Decimal(str(row.total_cost_cents or 0))
                 perf.avg_confidence = Decimal(str(row.avg_confidence)) if row.avg_confidence else None
-                perf.updated_at = datetime.utcnow()
+                perf.updated_at = datetime.now(timezone.utc)
             else:
                 # Create new
                 perf = AgentPerformanceDaily(
@@ -366,7 +366,7 @@ class ObservabilityService:
         days: int = 7
     ) -> Dict[str, Any]:
         """Get comprehensive statistics for an agent."""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(timezone.utc) - timedelta(days=days)
 
         # Recent actions
         result = await self.db.execute(
@@ -419,7 +419,7 @@ class ObservabilityService:
 
     async def get_platform_statistics(self, days: int = 7) -> Dict[str, Any]:
         """Get platform-wide statistics."""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(timezone.utc) - timedelta(days=days)
 
         # Overall stats
         result = await self.db.execute(

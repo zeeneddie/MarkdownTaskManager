@@ -209,7 +209,7 @@ class AzureDevOpsService:
             max_commits=request.max_commits,
             max_prs=request.max_pull_requests,
             status="running",
-            started_at=datetime.utcnow()
+            started_at=datetime.now(timezone.utc)
         )
         self.db.add(analysis)
         self.db.commit()
@@ -242,7 +242,7 @@ class AzureDevOpsService:
 
             # Update summary metrics
             analysis.status = "completed"
-            analysis.completed_at = datetime.utcnow()
+            analysis.completed_at = datetime.now(timezone.utc)
 
             self.db.commit()
             self.db.refresh(analysis)
@@ -252,7 +252,7 @@ class AzureDevOpsService:
         except Exception as e:
             analysis.status = "failed"
             analysis.error_message = str(e)
-            analysis.completed_at = datetime.utcnow()
+            analysis.completed_at = datetime.now(timezone.utc)
             self.db.commit()
             raise
         finally:
@@ -318,9 +318,9 @@ class AzureDevOpsService:
                     try:
                         commit_dt = datetime.fromisoformat(commit_date.replace("Z", "+00:00"))
                     except:
-                        commit_dt = datetime.utcnow()
+                        commit_dt = datetime.now(timezone.utc)
                 else:
-                    commit_dt = datetime.utcnow()
+                    commit_dt = datetime.now(timezone.utc)
 
                 # Check if bug fix
                 is_bug_fix = any(kw in comment for kw in ["fix", "bug", "issue", "error", "patch"])

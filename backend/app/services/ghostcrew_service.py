@@ -237,7 +237,7 @@ class GhostCrewService:
             scan_mode="assist",
             scan_type="interactive",
             status="running",
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
             agents_used=["security_advisor"],
             tools_used=["notes"],
         )
@@ -276,7 +276,7 @@ class GhostCrewService:
 
             # Update scan
             scan.status = "completed"
-            scan.completed_at = datetime.utcnow()
+            scan.completed_at = datetime.now(timezone.utc)
             scan.scan_summary = f"Assist query: {query[:100]}"
             scan.recommendations = response["recommendations"]
             await self.db.commit()
@@ -409,7 +409,7 @@ class GhostCrewService:
             target_path=repo_path,
             target_type="repository",
             status="running",
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
             agents_used=["security_scanner", "pattern_matcher"],
             tools_used=["terminal"],
         )
@@ -512,7 +512,7 @@ class GhostCrewService:
 
             # Update scan record
             scan.status = "completed"
-            scan.completed_at = datetime.utcnow()
+            scan.completed_at = datetime.now(timezone.utc)
             scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
             scan.total_findings = len(all_findings)
             scan.critical_count = severity_counts["critical"]
@@ -545,7 +545,7 @@ class GhostCrewService:
         except Exception as e:
             scan.status = "failed"
             scan.error_message = str(e)
-            scan.completed_at = datetime.utcnow()
+            scan.completed_at = datetime.now(timezone.utc)
             await self.db.commit()
             logger.error(f"Autonomous scan failed: {e}")
             raise
@@ -663,7 +663,7 @@ class GhostCrewService:
             target_path=target_path,
             target_type="repository",
             status="running",
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
             agents_used=agents,
             tools_used=self.TOOLS,
         )
@@ -730,7 +730,7 @@ class GhostCrewService:
 
             # Update scan record
             scan.status = "completed"
-            scan.completed_at = datetime.utcnow()
+            scan.completed_at = datetime.now(timezone.utc)
             scan.duration_seconds = int((scan.completed_at - scan.started_at).total_seconds())
             scan.total_findings = len(combined_findings)
             scan.critical_count = severity_counts["critical"]
@@ -763,7 +763,7 @@ class GhostCrewService:
         except Exception as e:
             scan.status = "failed"
             scan.error_message = str(e)
-            scan.completed_at = datetime.utcnow()
+            scan.completed_at = datetime.now(timezone.utc)
             await self.db.commit()
             logger.error(f"Crew mode failed: {e}")
             raise
@@ -1078,7 +1078,7 @@ class GhostCrewService:
         finding.status = "false_positive"
         finding.verified = True
         finding.verified_by = marked_by
-        finding.verified_at = datetime.utcnow()
+        finding.verified_at = datetime.now(timezone.utc)
 
         # Create learning record
         learning = VulnerabilityLearning(

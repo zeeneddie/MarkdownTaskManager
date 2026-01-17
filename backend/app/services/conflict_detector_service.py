@@ -14,7 +14,7 @@ Conflict Detection Rules:
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Dict, Optional, Any, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 import logging
 
@@ -83,7 +83,7 @@ class ConflictItem:
     resolution_notes: str = ""
     final_value: Optional[Dict] = None
 
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -142,7 +142,7 @@ class ConflictDetectorService:
         Returns:
             ConflictDetectionResult with all detected conflicts
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         conflicts = []
 
         # Index LLM results by item
@@ -182,7 +182,7 @@ class ConflictDetectorService:
                     conflicts.append(conflict)
 
         # Calculate summary
-        detection_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        detection_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
         conflicts_by_type = self._count_by_type(conflicts)
         conflicts_by_severity = self._count_by_severity(conflicts)
 
@@ -488,7 +488,7 @@ class ConflictDetectorService:
                     conflict.resolution = ConflictResolution.AUTO_ACCEPTED_LLM
                     conflict.final_value = conflict.llm_data
 
-                conflict.resolved_at = datetime.utcnow()
+                conflict.resolved_at = datetime.now(timezone.utc)
                 conflict.resolved_by = "system"
                 conflict.resolution_notes = "Auto-resolved based on confidence comparison"
                 resolved += 1
@@ -498,7 +498,7 @@ class ConflictDetectorService:
                 if conflict.llm_confidence >= 0.90:
                     conflict.resolution = ConflictResolution.AUTO_ACCEPTED_LLM
                     conflict.final_value = conflict.llm_data
-                    conflict.resolved_at = datetime.utcnow()
+                    conflict.resolved_at = datetime.now(timezone.utc)
                     conflict.resolved_by = "system"
                     conflict.resolution_notes = "Auto-resolved: LLM confidence >= 90%"
                     resolved += 1
@@ -535,7 +535,7 @@ class ConflictDetectorService:
             conflict_type=ConflictType.EXPLICIT_DISAGREEMENT,
             severity=ConflictSeverity.MEDIUM,
             resolution=resolution,
-            resolved_at=datetime.utcnow(),
+            resolved_at=datetime.now(timezone.utc),
             resolved_by=resolved_by,
             final_value=final_value,
             resolution_notes=notes

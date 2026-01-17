@@ -12,7 +12,7 @@ Supported Workflows:
 5. BUG - Hotfix branch worktrees (per bug fix)
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from uuid import UUID
 import asyncio
@@ -163,7 +163,7 @@ class CCPMWorkflowIntegrationService:
             project_id=project_id,
             worktrees=worktrees,
             status="active",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             metadata={
                 "config": config,
                 "context": context or {}

@@ -8,7 +8,7 @@ Each agent can work in an isolated branch without conflicts.
 import subprocess
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 from uuid import UUID
@@ -101,7 +101,7 @@ class GitWorktreeService:
             WorktreeInfo with worktree details
         """
         # Generate unique branch name
-        timestamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
         work_branch = f"agent/{agent_id}/{timestamp}"
         worktree_path = os.path.join(self.worktrees_base, f"{agent_id}-{timestamp}")
 
@@ -326,7 +326,7 @@ class GitWorktreeService:
             # Update status
             worktree.status = WorktreeStatus.MERGED.value
             worktree.merge_status = MergeStatus.MERGED.value
-            worktree.merged_at = datetime.utcnow()
+            worktree.merged_at = datetime.now(timezone.utc)
             await self.db.commit()
 
             # Cleanup if requested

@@ -7,7 +7,7 @@ SQLAlchemy models for:
 - PortalFeatureVoteAggregate: Cached vote aggregations
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 from uuid import UUID, uuid4
 
@@ -44,8 +44,8 @@ class PortalFeatureVote(Base):
     vote_weight = Column(Integer, default=1)  # Can be weighted for premium users
 
     # Tracking
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime(timezone=True), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     # Unique constraint defined in migration
     __table_args__ = (
@@ -110,8 +110,8 @@ class PortalFeatureComment(Base):
     is_pinned = Column(Boolean, default=False)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime(timezone=True), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships - self-referential for threaded comments
@@ -187,7 +187,7 @@ class PortalFeatureVoteAggregate(Base):
 
     # Tracking
     last_vote_at = Column(DateTime(timezone=True), nullable=True)
-    computed_at = Column(DateTime(timezone=True), default=lambda: datetime.utcnow())
+    computed_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert aggregate to dictionary."""

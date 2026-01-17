@@ -11,7 +11,7 @@ Handles the business logic for the project wizard:
 
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import os
 import json
@@ -87,7 +87,7 @@ class ProjectConfig:
     sprint_duration_weeks: int = 2
     working_hours_per_day: int = 8
     workflow: Optional[WorkflowConfig] = None
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         return {

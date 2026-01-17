@@ -16,7 +16,7 @@ Source: https://gregorriegler.com/2025/07/12/augmented-coding-pattern-language.h
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Any, Callable, Pattern
 from uuid import UUID, uuid4
@@ -106,7 +106,7 @@ class HabitHook:
     enabled: bool = True
     execution_count: int = 0
     last_executed: Optional[datetime] = None
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: Dict[str, Any] = field(default_factory=dict)
     priority: int = 50  # 0-100, higher = earlier execution
     cooldown_seconds: int = 0  # Minimum time between executions
@@ -347,7 +347,7 @@ class HabitHooksService:
             trigger=event_type,
             data=event_data,
             source=source,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             session_id=session_id
         )
 
@@ -361,7 +361,7 @@ class HabitHooksService:
 
             # Check cooldown
             if hook.cooldown_seconds > 0 and hook.last_executed:
-                elapsed = (datetime.utcnow() - hook.last_executed).total_seconds()
+                elapsed = (datetime.now(timezone.utc) - hook.last_executed).total_seconds()
                 if elapsed < hook.cooldown_seconds:
                     continue
 
@@ -448,13 +448,13 @@ class HabitHooksService:
             trigger_data=trigger_data,
             action_type=hook.action.type,
             status=HookStatus.PENDING,
-            started_at=datetime.utcnow()
+            started_at=datetime.now(timezone.utc)
         )
 
         if dry_run:
             execution.status = HookStatus.SKIPPED
             execution.result = "Dry run - not executed"
-            execution.completed_at = datetime.utcnow()
+            execution.completed_at = datetime.now(timezone.utc)
             return execution
 
         execution.status = HookStatus.RUNNING
@@ -472,7 +472,7 @@ class HabitHooksService:
             execution.error = str(e)
             logger.error(f"Hook '{hook.name}' execution failed: {e}")
 
-        execution.completed_at = datetime.utcnow()
+        execution.completed_at = datetime.now(timezone.utc)
 
         # Update hook statistics
         hook.execution_count += 1

@@ -10,7 +10,7 @@ Trajecten:
 - Migration: Transformatie (vereist Brown Paper als voorwaarde)
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any, Tuple
 from uuid import UUID
 import logging
@@ -170,7 +170,7 @@ class ProjectIntakeService:
                     })
 
         if changes:
-            intake.updated_at = datetime.utcnow()
+            intake.updated_at = datetime.now(timezone.utc)
             intake.last_modified_by = modified_by
             await self._add_event(
                 intake_id=intake_id,
@@ -238,7 +238,7 @@ class ProjectIntakeService:
             if hasattr(intake.scope, field):
                 setattr(intake.scope, field, value)
 
-        intake.scope.updated_at = datetime.utcnow()
+        intake.scope.updated_at = datetime.now(timezone.utc)
         await self._add_event(
             intake_id=intake_id,
             event_type="scope_updated",
@@ -266,7 +266,7 @@ class ProjectIntakeService:
 
         # Update status
         intake.status = IntakeStatus.analyzing
-        intake.updated_at = datetime.utcnow()
+        intake.updated_at = datetime.now(timezone.utc)
 
         await self._add_event(
             intake_id=intake_id,
@@ -343,11 +343,11 @@ class ProjectIntakeService:
             raise ValueError("Analyse moet voltooid zijn voordat een beslissing kan worden genomen")
 
         intake.brown_paper_decision = decision
-        intake.decision_date = datetime.utcnow()
+        intake.decision_date = datetime.now(timezone.utc)
         intake.decision_by = decision_by
         intake.decision_notes = decision_notes
         intake.status = IntakeStatus.completed
-        intake.completed_at = datetime.utcnow()
+        intake.completed_at = datetime.now(timezone.utc)
 
         await self._add_event(
             intake_id=intake_id,
@@ -460,7 +460,7 @@ class ProjectIntakeService:
         intake.target_stack = target_stack
         if target_architecture:
             intake.target_architecture = target_architecture
-        intake.updated_at = datetime.utcnow()
+        intake.updated_at = datetime.now(timezone.utc)
 
         await self._add_event(
             intake_id=intake_id,
@@ -593,7 +593,7 @@ class ProjectIntakeService:
             return None
 
         intake.migration_type = migration_type
-        intake.updated_at = datetime.utcnow()
+        intake.updated_at = datetime.now(timezone.utc)
 
         await self._add_event(
             intake_id=intake_id,
@@ -678,7 +678,7 @@ class ProjectIntakeService:
         intake.target_stack = target_stack
         if target_architecture:
             intake.target_architecture = target_architecture
-        intake.updated_at = datetime.utcnow()
+        intake.updated_at = datetime.now(timezone.utc)
 
         await self._add_event(
             intake_id=intake_id,
@@ -715,7 +715,7 @@ class ProjectIntakeService:
         if target_go_live:
             intake.target_go_live = target_go_live
         intake.hard_deadline = hard_deadline
-        intake.updated_at = datetime.utcnow()
+        intake.updated_at = datetime.now(timezone.utc)
 
         await self._add_event(
             intake_id=intake_id,
@@ -759,7 +759,7 @@ class ProjectIntakeService:
             integration.library_name = library_name
             integration.library_type = library_type
         integration.decision_notes = decision_notes
-        integration.updated_at = datetime.utcnow()
+        integration.updated_at = datetime.now(timezone.utc)
 
         await self._add_event(
             intake_id=intake_id,
@@ -796,7 +796,7 @@ class ProjectIntakeService:
 
         # Update status
         intake.status = IntakeStatus.active
-        intake.updated_at = datetime.utcnow()
+        intake.updated_at = datetime.now(timezone.utc)
 
         await self._add_event(
             intake_id=intake_id,

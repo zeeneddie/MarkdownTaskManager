@@ -16,7 +16,7 @@ Based on: CodeRAG (SylphxAI/coderag) concepts
 import hashlib
 import re
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
 import logging
@@ -452,7 +452,7 @@ class CodeRAGService:
             "name": chunk.name or "",
             "language": chunk.language or "",
             "project_id": project_id or 0,
-            "indexed_at": datetime.utcnow().isoformat(),
+            "indexed_at": datetime.now(timezone.utc).isoformat(),
         }
 
         try:

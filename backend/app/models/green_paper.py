@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Integer, Text, DateTime, ForeignKey, Enum
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import enum
 import uuid
 from app.database import Base
@@ -48,8 +48,8 @@ class GreenPaperSession(Base):
     total_questions = Column(Integer, default=6)
     progress_percentage = Column(Integer, default=0)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     completed_at = Column(DateTime, nullable=True)
 
     generation_metadata = Column(JSONB, nullable=True)  # initiated_by, context, etc.
@@ -79,8 +79,8 @@ class Answer(Base):
     is_required = Column(Integer, default=1)  # 1=required, 0=optional
     max_length = Column(Integer, nullable=True)  # Character limit
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     generation_metadata = Column(JSONB, nullable=True)  # time_spent_seconds, revision_count
 
@@ -119,8 +119,8 @@ class Constitution(Base):
 
     generation_attempt = Column(Integer, default=1)  # Retry counter (max 3)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     generation_metadata = Column(JSONB, nullable=True)  # generation_time, model_version, etc.
 
@@ -159,8 +159,8 @@ class Specification(Base):
 
     generation_attempt = Column(Integer, default=1)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     generation_metadata = Column(JSONB, nullable=True)
 

@@ -3,7 +3,7 @@ A/B Testing Models for Agent Evolution
 
 Tracks experiments, variants, and results for continuous evolution.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from enum import Enum
 from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, ForeignKey, Text, CheckConstraint, Index
@@ -43,7 +43,7 @@ class Experiment(Base):
     status = Column(String(20), nullable=False, default="DRAFT")
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
 
@@ -94,7 +94,7 @@ class ExperimentVariant(Base):
     is_control = Column(Boolean, nullable=False, default=False)
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     experiment = relationship("Experiment", back_populates="variants", foreign_keys=[experiment_id])
@@ -143,7 +143,7 @@ class ExperimentResult(Base):
     error_message = Column(Text, nullable=True)
 
     # Timestamp
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow(), index=True)
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
 
     # Relationships
     variant = relationship("ExperimentVariant", back_populates="results")

@@ -18,7 +18,7 @@ Date: 2025-11-22
 import os
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Tuple
 from pathlib import Path
 
@@ -109,7 +109,7 @@ class TrainingResult:
         self.metrics = metrics
         self.feature_importance = feature_importance
         self.cross_val_scores = cross_val_scores
-        self.trained_at = datetime.utcnow()
+        self.trained_at = datetime.now(timezone.utc)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -426,7 +426,7 @@ class MLTrainingService:
             raise ValueError(f"Model '{model_key}' not found. Train it first.")
 
         if version is None:
-            version = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+            version = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
         model_dir = self.models_dir / model_key / version
         model_dir.mkdir(parents=True, exist_ok=True)
@@ -444,7 +444,7 @@ class MLTrainingService:
         metadata = {
             "model_key": model_key,
             "version": version,
-            "saved_at": datetime.utcnow().isoformat(),
+            "saved_at": datetime.now(timezone.utc).isoformat(),
             "model_type": model_key.split("_")[-1] if "_" in model_key else "unknown"
         }
         metadata_path = model_dir / "metadata.json"

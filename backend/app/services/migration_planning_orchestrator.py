@@ -16,7 +16,7 @@ Date: 2025-12-15
 
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from uuid import UUID
 from dataclasses import dataclass
@@ -251,7 +251,7 @@ class MigrationPlanningOrchestrator:
             status="draft",
             current_phase="estimation",
             progress_percent=0,
-            started_at=datetime.utcnow()
+            started_at=datetime.now(timezone.utc)
         )
 
         self.db.add(plan)
@@ -315,7 +315,7 @@ class MigrationPlanningOrchestrator:
 
             # Mark as in_review (ready for human approval)
             plan.status = "in_review"
-            plan.completed_at = datetime.utcnow()
+            plan.completed_at = datetime.now(timezone.utc)
             plan.current_phase = "completed"
 
             await self.db.commit()
@@ -346,8 +346,8 @@ class MigrationPlanningOrchestrator:
             phase_name=result.phase_name,
             agent_name=self._get_agent_for_phase(result.phase_name),
             status="completed" if result.success else "failed",
-            started_at=datetime.utcnow(),
-            completed_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(timezone.utc),
             duration_seconds=result.duration_seconds,
             result_summary=result.error if not result.success else f"Processed {result.items_processed} items",
             result_data=result.data,
@@ -376,7 +376,7 @@ class MigrationPlanningOrchestrator:
         assessment: ProjectAssessment
     ) -> PhaseResult:
         """Phase 7: Function Point Estimation (Eliza)"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             # Get historical estimation data from ChromaDB
@@ -495,7 +495,7 @@ class MigrationPlanningOrchestrator:
                 except Exception as e:
                     logger.warning(f"Eliza insight generation failed: {e}")
 
-            duration = (datetime.utcnow() - start_time).seconds
+            duration = (datetime.now(timezone.utc) - start_time).seconds
 
             result_data = {
                 "unadjusted_fp": unadjusted_fp,
@@ -576,7 +576,7 @@ Respond in JSON format:
         assessment: ProjectAssessment
     ) -> PhaseResult:
         """Phase 8: Target Architecture Design (Felix)"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             tech_config = TARGET_TECHNOLOGIES.get(plan.target_technology, {})
@@ -659,7 +659,7 @@ Respond in JSON format:
             plan.data_migration_plan = data_migration
             plan.architecture_decisions = adrs
 
-            duration = (datetime.utcnow() - start_time).seconds
+            duration = (datetime.now(timezone.utc) - start_time).seconds
 
             return PhaseResult(
                 success=True,
@@ -727,7 +727,7 @@ Respond in JSON format:
         assessment: ProjectAssessment
     ) -> PhaseResult:
         """Phase 9: Migration Strategy Selection (Felix)"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             # Select strategy based on project characteristics
@@ -846,7 +846,7 @@ Respond in JSON format:
             ]
             plan.success_criteria = success_criteria
 
-            duration = (datetime.utcnow() - start_time).seconds
+            duration = (datetime.now(timezone.utc) - start_time).seconds
 
             return PhaseResult(
                 success=True,
@@ -876,7 +876,7 @@ Respond in JSON format:
         assessment: ProjectAssessment
     ) -> PhaseResult:
         """Phase 10: Migration Report Generation (Diana)"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             strategy = MIGRATION_STRATEGIES.get(plan.migration_strategy, {})
@@ -885,7 +885,7 @@ Respond in JSON format:
             report_lines = [
                 f"# Migration Plan: {assessment.project_name}",
                 "",
-                f"**Generated**: {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}",
+                f"**Generated**: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}",
                 f"**Assessment ID**: {assessment.id}",
                 "",
                 "---",
@@ -990,12 +990,12 @@ Respond in JSON format:
             plan.report_type = "full_migration_plan"
             plan.report_content = "\n".join(report_lines)
             plan.report_metadata = {
-                "generated_at": datetime.utcnow().isoformat(),
+                "generated_at": datetime.now(timezone.utc).isoformat(),
                 "sections": ["executive_summary", "assessment", "architecture", "estimation", "strategy", "risks", "success_criteria"],
                 "word_count": len(" ".join(report_lines).split())
             }
 
-            duration = (datetime.utcnow() - start_time).seconds
+            duration = (datetime.now(timezone.utc) - start_time).seconds
 
             return PhaseResult(
                 success=True,
@@ -1037,7 +1037,7 @@ Respond in JSON format:
 
         plan.status = "approved"
         plan.reviewed_by = reviewer
-        plan.reviewed_at = datetime.utcnow()
+        plan.reviewed_at = datetime.now(timezone.utc)
         plan.review_notes = notes
 
         await self.db.commit()
@@ -1060,7 +1060,7 @@ Respond in JSON format:
 
         plan.status = "rejected"
         plan.reviewed_by = reviewer
-        plan.reviewed_at = datetime.utcnow()
+        plan.reviewed_at = datetime.now(timezone.utc)
         plan.review_notes = notes
 
         await self.db.commit()

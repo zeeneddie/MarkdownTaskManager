@@ -235,7 +235,7 @@ async def list_actions(
 
     since = None
     if hours:
-        since = datetime.utcnow() - timedelta(hours=hours)
+        since = datetime.now(timezone.utc) - timedelta(hours=hours)
 
     actions = await service.get_recent_actions(agent_id, limit, since)
 

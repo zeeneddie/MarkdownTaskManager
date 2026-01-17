@@ -11,7 +11,7 @@ Handles business logic for BMAD green-paper sessions:
 
 from typing import Dict, List, Optional, Any, Union
 from uuid import UUID, uuid4
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -309,7 +309,7 @@ class GreenPaperService:
         if existing_answer:
             # Update existing answer
             existing_answer.answer = answer
-            existing_answer.updated_at = datetime.utcnow()
+            existing_answer.updated_at = datetime.now(timezone.utc)
             if metadata:
                 existing_answer.metadata = {
                     **(existing_answer.metadata or {}),
@@ -334,12 +334,12 @@ class GreenPaperService:
         progress = await self.calculate_progress(session_id)
         session.progress_percentage = progress["percentage"]
         session.current_question = min(question_number + 1, 6)
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
 
         # 7. Check if session completed
         if await self.check_session_complete(session_id):
             session.status = SessionStatus.COMPLETED
-            session.completed_at = datetime.utcnow()
+            session.completed_at = datetime.now(timezone.utc)
 
         await self.db.commit()
         await self.db.refresh(answer_obj)
@@ -567,7 +567,7 @@ class GreenPaperService:
             generated_by="Peter",
             generation_attempt=1,
             metadata={
-                "workflow_triggered_at": datetime.utcnow().isoformat(),
+                "workflow_triggered_at": datetime.now(timezone.utc).isoformat(),
                 "model": "deepseek-r1:latest",
                 "answers_provided": len(answers_data),
                 "ollama_response_meta": {
@@ -925,7 +925,7 @@ Generate the PROJECT CONSTITUTION now. Return ONLY valid JSON, no additional com
             )
 
         # 3. Update constitution status
-        constitution.reviewed_at = datetime.utcnow()
+        constitution.reviewed_at = datetime.now(timezone.utc)
         constitution.reviewed_by = reviewed_by
         constitution.review_feedback = feedback
 
@@ -1127,7 +1127,7 @@ Maintain the same overall structure but incorporate the user's feedback.
             generated_by="Peter",
             generation_attempt=constitution.generation_attempt + 1,
             metadata={
-                "workflow_triggered_at": datetime.utcnow().isoformat(),
+                "workflow_triggered_at": datetime.now(timezone.utc).isoformat(),
                 "model": "deepseek-r1:latest",
                 "previous_constitution_id": str(constitution_id),
                 "user_feedback": feedback,
@@ -1301,7 +1301,7 @@ Maintain the same overall structure but incorporate the user's feedback.
             generated_by="Felix",
             generation_attempt=1,
             metadata={
-                "workflow_triggered_at": datetime.utcnow().isoformat(),
+                "workflow_triggered_at": datetime.now(timezone.utc).isoformat(),
                 "model": "qwen2.5-coder:7b",
                 "constitution_id": str(constitution_id),
                 "ollama_response_meta": {
@@ -1833,7 +1833,7 @@ Generate the HIGH-LEVEL DESIGN SPECIFICATION now. Return ONLY valid JSON, no add
             )
 
         # 3. Update specification status
-        specification.reviewed_at = datetime.utcnow()
+        specification.reviewed_at = datetime.now(timezone.utc)
         specification.reviewed_by = reviewed_by
         specification.review_feedback = feedback
 
@@ -2029,7 +2029,7 @@ Maintain the same overall structure but incorporate the user's feedback.
             generated_by="Felix",
             generation_attempt=specification.generation_attempt + 1,
             metadata={
-                "workflow_triggered_at": datetime.utcnow().isoformat(),
+                "workflow_triggered_at": datetime.now(timezone.utc).isoformat(),
                 "model": "qwen2.5-coder:7b",
                 "previous_specification_id": str(specification_id),
                 "user_feedback": feedback,

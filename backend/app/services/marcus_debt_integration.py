@@ -137,7 +137,7 @@ class MarcusDebtIntegration:
         2. Have Marcus analyze results
         3. Generate prioritized remediation plan
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         logger.info("Starting comprehensive debt scan with Marcus")
 
@@ -172,10 +172,10 @@ class MarcusDebtIntegration:
                     marcus_insights.append(analysis)
 
         # Step 3: Generate summary
-        duration = (datetime.utcnow() - start_time).total_seconds()
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
         return {
-            "scan_id": f"comprehensive_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            "scan_id": f"comprehensive_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}",
             "snapshot_id": snapshot.id,
             "total_items": snapshot.total_items,
             "debt_ratio": snapshot.debt_ratio,
@@ -185,7 +185,7 @@ class MarcusDebtIntegration:
             "marcus_available": marcus_available,
             "marcus_insights": marcus_insights,
             "duration_seconds": duration,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "recommendations": self._generate_recommendations(snapshot, marcus_insights)
         }
 
@@ -236,7 +236,7 @@ Please analyze this debt item and provide:
                     "debt_type": item.debt_type.value,
                     "severity": item.severity.value,
                     "marcus_analysis": result.get("analysis", {}),
-                    "analyzed_at": datetime.utcnow().isoformat()
+                    "analyzed_at": datetime.now(timezone.utc).isoformat()
                 }
 
         except Exception as e:
@@ -385,7 +385,7 @@ Please analyze this debt item and provide:
                         "success": True,
                         "analysis": analysis,
                         "fix_guidance": self._generate_fix_guidance(item, analysis),
-                        "completed_at": datetime.utcnow().isoformat()
+                        "completed_at": datetime.now(timezone.utc).isoformat()
                     }
                     task.status = "completed"
 
@@ -518,7 +518,7 @@ Please analyze this debt item and provide:
         task.status = "completed"
         task.result = {
             "resolution_id": resolution.id,
-            "completed_at": datetime.utcnow().isoformat()
+            "completed_at": datetime.now(timezone.utc).isoformat()
         }
 
         # Update plan progress if task is part of a plan
@@ -540,7 +540,7 @@ Please analyze this debt item and provide:
         days: int = 7
     ) -> Dict[str, Any]:
         """Generate a report of Marcus's debt management activity"""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(timezone.utc) - timedelta(days=days)
 
         # Get resolutions by Marcus
         result = await self.db.execute(

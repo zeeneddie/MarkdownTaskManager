@@ -21,7 +21,7 @@ Date: 2025-11-22
 from fastapi import APIRouter, HTTPException, status
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import uuid
 
@@ -462,7 +462,7 @@ async def log_outcome(request: LogOutcomeRequest):
             key_decisions=key_decisions,
             duration=request.duration or 0,
             quality_score=request.quality_score,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             metadata={"task_id": request.task_id}
         )
 
@@ -578,11 +578,11 @@ async def self_navigating_health():
                 "comprehensive_search",
                 "outcome_logging"
             ],
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         return {
             "status": "degraded",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }

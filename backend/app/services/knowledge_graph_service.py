@@ -12,7 +12,7 @@ Provides:
 Future integration: Archon OS MCP Server (coleam00/Archon)
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional, Tuple, Set
 from dataclasses import dataclass, field
 from enum import Enum
@@ -735,7 +735,7 @@ class KnowledgeGraphService:
                 "entity_types": self._count_entity_types(),
                 "relation_types": self._count_relation_types()
             },
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat()
         }
 
         return json.dumps(data, indent=2, default=str)

@@ -14,7 +14,7 @@ Tiers:
 
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import asyncio
 import logging
@@ -103,7 +103,7 @@ class LLMCallResult:
     success: bool = True
     error: Optional[str] = None
     raw_response: Dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for storage."""
@@ -409,7 +409,7 @@ class TierProviderSelector:
             self._health_status[provider_id] = ProviderHealth(provider_id=provider_id)
 
         health = self._health_status[provider_id]
-        health.last_check = datetime.utcnow()
+        health.last_check = datetime.now(timezone.utc)
         health.latency_ms = latency_ms
 
         if is_healthy:

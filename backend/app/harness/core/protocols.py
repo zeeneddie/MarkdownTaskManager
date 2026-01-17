@@ -12,7 +12,7 @@ This enables plug-and-play mounting of:
 
 from typing import Protocol, Dict, Any, List, Optional, Callable, Awaitable, runtime_checkable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 
@@ -128,7 +128,7 @@ class ContextLayer:
     token_count: int
     priority: int  # Higher priority = retained during truncation
     ttl_seconds: Optional[int] = None  # None = permanent
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     tags: List[str] = field(default_factory=list)
 
 

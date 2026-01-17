@@ -10,7 +10,7 @@ Based on Meta/Harvard CCA Research (December 2025).
 
 from typing import Dict, Any, List, Optional, AsyncGenerator
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import asyncio
 import logging
@@ -365,7 +365,7 @@ class ConfuciusOrchestrator:
         Returns:
             ExecutionResult with output and metadata
         """
-        self._execution_start = datetime.utcnow()
+        self._execution_start = datetime.now(timezone.utc)
         self.state = OrchestratorState.INITIALIZING
 
         try:
@@ -465,7 +465,7 @@ class ConfuciusOrchestrator:
 
         Yields StreamEvent objects that can be converted to SSE format.
         """
-        self._execution_start = datetime.utcnow()
+        self._execution_start = datetime.now(timezone.utc)
 
         yield StreamEvent("state", {"state": "initializing"})
 
@@ -681,7 +681,7 @@ class ConfuciusOrchestrator:
     def _get_execution_time_ms(self) -> int:
         """Get total execution time in milliseconds."""
         if self._execution_start:
-            delta = datetime.utcnow() - self._execution_start
+            delta = datetime.now(timezone.utc) - self._execution_start
             return int(delta.total_seconds() * 1000)
         return 0
 

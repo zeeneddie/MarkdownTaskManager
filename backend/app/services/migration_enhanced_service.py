@@ -15,7 +15,7 @@ Phases:
 """
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -141,7 +141,7 @@ class MigrationEnhancedService:
         if not session:
             return Phase1Result(success=False, errors=["Session not found"])
 
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         session.phase_1_status = PhaseStatus.IN_PROGRESS
         session.status = MigrationStatus.IN_PROGRESS
         session.started_at = start_time
@@ -183,7 +183,7 @@ class MigrationEnhancedService:
             result.errors.append(str(e))
 
         # Record timing
-        result.duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+        result.duration_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
 
         # Update session
         session.phase_1_result = result
@@ -221,7 +221,7 @@ class MigrationEnhancedService:
         if session.phase_1_status != PhaseStatus.COMPLETED:
             return Phase2Result(success=False, errors=["Phase 1 not completed"])
 
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         session.phase_2_status = PhaseStatus.IN_PROGRESS
 
         result = Phase2Result()
@@ -254,7 +254,7 @@ class MigrationEnhancedService:
             result.success = False
             result.errors.append(str(e))
 
-        result.duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+        result.duration_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
 
         session.phase_2_result = result
         session.phase_2_status = PhaseStatus.COMPLETED if result.success else PhaseStatus.FAILED
@@ -289,7 +289,7 @@ class MigrationEnhancedService:
         if session.phase_1_status != PhaseStatus.COMPLETED:
             return Phase3Result(success=False, errors=["Phase 1 not completed"])
 
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         session.phase_3_status = PhaseStatus.IN_PROGRESS
 
         result = Phase3Result()
@@ -315,7 +315,7 @@ class MigrationEnhancedService:
             result.success = False
             result.errors.append(str(e))
 
-        result.duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+        result.duration_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
 
         session.phase_3_result = result
         session.phase_3_status = PhaseStatus.COMPLETED if result.success else PhaseStatus.FAILED
@@ -351,7 +351,7 @@ class MigrationEnhancedService:
         if session.phase_1_status != PhaseStatus.COMPLETED:
             return Phase4Result(success=False, errors=["Phase 1 not completed"])
 
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         session.phase_4_status = PhaseStatus.IN_PROGRESS
 
         result = Phase4Result()
@@ -405,7 +405,7 @@ class MigrationEnhancedService:
             result.success = False
             result.errors.append(str(e))
 
-        result.duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+        result.duration_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
 
         session.phase_4_result = result
         session.phase_4_status = PhaseStatus.COMPLETED if result.success else PhaseStatus.FAILED
@@ -439,7 +439,7 @@ class MigrationEnhancedService:
         if not can_start:
             return Phase5Result(success=False, errors=[reason])
 
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         session.phase_5_status = PhaseStatus.IN_PROGRESS
 
         result = Phase5Result()
@@ -492,7 +492,7 @@ class MigrationEnhancedService:
             result.success = False
             result.errors.append(str(e))
 
-        result.duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+        result.duration_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
 
         session.phase_5_result = result
         session.phase_5_status = PhaseStatus.COMPLETED if result.success else PhaseStatus.FAILED
@@ -529,7 +529,7 @@ class MigrationEnhancedService:
         if not can_start:
             return Phase6Result(success=False, errors=[reason])
 
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         session.phase_6_status = PhaseStatus.IN_PROGRESS
 
         result = Phase6Result()
@@ -543,9 +543,9 @@ class MigrationEnhancedService:
 
             # Stakeholder signoffs
             result.stakeholder_signoffs = {
-                "Product Owner": datetime.utcnow(),
-                "Tech Lead": datetime.utcnow(),
-                "QA Lead": datetime.utcnow(),
+                "Product Owner": datetime.now(timezone.utc),
+                "Tech Lead": datetime.now(timezone.utc),
+                "QA Lead": datetime.now(timezone.utc),
             }
 
             # GO decision
@@ -567,7 +567,7 @@ class MigrationEnhancedService:
             result.success = False
             result.errors.append(str(e))
 
-        result.duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+        result.duration_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
 
         session.phase_6_result = result
         session.phase_6_status = PhaseStatus.COMPLETED if result.success else PhaseStatus.FAILED
@@ -604,7 +604,7 @@ class MigrationEnhancedService:
         if not can_start:
             return Phase7Result(success=False, errors=[reason])
 
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         session.phase_7_status = PhaseStatus.IN_PROGRESS
 
         result = Phase7Result(deployment_strategy=session.deployment_strategy)
@@ -631,14 +631,14 @@ class MigrationEnhancedService:
             result.success = False
             result.errors.append(str(e))
 
-        result.duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+        result.duration_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
 
         session.phase_7_result = result
         session.phase_7_status = PhaseStatus.COMPLETED if result.success else PhaseStatus.FAILED
 
         if result.production_deployed:
             session.status = MigrationStatus.COMPLETED
-            session.completed_at = datetime.utcnow()
+            session.completed_at = datetime.now(timezone.utc)
 
         await self._persist_session(session)
         await self._log_phase_event(session_id, 7, "completed" if result.success else "failed")

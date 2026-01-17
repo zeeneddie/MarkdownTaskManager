@@ -101,7 +101,7 @@ async def get_workflow_statistics(db: AsyncSession = Depends(get_db)):
 
     Returns counts of active assessments, completed today, plans in review, etc.
     """
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
 
     try:
         # Count active assessments
@@ -147,7 +147,7 @@ async def get_workflow_statistics(db: AsyncSession = Depends(get_db)):
         total_plans = total_plans_result.scalar() or 0
 
         # Calculate average assessment time (completed in last 7 days)
-        week_ago = datetime.utcnow() - timedelta(days=7)
+        week_ago = datetime.now(timezone.utc) - timedelta(days=7)
         avg_result = await db.execute(
             select(
                 func.avg(
@@ -437,7 +437,7 @@ async def approve_plan(
 
         plan.status = "approved"
         plan.reviewed_by = request.reviewer
-        plan.reviewed_at = datetime.utcnow()
+        plan.reviewed_at = datetime.now(timezone.utc)
         plan.review_notes = request.notes
 
         await db.commit()
@@ -482,7 +482,7 @@ async def reject_plan(
 
         plan.status = "rejected"
         plan.reviewed_by = request.reviewer
-        plan.reviewed_at = datetime.utcnow()
+        plan.reviewed_at = datetime.now(timezone.utc)
         plan.review_notes = request.notes
 
         await db.commit()

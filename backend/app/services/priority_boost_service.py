@@ -176,7 +176,7 @@ class PriorityBoostService:
             boosted_priority=boosted_priority,
             priority_delta=1,
             status=BoostStatus.ACTIVE.value,
-            expires_at=datetime.utcnow() + timedelta(days=self.BOOST_DURATION_DAYS),
+            expires_at=datetime.now(timezone.utc) + timedelta(days=self.BOOST_DURATION_DAYS),
         )
         self.db.add(boost)
         await self.db.commit()
@@ -234,7 +234,7 @@ class PriorityBoostService:
 
     async def expire_old_boosts(self) -> int:
         """Expire boosts that have passed their expiration date."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         result = await self.db.execute(
             select(PriorityBoost).where(
                 and_(
@@ -265,7 +265,7 @@ class PriorityBoostService:
             return {"success": False, "error": "Boost not found"}
 
         boost.status = BoostStatus.COMPLETED.value
-        boost.completed_at = datetime.utcnow()
+        boost.completed_at = datetime.now(timezone.utc)
         await self.db.commit()
 
         return {
@@ -296,7 +296,7 @@ class PriorityBoostService:
                 "boosted_priority": b.boosted_priority,
                 "original_priority": b.original_priority,
                 "expires_at": b.expires_at.isoformat() if b.expires_at else None,
-                "days_remaining": (b.expires_at - datetime.utcnow()).days if b.expires_at else None,
+                "days_remaining": (b.expires_at - datetime.now(timezone.utc)).days if b.expires_at else None,
             }
             for b in boosts
         ]

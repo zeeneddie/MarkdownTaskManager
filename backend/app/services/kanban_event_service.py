@@ -5,7 +5,7 @@ Week 58: Event system for automatic agent activation on lane entry/exit.
 Includes retry tracking and escalation to Human Needed lane.
 """
 from typing import Optional, Dict, Any, List
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 from enum import Enum
 import logging
@@ -91,7 +91,7 @@ class KanbanEventService:
         """
         from app.models.kanban_retry import KanbanRetryLog
 
-        event_time = datetime.utcnow()
+        event_time = datetime.now(timezone.utc)
         result = {
             "event": EventType.LANE_ENTRY,
             "item_id": item_id,
@@ -184,7 +184,7 @@ class KanbanEventService:
         Returns:
             Event result
         """
-        event_time = datetime.utcnow()
+        event_time = datetime.now(timezone.utc)
         result = {
             "event": EventType.LANE_EXIT,
             "item_id": item_id,
@@ -246,7 +246,7 @@ class KanbanEventService:
             action=action,
             success=success,
             details=details or {},
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
 
         self.db.add(action_record)
@@ -482,7 +482,7 @@ class KanbanEventService:
                 "notes": notes,
                 "assigned_agent": assign_agent,
             },
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         self.db.add(resolution_action)
 
@@ -739,7 +739,7 @@ class KanbanEventService:
             result=result,
             agent_used=agent_used,
             analysis=analysis,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
 
         self.db.add(retry_log)

@@ -9,7 +9,7 @@ SQLAlchemy models for the Agent Harness Framework:
 - HarnessConfig: Runtime configuration
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, Text, Index
 from sqlalchemy.dialects.postgresql import UUID, JSONB
@@ -35,7 +35,7 @@ class ContextSnapshot(Base):
     content_hash = Column(String(64), nullable=False, index=True)
     agent_id = Column(String(50), nullable=False, index=True)
     session_id = Column(String(100), nullable=False, index=True)
-    timestamp = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
+    timestamp = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     # Context layers (stored as JSON)
     system_context = Column(JSONB, nullable=True)
@@ -45,7 +45,7 @@ class ContextSnapshot(Base):
     token_count = Column(Integer, nullable=False, default=0)
     parent_version_id = Column(UUID(as_uuid=True), ForeignKey('context_snapshots.id', ondelete='SET NULL'), nullable=True)
     extra_metadata = Column(JSONB, nullable=True, default={})
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     # Self-referential relationship for version chain
     parent = relationship("ContextSnapshot", remote_side=[id], backref="children")
@@ -90,7 +90,7 @@ class ConstraintAuditLog(Base):
     approved_at = Column(DateTime, nullable=True)
 
     session_id = Column(String(100), nullable=True)
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
         Index('idx_audit_log_agent_time', 'agent_id', 'created_at'),
@@ -120,8 +120,8 @@ class AgentSystemContext(Base):
     token_count = Column(Integer, nullable=False, default=0)
     version = Column(Integer, nullable=False, default=1)
     active = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
         Index('idx_agent_contexts_active', 'active', 'agent_id'),
@@ -146,7 +146,7 @@ class ContextActionLink(Base):
     context_snapshot_id = Column(UUID(as_uuid=True), ForeignKey('context_snapshots.id', ondelete='CASCADE'), nullable=False)
     action_id = Column(String(100), nullable=False, index=True)
     action_type = Column(String(50), nullable=False)
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     # Relationship
     snapshot = relationship("ContextSnapshot", back_populates="action_links")
@@ -178,8 +178,8 @@ class HarnessConfig(Base):
     description = Column(Text, nullable=True)
     active = Column(Boolean, nullable=False, default=True)
     priority = Column(Integer, nullable=False, default=0)
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
         Index('idx_harness_config_type_active', 'config_type', 'active'),

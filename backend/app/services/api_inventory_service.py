@@ -13,7 +13,7 @@ import os
 import logging
 import time
 from dataclasses import field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any, Tuple, Set
 from urllib.parse import urlparse
 import uuid
@@ -250,7 +250,7 @@ class APIInventoryService:
         """Create a new API inventory session."""
         session = APIInventorySession(
             project_id=project_id,
-            name=name or f"API Inventory {datetime.utcnow().isoformat()}",
+            name=name or f"API Inventory {datetime.now(timezone.utc).isoformat()}",
         )
         self.sessions[session.session_id] = session
         logger.info(f"Created API inventory session: {session.session_id}")

@@ -364,7 +364,7 @@ class RmtooAdapterService:
 
         requirement.validated = True
         requirement.validated_by = validated_by
-        requirement.validated_at = datetime.utcnow()
+        requirement.validated_at = datetime.now(timezone.utc)
         requirement.status = RequirementStatus.APPROVED.value
 
         # Regenerate rmtoo content

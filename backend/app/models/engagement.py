@@ -147,8 +147,8 @@ class FeatureFeedback(Base):
     action_taken = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime(timezone=True), nullable=True, onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=True, onupdate=lambda: datetime.now(timezone.utc))
 
     def is_positive(self) -> bool:
         """Check if feedback is positive."""
@@ -190,13 +190,13 @@ class FeedbackRequest(Base):
     feedback_id = Column(PGUUID(as_uuid=True), nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     def is_expired(self) -> bool:
         """Check if request has expired."""
         if self.expires_at is None:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
 
 
 # ============== GAMIFICATION MODELS ==============
@@ -230,7 +230,7 @@ class BadgeDefinition(Base):
     is_secret = Column(Boolean, nullable=False, default=False)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
     def check_criteria(self, user_stats: Dict[str, Any]) -> bool:
         """Check if user meets badge criteria."""
@@ -255,7 +255,7 @@ class UserBadge(Base):
     badge_id = Column(PGUUID(as_uuid=True), nullable=False, index=True)
 
     # Earning details
-    earned_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.utcnow())
+    earned_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     earned_for = Column(Text, nullable=True)
     progress_snapshot = Column(JSONB, nullable=True)
 
@@ -298,8 +298,8 @@ class UserLevel(Base):
     last_activity_date = Column(Date, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime(timezone=True), nullable=True, onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=True, onupdate=lambda: datetime.now(timezone.utc))
 
     def add_points(self, points: int) -> bool:
         """Add points and check for level up."""
@@ -374,7 +374,7 @@ class UserPointsHistory(Base):
     balance_after = Column(Integer, nullable=False)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
 
 
 # ============== PERSONALIZED DASHBOARD MODELS ==============
@@ -423,8 +423,8 @@ class DashboardPreferences(Base):
     watched_features = Column(JSONB, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime(timezone=True), nullable=True, onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), nullable=True, onupdate=lambda: datetime.now(timezone.utc))
 
 
 class FeatureRecommendation(Base):
@@ -448,7 +448,7 @@ class FeatureRecommendation(Base):
     voted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     expires_at = Column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
@@ -459,7 +459,7 @@ class FeatureRecommendation(Base):
         """Check if recommendation has expired."""
         if self.expires_at is None:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
 
 
 # ============== POINT VALUES ==============

@@ -6,7 +6,7 @@ Week 61: Enhanced Observability Integration
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 
 
@@ -182,5 +182,5 @@ class BaseSessionExporter(ABC):
         Returns:
             Filename with extension
         """
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         return f"session_{session_id}_{timestamp}.{self.file_extension}"

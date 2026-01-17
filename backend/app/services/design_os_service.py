@@ -23,7 +23,7 @@ import logging
 import random
 import string
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -272,7 +272,7 @@ class DesignTokenService:
             if hasattr(tokens, key):
                 setattr(tokens, key, value)
 
-        tokens.updated_at = datetime.utcnow()
+        tokens.updated_at = datetime.now(timezone.utc)
         await self.db.commit()
         await self.db.refresh(tokens)
 
@@ -416,7 +416,7 @@ class ApplicationShellService:
             if hasattr(shell, key):
                 setattr(shell, key, value)
 
-        shell.updated_at = datetime.utcnow()
+        shell.updated_at = datetime.now(timezone.utc)
         await self.db.commit()
         await self.db.refresh(shell)
 
@@ -536,7 +536,7 @@ class SampleDataGenerationService:
         elif "id" in field_name:
             return str(uuid.uuid4())
         elif "date" in field_name or "created" in field_name:
-            return datetime.utcnow().isoformat()
+            return datetime.now(timezone.utc).isoformat()
         elif "status" in field_name:
             statuses = ["active", "pending", "completed", "archived"]
             return statuses[index % len(statuses)]
@@ -658,7 +658,7 @@ class UISpecificationService:
         flows = spec.user_flows or []
         flows.append(flow)
         spec.user_flows = flows
-        spec.updated_at = datetime.utcnow()
+        spec.updated_at = datetime.now(timezone.utc)
 
         await self.db.commit()
         await self.db.refresh(spec)
@@ -681,7 +681,7 @@ class UISpecificationService:
 
         spec.in_scope = in_scope
         spec.out_of_scope = out_of_scope
-        spec.updated_at = datetime.utcnow()
+        spec.updated_at = datetime.now(timezone.utc)
 
         await self.db.commit()
         await self.db.refresh(spec)
@@ -712,7 +712,7 @@ class UISpecificationService:
         requirements = spec.ui_requirements or []
         requirements.append(requirement)
         spec.ui_requirements = requirements
-        spec.updated_at = datetime.utcnow()
+        spec.updated_at = datetime.now(timezone.utc)
 
         await self.db.commit()
         await self.db.refresh(spec)
@@ -747,7 +747,7 @@ class UISpecificationService:
             return None
 
         spec.status = status
-        spec.updated_at = datetime.utcnow()
+        spec.updated_at = datetime.now(timezone.utc)
 
         await self.db.commit()
         await self.db.refresh(spec)
@@ -1321,7 +1321,7 @@ class ImplementationPromptService:
         prompt = result.scalar_one_or_none()
         if prompt:
             prompt.times_used += 1
-            prompt.last_used_at = datetime.utcnow()
+            prompt.last_used_at = datetime.now(timezone.utc)
             await self.db.commit()
 
 

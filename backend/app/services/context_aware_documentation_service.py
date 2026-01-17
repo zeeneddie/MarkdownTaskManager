@@ -12,7 +12,7 @@ import ast
 import logging
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Set, Tuple
@@ -399,7 +399,7 @@ class ContextAwareDocumentationService:
         return ProjectDocumentation(
             project_name=project_path.name,
             project_path=str(project_path),
-            generated_at=datetime.utcnow(),
+            generated_at=datetime.now(timezone.utc),
             modules=modules,
             total_modules=len(modules),
             total_classes=total_classes,

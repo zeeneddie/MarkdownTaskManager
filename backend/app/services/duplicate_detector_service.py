@@ -6,7 +6,7 @@ Uses ChromaDB for semantic similarity search to detect
 duplicate or similar feature requests.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from uuid import UUID, uuid4
 import re
@@ -103,7 +103,7 @@ class DuplicateDetectorService:
                     "feature_id": feature_id,
                     "title": title[:200],  # Truncate for metadata
                     "project_id": project_id or 0,
-                    "indexed_at": datetime.utcnow().isoformat(),
+                    "indexed_at": datetime.now(timezone.utc).isoformat(),
                 }]
             )
             return True
@@ -347,7 +347,7 @@ class DuplicateDetectorService:
 
         duplicate.status = resolution
         duplicate.resolved_by = resolved_by
-        duplicate.resolved_at = datetime.utcnow()
+        duplicate.resolved_at = datetime.now(timezone.utc)
         if merge_target_id:
             duplicate.merge_target_id = merge_target_id
 
@@ -387,7 +387,7 @@ class DuplicateDetectorService:
         for dup in duplicates:
             dup.status = DuplicateStatus.MERGED.value
             dup.resolved_by = resolved_by
-            dup.resolved_at = datetime.utcnow()
+            dup.resolved_at = datetime.now(timezone.utc)
             dup.merge_target_id = target_feature_id
 
         await self.db.commit()

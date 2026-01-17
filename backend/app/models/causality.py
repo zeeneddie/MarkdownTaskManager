@@ -11,7 +11,7 @@ Based on: arXiv:2101.10766 - REFSQ 2021
 Repository: github.com/fischJan/CiRA
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional, List, Dict, Any
 from uuid import UUID, uuid4
@@ -150,8 +150,8 @@ class CausalSession(Base):
     error_message = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, nullable=True, onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, nullable=True, onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
     classifications = relationship("CausalClassification", back_populates="session", cascade="all, delete-orphan")
@@ -161,12 +161,12 @@ class CausalSession(Base):
     def start_processing(self) -> None:
         """Mark session as processing."""
         self.status = CausalSessionStatus.PROCESSING.value
-        self.started_at = datetime.utcnow()
+        self.started_at = datetime.now(timezone.utc)
 
     def complete(self, causal_count: int, non_causal_count: int, relation_count: int, avg_confidence: float) -> None:
         """Mark session as completed with results."""
         self.status = CausalSessionStatus.COMPLETED.value
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(timezone.utc)
         self.causal_count = causal_count
         self.non_causal_count = non_causal_count
         self.relation_count = relation_count
@@ -177,7 +177,7 @@ class CausalSession(Base):
     def fail(self, error_message: str) -> None:
         """Mark session as failed."""
         self.status = CausalSessionStatus.FAILED.value
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(timezone.utc)
         self.error_message = error_message
 
     def is_completed(self) -> bool:
@@ -226,7 +226,7 @@ class CausalClassification(Base):
     markers = Column(JSONB, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     session = relationship("CausalSession", back_populates="classifications")
@@ -279,7 +279,7 @@ class CausalRelation(Base):
     validation_notes = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     session = relationship("CausalSession", back_populates="relations")
@@ -347,8 +347,8 @@ class CausalDependencyGraph(Base):
     serialized_graph = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, nullable=True, onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, nullable=True, onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
     session = relationship("CausalSession", back_populates="dependency_graphs")
@@ -402,7 +402,7 @@ class CausalTestCase(Base):
     execution_notes = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     executed_at = Column(DateTime, nullable=True)
 
     # Relationships
@@ -421,7 +421,7 @@ class CausalTestCase(Base):
         self.status = TestCaseStatus.EXECUTED.value
         self.execution_result = result
         self.execution_notes = notes
-        self.executed_at = datetime.utcnow()
+        self.executed_at = datetime.now(timezone.utc)
 
     def is_passed(self) -> bool:
         """Check if test passed."""

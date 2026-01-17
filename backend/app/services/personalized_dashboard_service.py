@@ -293,7 +293,7 @@ class PersonalizedDashboardService:
             score=score,
             reason=reason,
             source_features=source_features,
-            expires_at=datetime.utcnow() + timedelta(days=7),
+            expires_at=datetime.now(timezone.utc) + timedelta(days=7),
         )
         self.db.add(rec)
         return rec
@@ -352,7 +352,7 @@ class PersonalizedDashboardService:
             return {"success": False, "error": "Recommendation not found"}
 
         rec.status = RecommendationStatus.DISMISSED.value
-        rec.dismissed_at = datetime.utcnow()
+        rec.dismissed_at = datetime.now(timezone.utc)
 
         await self.db.commit()
 
@@ -398,7 +398,7 @@ class PersonalizedDashboardService:
     ) -> List[Dict[str, Any]]:
         """Get recently added features."""
         try:
-            since = datetime.utcnow() - timedelta(days=7)
+            since = datetime.now(timezone.utc) - timedelta(days=7)
             query = select(PortalFeatureRequest).where(
                 PortalFeatureRequest.created_at >= since
             ).order_by(PortalFeatureRequest.created_at.desc()).limit(limit)

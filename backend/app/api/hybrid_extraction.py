@@ -24,7 +24,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Any
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 import logging
 
@@ -152,7 +152,7 @@ async def run_extraction_task(
         await db.execute(
             update(HybridExtractionSession)
             .where(HybridExtractionSession.id == session_id)
-            .values(status='running', started_at=datetime.utcnow())
+            .values(status='running', started_at=datetime.now(timezone.utc))
         )
         await db.commit()
 
@@ -284,7 +284,7 @@ async def run_extraction_task(
             .where(HybridExtractionSession.id == session_id)
             .values(
                 status='completed',
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(timezone.utc),
                 total_files=total_files,
                 total_rules=result.metrics.total_rules,
                 high_confidence_rules=result.metrics.high_confidence_rules,
@@ -327,7 +327,7 @@ async def run_extraction_task(
             .where(HybridExtractionSession.id == session_id)
             .values(
                 status='failed',
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(timezone.utc),
                 errors=[str(e)],
             )
         )

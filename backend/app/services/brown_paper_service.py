@@ -24,7 +24,7 @@ Architecture:
 import logging
 import re
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -296,8 +296,8 @@ class BrownPaperService:
             application_id=application_id,
             status=BrownPaperStatus.SCANNING,
             analysis=None,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
             project_path=project_path,
             project_name=project_name,
         )
@@ -462,7 +462,7 @@ class BrownPaperService:
                         classes_count=analysis.total_classes,
                         functions_count=analysis.total_functions,
                         patterns_detected=analysis.primary_patterns,
-                        updated_at=datetime.utcnow(),
+                        updated_at=datetime.now(timezone.utc),
                         generation_metadata={
                             "analysis_time_ms": analysis.analysis_time_ms,
                         }
@@ -529,7 +529,7 @@ class BrownPaperService:
                             readme_summary=analysis.readme_summary,
                             domains=domains_json,
                             analysis_time_ms=analysis.analysis_time_ms,
-                            updated_at=datetime.utcnow(),
+                            updated_at=datetime.now(timezone.utc),
                         )
                     )
                 else:
@@ -582,7 +582,7 @@ class BrownPaperService:
                     "domains_analyzed": const_metadata.get("domains_analyzed"),
                     "modules_analyzed": const_metadata.get("modules_analyzed"),
                     "generated_at": const_metadata.get("generated_at"),
-                    "persisted_at": datetime.utcnow().isoformat(),
+                    "persisted_at": datetime.now(timezone.utc).isoformat(),
                 }
 
                 # Generate markdown version
@@ -593,7 +593,7 @@ class BrownPaperService:
                     db_constitution.content_markdown = content_markdown
                     db_constitution.status = status
                     db_constitution.generation_metadata = generation_metadata
-                    db_constitution.updated_at = datetime.utcnow()
+                    db_constitution.updated_at = datetime.now(timezone.utc)
                 else:
                     db_constitution = BrownPaperConstitutionDB(
                         session_id=uuid.UUID(session_id),
@@ -872,7 +872,7 @@ class BrownPaperService:
             )
 
             session.analysis = analysis
-            session.updated_at = datetime.utcnow()
+            session.updated_at = datetime.now(timezone.utc)
 
             # Persist analysis to database
             await self._persist_analysis_to_db(session_id, session, analysis)
@@ -886,7 +886,7 @@ class BrownPaperService:
         except Exception as e:
             session.status = BrownPaperStatus.REJECTED
             session.error_message = str(e)
-            session.updated_at = datetime.utcnow()
+            session.updated_at = datetime.now(timezone.utc)
             logger.error(f"Brown Paper analysis failed: {e}", exc_info=True)
             raise
 
@@ -1709,13 +1709,13 @@ class BrownPaperService:
                 "application_id": analysis.application_id,
                 "domains_analyzed": len(analysis.domains),
                 "modules_analyzed": len(analysis.modules),
-                "generated_at": datetime.utcnow().isoformat(),
+                "generated_at": datetime.now(timezone.utc).isoformat(),
             }
         }
 
         analysis.constitution = constitution
         session.status = BrownPaperStatus.REVIEW
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
 
         await self._persist_constitution_to_db(
             session_id=session_id,
@@ -1938,7 +1938,7 @@ class BrownPaperService:
                     "modules": domain.modules,
                     "entities": domain.entities,
                     "domain_name": domain.name,  # Also in metadata for completeness
-                    "generated_at": datetime.utcnow().isoformat(),
+                    "generated_at": datetime.now(timezone.utc).isoformat(),
                 }
             }
 
@@ -1975,7 +1975,7 @@ class BrownPaperService:
             epics.append(epic)
 
         analysis.epics = epics
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
 
         if analysis.constitution:
             await self._persist_constitution_to_db(
@@ -2003,7 +2003,7 @@ class BrownPaperService:
             return False
 
         session.status = BrownPaperStatus.APPROVED
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
 
         # TODO: Persist to database and link to Green Paper models
 
@@ -2023,7 +2023,7 @@ class BrownPaperService:
 
         session.status = BrownPaperStatus.REJECTED
         session.error_message = f"Rejected by {reviewer}: {reason}"
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
 
         logger.info(f"Session {session_id} rejected by {reviewer}: {reason}")
         return True
@@ -2068,7 +2068,7 @@ class BrownPaperService:
             session_id=session_id,
             status="running",
             tier=request.tier,
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
         )
 
         try:
@@ -2156,7 +2156,7 @@ class BrownPaperService:
             response.status = "failed"
             response.errors.append(str(e))
 
-        response.completed_at = datetime.utcnow()
+        response.completed_at = datetime.now(timezone.utc)
         response.total_duration_ms = int((time.time() - start_time) * 1000)
 
         # Store enhanced analysis in session for later retrieval
@@ -2172,7 +2172,7 @@ class BrownPaperService:
                 'phases_completed': response.phases_completed,
                 'total_duration_ms': response.total_duration_ms,
             }
-            session.updated_at = datetime.utcnow()
+            session.updated_at = datetime.now(timezone.utc)
             logger.info(f"Enhanced analysis stored for session {session_id}")
 
         return response
@@ -3069,7 +3069,7 @@ class BMADBrownPaperWorkflow:
                     unique_locations.append(loc)
 
             context = {
-                "fetched_at": datetime.utcnow().isoformat(),
+                "fetched_at": datetime.now(timezone.utc).isoformat(),
                 "project_id": project_id,
                 "query": query,
                 "relevant_docs": relevant_docs[:10],  # Top 10
@@ -3136,7 +3136,7 @@ class BMADBrownPaperWorkflow:
                 db_session.tasks = session.tasks
                 db_session.enhanced_analysis = session.enhanced_analysis
                 db_session.error_message = session.error_message
-                db_session.updated_at = datetime.utcnow()
+                db_session.updated_at = datetime.now(timezone.utc)
             else:
                 # Create new session
                 db_session = BMADSessionDB(
@@ -3332,7 +3332,7 @@ class BMADBrownPaperWorkflow:
             session_id,
             BMADEventType.SESSION_RESUMED,
             {
-                "resumed_at": datetime.utcnow().isoformat(),
+                "resumed_at": datetime.now(timezone.utc).isoformat(),
                 "resumed_by": user_id,
                 "current_question": session.current_question,
                 "status": session.status,
@@ -3383,7 +3383,7 @@ class BMADBrownPaperWorkflow:
 
         session.status = "cancelled"
         session.error_message = reason
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
 
         await self._persist_session_to_db(session)
         await self._log_event(
@@ -3440,8 +3440,8 @@ class BMADBrownPaperWorkflow:
             migration_analysis=None,
             specification=None,
             tasks=None,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
             vector_context=vector_context,
         )
 
@@ -3637,10 +3637,10 @@ class BMADBrownPaperWorkflow:
             question_number=q_num,
             question_text=q_info["question"],
             answer=answer.strip(),
-            answered_at=datetime.utcnow(),
+            answered_at=datetime.now(timezone.utc),
         )
 
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
 
         # Move to next question or complete
         if q_num < 8:
@@ -3692,10 +3692,10 @@ class BMADBrownPaperWorkflow:
             question_number=q_num,
             question_text=q_info["question"],
             answer=answer.strip(),
-            answered_at=datetime.utcnow(),
+            answered_at=datetime.now(timezone.utc),
         )
 
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
 
         # Move to next question or complete
         if q_num < 8:
@@ -3784,7 +3784,7 @@ class BMADBrownPaperWorkflow:
 
         session.migration_analysis = analysis
         session.status = "generating"
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
 
         # Persist to database
         await self._persist_session_to_db(session)
@@ -3947,7 +3947,7 @@ class BMADBrownPaperWorkflow:
             recommended_phases=phases,
             technical_spikes=spikes,
             go_no_go_checkpoints=checkpoints,
-            analyzed_at=datetime.utcnow(),
+            analyzed_at=datetime.now(timezone.utc),
         )
 
     # ========================================================================
@@ -3979,7 +3979,7 @@ class BMADBrownPaperWorkflow:
             "metadata": {
                 "project_name": session.project_name,
                 "project_path": session.project_path,
-                "generated_at": datetime.utcnow().isoformat(),
+                "generated_at": datetime.now(timezone.utc).isoformat(),
                 "workflow": "BMAD_BROWN_PAPER",
                 "session_id": session_id,
             },
@@ -3996,7 +3996,7 @@ class BMADBrownPaperWorkflow:
         }
 
         session.specification = specification
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
 
         # Persist to database
         await self._persist_session_to_db(session)
@@ -4257,7 +4257,7 @@ Timeline: {timeline}
 
         session.tasks = tasks
         session.status = "review"
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
 
         # Persist to database
         await self._persist_session_to_db(session)
@@ -4287,7 +4287,7 @@ Timeline: {timeline}
             return False
 
         session.status = "approved"
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
         return True
 
     def reject_session(self, session_id: str, reason: str) -> bool:
@@ -4298,7 +4298,7 @@ Timeline: {timeline}
 
         session.status = "rejected"
         session.error_message = reason
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
         return True
 
     async def approve_session_async(
@@ -4312,7 +4312,7 @@ Timeline: {timeline}
             return False
 
         session.status = "approved"
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
 
         # Persist to database
         await self._persist_session_to_db(session)
@@ -4339,7 +4339,7 @@ Timeline: {timeline}
 
         session.status = "rejected"
         session.error_message = reason
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
 
         # Persist to database
         await self._persist_session_to_db(session)

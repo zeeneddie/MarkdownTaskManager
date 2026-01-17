@@ -6,7 +6,7 @@ and statistical analysis.
 """
 
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 from uuid import UUID, uuid4
 import math
@@ -86,7 +86,7 @@ class ABTestingService:
             feature_name=feature_name,
             description=description,
             status="DRAFT",
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         self.db.add(experiment)
         await self.db.flush()  # Get experiment.id
@@ -101,7 +101,7 @@ class ABTestingService:
                 traffic_percentage=variant_data["traffic_percentage"],
                 config_json=variant_data["config_json"],
                 is_control=variant_data.get("is_control", False),
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             self.db.add(variant)
 
@@ -143,7 +143,7 @@ class ABTestingService:
             )
 
         experiment.status = "ACTIVE"
-        experiment.started_at = datetime.utcnow()
+        experiment.started_at = datetime.now(timezone.utc)
 
         await self.db.commit()
         await self.db.refresh(experiment)
@@ -221,7 +221,7 @@ class ABTestingService:
             )
 
         experiment.status = "COMPLETED"
-        experiment.completed_at = datetime.utcnow()
+        experiment.completed_at = datetime.now(timezone.utc)
         experiment.winner_variant_id = winner_variant_id
 
         await self.db.commit()
@@ -319,7 +319,7 @@ class ABTestingService:
             success=success,
             metrics_json=metrics,
             error_message=error_message,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
 
         self.db.add(result)

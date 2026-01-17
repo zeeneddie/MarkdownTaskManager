@@ -11,7 +11,7 @@ Stores thinking patterns in vector database for:
 """
 
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 import logging
 
@@ -121,7 +121,7 @@ class ThinkingPatternStore:
             "session_id": session_id or "",
             "action_id": action_id or 0,
             "token_count": token_count,
-            "stored_at": datetime.utcnow().isoformat(),
+            "stored_at": datetime.now(timezone.utc).isoformat(),
             "content_length": len(content),
         }
 

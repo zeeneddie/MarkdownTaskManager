@@ -12,7 +12,7 @@ Flow:
 - Migration (requires Brown Paper) → Project Generation
 """
 
-from datetime import datetime, date
+from datetime import datetime, timezone, date
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 
@@ -440,7 +440,7 @@ async def update_intake(
         if hasattr(intake, field):
             setattr(intake, field, value)
 
-    intake.updated_at = datetime.utcnow()
+    intake.updated_at = datetime.now(timezone.utc)
     intake.last_modified_by = updated_by
 
     await db.commit()
@@ -494,7 +494,7 @@ async def configure_brown_paper_scope(
         scope = intake.scope
         for field, value in request.model_dump().items():
             setattr(scope, field, value)
-        scope.updated_at = datetime.utcnow()
+        scope.updated_at = datetime.now(timezone.utc)
     else:
         scope = ProjectIntakeScope(
             intake_id=intake_id,
@@ -531,7 +531,7 @@ async def start_brown_paper_analysis(
     # Update status
     old_status = intake.status
     intake.status = IntakeStatus.ANALYZING
-    intake.updated_at = datetime.utcnow()
+    intake.updated_at = datetime.now(timezone.utc)
 
     await add_intake_event(
         db, intake_id, IntakeEventType.ANALYSIS_STARTED,
@@ -568,11 +568,11 @@ async def record_brown_paper_decision(
 
     # Record decision
     intake.brown_paper_decision = request.decision
-    intake.decision_date = datetime.utcnow()
+    intake.decision_date = datetime.now(timezone.utc)
     intake.decision_by = request.decision_by
     intake.decision_notes = request.decision_notes
     intake.status = IntakeStatus.COMPLETED
-    intake.completed_at = datetime.utcnow()
+    intake.completed_at = datetime.now(timezone.utc)
 
     await add_intake_event(
         db, intake_id, IntakeEventType.DECISION_MADE,
@@ -640,7 +640,7 @@ async def configure_green_paper_stack(
 
     intake.target_stack = request.target_stack
     intake.target_architecture = request.target_architecture
-    intake.updated_at = datetime.utcnow()
+    intake.updated_at = datetime.now(timezone.utc)
 
     await add_intake_event(
         db, intake_id, IntakeEventType.TARGET_CONFIGURED,
@@ -702,7 +702,7 @@ async def generate_green_paper_project(
 
     # Update status
     intake.status = IntakeStatus.ACTIVE
-    intake.updated_at = datetime.utcnow()
+    intake.updated_at = datetime.now(timezone.utc)
 
     # TODO: Trigger project generation in background
     # background_tasks.add_task(generate_project_from_green_paper, intake_id)
@@ -774,7 +774,7 @@ async def set_migration_type(
 
     old_value = intake.migration_type
     intake.migration_type = migration_type
-    intake.updated_at = datetime.utcnow()
+    intake.updated_at = datetime.now(timezone.utc)
 
     await add_intake_event(
         db, intake_id, IntakeEventType.STATUS_CHANGED,
@@ -868,7 +868,7 @@ async def configure_migration_target(
 
     intake.target_stack = request.target_stack
     intake.target_architecture = request.target_architecture
-    intake.updated_at = datetime.utcnow()
+    intake.updated_at = datetime.now(timezone.utc)
 
     await add_intake_event(
         db, intake_id, IntakeEventType.TARGET_CONFIGURED,
@@ -897,7 +897,7 @@ async def configure_migration_strategy(
     intake.start_date = request.start_date
     intake.target_go_live = request.target_go_live
     intake.hard_deadline = request.hard_deadline
-    intake.updated_at = datetime.utcnow()
+    intake.updated_at = datetime.now(timezone.utc)
 
     await add_intake_event(
         db, intake_id, IntakeEventType.TARGET_CONFIGURED,
@@ -944,7 +944,7 @@ async def configure_integration(
     integration.library_name = request.library_name
     integration.library_type = request.library_type
     integration.decision_notes = request.decision_notes
-    integration.updated_at = datetime.utcnow()
+    integration.updated_at = datetime.now(timezone.utc)
 
     await add_intake_event(
         db, intake_id, IntakeEventType.INTEGRATIONS_CONFIGURED,
@@ -979,7 +979,7 @@ async def start_migration_project(
 
     # Update status
     intake.status = IntakeStatus.ACTIVE
-    intake.updated_at = datetime.utcnow()
+    intake.updated_at = datetime.now(timezone.utc)
 
     await add_intake_event(
         db, intake_id, IntakeEventType.MIGRATION_STARTED,

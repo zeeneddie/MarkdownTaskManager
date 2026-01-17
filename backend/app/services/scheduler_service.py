@@ -78,7 +78,7 @@ class SchedulerService:
         """
         logger.info(f"🔧 Starting scheduled maintenance scan (job_id: {job_id})")
 
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             # Create maintenance request
@@ -102,7 +102,7 @@ class SchedulerService:
                 timeout=1800  # 30 minutes max
             )
 
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
 
             # Track execution history
@@ -126,7 +126,7 @@ class SchedulerService:
             logger.info(f"   Tasks: {execution_record['tasks_count']}")
 
         except asyncio.TimeoutError:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
 
             execution_record = {
@@ -145,7 +145,7 @@ class SchedulerService:
             logger.error(f"⏱️ Scheduled maintenance timed out after {duration:.1f}s")
 
         except Exception as e:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
 
             execution_record = {

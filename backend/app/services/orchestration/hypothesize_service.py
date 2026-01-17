@@ -20,7 +20,7 @@ Key Features:
 import json
 import hashlib
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any, Callable
@@ -97,7 +97,7 @@ class VerificationResult:
     outcome_id: str
     passed: bool
     actual_result: str
-    verified_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    verified_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     error_message: Optional[str] = None
     evidence: Optional[Dict[str, Any]] = None
 
@@ -131,7 +131,7 @@ class Hypothesis:
     recovery_details: str = ""
     status: HypothesisStatus = HypothesisStatus.PENDING
     results: List[VerificationResult] = field(default_factory=list)
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     validated_at: Optional[datetime] = None
     confidence: float = 0.0              # 0.0 to 1.0
     assumptions: List[str] = field(default_factory=list)
@@ -246,7 +246,7 @@ class Hypothesis:
         else:
             self.status = HypothesisStatus.TESTING
 
-        self.validated_at = datetime.utcnow()
+        self.validated_at = datetime.now(timezone.utc)
         return self.status
 
     def format_markdown(self) -> str:
@@ -457,7 +457,7 @@ class HypothesizeService:
             Created Hypothesis
         """
         hypothesis_id = hashlib.md5(
-            f"{action}:{context}:{datetime.utcnow().isoformat()}".encode()
+            f"{action}:{context}:{datetime.now(timezone.utc).isoformat()}".encode()
         ).hexdigest()[:12]
 
         hypothesis = Hypothesis(

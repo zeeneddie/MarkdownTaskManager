@@ -9,7 +9,7 @@ Stores:
 - Stack Agents (assigned AI agents per stack)
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, JSON, Text, Boolean
 from sqlalchemy.orm import relationship
@@ -37,8 +37,8 @@ class Application(Base):
     primary_stacks = Column(JSON, default=list)
 
     # Metadata
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     last_scan_at = Column(DateTime, nullable=True)
 
     # Configuration
@@ -106,7 +106,7 @@ class Component(Base):
     line_count = Column(Integer, default=0)
 
     # Metadata
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_scan_at = Column(DateTime, nullable=True)
 
     # Relationships
@@ -153,7 +153,7 @@ class StackAgent(Base):
     success_rate = Column(Integer, default=0)  # Percentage 0-100
 
     # Metadata
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_active_at = Column(DateTime, nullable=True)
     is_active = Column(Boolean, default=True)
 

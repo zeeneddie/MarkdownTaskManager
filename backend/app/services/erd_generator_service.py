@@ -18,7 +18,7 @@ Date: 2026-01-01
 import logging
 import uuid
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any, Set, Tuple
 from dataclasses import asdict
 
@@ -727,7 +727,7 @@ class ERDGeneratorService:
             tables=tables,
             relationships=relationships,
             bounded_contexts=data.get("bounded_contexts", {}),
-            created_at=datetime.fromisoformat(data["created_at"]) if data.get("created_at") else datetime.utcnow()
+            created_at=datetime.fromisoformat(data["created_at"]) if data.get("created_at") else datetime.now(timezone.utc)
         )
 
     # ============================================

@@ -6,7 +6,7 @@ Fase 23.6 Phase 24.1: Data types for stage-based LLM council reviews.
 
 from enum import Enum
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 
 
@@ -212,7 +212,7 @@ class ReviewResult:
     rounds_completed: int
     improved_artifact: Optional[str] = None
     metrics: Optional[Dict[str, Any]] = None
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""

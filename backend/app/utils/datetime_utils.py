@@ -10,7 +10,7 @@ Using datetime.now(timezone.utc) creates timezone-aware datetimes which cause er
 Use utc_now() instead of datetime.now(timezone.utc) for database operations.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def utc_now() -> datetime:
@@ -28,7 +28,7 @@ def utc_now() -> datetime:
 
         created_at = utc_now()
     """
-    return datetime.utcnow()
+    return datetime.now(timezone.utc)
 
 
 def ensure_naive(dt: datetime) -> datetime:

@@ -21,7 +21,7 @@ Usage:
 from enum import Enum
 from typing import Dict, Optional
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class ProjectSize(str, Enum):
@@ -94,7 +94,7 @@ class ProjectProfile:
 
     # Project metadata
     project_id: Optional[str] = None
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Budget/resource constraints
     budget_type: str = "volunteer"  # volunteer, startup, corporate, enterprise

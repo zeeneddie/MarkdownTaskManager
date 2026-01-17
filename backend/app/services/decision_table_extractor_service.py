@@ -20,7 +20,7 @@ import logging
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 
@@ -133,7 +133,7 @@ class DecisionTableExtractorService:
         result = DecisionTableExtractionResult(
             session_id=session_id,
             project_id=project_id,
-            started_at=datetime.utcnow()
+            started_at=datetime.now(timezone.utc)
         )
         self._sessions[session_id] = result
         logger.info(f"Created decision table extraction session: {session_id}")
@@ -190,7 +190,7 @@ class DecisionTableExtractorService:
                 t.confidence for t in result.tables
             ) / len(result.tables)
 
-        result.completed_at = datetime.utcnow()
+        result.completed_at = datetime.now(timezone.utc)
         result.duration_seconds = (
             result.completed_at - result.started_at
         ).total_seconds()

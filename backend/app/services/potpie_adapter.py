@@ -21,7 +21,7 @@ import json
 import subprocess
 import tempfile
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 import logging
@@ -60,7 +60,7 @@ class PotpieGraph:
     """Complete knowledge graph from Potpie analysis."""
     repository_path: str
     nodes: List[PotpieNode] = field(default_factory=list)
-    analysis_timestamp: datetime = field(default_factory=lambda: datetime.utcnow())
+    analysis_timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Statistics
     total_files: int = 0

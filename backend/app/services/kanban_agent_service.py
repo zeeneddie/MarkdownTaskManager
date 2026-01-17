@@ -12,7 +12,7 @@ Features:
 - Stack-specific agent templates (IoT, Mobile, Security)
 """
 from typing import Optional, Dict, Any, List, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from dataclasses import dataclass, field
 import logging
@@ -511,7 +511,7 @@ class KanbanAgentService:
             success=True,  # Trigger is successful, execution tracked separately
             details={
                 "task_description": task_description,
-                "triggered_at": datetime.utcnow().isoformat(),
+                "triggered_at": datetime.now(timezone.utc).isoformat(),
             }
         )
 
@@ -567,7 +567,7 @@ class KanbanAgentService:
             details={
                 "work_result": work_result,
                 "error_message": error_message,
-                "completed_at": datetime.utcnow().isoformat(),
+                "completed_at": datetime.now(timezone.utc).isoformat(),
             }
         )
 
@@ -687,7 +687,7 @@ class KanbanAgentService:
 
         return {
             "statistics": stats,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
         }
 
     async def validate_lane_transition_quality(

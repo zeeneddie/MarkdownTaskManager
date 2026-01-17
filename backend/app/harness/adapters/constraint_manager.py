@@ -13,7 +13,7 @@ import uuid
 import logging
 from typing import Dict, Any, List, Optional
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 import yaml
 
@@ -358,7 +358,7 @@ class MarQedConstraintManager(BaseAdapter, ConstraintManagerProtocol):
             self._runtime_constraints[agent_id] = []
 
         constraint["id"] = str(uuid.uuid4())[:8]
-        constraint["added_at"] = datetime.utcnow().isoformat()
+        constraint["added_at"] = datetime.now(timezone.utc).isoformat()
         self._runtime_constraints[agent_id].append(constraint)
 
         logger.info(f"Added runtime constraint for {agent_id}: {constraint['id']}")
@@ -475,7 +475,7 @@ class MarQedConstraintManager(BaseAdapter, ConstraintManagerProtocol):
         """Log audit entry for compliance."""
         entry = {
             "audit_id": audit_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "agent_id": agent_id,
             "action": action,
             "result": result,

@@ -7,7 +7,7 @@ Uses Peter agent for understanding, Diana agent for response generation.
 """
 
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any, Tuple
 from uuid import UUID, uuid4
 
@@ -76,7 +76,7 @@ class PortalChatbotService:
             context={},
             feature_ids_mentioned=[],
             message_count=0,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
 
         self.db.add(session)
@@ -222,7 +222,7 @@ class PortalChatbotService:
             detected_intent=detected_intent,
             action_type=action_type,
             action_data=action_data,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
         )
 
         self.db.add(message)

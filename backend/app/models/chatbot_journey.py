@@ -7,7 +7,7 @@ Client Portal 2.0 Phase 4: Advanced Features
 - Customer Journey Analytics (JourneyEvent, JourneyFunnel, JourneyFunnelSnapshot)
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional, List, Dict, Any
 from uuid import UUID, uuid4
@@ -147,7 +147,7 @@ class ChatSession(Base):
     satisfaction_rating = Column(Integer, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     last_message_at = Column(DateTime, nullable=True)
     closed_at = Column(DateTime, nullable=True)
 
@@ -157,7 +157,7 @@ class ChatSession(Base):
     def add_message(self) -> None:
         """Increment message count and update last message time."""
         self.message_count += 1
-        self.last_message_at = datetime.utcnow()
+        self.last_message_at = datetime.now(timezone.utc)
 
     def add_agent(self, agent: str) -> None:
         """Add agent to the list of involved agents."""
@@ -176,7 +176,7 @@ class ChatSession(Base):
     def close(self, rating: Optional[int] = None) -> None:
         """Close the session."""
         self.status = ChatSessionStatus.CLOSED.value
-        self.closed_at = datetime.utcnow()
+        self.closed_at = datetime.now(timezone.utc)
         if rating:
             self.satisfaction_rating = rating
 
@@ -217,7 +217,7 @@ class ChatMessage(Base):
     feedback_text = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     session = relationship("ChatSession", back_populates="messages")
@@ -270,7 +270,7 @@ class JourneyEvent(Base):
     browser = Column(String(50), nullable=True)
 
     # Timestamps
-    timestamp = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
+    timestamp = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     def is_conversion_event(self) -> bool:
         """Check if this is a conversion event."""
@@ -300,8 +300,8 @@ class JourneyFunnel(Base):
     is_active = Column(Boolean, nullable=False, default=True)
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, nullable=True, onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, nullable=True, onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
     snapshots = relationship("JourneyFunnelSnapshot", back_populates="funnel", cascade="all, delete-orphan")
@@ -340,7 +340,7 @@ class JourneyFunnelSnapshot(Base):
     insights = Column(JSONB, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     funnel = relationship("JourneyFunnel", back_populates="snapshots")

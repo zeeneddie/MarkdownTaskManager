@@ -10,7 +10,7 @@ for 3D visualization of software metrics.
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.services.codecharta_exporter_service import get_codecharta_exporter, CodeChartaProject
 
@@ -124,7 +124,7 @@ async def export_to_codecharta(request: ExportRequest):
             edge_count=len(json_data.get("edges", [])),
             metrics=list(json_data.get("attributeDescriptors", {}).keys()),
             json_data=json_data,
-            exported_at=datetime.utcnow().isoformat(),
+            exported_at=datetime.now(timezone.utc).isoformat(),
         )
 
     except Exception as e:
@@ -185,7 +185,7 @@ async def export_from_source(request: ExportFromSourceRequest):
             edge_count=len(json_data.get("edges", [])),
             metrics=list(json_data.get("attributeDescriptors", {}).keys()),
             json_data=json_data,
-            exported_at=datetime.utcnow().isoformat(),
+            exported_at=datetime.now(timezone.utc).isoformat(),
         )
 
     except HTTPException:

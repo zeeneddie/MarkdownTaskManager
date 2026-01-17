@@ -8,7 +8,7 @@ with four lifecycle hooks for modular integration.
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List, TYPE_CHECKING
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 if TYPE_CHECKING:
@@ -273,13 +273,13 @@ class BaseAgentExtension(ABC):
 
     def start_execution(self) -> None:
         """Mark start of execution (for timing)."""
-        self._execution_start = datetime.utcnow()
+        self._execution_start = datetime.now(timezone.utc)
         self.clear_partial()
 
     def get_execution_duration_ms(self) -> int:
         """Get execution duration in milliseconds."""
         if self._execution_start:
-            delta = datetime.utcnow() - self._execution_start
+            delta = datetime.now(timezone.utc) - self._execution_start
             return int(delta.total_seconds() * 1000)
         return 0
 

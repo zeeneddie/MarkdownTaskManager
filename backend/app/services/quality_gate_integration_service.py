@@ -16,7 +16,7 @@ Date: 2025-11-24
 from typing import List, Dict, Any, Optional, Tuple, TYPE_CHECKING
 from dataclasses import dataclass
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -339,7 +339,7 @@ class QualityGateIntegrationService:
                 "passed": gate_result.passed,
                 "blocking_count": len(gate_result.blocking_issues),
                 "coverage_actual": gate_result.coverage_actual,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             },
             comment=f"Gate {'PASSED' if gate_result.passed else 'FAILED'} for {workflow_type}"
         )

@@ -9,7 +9,7 @@ Provides:
 - Agent-optimized insights (Felix, Miguel, Quinn)
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel, Field
@@ -325,5 +325,5 @@ async def knowledge_graph_health():
             "dependency_analysis",
             "agent_contexts"
         ],
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }

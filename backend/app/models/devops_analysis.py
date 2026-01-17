@@ -5,7 +5,7 @@ Database models for GitHub/DevOps Analysis - Week 97-98 (Fase 14).
 Provides repository intelligence for improved extraction and project assessment.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional, List
 from sqlalchemy import (
@@ -68,7 +68,7 @@ class RepositoryAnalysis(Base):
     error_message = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     started_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
 
@@ -276,4 +276,4 @@ class RepositoryInsight(Base):
     recommendations = Column(JSON, default=list)  # Action items
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

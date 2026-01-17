@@ -5,7 +5,7 @@ Database models for security scanning, vulnerability tracking,
 pattern learning, and compliance checking.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 from uuid import uuid4
 
@@ -56,7 +56,7 @@ class GhostCrewScan(Base):
     recommendations = Column(JSONB, default=list)
     scan_metadata = Column(JSONB, default=dict)
     error_message = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     created_by = Column(String(100), nullable=True)
 
     # Relationships
@@ -139,8 +139,8 @@ class SecurityFinding(Base):
     detected_by_agent = Column(String(100), nullable=True)
     detection_method = Column(String(100), nullable=True)
     finding_metadata = Column(JSONB, default=dict)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
     scan = relationship("GhostCrewScan", back_populates="findings")
@@ -209,8 +209,8 @@ class ShadowPattern(Base):
     is_verified = Column(Boolean, default=False)
     verified_by = Column(String(100), nullable=True)
     pattern_metadata = Column(JSONB, default=dict)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
     learnings = relationship("VulnerabilityLearning", back_populates="pattern")
@@ -267,7 +267,7 @@ class VulnerabilityLearning(Base):
     pattern_updated_at = Column(DateTime, nullable=True)
     prevents_future_fp = Column(Boolean, default=False)
     learning_metadata = Column(JSONB, default=dict)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     finding = relationship("SecurityFinding", back_populates="learnings")
@@ -323,7 +323,7 @@ class ComplianceCheck(Base):
     audit_notes = Column(Text, nullable=True)
     next_audit_date = Column(DateTime, nullable=True)
     compliance_metadata = Column(JSONB, default=dict)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     completed_at = Column(DateTime, nullable=True)
 
     # Relationships
@@ -380,7 +380,7 @@ class SecurityKnowledge(Base):
     languages_affected = Column(JSONB, default=list)
     frameworks_affected = Column(JSONB, default=list)
     detection_methods = Column(JSONB, default=list)
-    last_updated = Column(DateTime, default=lambda: datetime.utcnow())
+    last_updated = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     source = Column(String(100), nullable=True)
     is_active = Column(Boolean, default=True)
 

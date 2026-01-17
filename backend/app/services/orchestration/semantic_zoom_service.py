@@ -16,7 +16,7 @@ Source: https://gregorriegler.com/2025/07/12/augmented-coding-pattern-language.h
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Any, Tuple
 from uuid import UUID, uuid4
@@ -73,7 +73,7 @@ class ZoomView:
     parent_level: Optional[ZoomLevel]
     line_range: Optional[Tuple[int, int]] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -123,7 +123,7 @@ class SemanticZoomService:
             root_path=root_path,
             current_view_id=None,
             history=[],
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         self._sessions[session.id] = session
         logger.info(f"Started zoom session {session.id} at {root_path}")
@@ -179,7 +179,7 @@ class SemanticZoomService:
                     view_id=view.id,
                     path=path,
                     level=level,
-                    timestamp=datetime.utcnow()
+                    timestamp=datetime.now(timezone.utc)
                 ))
 
         logger.debug(f"Created view {view.id} at {path} level {level.name}")

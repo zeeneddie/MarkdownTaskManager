@@ -14,7 +14,7 @@ Now with ProjectProfile support for dynamic agent configuration!
 import re
 import asyncio
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 from enum import Enum
 from dataclasses import dataclass
@@ -278,7 +278,7 @@ class SpecReviewService:
         Returns:
             ReviewResult with suggestions and quality score
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         # Get specification
         spec = await self._get_specification(specification_id)
@@ -314,7 +314,7 @@ class SpecReviewService:
                 else:
                     escalation_reason = f"Quality score too low ({quality_score:.1f}/10)"
 
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             duration = (end_time - start_time).total_seconds()
 
             return ReviewResult(
@@ -497,7 +497,7 @@ END_REVIEW
                 rejected_count=0,
                 updated_content=None,
                 needs_human_decision=[],
-                processed_at=datetime.utcnow()
+                processed_at=datetime.now(timezone.utc)
             )
 
         # Get specification
@@ -537,7 +537,7 @@ END_REVIEW
             rejected_count=len(rejected),
             updated_content=updated_content,
             needs_human_decision=needs_human,
-            processed_at=datetime.utcnow()
+            processed_at=datetime.now(timezone.utc)
         )
 
     async def _felix_evaluate_suggestion(

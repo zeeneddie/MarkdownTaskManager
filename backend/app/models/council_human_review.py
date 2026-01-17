@@ -12,7 +12,7 @@ Tables:
 - DocumentVersion: MD files synced with database
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional, List, Dict, Any
 from uuid import UUID, uuid4
@@ -65,8 +65,8 @@ class CouncilHumanSession(Base):
     status = Column(String(20), nullable=False, default=SessionStatus.DRAFT.value)
     providers_config = Column(JSONB, nullable=False, default=dict)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow(), nullable=False)
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow(), nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
     approved_at = Column(DateTime, nullable=True)
     approved_by = Column(String(100), nullable=True)
     rejected_at = Column(DateTime, nullable=True)
@@ -127,7 +127,7 @@ class CouncilProviderResponse(Base):
     tokens_used = Column(Integer, nullable=True)
     generation_time_ms = Column(Integer, nullable=True)
     extra_data = Column("metadata", JSONB, nullable=False, default=dict)  # DB column is 'metadata', Python attr is 'extra_data'
-    created_at = Column(DateTime, default=lambda: datetime.utcnow(), nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Relationships
     session = relationship("CouncilHumanSession", back_populates="provider_responses")
@@ -169,7 +169,7 @@ class CouncilPeerReview(Base):
     suggestions = Column(ARRAY(Text), nullable=True)
     consensus_contribution = Column(Text, nullable=True)  # What to keep in consensus
     extra_data = Column("metadata", JSONB, nullable=False, default=dict)  # DB column is 'metadata', Python attr is 'extra_data'
-    created_at = Column(DateTime, default=lambda: datetime.utcnow(), nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Relationships
     session = relationship("CouncilHumanSession", back_populates="peer_reviews")
@@ -217,7 +217,7 @@ class CouncilConsensus(Base):
     human_additions = Column(Text, nullable=True)  # What human added that all LLMs missed
 
     is_approved = Column(Boolean, nullable=False, default=False)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow(), nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     approved_at = Column(DateTime, nullable=True)
 
     # Relationships
@@ -263,7 +263,7 @@ class DocumentVersion(Base):
     content_hash = Column(String(64), nullable=True)  # SHA256 for change detection
     council_session_id = Column(PGUUID(as_uuid=True), ForeignKey("council_human_sessions.id", ondelete="SET NULL"), nullable=True)
     created_by = Column(String(100), nullable=True)  # "council", "human", "sync"
-    created_at = Column(DateTime, default=lambda: datetime.utcnow(), nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     extra_metadata = Column(JSONB, nullable=False, default=dict)
 
     # Relationships

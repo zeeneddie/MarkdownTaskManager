@@ -14,7 +14,7 @@ Features:
 
 import hashlib
 import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, List, Dict, Any, Tuple
 from uuid import UUID
@@ -280,7 +280,7 @@ class DocumentSyncService:
             type_paths = {
                 DocumentType.ONBOARDING.value: "docs/ONBOARDING.md",
                 DocumentType.ARCHITECTURE.value: "docs/ARCHITECTURE.md",
-                DocumentType.ADR.value: f"docs/adr/ADR-{datetime.utcnow().strftime('%Y%m%d')}.md",
+                DocumentType.ADR.value: f"docs/adr/ADR-{datetime.now(timezone.utc).strftime('%Y%m%d')}.md",
                 DocumentType.SPECIFICATION.value: "docs/SPECIFICATION.md",
                 DocumentType.README.value: "README.md",
                 DocumentType.API_DOCS.value: "docs/API.md",

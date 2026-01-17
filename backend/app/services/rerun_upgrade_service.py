@@ -6,7 +6,7 @@ Tracks deltas between extraction runs for comparison.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
@@ -225,7 +225,7 @@ class RerunUpgradeService:
             expected_confidence_gain=confidence_gain,
             expected_story_improvement=estimated_improvement,
             estimated_duration_minutes=estimated_duration,
-            valid_until=datetime.utcnow().replace(
+            valid_until=datetime.now(timezone.utc).replace(
                 hour=23, minute=59, second=59
             ),  # Valid until end of day
             project_id=project_id,
@@ -277,7 +277,7 @@ class RerunUpgradeService:
             original_session_id=original_session_id,
             target_tier=target,
             reason=upgrade_reason,
-            requested_at=datetime.utcnow(),
+            requested_at=datetime.now(timezone.utc),
             requested_by=requested_by,
             quote_id=quote_id,
             focus_areas=focus_areas or [],
@@ -302,7 +302,7 @@ class RerunUpgradeService:
         Returns:
             RerunResult with delta analysis
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         errors = []
 
         try:
@@ -334,7 +334,7 @@ class RerunUpgradeService:
             # Calculate cost
             cost = self._calculate_rerun_cost(request, original_result)
 
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             duration_ms = int((end_time - start_time).total_seconds() * 1000)
 
             result = RerunResult(
@@ -356,7 +356,7 @@ class RerunUpgradeService:
             logger.error(f"Re-run failed: {e}")
             errors.append(str(e))
 
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
             duration_ms = int((end_time - start_time).total_seconds() * 1000)
 
             return RerunResult(
@@ -457,7 +457,7 @@ class RerunUpgradeService:
             rerun_session_id=rerun_result.get("extraction_id", ""),
             original_tier=original_tier,
             rerun_tier=rerun_tier,
-            calculated_at=datetime.utcnow(),
+            calculated_at=datetime.now(timezone.utc),
             added_stories=added_stories,
             removed_stories=removed_stories,
             modified_stories=modified_stories,
@@ -611,7 +611,7 @@ class RerunUpgradeService:
             "stories": merged_stories,
             "total_stories": len(merged_stories),
             "merge_strategy": strategy,
-            "merged_at": datetime.utcnow().isoformat(),
+            "merged_at": datetime.now(timezone.utc).isoformat(),
             "original_session_id": original.get("extraction_id"),
             "rerun_session_id": rerun.get("extraction_id"),
         }
@@ -765,7 +765,7 @@ class RerunUpgradeService:
             rerun_session_id="",
             original_tier=ExtractionTier.FREE,
             rerun_tier=request.target_tier,
-            calculated_at=datetime.utcnow(),
+            calculated_at=datetime.now(timezone.utc),
             added_stories=[],
             removed_stories=[],
             modified_stories=[],

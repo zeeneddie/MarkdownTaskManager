@@ -16,7 +16,7 @@ import shutil
 import subprocess
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -92,7 +92,7 @@ class TransformationStatistics:
     rules_applied: int = 0
     cli_invocations: int = 0
     rollbacks: int = 0
-    start_time: datetime = field(default_factory=lambda: datetime.utcnow())
+    start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -101,7 +101,7 @@ class TransformationStatistics:
             "rules_applied": self.rules_applied,
             "cli_invocations": self.cli_invocations,
             "rollbacks": self.rollbacks,
-            "uptime_seconds": int((datetime.utcnow() - self.start_time).total_seconds()),
+            "uptime_seconds": int((datetime.now(timezone.utc) - self.start_time).total_seconds()),
         }
 
 
@@ -422,7 +422,7 @@ class CodeTransformationService:
         await asyncio.to_thread(path.write_text, content, encoding)
 
     def _backup(self, path: Path) -> Path:
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S_%f")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%f")
         backup_dir = self.backup_root / timestamp
         backup_dir.mkdir(parents=True, exist_ok=True)
         backup_path = backup_dir / path.name
@@ -431,7 +431,7 @@ class CodeTransformationService:
         return backup_path
 
     async def transform_file(self, request: TransformationRequest) -> TransformationResult:
-        start = datetime.utcnow()
+        start = datetime.now(timezone.utc)
         source = Path(request.source_path)
         target = Path(request.target_path) if request.target_path else source
         errors: List[str] = []
@@ -471,7 +471,7 @@ class CodeTransformationService:
                 applied[rule.name] = applied.get(rule.name, 0) + count
 
         if transformed == original:
-            duration = int((datetime.utcnow() - start).total_seconds() * 1000)
+            duration = int((datetime.now(timezone.utc) - start).total_seconds() * 1000)
             return TransformationResult(
                 success=True,
                 source_path=str(source),
@@ -510,7 +510,7 @@ class CodeTransformationService:
         self.stats.lines_changed += lines_changed
         self.stats.rules_applied += sum(applied.values())
 
-        duration = int((datetime.utcnow() - start).total_seconds() * 1000)
+        duration = int((datetime.now(timezone.utc) - start).total_seconds() * 1000)
         return TransformationResult(
             success=True,
             source_path=str(source),

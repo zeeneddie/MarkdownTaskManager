@@ -10,7 +10,7 @@ Author: Claude Code (Week 15 Day 5)
 Date: 2025-11-21
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from sqlalchemy import (
     Column, Integer, String, Float, Boolean, DateTime, JSON, Text,
@@ -84,8 +84,8 @@ class EstimationProject(Base):
     is_greenfield = Column(Boolean, default=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
     function_point_estimates = relationship(
@@ -156,7 +156,7 @@ class FunctionPointEstimate(Base):
     estimation_accuracy = Column(Float, nullable=True)  # % accuracy vs actual
 
     # Metadata
-    estimated_at = Column(DateTime, default=lambda: datetime.utcnow(), index=True)
+    estimated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     actuals_recorded_at = Column(DateTime, nullable=True)
     source = Column(String(50), default="api")  # api, ui, import
 
@@ -225,7 +225,7 @@ class StoryPointEstimate(Base):
     velocity_factor = Column(Float, nullable=True)  # actual_hours / story_points
 
     # Metadata
-    estimated_at = Column(DateTime, default=lambda: datetime.utcnow(), index=True)
+    estimated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
     actuals_recorded_at = Column(DateTime, nullable=True)
     source = Column(String(50), default="api")
 
@@ -256,7 +256,7 @@ class MLModelVersion(Base):
 
     # Training metadata
     training_samples = Column(Integer, nullable=False)
-    training_date = Column(DateTime, default=lambda: datetime.utcnow())
+    training_date = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     features_used = Column(JSON, nullable=False)  # List of feature names
     hyperparameters = Column(JSON, nullable=True)
 
@@ -276,7 +276,7 @@ class MLModelVersion(Base):
     model_path = Column(String(500), nullable=True)  # Path to serialized model
 
     # Metadata
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     activated_at = Column(DateTime, nullable=True)
     deactivated_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)

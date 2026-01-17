@@ -11,7 +11,7 @@ with clear hierarchy and relationships.
 from sqlalchemy import Column, String, Integer, Text, DateTime, ForeignKey, Boolean, Float
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from app.database import Base
 
@@ -107,11 +107,11 @@ class Epic(Base):
 
     # Generation metadata
     generated_by = Column(String(50), default="Felix")
-    generated_at = Column(DateTime, default=lambda: datetime.utcnow())
+    generated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     generation_prompt = Column(Text, nullable=True)  # Prompt used for generation
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     extra_metadata = Column("metadata", JSONB, nullable=True)  # dependencies, risks, notes
 
@@ -161,10 +161,10 @@ class Feature(Base):
     progress_percentage = Column(Integer, default=0)
 
     generated_by = Column(String(50), default="Felix")
-    generated_at = Column(DateTime, default=lambda: datetime.utcnow())
+    generated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     extra_metadata = Column("metadata", JSONB, nullable=True)
 
@@ -229,10 +229,10 @@ class Story(Base):
     blocked_reason = Column(Text, nullable=True)
 
     generated_by = Column(String(50), default="Felix")
-    generated_at = Column(DateTime, default=lambda: datetime.utcnow())
+    generated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     completed_at = Column(DateTime, nullable=True)
 
@@ -294,10 +294,10 @@ class Task(Base):
     pull_request_url = Column(String(500), nullable=True)
 
     generated_by = Column(String(50), default="Felix")
-    generated_at = Column(DateTime, default=lambda: datetime.utcnow())
+    generated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     completed_at = Column(DateTime, nullable=True)
 
     extra_metadata = Column("metadata", JSONB, nullable=True)

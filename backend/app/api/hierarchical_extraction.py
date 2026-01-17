@@ -18,7 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Any
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -147,7 +147,7 @@ async def run_extraction_task(
             .where(HierarchicalExtractionSession.id == session_id)
             .values(
                 status=ExtractionSessionStatus.RUNNING,
-                started_at=datetime.utcnow()
+                started_at=datetime.now(timezone.utc)
             )
         )
         await db.commit()
@@ -181,7 +181,7 @@ async def run_extraction_task(
             .where(HierarchicalExtractionSession.id == session_id)
             .values(
                 status=ExtractionSessionStatus.COMPLETED,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(timezone.utc),
                 total_epics=result.total_epics,
                 total_features=result.total_features,
                 total_stories=result.total_stories,
@@ -203,7 +203,7 @@ async def run_extraction_task(
             .where(HierarchicalExtractionSession.id == session_id)
             .values(
                 status=ExtractionSessionStatus.FAILED,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(timezone.utc),
                 errors=[str(e)]
             )
         )
@@ -867,7 +867,7 @@ async def run_extraction_with_cira_task(
             .where(HierarchicalExtractionSession.id == session_id)
             .values(
                 status=ExtractionSessionStatus.RUNNING,
-                started_at=datetime.utcnow()
+                started_at=datetime.now(timezone.utc)
             )
         )
         await db.commit()
@@ -907,7 +907,7 @@ async def run_extraction_with_cira_task(
             .where(HierarchicalExtractionSession.id == session_id)
             .values(
                 status=ExtractionSessionStatus.COMPLETED,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(timezone.utc),
                 total_epics=result.total_epics,
                 total_features=result.total_features,
                 total_stories=result.total_stories,
@@ -929,7 +929,7 @@ async def run_extraction_with_cira_task(
             .where(HierarchicalExtractionSession.id == session_id)
             .values(
                 status=ExtractionSessionStatus.FAILED,
-                completed_at=datetime.utcnow(),
+                completed_at=datetime.now(timezone.utc),
                 errors=[str(e)]
             )
         )

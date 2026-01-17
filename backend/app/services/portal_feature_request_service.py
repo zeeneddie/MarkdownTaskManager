@@ -206,7 +206,7 @@ class PortalFeatureRequestService:
             # Handle status transitions
             if "status" in updates:
                 if updates["status"] == "done":
-                    request.completed_at = datetime.utcnow()
+                    request.completed_at = datetime.now(timezone.utc)
 
             await self.db.commit()
             await self.db.refresh(request)
@@ -263,7 +263,7 @@ class PortalFeatureRequestService:
             request.work_type = classification["work_type"]
             request.classification_confidence = classification["confidence"]
             request.classification_reasoning = classification["reasoning"]
-            request.classified_at = datetime.utcnow()
+            request.classified_at = datetime.now(timezone.utc)
             request.classified_by = "peter_agent" if use_llm else "rule_engine"
             request.status = "classified"
 
@@ -627,7 +627,7 @@ class PortalFeatureRequestService:
 
             # TODO: Create actual kanban item via kanban service
             # For now, we'll generate a mock ID
-            kanban_item_id = int(datetime.utcnow().timestamp())
+            kanban_item_id = int(datetime.now(timezone.utc).timestamp())
 
             request.kanban_item_id = kanban_item_id
             request.status = "in_progress"
@@ -658,7 +658,7 @@ class PortalFeatureRequestService:
     ) -> Dict[str, Any]:
         """Get feature request statistics."""
         try:
-            since = datetime.utcnow() - timedelta(days=days)
+            since = datetime.now(timezone.utc) - timedelta(days=days)
 
             base_filter = PortalFeatureRequest.created_at >= since
             filters = [base_filter]

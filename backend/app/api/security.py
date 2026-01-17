@@ -15,7 +15,7 @@ Endpoints:
 - GET /security/dashboard/stats - Dashboard statistics
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel, Field
@@ -286,7 +286,7 @@ async def get_owasp_report(
         # Format response
         report = {
             "project_id": project_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "categories": {}
         }
 
@@ -714,7 +714,7 @@ async def get_pattern_statistics():
     return {
         "status": "ok",
         **stats,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -728,7 +728,7 @@ async def get_supported_languages():
     return {
         "languages": service.get_supported_languages(),
         "extensions": list(service.get_supported_extensions()),
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -745,7 +745,7 @@ async def reload_patterns():
     return {
         "status": "reloaded",
         **stats,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -767,5 +767,5 @@ async def security_health():
         "pattern_count": test_service.get_pattern_statistics().get("total_patterns", 0),
         "total_scans_performed": len(_scan_results),
         "owasp_coverage": [cat.value for cat in OWASPCategory],
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }

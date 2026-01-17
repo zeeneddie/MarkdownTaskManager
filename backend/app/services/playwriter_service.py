@@ -8,7 +8,7 @@ Provides tab permission management and convenience methods.
 import logging
 import asyncio
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
 from dataclasses import dataclass, field
 
@@ -124,7 +124,7 @@ class PlaywriterService:
             viewport_height=viewport_height,
             context_options=context_options or {},
             status=SessionStatus.CREATED.value,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         self.db.add(session)
         self.db.commit()
@@ -150,7 +150,7 @@ class PlaywriterService:
         # In production: Launch browser here
         # For now, just update status
         session.status = SessionStatus.ACTIVE.value
-        session.started_at = datetime.utcnow()
+        session.started_at = datetime.now(timezone.utc)
         self.db.commit()
 
         # Create initial tab
@@ -161,8 +161,8 @@ class PlaywriterService:
             url="about:blank",
             title="New Tab",
             permitted=True,  # Initial tab is auto-permitted
-            permitted_at=datetime.utcnow(),
-            created_at=datetime.utcnow()
+            permitted_at=datetime.now(timezone.utc),
+            created_at=datetime.now(timezone.utc)
         )
         self.db.add(initial_tab)
         self.db.commit()
@@ -186,7 +186,7 @@ class PlaywriterService:
 
         # In production: Close browser here
         session.status = SessionStatus.CLOSED.value
-        session.closed_at = datetime.utcnow()
+        session.closed_at = datetime.now(timezone.utc)
         self.db.commit()
 
         return {
@@ -244,24 +244,24 @@ class PlaywriterService:
             tab_id=tab_id,
             code=code,
             status=ExecutionStatus.RUNNING.value,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         self.db.add(execution)
         self.db.commit()
 
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             # In production: Execute actual Playwright code here
             # For now, we simulate execution
             result = await self._simulate_execution(code)
 
-            execution_time = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            execution_time = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
 
             execution.status = ExecutionStatus.COMPLETED.value
             execution.result = result
             execution.execution_time_ms = execution_time
-            execution.completed_at = datetime.utcnow()
+            execution.completed_at = datetime.now(timezone.utc)
             self.db.commit()
 
             return ExecutionResult(
@@ -271,12 +271,12 @@ class PlaywriterService:
             )
 
         except Exception as e:
-            execution_time = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+            execution_time = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
 
             execution.status = ExecutionStatus.FAILED.value
             execution.error = str(e)
             execution.execution_time_ms = execution_time
-            execution.completed_at = datetime.utcnow()
+            execution.completed_at = datetime.now(timezone.utc)
             self.db.commit()
 
             logger.error(f"Execution failed: {e}")
@@ -445,7 +445,7 @@ class PlaywriterService:
                 session_id=session_id,
                 tab_index=tab_index,
                 permitted=False,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             self.db.add(tab)
             self.db.commit()
@@ -476,7 +476,7 @@ class PlaywriterService:
             raise ValueError(f"Tab not found: session={session_id}, index={tab_index}")
 
         tab.permitted = True
-        tab.permitted_at = datetime.utcnow()
+        tab.permitted_at = datetime.now(timezone.utc)
         tab.permitted_by = granted_by
         self.db.commit()
 

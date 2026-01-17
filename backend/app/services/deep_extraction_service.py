@@ -19,7 +19,7 @@ Key Changes Week 99:
 """
 
 from typing import Dict, List, Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 import asyncio
 import logging
@@ -840,7 +840,7 @@ class DeepExtractionService:
 
         if not files_dict:
             logger.warning(f"No source files found at {session.source_path}")
-            session.cycle_0_completed_at = datetime.utcnow()
+            session.cycle_0_completed_at = datetime.now(timezone.utc)
             await self.db.commit()
             return {
                 "cycle": 0,
@@ -869,7 +869,7 @@ class DeepExtractionService:
             )
         except Exception as e:
             logger.error(f"Static analysis failed: {e}")
-            session.cycle_0_completed_at = datetime.utcnow()
+            session.cycle_0_completed_at = datetime.now(timezone.utc)
             await self.db.commit()
             return {
                 "cycle": 0,
@@ -886,7 +886,7 @@ class DeepExtractionService:
         session.static_domain_coverage = result.domain_coverage
         session.static_nfr_coverage = result.nfr_coverage
         session.static_compliance_score = result.compliance_score
-        session.cycle_0_completed_at = datetime.utcnow()
+        session.cycle_0_completed_at = datetime.now(timezone.utc)
 
         await self.db.commit()
 
@@ -1253,7 +1253,7 @@ This is a placeholder for testing the extraction pipeline.
         session.total_features = total_features
         session.total_stories = total_stories
         session.total_tasks = total_tasks
-        session.cycle_1_completed_at = datetime.utcnow()
+        session.cycle_1_completed_at = datetime.now(timezone.utc)
 
         # Update cost tracking
         stats = selector.get_call_statistics()
@@ -1303,7 +1303,7 @@ This is a placeholder for testing the extraction pipeline.
 
         if not cycle_1_results:
             logger.warning(f"No Cycle 1 results found for session {session_id}")
-            session.cycle_2_completed_at = datetime.utcnow()
+            session.cycle_2_completed_at = datetime.now(timezone.utc)
             await self.db.commit()
             return {
                 "cycle": 2,
@@ -1351,7 +1351,7 @@ This is a placeholder for testing the extraction pipeline.
         finally:
             await adapter.close()
 
-        session.cycle_2_completed_at = datetime.utcnow()
+        session.cycle_2_completed_at = datetime.now(timezone.utc)
 
         # Update cost tracking
         stats = selector.get_call_statistics()
@@ -1477,7 +1477,7 @@ This is a placeholder for testing the extraction pipeline.
             # No conflicts and all items auto-accepted - can skip to Cycle 5
             session.status = ExtractionStatus.RUNNING.value
 
-        session.cycle_3_completed_at = datetime.utcnow()
+        session.cycle_3_completed_at = datetime.now(timezone.utc)
         await self.db.commit()
 
         logger.info(
@@ -1718,7 +1718,7 @@ This is a placeholder for testing the extraction pipeline.
             }
 
         session.current_cycle = 4
-        session.cycle_4_completed_at = datetime.utcnow()
+        session.cycle_4_completed_at = datetime.now(timezone.utc)
         session.status = ExtractionStatus.RUNNING.value
 
         # Count human reviewed items
@@ -1906,8 +1906,8 @@ This is a placeholder for testing the extraction pipeline.
             }
 
         # Mark session as completed
-        session.cycle_5_completed_at = datetime.utcnow()
-        session.completed_at = datetime.utcnow()
+        session.cycle_5_completed_at = datetime.now(timezone.utc)
+        session.completed_at = datetime.now(timezone.utc)
         session.status = ExtractionStatus.COMPLETED.value
 
         await self.db.commit()
@@ -2279,7 +2279,7 @@ This is a placeholder for testing the extraction pipeline.
                     "orphaned_items": matrix.coverage.get("orphaned", 0),
                 },
                 "links_count": len(matrix.links),
-                "generated_at": datetime.utcnow().isoformat(),
+                "generated_at": datetime.now(timezone.utc).isoformat(),
             }
         except Exception as e:
             logger.warning(f"Traceability matrix generation failed: {e}")
@@ -2424,7 +2424,7 @@ This is a placeholder for testing the extraction pipeline.
         conflict.human_custom = custom_resolution
         conflict.human_reasoning = reasoning
         conflict.resolved_by = resolved_by
-        conflict.resolved_at = datetime.utcnow()
+        conflict.resolved_at = datetime.now(timezone.utc)
         conflict.status = ConflictStatus.RESOLVED.value
 
         await self.db.commit()
@@ -2451,7 +2451,7 @@ This is a placeholder for testing the extraction pipeline.
         consensus.human_decision = decision
         consensus.human_feedback = feedback
         consensus.decided_by = decided_by
-        consensus.decided_at = datetime.utcnow()
+        consensus.decided_at = datetime.now(timezone.utc)
         consensus.status = ConsensusStatus.ACCEPTED.value if decision == "accept" else ConsensusStatus.REJECTED.value
 
         await self.db.commit()
@@ -2572,7 +2572,7 @@ This is a placeholder for testing the extraction pipeline.
                 conflict.human_choice = conflict.llm_recommendation
                 conflict.human_reasoning = "Auto-resolved using LLM recommendation"
                 conflict.resolved_by = "auto"
-                conflict.resolved_at = datetime.utcnow()
+                conflict.resolved_at = datetime.now(timezone.utc)
                 conflict.status = ConflictStatus.RESOLVED.value
                 resolved += 1
             else:

@@ -17,7 +17,7 @@ Date: 2025-11-22
 from fastapi import APIRouter, HTTPException, status, Depends, BackgroundTasks
 from typing import Optional, Dict, Any, List
 from pydantic import BaseModel, Field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import logging
 
@@ -353,7 +353,7 @@ async def add_experience(request: AddExperienceRequest):
             key_decisions=key_decisions,
             duration=request.duration,
             quality_score=request.quality_score * 100,  # Convert 0-1 to 0-100
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             metadata=request.metadata
         )
 
@@ -501,7 +501,7 @@ async def add_pattern(request: AddPatternRequest):
     """Add a new successful pattern"""
     try:
         store = get_experience_store()
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Map API fields to service dataclass fields
         pattern = SuccessfulPattern(
@@ -607,7 +607,7 @@ async def add_failure_analysis(request: AddFailureRequest):
             contributing_factors=request.attempted_fixes,  # Map attempted_fixes
             prevention_strategies=request.preventive_measures,
             similar_failures=[],
-            timestamp=datetime.utcnow()
+            timestamp=datetime.now(timezone.utc)
         )
 
         failure_id = await store.add_failure_analysis(failure)
@@ -913,7 +913,7 @@ async def add_estimation_accuracy(
             factors=list(factors.keys()) if factors else [],
             underestimated_aspects=[],
             overestimated_aspects=[],
-            timestamp=datetime.utcnow()
+            timestamp=datetime.now(timezone.utc)
         )
 
         estimation_id = await store.add_estimation_accuracy(estimation)
@@ -986,7 +986,7 @@ async def add_quality_metrics(
             security_issues=int(100 - security_score) if security_score else 0,  # Convert score to issues count
             performance_score=maintainability_score,  # Map maintainability to performance
             documentation_score=documentation_score,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.now(timezone.utc)
         )
 
         metrics_id = await store.add_quality_metrics(metrics)
@@ -1201,13 +1201,13 @@ async def evolution_health():
                 "evolution_service": "available" if evolution else "unavailable",
                 "validation_pipeline": "available" if pipeline else "unavailable"
             },
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     except Exception as e:
         return {
             "status": "degraded",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
 

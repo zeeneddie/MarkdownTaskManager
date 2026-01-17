@@ -13,7 +13,7 @@ Key Features:
 import asyncio
 import re
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 
@@ -129,7 +129,7 @@ class BigAGIBeamService:
             validation_models=validators,
             status=ValidationStatus.PENDING.value,
             session_metadata=session_metadata or {},
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
 
         self.db.add(validation)
@@ -236,7 +236,7 @@ class BigAGIBeamService:
             validation.consensus_score = consensus_result.confidence
             validation.consensus_reached = consensus_result.confidence >= self.CONSENSUS_THRESHOLD
             validation.final_answer = consensus_result.synthesis
-            validation.completed_at = datetime.utcnow()
+            validation.completed_at = datetime.now(timezone.utc)
 
             await self.db.commit()
 
@@ -286,7 +286,7 @@ class BigAGIBeamService:
                 # Fallback to ollama
                 provider = self.registry.get_provider("ollama")
 
-            start_time = datetime.utcnow()
+            start_time = datetime.now(timezone.utc)
 
             try:
                 request = LLMRequest(
@@ -307,7 +307,7 @@ class BigAGIBeamService:
                     response.content
                 )
 
-                duration_ms = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+                duration_ms = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
 
                 return BigAGIResponse(
                     id=uuid4(),
@@ -320,7 +320,7 @@ class BigAGIBeamService:
                     agreement_score=agreement,
                     tokens_used=response.token_input + response.token_output,
                     latency_ms=duration_ms,
-                    created_at=datetime.utcnow()
+                    created_at=datetime.now(timezone.utc)
                 )
 
             except Exception as e:
@@ -333,7 +333,7 @@ class BigAGIBeamService:
                     error=str(e),
                     confidence=0.0,
                     agreement_score=0.0,
-                    created_at=datetime.utcnow()
+                    created_at=datetime.now(timezone.utc)
                 )
 
         # Query all validators in parallel
@@ -492,7 +492,7 @@ Format your confidence as: "Confidence: XX/100" at the end of your response."""
                 key_agreements=[],
                 key_disagreements=["No valid validator responses received"],
                 synthesis="Unable to reach consensus - validation failed",
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
 
         # Calculate consensus score based on method
@@ -534,7 +534,7 @@ Format your confidence as: "Confidence: XX/100" at the end of your response."""
             key_agreements=agreements,
             key_disagreements=disagreements,
             synthesis=synthesis,
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
 
     def _majority_consensus(self, responses: List[BigAGIResponse]) -> float:

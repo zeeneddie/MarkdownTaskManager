@@ -13,7 +13,7 @@ Features:
 from enum import Enum
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class TechStack(Enum):
@@ -567,7 +567,7 @@ class StackAgentFactory:
             id=self._generate_instance_id(),
             project_id=project_id,
             template=template,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             config_overrides=config_overrides or {},
         )
 

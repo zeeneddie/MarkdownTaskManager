@@ -7,7 +7,7 @@ SQLAlchemy models and dataclasses for advanced testing strategies:
 - Dual-Run Comparison (parallel execution)
 """
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
@@ -140,8 +140,8 @@ class CharacterizationTestModel(Base):
     tolerance_rules = Column(JSONB, nullable=True)  # Numeric tolerance, date formats
     tags = Column(JSONB, nullable=True)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
         Index("ix_characterization_tests_status", "status"),
@@ -179,7 +179,7 @@ class CharacterizationTestRunModel(Base):
     match_percentage = Column(Float, default=100.0)
 
     # Metadata
-    executed_at = Column(DateTime, default=lambda: datetime.utcnow())
+    executed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     duration_ms = Column(Integer, default=0)
 
 
@@ -233,8 +233,8 @@ class VisualRegressionTestModel(Base):
     pages = Column(JSONB, nullable=True)  # List of page configs
     tags = Column(JSONB, nullable=True)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
         Index("ix_visual_regression_tests_status", "status"),
@@ -267,7 +267,7 @@ class VisualRegressionRunModel(Base):
 
     # Metadata
     viewport = Column(JSONB, nullable=True)
-    executed_at = Column(DateTime, default=lambda: datetime.utcnow())
+    executed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     duration_ms = Column(Integer, default=0)
     error = Column(Text, nullable=True)
 
@@ -320,8 +320,8 @@ class DualRunComparisonModel(Base):
     error_summary = Column(JSONB, nullable=True)
 
     tags = Column(JSONB, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
         Index("ix_dual_run_comparisons_status", "status"),
@@ -360,7 +360,7 @@ class DualRunRequestModel(Base):
     diff_count = Column(Integer, default=0)
 
     # Metadata
-    executed_at = Column(DateTime, default=lambda: datetime.utcnow())
+    executed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     correlation_id = Column(String(64), nullable=True)
 
     __table_args__ = (
@@ -404,8 +404,8 @@ class TestingExcellenceSummaryModel(Base):
     recommendations = Column(JSONB, nullable=True)
     blocking_issues = Column(JSONB, nullable=True)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 # ============================================================================

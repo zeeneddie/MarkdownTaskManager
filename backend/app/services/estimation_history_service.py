@@ -12,7 +12,7 @@ Date: 2025-11-21
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, func
@@ -226,7 +226,7 @@ class EstimationHistoryService:
             if hasattr(project, key):
                 setattr(project, key, value)
 
-        project.updated_at = datetime.utcnow()
+        project.updated_at = datetime.now(timezone.utc)
         await self.db.flush()
         await self.db.refresh(project)
         return project
@@ -336,7 +336,7 @@ class EstimationHistoryService:
             accuracy = 1 - abs(actual_effort_hours - estimated_hours) / max(actual_effort_hours, estimated_hours)
             estimate.estimation_accuracy = max(0, min(1, accuracy)) * 100
 
-        estimate.actuals_recorded_at = datetime.utcnow()
+        estimate.actuals_recorded_at = datetime.now(timezone.utc)
         await self.db.flush()
         await self.db.refresh(estimate)
         return estimate
@@ -455,7 +455,7 @@ class EstimationHistoryService:
                 / max(actual_story_points, estimate.story_points)
             ) * 100
 
-        estimate.actuals_recorded_at = datetime.utcnow()
+        estimate.actuals_recorded_at = datetime.now(timezone.utc)
         await self.db.flush()
         await self.db.refresh(estimate)
         return estimate

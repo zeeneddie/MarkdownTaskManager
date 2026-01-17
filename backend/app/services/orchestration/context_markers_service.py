@@ -17,7 +17,7 @@ Source: https://gregorriegler.com/2025/07/12/augmented-coding-pattern-language.h
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Any
 from uuid import UUID, uuid4
@@ -172,7 +172,7 @@ class ContextMarkersService:
             The created/updated ContextMarker
         """
         state = self._get_or_create_state(session_id)
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Calculate expiration if specified
         expires_at = None
@@ -232,7 +232,7 @@ class ContextMarkersService:
         marker = state.markers[marker_type]
         marker.active = False
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         state.updated_at = now
 
         # Record history
@@ -256,7 +256,7 @@ class ContextMarkersService:
             return []
 
         # Filter out expired markers
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         active_markers = []
         expired_types = []
 
@@ -336,7 +336,7 @@ class ContextMarkersService:
         marker = state.markers[marker_type]
 
         # Check expiration
-        if marker.expires_at and marker.expires_at < datetime.utcnow():
+        if marker.expires_at and marker.expires_at < datetime.now(timezone.utc):
             self.clear_marker(session_id, marker_type, "expired")
             return False
 
@@ -446,7 +446,7 @@ class ContextMarkersService:
     def _get_or_create_state(self, session_id: UUID) -> ContextState:
         """Get or create context state for a session."""
         if session_id not in self._states:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             self._states[session_id] = ContextState(
                 session_id=session_id,
                 markers={},

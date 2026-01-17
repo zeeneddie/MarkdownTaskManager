@@ -16,7 +16,7 @@ Retry: BUILD ↔ TEST (max 3x) → HUMAN_NEEDED
 """
 
 from typing import Dict, Any, List, Optional, Callable
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import logging
 import asyncio
@@ -545,7 +545,7 @@ class LaneProgressionService:
                     .values(
                         status=new_status,
                         is_blocked=(new_lane in ["blocked", "human_needed"]),
-                        updated_at=datetime.utcnow()
+                        updated_at=datetime.now(timezone.utc)
                     )
                 )
             elif item_type == "task":
@@ -556,7 +556,7 @@ class LaneProgressionService:
                     .values(
                         status=new_status,
                         is_blocked=(new_lane in ["blocked", "human_needed"]),
-                        updated_at=datetime.utcnow()
+                        updated_at=datetime.now(timezone.utc)
                     )
                 )
             elif item_type == "bug":
@@ -576,7 +576,7 @@ class LaneProgressionService:
                     .where(Bug.id == item_id)
                     .values(
                         status=new_status,
-                        updated_at=datetime.utcnow()
+                        updated_at=datetime.now(timezone.utc)
                     )
                 )
 
@@ -612,7 +612,7 @@ class LaneProgressionService:
                     "to_lane": to_lane,
                     "agent_name": agent_name,
                     "result": result,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "auto_progression": True,  # Flag for dashboard animation
                 }
             )
@@ -636,7 +636,7 @@ class LaneProgressionService:
                     "item_type": item_type,
                     "retry_count": retry_count,
                     "reason": f"Max retries ({retry_count}) exceeded",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "requires_human": True,
                 }
             )
@@ -660,7 +660,7 @@ class LaneProgressionService:
                     "item_type": item_type,
                     "agent_name": agent_name,
                     "lane": lane,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
             )
         except Exception as e:
@@ -682,7 +682,7 @@ class LaneProgressionService:
 
         self._task_results[item_id][agent_name] = {
             "output": work_output,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def get_previous_results(self, item_id: str) -> Dict[str, Any]:

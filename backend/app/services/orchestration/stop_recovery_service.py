@@ -16,7 +16,7 @@ Source: https://gregorriegler.com/2025/07/12/augmented-coding-pattern-language.h
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Any, Callable
 from uuid import UUID, uuid4
@@ -77,7 +77,7 @@ class RecoveryResult:
     message: str
     new_checkpoint: Optional[str] = None
     changes_reverted: int = 0
-    timestamp: datetime = field(default_factory=lambda: datetime.utcnow())
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -172,7 +172,7 @@ class StopRecoveryService:
         Returns:
             Created StopEvent
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         severity = self.REASON_SEVERITY.get(reason, "error")
 
         # Generate recovery options
@@ -251,7 +251,7 @@ class StopRecoveryService:
 
         if result.success:
             event.status = StopEventStatus.RECOVERED
-            event.resolved_at = datetime.utcnow()
+            event.resolved_at = datetime.now(timezone.utc)
             event.recovery_result = result
 
             # Update session state
@@ -343,7 +343,7 @@ class StopRecoveryService:
 
         event.status = StopEventStatus.ESCALATED
         event.context["escalation_reason"] = reason
-        event.context["escalated_at"] = datetime.utcnow().isoformat()
+        event.context["escalated_at"] = datetime.now(timezone.utc).isoformat()
 
         self._trigger_callback("on_escalate", event, reason)
 

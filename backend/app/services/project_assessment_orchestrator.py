@@ -19,7 +19,7 @@ Date: 2025-12-15
 import os
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any, Tuple
 from uuid import UUID
 from dataclasses import dataclass
@@ -242,7 +242,7 @@ class ProjectAssessmentOrchestrator:
             log_data = self._truncate_data(data, self.verbose.max_sample_length)
 
         entry = VerboseLogEntry(
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             phase=phase,
             step=level,
             level=level,
@@ -360,7 +360,7 @@ class ProjectAssessmentOrchestrator:
             status="running",
             current_phase="registration",
             progress_percent=0,
-            started_at=datetime.utcnow()
+            started_at=datetime.now(timezone.utc)
         )
 
         self.db.add(assessment)
@@ -379,7 +379,7 @@ class ProjectAssessmentOrchestrator:
         Returns:
             Updated ProjectAssessment with results
         """
-        workflow_start = datetime.utcnow()
+        workflow_start = datetime.now(timezone.utc)
         self._log_verbose("workflow", "INPUT", "Starting assessment workflow", {
             "assessment_id": str(assessment_id)
         })
@@ -473,7 +473,7 @@ class ProjectAssessmentOrchestrator:
 
             # Mark completed
             assessment.status = "completed"
-            assessment.completed_at = datetime.utcnow()
+            assessment.completed_at = datetime.now(timezone.utc)
             assessment.current_phase = "completed"
 
             # Calculate overall score and grade
@@ -482,7 +482,7 @@ class ProjectAssessmentOrchestrator:
             await self.db.commit()
 
             # Calculate total workflow duration
-            workflow_duration_ms = int((datetime.utcnow() - workflow_start).total_seconds() * 1000)
+            workflow_duration_ms = int((datetime.now(timezone.utc) - workflow_start).total_seconds() * 1000)
             self._log_verbose("workflow", "OUTPUT", "Assessment workflow completed", {
                 "overall_grade": assessment.overall_grade,
                 "overall_score": assessment.overall_health_score,
@@ -518,8 +518,8 @@ class ProjectAssessmentOrchestrator:
             phase_name=result.phase_name,
             agent_name=self._get_agent_for_phase(result.phase_name),
             status="completed" if result.success else "failed",
-            started_at=datetime.utcnow(),
-            completed_at=datetime.utcnow(),
+            started_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(timezone.utc),
             duration_seconds=result.duration_seconds,
             result_summary=result.error if not result.success else f"Processed {result.items_processed} items, found {result.items_found}",
             result_data=result.data,
@@ -547,7 +547,7 @@ class ProjectAssessmentOrchestrator:
 
     async def _run_registration_phase(self, assessment: ProjectAssessment) -> PhaseResult:
         """Phase 1: Scan and register project"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         self._log_verbose("registration", "INPUT", "Starting registration phase", {
             "directory": assessment.directory_path,
@@ -573,7 +573,7 @@ class ProjectAssessmentOrchestrator:
             assessment.file_count = scan_result.total_files
             assessment.line_count = scan_result.total_loc
 
-            duration = (datetime.utcnow() - start_time).seconds
+            duration = (datetime.now(timezone.utc) - start_time).seconds
 
             result = PhaseResult(
                 success=True,
@@ -609,7 +609,7 @@ class ProjectAssessmentOrchestrator:
 
     async def _run_asis_phase(self, assessment: ProjectAssessment) -> PhaseResult:
         """Phase 2: AS-IS Architecture Analysis (Miguel)"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         self._log_verbose("as_is", "INPUT", "Starting AS-IS architecture analysis", {
             "directory": assessment.directory_path,
@@ -683,7 +683,7 @@ class ProjectAssessmentOrchestrator:
             if llm_insights:
                 result_data["llm_insights"] = llm_insights
 
-            duration = (datetime.utcnow() - start_time).seconds
+            duration = (datetime.now(timezone.utc) - start_time).seconds
 
             result = PhaseResult(
                 success=True,
@@ -767,7 +767,7 @@ Respond in JSON format:
         - Method complexity analysis
         - Cross-file relationships
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         self._log_verbose("code", "INPUT", "Starting code analysis phase", {
             "directory": assessment.directory_path,
@@ -967,7 +967,7 @@ Respond in JSON format:
             assessment.code_complexity = code_analysis["complexity"]
             assessment.code_test_coverage_percent = code_analysis["test_coverage"]
 
-            duration = (datetime.utcnow() - start_time).seconds
+            duration = (datetime.now(timezone.utc) - start_time).seconds
 
             # items_found includes: test files + KG entities
             total_found = test_files + code_analysis.get("class_count", 0) + code_analysis.get("function_count", 0)
@@ -1009,7 +1009,7 @@ Respond in JSON format:
         """
         from pathlib import Path
 
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         self._log_verbose("security", "INPUT", "Starting security analysis phase", {
             "directory": assessment.directory_path,
@@ -1106,7 +1106,7 @@ Respond in JSON format:
                 }
             })
 
-            duration = (datetime.utcnow() - start_time).seconds
+            duration = (datetime.now(timezone.utc) - start_time).seconds
 
             logger.info(f"Security scan completed: {len(findings_list)} findings, grade {assessment.security_grade}")
 
@@ -1219,7 +1219,7 @@ Respond in JSON format:
                 }
             })
 
-            duration = (datetime.utcnow() - start_time).seconds
+            duration = (datetime.now(timezone.utc) - start_time).seconds
 
             return PhaseResult(
                 success=True,
@@ -1251,7 +1251,7 @@ Respond in JSON format:
         Week 113 FIX-2: Now uses QualityScanService for real code scanning
         instead of only using architecture issues as baseline.
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         self._log_verbose("quality", "INPUT", "Starting quality analysis phase", {
             "directory": assessment.directory_path,
@@ -1406,7 +1406,7 @@ Respond in JSON format:
             assessment.quality_score = quality_score
             assessment.quality_grade = quality_grade
 
-            duration = (datetime.utcnow() - start_time).seconds
+            duration = (datetime.now(timezone.utc) - start_time).seconds
 
             result = PhaseResult(
                 success=True,
@@ -1453,7 +1453,7 @@ Respond in JSON format:
         Extracts business rules, functional requirements, and non-functional requirements
         from source code using the 6-cycle hybrid extraction pipeline.
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         self._log_verbose("requirements", "INPUT", "Starting requirements extraction phase", {
             "directory": assessment.directory_path,
@@ -1571,7 +1571,7 @@ Respond in JSON format:
                 assessment.requirements_extraction = {}
             assessment.requirements_extraction = extraction_results
 
-            duration = (datetime.utcnow() - start_time).seconds
+            duration = (datetime.now(timezone.utc) - start_time).seconds
 
             total_found = (
                 extraction_results.get("epics_found", 0) +
@@ -1614,7 +1614,7 @@ Respond in JSON format:
 
     async def _run_report_phase(self, assessment: ProjectAssessment) -> PhaseResult:
         """Phase 7: Health Report Generation (Diana)"""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         self._log_verbose("report", "INPUT", "Starting report generation phase", {
             "project_name": assessment.project_name,
@@ -1629,7 +1629,7 @@ Respond in JSON format:
             summary_lines = [
                 f"# Project Health Report: {assessment.project_name}",
                 "",
-                f"**Assessment Date**: {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}",
+                f"**Assessment Date**: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')}",
                 "",
                 "## Overview",
                 f"- **Primary Stack**: {assessment.primary_stack or 'Unknown'}",
@@ -1707,7 +1707,7 @@ Respond in JSON format:
             self._log_verbose("report", "STEP", f"Identified {len(blockers)} blockers")
             assessment.blockers = blockers
 
-            duration = (datetime.utcnow() - start_time).seconds
+            duration = (datetime.now(timezone.utc) - start_time).seconds
 
             result = PhaseResult(
                 success=True,

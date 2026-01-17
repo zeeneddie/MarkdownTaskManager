@@ -349,7 +349,7 @@ def transfer_funds(from_account: str, to_account: str,
         amount=amount,
         description=description,
         status='completed',
-        timestamp=datetime.utcnow()
+        timestamp=datetime.now(timezone.utc)
     )
 
     db.session.add(transaction)
@@ -759,7 +759,7 @@ def initiate_return(order_id: int, items: list, reason: str) -> Return:
         raise OrderNotFoundError("Order not found")
 
     # Check return window (30 days)
-    days_since_delivery = (datetime.utcnow() - order.delivered_at).days
+    days_since_delivery = (datetime.now(timezone.utc) - order.delivered_at).days
     if days_since_delivery > 30:
         raise ReturnWindowExpiredError("Return window has expired (30 days)")
 

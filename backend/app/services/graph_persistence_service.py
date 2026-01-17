@@ -147,7 +147,7 @@ class GraphPersistenceService:
                 existing.docstring = entity.docstring
                 existing.entity_data = entity.metadata
                 existing.hash = content_hash
-                existing.last_synced = datetime.utcnow()
+                existing.last_synced = datetime.now(timezone.utc)
             return existing
         else:
             # Insert new
@@ -162,7 +162,7 @@ class GraphPersistenceService:
                 docstring=entity.docstring,
                 entity_data=entity.metadata,
                 hash=content_hash,
-                last_synced=datetime.utcnow()
+                last_synced=datetime.now(timezone.utc)
             )
             self.db.add(db_entity)
             await self.db.flush()
@@ -253,7 +253,7 @@ class GraphPersistenceService:
         """
         # Check cache first
         cached = await self._get_cached_impact(entity_id, "transitive")
-        if cached and cached.cache_valid_until > datetime.utcnow():
+        if cached and cached.cache_valid_until > datetime.now(timezone.utc):
             return {
                 "entity_id": str(entity_id),
                 "affected_entities": cached.affected_entities,
@@ -902,7 +902,7 @@ class GraphPersistenceService:
         result = await self.db.execute(stmt)
         existing = result.scalar_one_or_none()
 
-        cache_valid_until = datetime.utcnow() + self._cache_ttl
+        cache_valid_until = datetime.now(timezone.utc) + self._cache_ttl
 
         if existing:
             existing.affected_entities = affected_entities

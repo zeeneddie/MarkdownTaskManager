@@ -76,7 +76,7 @@ class TokenCacheService:
         Returns:
             Dict with cache statistics
         """
-        since = datetime.utcnow() - timedelta(hours=hours)
+        since = datetime.now(timezone.utc) - timedelta(hours=hours)
 
         query = self.db.query(
             func.sum(AgentAction.input_tokens).label("total_input"),
@@ -139,7 +139,7 @@ class TokenCacheService:
         Returns:
             List of per-agent cache statistics
         """
-        since = datetime.utcnow() - timedelta(hours=hours)
+        since = datetime.now(timezone.utc) - timedelta(hours=hours)
 
         results = self.db.query(
             AgentAction.agent_name,
@@ -238,7 +238,7 @@ class TokenCacheService:
         Returns:
             List of hourly cache statistics
         """
-        since = datetime.utcnow() - timedelta(hours=hours)
+        since = datetime.now(timezone.utc) - timedelta(hours=hours)
 
         # Group by hour
         results = self.db.query(

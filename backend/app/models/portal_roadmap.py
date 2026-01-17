@@ -56,7 +56,7 @@ class PortalAnalysisQueue(Base):
     # Queue metadata
     priority = Column(Integer, default=0)  # Higher = more urgent
     requested_by = Column(String(100), nullable=True)
-    requested_at = Column(DateTime(timezone=True), default=lambda: datetime.utcnow())
+    requested_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # Analysis status
     status = Column(String(30), default="pending")
@@ -68,8 +68,8 @@ class PortalAnalysisQueue(Base):
     analysis_result = Column(JSONB, nullable=True)  # Agent output
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime(timezone=True), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
     backlog_item = relationship("Item", foreign_keys=[item_id])
@@ -152,8 +152,8 @@ class PortalRelease(Base):
     display_order = Column(Integer, default=0)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime(timezone=True), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
     released_at = Column(DateTime(timezone=True), nullable=True)
 
     # Relationships
@@ -263,8 +263,8 @@ class PortalRoadmapItem(Base):
     tags = Column(JSONB, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime(timezone=True), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
     release = relationship("PortalRelease", back_populates="roadmap_items")
@@ -353,8 +353,8 @@ class PortalPublicRoadmap(Base):
     last_viewed_at = Column(DateTime(timezone=True), nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime(timezone=True), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert public roadmap config to dictionary."""
@@ -384,4 +384,4 @@ class PortalPublicRoadmap(Base):
     def increment_views(self) -> None:
         """Increment view count and update last viewed timestamp."""
         self.view_count = (self.view_count or 0) + 1
-        self.last_viewed_at = datetime.utcnow()
+        self.last_viewed_at = datetime.now(timezone.utc)

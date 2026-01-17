@@ -20,7 +20,7 @@ Usage:
 
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, Generic, List, Optional, TypeVar
 from abc import ABC, abstractmethod
 import random
@@ -62,7 +62,7 @@ class UserData:
     name: str
     is_active: bool = True
     is_admin: bool = False
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -87,7 +87,7 @@ class UserBuilder(Builder[UserData]):
         self._name = f"Test User {self._id}"
         self._is_active = True
         self._is_admin = False
-        self._created_at = datetime.utcnow()
+        self._created_at = datetime.now(timezone.utc)
         self._metadata: Dict[str, Any] = {}
         return self
 
@@ -120,7 +120,7 @@ class UserBuilder(Builder[UserData]):
         return self
 
     def created_days_ago(self, days: int) -> "UserBuilder":
-        self._created_at = datetime.utcnow() - timedelta(days=days)
+        self._created_at = datetime.now(timezone.utc) - timedelta(days=days)
         return self
 
     def with_metadata(self, key: str, value: Any) -> "UserBuilder":
@@ -152,7 +152,7 @@ class ProjectData:
     description: str
     owner_id: int
     status: str = "active"
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     tech_stack: List[str] = field(default_factory=list)
 
 
@@ -177,7 +177,7 @@ class ProjectBuilder(Builder[ProjectData]):
         self._description = f"Description for project {self._id}"
         self._owner_id = 1
         self._status = "active"
-        self._created_at = datetime.utcnow()
+        self._created_at = datetime.now(timezone.utc)
         self._tech_stack: List[str] = []
         return self
 
@@ -343,11 +343,11 @@ class TaskBuilder(Builder[TaskData]):
         return self
 
     def due_in_days(self, days: int) -> "TaskBuilder":
-        self._due_date = datetime.utcnow() + timedelta(days=days)
+        self._due_date = datetime.now(timezone.utc) + timedelta(days=days)
         return self
 
     def overdue(self) -> "TaskBuilder":
-        self._due_date = datetime.utcnow() - timedelta(days=1)
+        self._due_date = datetime.now(timezone.utc) - timedelta(days=1)
         return self
 
     def with_tags(self, tags: List[str]) -> "TaskBuilder":

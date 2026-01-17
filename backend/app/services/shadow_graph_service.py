@@ -71,7 +71,7 @@ class ShadowGraphService:
         if pattern:
             # Update existing pattern
             pattern.times_detected += 1
-            pattern.last_detection = datetime.utcnow()
+            pattern.last_detection = datetime.now(timezone.utc)
 
             # Add scan to learned_from list
             if str(scan_id) not in pattern.learned_from_scans:
@@ -100,7 +100,7 @@ class ShadowGraphService:
                 times_detected=1,
                 true_positives=0,
                 false_positives=0,
-                last_detection=datetime.utcnow(),
+                last_detection=datetime.now(timezone.utc),
                 source="learned",
                 learned_from_scans=[str(scan_id)],
                 code_examples=[finding.code_snippet[:500]] if finding.code_snippet else [],
@@ -281,7 +281,7 @@ class ShadowGraphService:
         finding.status = "confirmed"
         finding.verified = True
         finding.verified_by = confirmed_by
-        finding.verified_at = datetime.utcnow()
+        finding.verified_at = datetime.now(timezone.utc)
 
         # Create learning record
         learning = VulnerabilityLearning(
@@ -522,7 +522,7 @@ class ShadowGraphService:
         days: int = 30
     ) -> Dict[str, Any]:
         """Get learning statistics."""
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(timezone.utc) - timedelta(days=days)
 
         # Count patterns
         patterns_query = select(func.count(ShadowPattern.id))

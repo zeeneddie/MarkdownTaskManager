@@ -9,7 +9,7 @@ Week 80+: Implements file-to-backlog mapping and statistics aggregation.
 
 import logging
 import fnmatch
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any, Tuple
 from uuid import UUID
 
@@ -324,7 +324,7 @@ class DebtCategorizationService:
                         "epic_id": str(epic_id) if epic_id else None,
                         "feature_id": str(feature_id) if feature_id else None,
                         "story_id": str(story_id) if story_id else None,
-                        "now": datetime.utcnow(),
+                        "now": datetime.now(timezone.utc),
                     }
                 )
                 categorized += 1
@@ -363,7 +363,7 @@ class DebtCategorizationService:
                 "epic_id": str(epic_id) if epic_id else None,
                 "feature_id": str(feature_id) if feature_id else None,
                 "story_id": str(story_id) if story_id else None,
-                "now": datetime.utcnow(),
+                "now": datetime.now(timezone.utc),
             }
         )
         await self.db.commit()

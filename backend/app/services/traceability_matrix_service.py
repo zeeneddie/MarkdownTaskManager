@@ -9,7 +9,7 @@ Maps code elements to user stories for:
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple
 from uuid import uuid4
@@ -235,7 +235,7 @@ class TraceabilityMatrixService:
             TraceabilityMatrixResult with all links and metrics
         """
         matrix_id = str(uuid4())
-        created_at = datetime.utcnow()
+        created_at = datetime.now(timezone.utc)
 
         # Convert to internal representations
         self._code_elements = {
@@ -354,11 +354,11 @@ class TraceabilityMatrixService:
             story=self._stories[story_id],
             link_type=link_type,
             confidence=LinkConfidence.MANUAL,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             created_by=user_id,
             evidence=["Manually linked by user"],
             verified=True,
-            verified_at=datetime.utcnow(),
+            verified_at=datetime.now(timezone.utc),
             verified_by=user_id,
             notes=notes,
         )
@@ -381,7 +381,7 @@ class TraceabilityMatrixService:
 
         if is_valid:
             link.verified = True
-            link.verified_at = datetime.utcnow()
+            link.verified_at = datetime.now(timezone.utc)
             link.verified_by = user_id
             if notes:
                 link.notes = notes
@@ -511,7 +511,7 @@ class TraceabilityMatrixService:
                 story=self._to_story_reference(data.get("story", {})),
                 link_type=LinkType(data.get("link_type", "implements")),
                 confidence=LinkConfidence(data.get("confidence", "low")),
-                created_at=data.get("created_at", datetime.utcnow()),
+                created_at=data.get("created_at", datetime.now(timezone.utc)),
                 created_by=data.get("created_by", "auto"),
                 evidence=data.get("evidence", []),
                 verified=data.get("verified", False),
@@ -538,7 +538,7 @@ class TraceabilityMatrixService:
                             story=story,
                             link_type=LinkType.IMPLEMENTS,
                             confidence=LinkConfidence.HIGH,
-                            created_at=datetime.utcnow(),
+                            created_at=datetime.now(timezone.utc),
                             created_by="auto",
                             evidence=[f"Found reference '{match}' in code"],
                         )
@@ -576,7 +576,7 @@ class TraceabilityMatrixService:
                     story=best_match,
                     link_type=LinkType.IMPLEMENTS,
                     confidence=confidence,
-                    created_at=datetime.utcnow(),
+                    created_at=datetime.now(timezone.utc),
                     created_by="auto",
                     evidence=best_reasons,
                 )
@@ -1071,7 +1071,7 @@ class TraceabilityMatrixService:
                 link_type=link_type,
                 confidence=relation.get("confidence", 0.5),
                 evidence=relation.get("sentence", ""),
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
                 created_by="cira",
                 cira_session_id=cira_session_id,
             )

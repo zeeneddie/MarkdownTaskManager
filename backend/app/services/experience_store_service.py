@@ -16,7 +16,7 @@ Date: 2025-11-22
 """
 
 from typing import List, Dict, Any, Optional, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 from dataclasses import dataclass, field, asdict
 from enum import Enum
 import uuid
@@ -576,7 +576,7 @@ class ExperienceStoreService:
                 meta['average_quality'] = (
                     (meta['average_quality'] * (total - 1) + quality_score) / total
                 )
-                meta['last_used'] = datetime.utcnow().isoformat()
+                meta['last_used'] = datetime.now(timezone.utc).isoformat()
 
                 self._collections[self.PATTERNS].update(
                     ids=[pattern_id],
@@ -594,7 +594,7 @@ class ExperienceStoreService:
                     pat['average_quality'] = (
                         (pat['average_quality'] * (total - 1) + quality_score) / total
                     )
-                    pat['last_used'] = datetime.utcnow().isoformat()
+                    pat['last_used'] = datetime.now(timezone.utc).isoformat()
                     return True
         return False
 
@@ -814,7 +814,7 @@ class ExperienceStoreService:
     ) -> Dict[str, Any]:
         """Get quality trend for an agent over time"""
         from datetime import timedelta
-        cutoff = datetime.utcnow() - timedelta(days=days)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
         records = []
 
         if self.chroma_client and self.QUALITY in self._collections:

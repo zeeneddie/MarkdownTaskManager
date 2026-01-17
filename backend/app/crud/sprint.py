@@ -3,7 +3,7 @@ from sqlalchemy import select, and_, or_
 from app.models.sprint import Sprint
 from app.models.item import Item, ItemType
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 async def get_sprint_by_id(db: AsyncSession, sprint_id: int) -> Optional[Sprint]:
     """Get sprint by ID"""
@@ -52,7 +52,7 @@ async def update_sprint(db: AsyncSession, sprint_id: int, update_data: dict) -> 
     for key, value in update_data.items():
         setattr(sprint, key, value)
 
-    sprint.updated_at = datetime.utcnow()
+    sprint.updated_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(sprint)
 
@@ -77,7 +77,7 @@ async def delete_sprint(db: AsyncSession, sprint_id: int) -> bool:
 
     for story in stories:
         story.sprint_id = None
-        story.updated_at = datetime.utcnow()
+        story.updated_at = datetime.now(timezone.utc)
 
     await db.delete(sprint)
     await db.commit()
@@ -107,7 +107,7 @@ async def calculate_sprint_points(db: AsyncSession, sprint_name: str):
 
     sprint.total_sp = total_sp
     sprint.completed_sp = completed_sp
-    sprint.updated_at = datetime.utcnow()
+    sprint.updated_at = datetime.now(timezone.utc)
 
     await db.commit()
 
@@ -140,7 +140,7 @@ async def assign_story_to_sprint(db: AsyncSession, story_id: str, sprint_name: s
 
     old_sprint_id = story.sprint_id
     story.sprint_id = sprint.id
-    story.updated_at = datetime.utcnow()
+    story.updated_at = datetime.now(timezone.utc)
 
     await db.commit()
     await db.refresh(story)
@@ -165,7 +165,7 @@ async def unassign_story_from_sprint(db: AsyncSession, story_id: str) -> Optiona
 
     old_sprint_id = story.sprint_id
     story.sprint_id = None
-    story.updated_at = datetime.utcnow()
+    story.updated_at = datetime.now(timezone.utc)
 
     await db.commit()
     await db.refresh(story)
@@ -190,7 +190,7 @@ async def get_sprint_velocity(db: AsyncSession, sprint_id: int) -> dict:
     in_progress_stories = len([s for s in stories if s.status == "IN_PROGRESS"])
 
     # Calculate days elapsed and remaining
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     total_days = (sprint.end_date - sprint.start_date).days
     days_elapsed = max(0, (now - sprint.start_date).days)
     days_remaining = max(0, (sprint.end_date - now).days)

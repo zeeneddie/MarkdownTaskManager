@@ -8,7 +8,7 @@ from the filesystem.
 from typing import Dict, Any, List, Optional
 from pathlib import Path
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import hashlib
 
@@ -117,7 +117,7 @@ class ReferenceRegistry:
             self._cache[reference_id] = CachedReference(
                 reference=ref,
                 content=content,
-                loaded_at=datetime.utcnow(),
+                loaded_at=datetime.now(timezone.utc),
                 content_hash=content_hash,
                 word_count=len(content.split()),
                 line_count=len(content.splitlines()),

@@ -11,7 +11,7 @@ Endpoints for:
 - Pattern analysis
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field, ConfigDict
@@ -240,7 +240,7 @@ async def export_session(
     # Build session data
     session_data = SessionData(
         session_id=session_id,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
         provider="multi",
         model="mixed",
         thinking_blocks=[
@@ -381,7 +381,7 @@ async def health_check():
         "status": "healthy",
         "service": "cctrace",
         "version": "1.0",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 

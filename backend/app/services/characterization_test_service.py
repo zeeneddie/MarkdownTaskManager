@@ -11,7 +11,7 @@ import json
 import logging
 import time
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
@@ -82,7 +82,7 @@ class CharacterizationTestService:
             test_name=test_name,
             result=ComparisonResult.NEW_BASELINE,
             input_scenario=input_scenario,
-            executed_at=datetime.utcnow(),
+            executed_at=datetime.now(timezone.utc),
         )
 
         try:
@@ -99,7 +99,7 @@ class CharacterizationTestService:
             self._baselines[test_id] = {
                 "data": legacy_output,
                 "hash": baseline_hash,
-                "recorded_at": datetime.utcnow().isoformat(),
+                "recorded_at": datetime.now(timezone.utc).isoformat(),
                 "input_scenario": input_scenario,
             }
 
@@ -154,7 +154,7 @@ class CharacterizationTestService:
             test_name=test_name,
             result=ComparisonResult.MISMATCH,
             input_scenario=input_scenario,
-            executed_at=datetime.utcnow(),
+            executed_at=datetime.now(timezone.utc),
         )
 
         # Get baseline
@@ -248,7 +248,7 @@ class CharacterizationTestService:
             test_name=test_name,
             result=ComparisonResult.MISMATCH,
             input_scenario=input_scenario,
-            executed_at=datetime.utcnow(),
+            executed_at=datetime.now(timezone.utc),
         )
 
         try:
@@ -524,7 +524,7 @@ class CharacterizationTestService:
         self._baselines[test_id] = {
             "data": baseline_data,
             "hash": baseline_hash,
-            "recorded_at": datetime.utcnow().isoformat(),
+            "recorded_at": datetime.now(timezone.utc).isoformat(),
         }
         return baseline_hash
 

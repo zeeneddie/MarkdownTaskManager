@@ -18,7 +18,7 @@ import logging
 import uuid
 import json
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import asdict
 from pathlib import Path
@@ -589,7 +589,7 @@ class JourneyComparisonService:
             rules = []
 
         # Filter expired unless requested
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if not include_expired:
             rules = [r for r in rules if r.expires_at is None or r.expires_at > now]
 
@@ -606,7 +606,7 @@ class JourneyComparisonService:
             await self.db.execute(
                 update(JourneyOverrideRuleModel)
                 .where(JourneyOverrideRuleModel.id == rule_id)
-                .values(active=False, updated_at=datetime.utcnow())
+                .values(active=False, updated_at=datetime.now(timezone.utc))
             )
             await self.db.commit()
             return True
@@ -621,7 +621,7 @@ class JourneyComparisonService:
         rules: List[JourneyOverrideRule]
     ) -> Optional[JourneyOverrideRule]:
         """Find an applicable override rule for a step comparison."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         for rule in rules:
             # Check if rule is active and not expired
@@ -804,7 +804,7 @@ class JourneyComparisonService:
                     api_request=s.get("api_request"),
                     api_response=s.get("api_response"),
                     duration_ms=s.get("duration_ms", 0),
-                    timestamp=datetime.fromisoformat(s["timestamp"]) if s.get("timestamp") else datetime.utcnow()
+                    timestamp=datetime.fromisoformat(s["timestamp"]) if s.get("timestamp") else datetime.now(timezone.utc)
                 ))
 
         return JourneyRecording(
@@ -815,7 +815,7 @@ class JourneyComparisonService:
             base_url=db_model.base_url,
             steps=steps,
             total_duration_ms=db_model.total_duration_ms or 0,
-            recorded_at=db_model.recorded_at or datetime.utcnow(),
+            recorded_at=db_model.recorded_at or datetime.now(timezone.utc),
             recorded_by=db_model.recorded_by
         )
 
@@ -830,7 +830,7 @@ class JourneyComparisonService:
             new_behavior=db_model.new_behavior,
             reason=db_model.reason,
             approved_by=db_model.approved_by,
-            approved_at=db_model.approved_at or datetime.utcnow(),
+            approved_at=db_model.approved_at or datetime.now(timezone.utc),
             expires_at=db_model.expires_at,
             active=db_model.active
         )

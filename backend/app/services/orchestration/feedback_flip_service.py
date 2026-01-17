@@ -16,7 +16,7 @@ Source: https://gregorriegler.com/2025/07/12/augmented-coding-pattern-language.h
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Any, Callable
 from uuid import UUID, uuid4
@@ -165,7 +165,7 @@ class FeedbackFlipService:
         Returns:
             Created FlipSession
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         session = FlipSession(
             id=uuid4(),
@@ -212,7 +212,7 @@ class FeedbackFlipService:
 
         old_mode = session.mode
         session.mode = new_mode
-        session.updated_at = datetime.utcnow()
+        session.updated_at = datetime.now(timezone.utc)
 
         session.mode_history.append({
             "mode": new_mode.value,
@@ -273,7 +273,7 @@ class FeedbackFlipService:
             recommendations=recommendations,
             scores=scores,
             overall_score=overall_score,
-            evaluated_at=datetime.utcnow(),
+            evaluated_at=datetime.now(timezone.utc),
             metadata=metadata or {}
         )
 

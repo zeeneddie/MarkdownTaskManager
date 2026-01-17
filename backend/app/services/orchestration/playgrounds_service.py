@@ -17,7 +17,7 @@ Source: https://gregorriegler.com/2025/07/12/augmented-coding-pattern-language.h
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from enum import Enum
 from typing import Dict, List, Optional, Any, Callable
 from uuid import UUID, uuid4
@@ -191,7 +191,7 @@ class PlaygroundsService:
             if len(active) >= self.MAX_PLAYGROUNDS:
                 raise RuntimeError(f"Maximum playgrounds ({self.MAX_PLAYGROUNDS}) reached")
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         ttl = ttl_hours if ttl_hours is not None else self._default_ttl_hours
         expires_at = now + timedelta(hours=ttl) if ttl > 0 else None
 
@@ -265,14 +265,14 @@ class PlaygroundsService:
         if playground.status != PlaygroundStatus.ACTIVE:
             raise RuntimeError(f"Playground is not active: {playground.status.value}")
 
-        playground.last_accessed = datetime.utcnow()
+        playground.last_accessed = datetime.now(timezone.utc)
 
         # Prepare environment
         execution_env = os.environ.copy()
         if env:
             execution_env.update(env)
 
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         try:
             result = subprocess.run(
@@ -285,7 +285,7 @@ class PlaygroundsService:
                 env=execution_env
             )
 
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
 
             execution = ExecutionResult(
                 command=command,
@@ -308,7 +308,7 @@ class PlaygroundsService:
             )
 
         except Exception as e:
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             execution = ExecutionResult(
                 command=command,
                 exit_code=-1,
@@ -338,7 +338,7 @@ class PlaygroundsService:
         if not playground:
             raise ValueError(f"Playground {playground_id} not found")
 
-        playground.last_accessed = datetime.utcnow()
+        playground.last_accessed = datetime.now(timezone.utc)
 
         files_added = []
         files_modified = []
@@ -385,7 +385,7 @@ class PlaygroundsService:
             files_deleted=files_deleted,
             total_additions=total_additions,
             total_deletions=total_deletions,
-            generated_at=datetime.utcnow()
+            generated_at=datetime.now(timezone.utc)
         )
 
     def merge_playground(
@@ -472,7 +472,7 @@ class PlaygroundsService:
                 success=True,
                 files_merged=merged,
                 conflicts=conflicts,
-                merged_at=datetime.utcnow()
+                merged_at=datetime.now(timezone.utc)
             )
 
         except Exception as e:
@@ -499,7 +499,7 @@ class PlaygroundsService:
             raise ValueError(f"Playground {playground_id} not found")
 
         playground.status = PlaygroundStatus.ARCHIVED
-        playground.last_accessed = datetime.utcnow()
+        playground.last_accessed = datetime.now(timezone.utc)
 
         logger.info(f"Archived playground {playground_id}")
 
@@ -552,7 +552,7 @@ class PlaygroundsService:
             playgrounds = [p for p in playgrounds if p.status == status]
 
         if not include_expired:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             playgrounds = [p for p in playgrounds
                           if not p.expires_at or p.expires_at > now]
 
@@ -614,7 +614,7 @@ class PlaygroundsService:
 
     def _cleanup_expired(self) -> int:
         """Clean up expired playgrounds."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         expired = []
 
         for pg_id, playground in self._playgrounds.items():

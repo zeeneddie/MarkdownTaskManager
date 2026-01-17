@@ -196,7 +196,7 @@ class CostManagementService:
             return {"error": "Budget not found"}
 
         # Determine time range
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if period == "daily":
             start = now.replace(hour=0, minute=0, second=0, microsecond=0)
             limit = budget.daily_limit
@@ -318,7 +318,7 @@ class CostManagementService:
         Returns:
             Detailed cost breakdown
         """
-        since = datetime.utcnow() - timedelta(days=days)
+        since = datetime.now(timezone.utc) - timedelta(days=days)
 
         query = self.db.query(
             AgentAction.model,

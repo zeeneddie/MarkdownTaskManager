@@ -14,7 +14,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -833,14 +833,14 @@ async def process_cdc_event(session_id: str, request: ProcessEventRequest):
     except ValueError:
         raise HTTPException(status_code=400, detail=f"Invalid operation: {request.operation}")
 
-    from datetime import datetime
+    from datetime import datetime, timezone
     from uuid import uuid4
 
     event = ChangeEvent(
         id=str(uuid4()),
         table=request.table,
         operation=operation,
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(timezone.utc),
         legacy_data=request.legacy_data,
         primary_key=request.primary_key or {}
     )

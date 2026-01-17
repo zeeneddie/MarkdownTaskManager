@@ -15,7 +15,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from enum import Enum
 
@@ -106,7 +106,7 @@ class HierarchicalExtractionSession(Base):
     duration_ms = Column(Integer, default=0)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     started_at = Column(DateTime(timezone=True), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
 
@@ -185,14 +185,14 @@ class ExtractedStoryItem(Base):
 
     # Extraction metadata
     extracted_by = Column(String(100), nullable=True)  # LLM provider
-    extracted_at = Column(DateTime(timezone=True), default=lambda: datetime.utcnow())
+    extracted_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # Raw LLM output for debugging
     raw_response = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime(timezone=True), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
     session = relationship("HierarchicalExtractionSession", back_populates="items")
@@ -253,7 +253,7 @@ class ExtractionHierarchyRelation(Base):
     confidence = Column(Float, default=1.0)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     def __repr__(self):
         return f"<ExtractionHierarchyRelation {self.parent_id} -> {self.child_id}>"
@@ -298,7 +298,7 @@ class ExtractionLevelMetrics(Base):
     errors = Column(JSONB, default=list)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     def __repr__(self):
         return f"<ExtractionLevelMetrics {self.level.value} session={self.session_id}>"

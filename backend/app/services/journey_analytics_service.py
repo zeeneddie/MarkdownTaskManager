@@ -86,7 +86,7 @@ class JourneyAnalyticsService:
             feature_status=feature_status,
             device_type=device_type,
             browser=browser,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
         )
 
         self.db.add(event)
@@ -227,7 +227,7 @@ class JourneyAnalyticsService:
 
         # Default to last N days based on funnel window
         if period_end is None:
-            period_end = datetime.utcnow()
+            period_end = datetime.now(timezone.utc)
         if period_start is None:
             period_start = period_end - timedelta(days=funnel.window_days)
 
@@ -502,7 +502,7 @@ class JourneyAnalyticsService:
     ) -> Dict[str, Any]:
         """Get aggregate event statistics."""
         if period_end is None:
-            period_end = datetime.utcnow()
+            period_end = datetime.now(timezone.utc)
         if period_start is None:
             period_start = period_end - timedelta(days=30)
 

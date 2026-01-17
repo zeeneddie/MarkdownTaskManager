@@ -14,7 +14,7 @@ Supports CAFCR methodology and INVEST validation.
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set, Any, Tuple
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 import json
 from collections import defaultdict
@@ -88,7 +88,7 @@ class TraceLink:
     link_type: LinkType
     confidence: float = 1.0
     evidence: Optional[str] = None
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     validated: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
@@ -566,7 +566,7 @@ class TraceabilityMatrixGenerator:
             "artifacts": {aid: a.to_dict() for aid, a in self.matrix.artifacts.items()},
             "links": [l.to_dict() for l in self.matrix.links],
             "coverage": self.generate_coverage_report().__dict__,
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(timezone.utc).isoformat()
         }, indent=2, default=str)
 
     def _to_markdown(self) -> str:

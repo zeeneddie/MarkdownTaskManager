@@ -12,7 +12,7 @@ Date: 2026-01-01
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Any
 from sqlalchemy import Column, Integer, String, Text, DateTime, Float, Boolean, ForeignKey, JSON, Enum as SQLEnum
@@ -131,7 +131,7 @@ class LineageNode:
     source_path: Optional[str] = None  # file path or URL
     source_line: Optional[int] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 @dataclass
@@ -187,8 +187,8 @@ class LineageGraph:
     nodes: List[LineageNode] = field(default_factory=list)
     edges: List[LineageEdge] = field(default_factory=list)
     field_mappings: List[FieldMapping] = field(default_factory=list)
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
-    updated_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def get_node(self, node_id: str) -> Optional[LineageNode]:
         """Get node by ID."""
@@ -254,7 +254,7 @@ class ERDDiagram:
     tables: List[ERDTable] = field(default_factory=list)
     relationships: List[ERDRelationship] = field(default_factory=list)
     bounded_contexts: Dict[str, List[str]] = field(default_factory=dict)  # context -> table names
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_mermaid(self) -> str:
         """Generate Mermaid ERD syntax."""
@@ -320,7 +320,7 @@ class CDCEvent:
     primary_key_values: Dict[str, Any] = field(default_factory=dict)
     before_values: Optional[Dict[str, Any]] = None
     after_values: Optional[Dict[str, Any]] = None
-    timestamp: datetime = field(default_factory=lambda: datetime.utcnow())
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     transaction_id: Optional[str] = None
     sequence_number: int = 0
 
@@ -383,7 +383,7 @@ class JourneyStep:
     screenshot_path: Optional[str] = None
     api_request: Optional[Dict[str, Any]] = None
     api_response: Optional[Dict[str, Any]] = None
-    timestamp: datetime = field(default_factory=lambda: datetime.utcnow())
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     duration_ms: int = 0
 
 
@@ -397,7 +397,7 @@ class JourneyRecording:
     description: Optional[str] = None
     steps: List[JourneyStep] = field(default_factory=list)
     total_duration_ms: int = 0
-    recorded_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    recorded_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     recorded_by: Optional[str] = None
 
 
@@ -427,7 +427,7 @@ class JourneyOverrideRule:
     reason: str
     approved_by: str
     step_number: Optional[int] = None  # None = applies to all steps
-    approved_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    approved_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     expires_at: Optional[datetime] = None
     active: bool = True
 
@@ -447,7 +447,7 @@ class JourneyComparisonResult:
     overall_match_percentage: float = 0.0
     visual_match_percentage: float = 0.0
     data_match_percentage: float = 0.0
-    compared_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    compared_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     status: str = "pending"  # pending, passed, failed, needs_review
 
 
@@ -469,8 +469,8 @@ class DataLineageSession(Base):
     edge_count = Column(Integer, default=0)
     field_mapping_count = Column(Integer, default=0)
     graph_data = Column(JSON, nullable=True)  # Full LineageGraph as JSON
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class DataLineageFieldMapping(Base):
@@ -493,7 +493,7 @@ class DataLineageFieldMapping(Base):
     validation_rule = Column(Text, nullable=True)
     confidence = Column(Float, default=1.0)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class ERDDiagramModel(Base):
@@ -513,8 +513,8 @@ class ERDDiagramModel(Base):
     plantuml_output = Column(Text, nullable=True)
     bounded_contexts = Column(JSON, nullable=True)
     normalization_level = Column(String(10), default="3NF")
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class CDCSessionModel(Base):
@@ -536,8 +536,8 @@ class CDCSessionModel(Base):
     stats = Column(JSON, nullable=True)  # Per-table stats
     started_at = Column(DateTime, nullable=True)
     stopped_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class JourneyRecordingModel(Base):
@@ -554,8 +554,8 @@ class JourneyRecordingModel(Base):
     total_duration_ms = Column(Integer, default=0)
     steps_data = Column(JSON, nullable=True)  # List of JourneyStep
     recorded_by = Column(String(255), nullable=True)
-    recorded_at = Column(DateTime, default=lambda: datetime.utcnow())
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    recorded_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class JourneyComparisonModel(Base):
@@ -576,8 +576,8 @@ class JourneyComparisonModel(Base):
     data_match_percentage = Column(Float, default=0.0)
     status = Column(String(50), default="pending")
     comparison_data = Column(JSON, nullable=True)  # Full comparison result
-    compared_at = Column(DateTime, default=lambda: datetime.utcnow())
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    compared_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class JourneyOverrideRuleModel(Base):
@@ -593,8 +593,8 @@ class JourneyOverrideRuleModel(Base):
     new_behavior = Column(Text, nullable=False)
     reason = Column(Text, nullable=False)
     approved_by = Column(String(255), nullable=False)
-    approved_at = Column(DateTime, default=lambda: datetime.utcnow())
+    approved_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     expires_at = Column(DateTime, nullable=True)
     active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))

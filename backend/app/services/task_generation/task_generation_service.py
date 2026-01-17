@@ -13,7 +13,7 @@ Includes Vector DB Integration for context-aware task generation.
 import logging
 from typing import Dict, List, Optional, Any, Tuple
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
@@ -237,7 +237,7 @@ class TaskGenerationService:
                 generated_by="Felix",
                 generation_prompt=felix_response.get("prompt_used"),
                 generation_metadata={
-                    "generated_at": datetime.utcnow().isoformat(),
+                    "generated_at": datetime.now(timezone.utc).isoformat(),
                     "specification_title": specification.content_json.get("title"),
                     "generation_version": "1.0"
                 }
@@ -373,7 +373,7 @@ class TaskGenerationService:
                 generated_by="Felix",
                 generation_metadata={
                     "epic_title": epic.title,
-                    "generated_at": datetime.utcnow().isoformat()
+                    "generated_at": datetime.now(timezone.utc).isoformat()
                 }
             )
 
@@ -518,7 +518,7 @@ class TaskGenerationService:
                 generated_by="Felix",
                 generation_metadata={
                     "feature_title": feature.title,
-                    "generated_at": datetime.utcnow().isoformat()
+                    "generated_at": datetime.now(timezone.utc).isoformat()
                 }
             )
 
@@ -660,7 +660,7 @@ class TaskGenerationService:
                 generated_by="Felix",
                 generation_metadata={
                     "story_title": story.title,
-                    "generated_at": datetime.utcnow().isoformat()
+                    "generated_at": datetime.now(timezone.utc).isoformat()
                 }
             )
 

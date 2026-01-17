@@ -6,7 +6,7 @@ Week 77: Coordinates VBScript, Stored Procedure, SWOT, and Improvement Planning.
 
 import logging
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
 from sqlalchemy.orm import Session
 from sqlalchemy import select
@@ -67,7 +67,7 @@ class LayeredAnalysisService:
             source_path=source_path or description,  # Store description in source_path
             status="created",
             current_phase="initialization",
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         self.db.add(session)
         await self.db.commit()
@@ -100,7 +100,7 @@ class LayeredAnalysisService:
             raise ValueError(f"Session not found: {session_id}")
 
         session.status = "running"
-        session.started_at = datetime.utcnow()
+        session.started_at = datetime.now(timezone.utc)
         self.db.commit()
 
         results = {
@@ -150,7 +150,7 @@ class LayeredAnalysisService:
 
             # Mark session complete
             session.status = "completed"
-            session.completed_at = datetime.utcnow()
+            session.completed_at = datetime.now(timezone.utc)
             self.db.commit()
 
             results["status"] = "completed"
@@ -190,7 +190,7 @@ class LayeredAnalysisService:
             includes_analysis=result.get("includes_analysis", {}),
             sql_patterns=result.get("sql_patterns", {}),
             recommendations=result.get("recommendations", []),
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         self.db.add(db_analysis)
         self.db.commit()
@@ -221,7 +221,7 @@ class LayeredAnalysisService:
             cursor_usage=result.get("cursor_usage", {}),
             transaction_patterns=result.get("transaction_patterns", {}),
             recommendations=result.get("recommendations", []),
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         self.db.add(db_analysis)
         self.db.commit()
@@ -251,7 +251,7 @@ class LayeredAnalysisService:
             threats=result.get("matrix", {}).get("threats", []),
             prioritization=result.get("prioritization", {}),
             migration_readiness=result.get("migration_readiness", {}),
-            created_at=datetime.utcnow()
+            created_at=datetime.now(timezone.utc)
         )
         self.db.add(db_swot)
         self.db.commit()
@@ -289,7 +289,7 @@ class LayeredAnalysisService:
                 risk_if_not_done=item.risk_if_not_done.value,
                 implementation_notes=item.implementation_notes,
                 status=item.status,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             self.db.add(db_item)
 
@@ -502,7 +502,7 @@ class LayeredAnalysisService:
             raise ValueError(f"Invalid status: {status}. Must be one of {valid_statuses}")
 
         item.status = status
-        item.updated_at = datetime.utcnow()
+        item.updated_at = datetime.now(timezone.utc)
         self.db.commit()
 
         return self._serialize_improvement(item)

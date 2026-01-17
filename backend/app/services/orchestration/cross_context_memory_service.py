@@ -21,7 +21,7 @@ import json
 import hashlib
 import shutil
 from enum import Enum
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from dataclasses import dataclass, field, asdict
 from typing import Optional, List, Dict, Any, Set, Union
@@ -67,8 +67,8 @@ class MemoryEntry:
     value: Any
     memory_type: MemoryType
     scope: MemoryScope
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
-    updated_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     expires_at: Optional[datetime] = None
     tags: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -77,7 +77,7 @@ class MemoryEntry:
         """Check if this entry has expired."""
         if self.expires_at is None:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to JSON-serializable dictionary."""
@@ -122,7 +122,7 @@ class Goal:
     progress: float = 0.0   # 0.0 to 1.0
     sub_goals: List[str] = field(default_factory=list)
     parent_goal: Optional[str] = None
-    created_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: Optional[datetime] = None
     completion_criteria: List[str] = field(default_factory=list)
     blockers: List[str] = field(default_factory=list)
@@ -131,7 +131,7 @@ class Goal:
         """Mark goal as completed."""
         self.status = "completed"
         self.progress = 1.0
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(timezone.utc)
 
     def update_progress(self, progress: float) -> None:
         """Update goal progress (0.0 to 1.0)."""
@@ -152,7 +152,7 @@ class Decision:
     decision: str
     rationale: str
     alternatives_considered: List[str] = field(default_factory=list)
-    made_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    made_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     context: Dict[str, Any] = field(default_factory=dict)
     reversible: bool = True
     reverted: bool = False
@@ -233,7 +233,7 @@ class CrossContextMemoryService:
 
     def _generate_session_id(self) -> str:
         """Generate a unique session ID."""
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat()
         return hashlib.md5(timestamp.encode()).hexdigest()[:12]
 
     def _ensure_directories(self) -> None:
@@ -287,7 +287,7 @@ class CrossContextMemoryService:
         """
         expires_at = None
         if ttl_seconds:
-            expires_at = datetime.utcnow() + timedelta(seconds=ttl_seconds)
+            expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl_seconds)
 
         entry = MemoryEntry(
             key=key,
@@ -409,7 +409,7 @@ class CrossContextMemoryService:
             The created Goal
         """
         goal_id = hashlib.md5(
-            f"{description}:{datetime.utcnow().isoformat()}".encode()
+            f"{description}:{datetime.now(timezone.utc).isoformat()}".encode()
         ).hexdigest()[:8]
 
         goal = Goal(
@@ -533,7 +533,7 @@ class CrossContextMemoryService:
             The recorded Decision
         """
         decision_id = hashlib.md5(
-            f"{decision}:{datetime.utcnow().isoformat()}".encode()
+            f"{decision}:{datetime.now(timezone.utc).isoformat()}".encode()
         ).hexdigest()[:8]
 
         dec = Decision(
@@ -568,7 +568,7 @@ class CrossContextMemoryService:
         dec = self._decisions.get(decision_id)
         if dec and dec.reversible and not dec.reverted:
             dec.reverted = True
-            dec.reverted_at = datetime.utcnow()
+            dec.reverted_at = datetime.now(timezone.utc)
             dec.revert_reason = reason
             self._save_decisions()
         return dec
@@ -908,7 +908,7 @@ class CrossContextMemoryService:
             Formatted markdown string
         """
         lines = ["# Cross-Context Memory Export\n"]
-        lines.append(f"*Exported at: {datetime.utcnow().isoformat()}*\n")
+        lines.append(f"*Exported at: {datetime.now(timezone.utc).isoformat()}*\n")
 
         if include_goals:
             lines.append(self.get_goal_file())

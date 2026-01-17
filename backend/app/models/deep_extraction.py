@@ -16,7 +16,7 @@ Tables:
 from sqlalchemy import Column, String, Integer, Text, DateTime, Float, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 from enum import Enum
 
@@ -259,7 +259,7 @@ class ExtractionSession(Base):
     margin_usd = Column(Float, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     completed_at = Column(DateTime, nullable=True)
 
     # Relationships
@@ -319,7 +319,7 @@ class ExtractionRun(Base):
     credit_from_previous = Column(Float, default=0.0)
     amount_charged = Column(Float, nullable=True)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     session = relationship("ExtractionSession", back_populates="runs")
@@ -367,7 +367,7 @@ class ExtractionLLMResult(Base):
     latency_ms = Column(Integer, nullable=True)
     cost_usd = Column(Float, nullable=True)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     session = relationship("ExtractionSession", back_populates="llm_results")
@@ -398,7 +398,7 @@ class ExtractionEnrichment(Base):
     modifications = Column(JSONB, default=[])  # Suggested changes
     confidence_adjustments = Column(JSONB, nullable=True)  # Per-item confidence changes
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     session = relationship("ExtractionSession", back_populates="enrichments")
@@ -474,7 +474,7 @@ class ExtractionConsensus(Base):
     source_conflict_id = Column(UUID(as_uuid=True), ForeignKey('static_llm_conflicts.id', ondelete='SET NULL'), nullable=True)
     from_static_analysis = Column(String(1), default='N')  # Y/N - indicates item originated from static analysis
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Self-referential relationship for hierarchy
     children = relationship("ExtractionConsensus", backref="parent", remote_side=[id], foreign_keys=[parent_id])
@@ -520,7 +520,7 @@ class ExtractionConflict(Base):
     resolved_at = Column(DateTime, nullable=True)
     resolved_by = Column(String(100), nullable=True)
 
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     session = relationship("ExtractionSession", back_populates="conflicts")
@@ -627,8 +627,8 @@ class StaticLLMConflict(Base):
     final_confidence = Column(Float, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
     session = relationship("ExtractionSession", back_populates="static_llm_conflicts")
@@ -665,7 +665,7 @@ class ConflictResolutionHistory(Base):
     notes = Column(Text, nullable=True)
 
     # Timestamp
-    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     conflict = relationship("StaticLLMConflict", back_populates="resolution_history")

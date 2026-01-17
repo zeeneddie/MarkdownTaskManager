@@ -10,7 +10,7 @@ Stores CodeWiki analysis results:
 - Documentation content
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 from sqlalchemy import (
     Column, Integer, String, Text, DateTime, Boolean,
@@ -75,8 +75,8 @@ class CodeWikiAnalysis(Base):
     duration_seconds = Column(Integer)
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime(timezone=True), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     # Relationships
     modules = relationship("CodeWikiModule", back_populates="analysis", cascade="all, delete-orphan")
@@ -140,7 +140,7 @@ class CodeWikiModule(Base):
     documentation_md = Column(Text)  # module*.md content
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     analysis = relationship("CodeWikiAnalysis", back_populates="modules")
@@ -203,7 +203,7 @@ class CodeWikiDiagram(Base):
     png_path = Column(String(500))
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     # Relationships
     analysis = relationship("CodeWikiAnalysis", back_populates="diagrams")
@@ -248,8 +248,8 @@ class CodeWikiAgentContext(Base):
     last_used_at = Column(DateTime(timezone=True))
 
     # Timestamps
-    created_at = Column(DateTime(timezone=True), default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime(timezone=True), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), onupdate=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         return {

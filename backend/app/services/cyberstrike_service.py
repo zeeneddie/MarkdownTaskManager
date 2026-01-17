@@ -57,7 +57,7 @@ import re
 import subprocess
 import tempfile
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -370,13 +370,13 @@ class CyberStrikeService:
             raise ValueError("No path specified for security scan")
 
         self._scan_count += 1
-        scan_id = f"scan-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{self._scan_count}"
+        scan_id = f"scan-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}-{self._scan_count}"
 
         result = ScanResult(
             scan_id=scan_id,
             project_path=scan_path,
             scan_type=scan_type,
-            started_at=datetime.utcnow()
+            started_at=datetime.now(timezone.utc)
         )
 
         try:
@@ -422,13 +422,13 @@ class CyberStrikeService:
             # Generate summary
             result.summary = self._generate_summary(result.vulnerabilities)
             result.status = "completed"
-            result.completed_at = datetime.utcnow()
+            result.completed_at = datetime.now(timezone.utc)
 
         except Exception as e:
             logger.error(f"Security scan failed: {e}")
             result.status = "failed"
             result.error = str(e)
-            result.completed_at = datetime.utcnow()
+            result.completed_at = datetime.now(timezone.utc)
 
         return result
 
@@ -1098,7 +1098,7 @@ class CyberStrikeService:
                 "blocking_issues": result.summary.get("blocking_issues", [])[:10],  # Top 10
             },
             "recommendations": self._generate_quinn_recommendations(result),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
     def _generate_quinn_recommendations(self, result: ScanResult) -> List[str]:

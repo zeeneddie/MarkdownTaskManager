@@ -14,7 +14,7 @@ Supports:
 from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 import logging
 
@@ -1048,7 +1048,7 @@ async def sync_backlog_to_kanban(
                     epic.status = map_status_to_epic_status(epic_info.status)
                     epic.priority = epic_info.priority.lower()
                     epic.estimated_story_points = epic_info.story_points
-                    epic.updated_at = datetime.utcnow()
+                    epic.updated_at = datetime.now(timezone.utc)
                 else:
                     # Create new
                     epic = Epic(
@@ -1080,7 +1080,7 @@ async def sync_backlog_to_kanban(
                         if feature:
                             feature.title = feature_info.title
                             feature.status = map_status_to_epic_status(feature_info.status)
-                            feature.updated_at = datetime.utcnow()
+                            feature.updated_at = datetime.now(timezone.utc)
                         else:
                             feature = Feature(
                                 id=feature_id,
@@ -1114,7 +1114,7 @@ async def sync_backlog_to_kanban(
                                     story.status = map_status_to_story_status(story_info.status)
                                     story.priority = story_info.priority.lower()
                                     story.story_points = fib_sp
-                                    story.updated_at = datetime.utcnow()
+                                    story.updated_at = datetime.now(timezone.utc)
                                 else:
                                     story = Story(
                                         id=story_id,
@@ -1147,7 +1147,7 @@ async def sync_backlog_to_kanban(
                                             task.title = task_info.title
                                             task.status = TaskStatus.TODO if task_info.status.upper() == "NEW" else TaskStatus.IN_PROGRESS
                                             task.priority = task_info.priority.lower()
-                                            task.updated_at = datetime.utcnow()
+                                            task.updated_at = datetime.now(timezone.utc)
                                         else:
                                             task = Task(
                                                 id=task_id,

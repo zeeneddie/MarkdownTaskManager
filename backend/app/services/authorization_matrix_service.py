@@ -19,7 +19,7 @@ Date: 2026-01-01
 import logging
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set, Tuple
 from uuid import uuid4
 
@@ -249,7 +249,7 @@ class AuthorizationMatrixService:
         result = AuthorizationExtractionResult(
             session_id=session_id,
             project_id=project_id,
-            started_at=datetime.utcnow()
+            started_at=datetime.now(timezone.utc)
         )
         self._sessions[session_id] = result
         logger.info(f"Created authorization extraction session: {session_id}")
@@ -311,7 +311,7 @@ class AuthorizationMatrixService:
         result.matrix = matrix
         result.average_confidence = matrix.confidence
 
-        result.completed_at = datetime.utcnow()
+        result.completed_at = datetime.now(timezone.utc)
         result.duration_seconds = (
             result.completed_at - result.started_at
         ).total_seconds()

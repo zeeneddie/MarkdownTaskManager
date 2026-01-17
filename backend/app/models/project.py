@@ -8,7 +8,7 @@ Used for BMAD workflow project definitions.
 from sqlalchemy import Column, String, Integer, Text, DateTime, CheckConstraint, ForeignKey
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database import Base
 
 
@@ -50,8 +50,8 @@ class Project(Base):
     estimated_days = Column(Integer)
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow())
-    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
+    created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     activated_at = Column(DateTime)
     archived_at = Column(DateTime)
 

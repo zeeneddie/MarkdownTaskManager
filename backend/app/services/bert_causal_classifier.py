@@ -19,7 +19,7 @@ import os
 import json
 import logging
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any, Tuple
 from dataclasses import dataclass, field
 
@@ -577,11 +577,11 @@ class BERTCausalClassifier:
         metadata = {
             "model_name": self.model_name,
             "base_model": self.model_name,
-            "trained_on": datetime.utcnow().isoformat(),
+            "trained_on": datetime.now(timezone.utc).isoformat(),
             "num_training_samples": 0,  # Updated during fine-tuning
             "accuracy": 0.0,
             "f1_score": 0.0,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "config": {
                 "max_length": self.max_length,
                 "temperature": self.temperature,

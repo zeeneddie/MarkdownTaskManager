@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 from app.database import get_db
@@ -670,7 +670,7 @@ async def update_spec_status(
         raise HTTPException(status_code=404, detail="UI specification not found")
 
     spec.status = status
-    spec.updated_at = datetime.utcnow()
+    spec.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(spec)
 
@@ -883,7 +883,7 @@ async def get_implementation_prompt(
 
     # Track usage
     prompt.times_used += 1
-    prompt.last_used_at = datetime.utcnow()
+    prompt.last_used_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(prompt)
 
@@ -1642,7 +1642,7 @@ async def export_full_design_package(
     export_data = {
         "project_id": project_id,
         "target_stack": target_stack,
-        "exported_at": datetime.utcnow().isoformat(),
+        "exported_at": datetime.now(timezone.utc).isoformat(),
         "artifacts": {}
     }
 
@@ -1779,7 +1779,7 @@ async def export_design_as_markdown(
     md_parts = [
         f"# Design Documentation: {project_id}",
         "",
-        f"Generated: {datetime.utcnow().isoformat()}",
+        f"Generated: {datetime.now(timezone.utc).isoformat()}",
         "",
         "---",
         "",

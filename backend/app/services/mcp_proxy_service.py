@@ -139,7 +139,7 @@ class MCPProxyService:
         server = await self.get_server(server_id)
         if server:
             server.health_status = status
-            server.last_health_check = datetime.utcnow()
+            server.last_health_check = datetime.now(timezone.utc)
             await self.db.commit()
             await self.db.refresh(server)
         return server
@@ -171,7 +171,7 @@ class MCPProxyService:
                 "healthy": healthy,
                 "server_name": server.name,
                 "server_type": server.server_type,
-                "last_check": datetime.utcnow().isoformat()
+                "last_check": datetime.now(timezone.utc).isoformat()
             }
         except Exception as e:
             await self.update_server_health(server_id, "unhealthy")
@@ -439,7 +439,7 @@ class MCPProxyService:
             "tool": tool.tool_name,
             "params": params,
             "mock_result": "Tool execution result",
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
     def _generate_cache_key(self, tool_name: str, params: Dict[str, Any]) -> str:

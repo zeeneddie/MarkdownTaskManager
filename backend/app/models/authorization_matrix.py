@@ -9,7 +9,7 @@ Date: 2026-01-01
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set
 from uuid import uuid4
@@ -188,7 +188,7 @@ class AuthorizationMatrix:
     # Metadata
     source_files: List[str] = field(default_factory=list)
     confidence: float = 1.0
-    extracted_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    extracted_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def get_role_permissions(self, role_name: str) -> List[str]:
         """Get all permissions for a role (including inherited)"""
@@ -340,6 +340,6 @@ class AuthorizationExtractionResult:
     warnings: List[str] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
 
-    started_at: datetime = field(default_factory=lambda: datetime.utcnow())
+    started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     completed_at: Optional[datetime] = None
     duration_seconds: float = 0.0
