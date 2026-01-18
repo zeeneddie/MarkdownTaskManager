@@ -1,0 +1,294 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* MarQed Brand Colors als basis */
+    --marqed-blue-dark: 213 67% 33%;      /* #1A4B8E */
+    --marqed-blue: 224 76% 53%;           /* #2563EB */
+    --marqed-blue-medium: 217 91% 60%;    /* #3B82F6 */
+    --marqed-blue-light: 213 94% 68%;     /* #60A5FA */
+    --marqed-blue-sky: 212 96% 78%;       /* #93C5FD */
+    --marqed-orange-dark: 21 91% 40%;     /* #C2410C */
+    --marqed-orange: 21 90% 48%;          /* #EA580C */
+    --marqed-orange-medium: 25 95% 53%;   /* #F97316 */
+    --marqed-orange-light: 27 96% 61%;    /* #FB923C */
+
+    /* Shadcn/ui variabelen - MarQed themed */
+    --background: 210 20% 98%;            /* Licht blauwgrijs */
+    --foreground: 213 67% 15%;            /* Donker blauw */
+    --card: 0 0% 100%;
+    --card-foreground: 213 67% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 213 67% 15%;
+    --primary: 224 76% 53%;               /* MarQed blauw */
+    --primary-foreground: 210 40% 98%;
+    --secondary: 212 96% 95%;             /* Licht blauw */
+    --secondary-foreground: 213 67% 33%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 213 30% 45%;
+    --accent: 25 95% 53%;                 /* MarQed oranje */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 212 30% 90%;
+    --input: 212 30% 90%;
+    --ring: 224 76% 53%;                  /* MarQed blauw */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 213 67% 8%;
+    --foreground: 210 40% 98%;
+    --card: 213 67% 10%;
+    --card-foreground: 210 40% 98%;
+    --popover: 213 67% 10%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 213 67% 10%;
+    --secondary: 213 40% 18%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 213 40% 18%;
+    --muted-foreground: 212 30% 65%;
+    --accent: 25 95% 53%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 213 40% 18%;
+    --input: 213 40% 18%;
+    --ring: 217 91% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* ============================================
+   MarQed Brand Styling
+   ============================================ */
+
+/* Primaire gradient - blauw naar oranje accent */
+.marqed-gradient {
+  background: linear-gradient(135deg, #1A4B8E 0%, #2563EB 50%, #3B82F6 100%);
+}
+
+/* Gradient met oranje accent */
+.marqed-gradient-accent {
+  background: linear-gradient(135deg, #2563EB 0%, #3B82F6 60%, #F97316 100%);
+}
+
+/* Oranje accent gradient */
+.marqed-gradient-orange {
+  background: linear-gradient(135deg, #EA580C 0%, #F97316 50%, #FB923C 100%);
+}
+
+/* Subtiele achtergrond gradient */
+.marqed-bg-subtle {
+  background: linear-gradient(180deg,
+    rgba(37, 99, 235, 0.02) 0%,
+    rgba(249, 115, 22, 0.02) 100%
+  );
+}
+
+/* Card hover effect */
+.marqed-card-hover {
+  @apply transition-all duration-300 hover:shadow-lg hover:shadow-marqed-blue/10 hover:-translate-y-0.5;
+}
+
+/* ============================================
+   Circuit Pattern Background
+   ============================================ */
+
+/* Circuit patroon als subtiele achtergrond */
+.marqed-circuit-bg {
+  position: relative;
+}
+
+.marqed-circuit-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/marqed-logo.svg');
+  background-repeat: no-repeat;
+  background-position: bottom right;
+  background-size: 400px auto;
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Watermark in rechteronder hoek */
+.marqed-watermark {
+  position: relative;
+}
+
+.marqed-watermark::after {
+  content: '';
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 120px;
+  height: 40px;
+  background-image: url('/marqed-logo.svg');
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Circuit lijnen decoratie */
+.marqed-circuit-lines {
+  background-image:
+    linear-gradient(90deg, rgba(96, 165, 250, 0.1) 1px, transparent 1px),
+    linear-gradient(rgba(96, 165, 250, 0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Decoratieve cirkel nodes zoals in het logo */
+.marqed-node {
+  @apply w-2 h-2 rounded-full bg-marqed-blue-light;
+  box-shadow: 0 0 8px rgba(96, 165, 250, 0.5);
+}
+
+.marqed-node-orange {
+  @apply w-2 h-2 rounded-full bg-marqed-orange;
+  box-shadow: 0 0 8px rgba(249, 115, 22, 0.5);
+}
+
+/* ============================================
+   Login Page Specific
+   ============================================ */
+
+.login-bg {
+  background: linear-gradient(135deg,
+    #f8fafc 0%,
+    rgba(37, 99, 235, 0.05) 50%,
+    rgba(249, 115, 22, 0.03) 100%
+  );
+  min-height: 100vh;
+}
+
+/* Logo container met glow effect */
+.logo-glow {
+  filter: drop-shadow(0 0 20px rgba(37, 99, 235, 0.15));
+}
+
+/* ============================================
+   Animated Elements
+   ============================================ */
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* ============================================
+   Typography
+   ============================================ */
+
+/* Headline met gradient */
+.marqed-headline {
+  background: linear-gradient(135deg, #1A4B8E 0%, #2563EB 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Accent tekst */
+.marqed-accent-text {
+  @apply text-marqed-orange font-semibold;
+}
+
+/* ============================================
+   Buttons & Interactive
+   ============================================ */
+
+/* Primary button met MarQed styling */
+.btn-marqed {
+  @apply bg-marqed-blue hover:bg-marqed-blue-dark text-white font-medium;
+  @apply transition-all duration-200;
+  @apply shadow-md hover:shadow-lg hover:shadow-marqed-blue/25;
+}
+
+/* Orange accent button */
+.btn-marqed-accent {
+  @apply bg-marqed-orange hover:bg-marqed-orange-dark text-white font-medium;
+  @apply transition-all duration-200;
+  @apply shadow-md hover:shadow-lg hover:shadow-marqed-orange/25;
+}
+
+/* ============================================
+   Status Colors
+   ============================================ */
+
+.status-active {
+  @apply bg-emerald-100 text-emerald-800 border border-emerald-200;
+}
+
+.status-pending {
+  @apply bg-marqed-orange-light/20 text-marqed-orange-dark border border-marqed-orange-light/30;
+}
+
+.status-completed {
+  @apply bg-marqed-blue-light/20 text-marqed-blue-dark border border-marqed-blue-light/30;
+}
+
+/* ============================================
+   Scrollbar Styling
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-marqed-blue-sky/20 rounded-full;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-marqed-blue-light/40 rounded-full;
+  @apply hover:bg-marqed-blue/50;
+}
+
+/* ============================================
+   Focus States
+   ============================================ */
+
+.focus-marqed:focus {
+  @apply outline-none ring-2 ring-marqed-blue ring-offset-2;
+}
+
+.focus-marqed:focus-visible {
+  @apply outline-none ring-2 ring-marqed-blue ring-offset-2;
+}
