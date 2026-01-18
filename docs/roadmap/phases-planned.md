@@ -2,7 +2,7 @@
 
 **Project:** MarQed AI Agent Software Platform
 **Period:** Week 158+ (2026-01-XX onwards)
-**Last Updated:** 2026-01-15 (Fase 31 + Fase 24-A1 + K3 + D1 + D2 + K1 + K2 + A4 + E1 + J1 COMPLETE)
+**Last Updated:** 2026-01-17 (Fase 50 ML Novel Vulnerability Detection toegevoegd)
 
 ---
 
@@ -15,6 +15,7 @@
 | [phases-current.md](phases-current.md) | Current work (Week 144) |
 | **This file** | Planned work overview (Fase 22+) |
 | [gap-analysis-complete-roadmap.md](gap-analysis-complete-roadmap.md) | Complete GAP analysis (75 items) |
+| [gap-analysis-agent-security.md](../research/gap-analysis-agent-security.md) | **NEW** Agent↔Security service gap analysis (Fase 37) |
 | [migration-pattern-catalog.md](migration-pattern-catalog.md) | **NEW** 25 migration patterns reference |
 
 ---
@@ -55,6 +56,11 @@
 | **M1** | 4.0 | Export Multi-Format | PLANNED | CSV/Excel/ODS/MS Project |
 | **A3** | 3.7 | Technology Radar | PLANNED | End-of-life tracking |
 | **A5** | 3.5 | Complexity Dashboard | PLANNED | Module complexity view |
+| **KB1** | 4.5 | Famous-Bugs Knowledge Base | PLANNED | Integrate [famous-bugs](https://github.com/zeeneddie/famous-bugs) into ChromaDB |
+| **KB2** | 5.0 | Python-Errors Knowledge Base | PLANNED | Integrate [python-errors](https://github.com/zeeneddie/python-errors) - 13 error categorieën |
+| **KB3** | 4.0 | Logical Errors Dataset (C#) | PLANNED | Integrate [logicalErrors](https://github.com/zeeneddie/logicalErrors) - 5 modules .NET patterns |
+| **KB4** | 4.0 | Logical Errors Dataset (C/Python) | PLANNED | Integrate [correctLogicalErrors](https://github.com/zeeneddie/correctLogicalErrors) - multi-lang examples |
+| **KB5** | 5.5 | Post-Mortems Knowledge Base | PLANNED | Integrate [danluu/post-mortems](https://github.com/danluu/post-mortems) - 11.9k⭐ outage patterns |
 
 ### GAP Analysis Implementation (Week 163-244)
 
@@ -67,18 +73,129 @@
 | **28** | 215-226 | GAP Advanced Integrations | 10 | [gap-phases.md](phases/gap-phases.md#fase-28) |
 | **GAP-29** | 227-244 | GAP Innovation & Scale | 9 | [gap-phases.md](phases/gap-phases.md#fase-gap-29) |
 
-### New Phases (Week 175-184) 🆕
+### 🔴 NEXT: Injection Vulnerability Scanners (Week 159-168)
 
 | Fase | Week | Title | Priority | ROI | Detail |
 |------|------|-------|----------|-----|--------|
-| **32** | 175-180 | Ralph Wiggum Autonomous Loop | HIGH | 8.5 | [fase-32-ralph-wiggum-loop.md](phases/fase-32-ralph-wiggum-loop.md) |
-| **33** | 179-184 | DevStats Developer Metrics | MEDIUM-HIGH | 7.0 | [fase-33-devstats-dashboard.md](phases/fase-33-devstats-dashboard.md) |
+| **41** | 159-168 | **Injection Vulnerability Scanners** | 🔴 **HIGHEST** | 9.8 | [fase-41-injection-vulnerability-scanners.md](phases/fase-41-injection-vulnerability-scanners.md) |
+
+**Critical Gap:** CWE Top 25 coverage currently at 40%. After Fase 41: **96%**
+
+**23 Missing CWEs to implement:**
+- **Tier 1 (P0):** CWE-79 (XSS), CWE-89 (SQLi), CWE-78 (CMDi), CWE-22 (Path), CWE-502 (Deser), CWE-918 (SSRF)
+- **Tier 2 (P1):** CWE-352 (CSRF), CWE-434 (Upload), CWE-94 (Code), CWE-77 (Cmd), CWE-611 (XXE), CWE-90 (LDAP), CWE-943 (NoSQL), CWE-1336 (SSTI)
+- **Tier 3 (P2):** CWE-862, CWE-863, CWE-287, CWE-269, CWE-20, CWE-306, CWE-643, CWE-113, CWE-917
+
+**Fase 41B: Iterative False Negative Cycle (included):**
+- Week 161, 164, 167: False negative hunting after each tier
+- Week 166: FNRemediationDetector (taint analysis scanner)
+- Week 168: Final FN hunt + stabilization
+- Target: False negative rate from ~30% → **<5%**
+
+---
+
+### 🟡 THEN: Advanced False Negative Detection (Week 169-176)
+
+| Fase | Week | Title | Priority | ROI | Detail |
+|------|------|-------|----------|-----|--------|
+| **42** | 169-176 | **Advanced FN Detection** | 🟡 **HIGH** | 8.5 | [fase-42-advanced-fn-detection.md](phases/fase-42-advanced-fn-detection.md) |
+
+**Goal:** Reduce FN rate from **<5%** to **<2%**
+
+---
+
+### 🟢 NEW: Zero-Complaints Green Paper & Maintenance (Week 177-184)
+
+| Fase | Week | Title | Priority | ROI | Detail |
+|------|------|-------|----------|-----|--------|
+| **43** | 177-184 | **Zero-Complaints Strategy** | 🟢 **HIGH** | 8.0 | [GREEN-PAPER-MAINTENANCE-ZERO-COMPLAINTS-PLAN.md](../plans/GREEN-PAPER-MAINTENANCE-ZERO-COMPLAINTS-PLAN.md) |
+
+**Goal:** Reduce complaints from current baseline to **0 critical** (8 weeks), **<5% minor** (12 weeks)
+
+**4 Strategic Pillars:**
+
+| Pillar | Focus | Key Deliverables |
+|--------|-------|------------------|
+| **Preventie** | Schema hardening, input validatie | GP-001/002/003, Pydantic constraints |
+| **Detectie** | Quality pre-checks, proactive scanning | QualityPrecheckService, Schema audit CI/CD |
+| **Respons** | Graceful degradation, auto-retry | Fallback models, exponential backoff |
+| **Feedback** | Quality metrics, user feedback | Metrics dashboard, feedback collection |
+
+**Implementation Timeline:**
+
+| Week | Focus | Deliverables |
+|------|-------|--------------|
+| 177-178 | Foundation | Schema hardening (GP-001/002/003), CI/CD audit script |
+| 179-180 | Detection | QualityPrecheckService, proactive scanning |
+| 181-182 | Response | Graceful degradation, retry policies |
+| 183-184 | Feedback | Quality metrics endpoint, feedback system |
+
+**Success Criteria:**
+
+| Metric | Baseline | Target (8w) | Target (12w) |
+|--------|----------|-------------|--------------|
+| Critical complaints/week | 5+ | 0 | 0 |
+| Minor complaints/week | 15+ | <5 | <2 |
+| First-try approval rate | 60% | 85% | 95% |
+| Session completion rate | 70% | 90% | 95% |
+| LLM timeout rate | 15% | <5% | <2% |
+
+**4 Detection Categories:**
+- **AST Taint Tracking (Week 169-172):** Cross-function data flow analysis for Python/JS/Java
+- **Dynamic Features (Week 170-172):** Detect eval(), reflection, getattr() with user input
+- **Framework Plugins (Week 173-175):** Django, Flask, Express, Spring, Rails, Laravel, ASP.NET
+- **Obfuscation Detection (Week 175-176):** String concat, Base64, Unicode escapes, entropy analysis
+
+**Expected Results:**
+- Cross-function FN: 2.0% → 0.5%
+- Dynamic language FN: 1.25% → 0.5%
+- Framework-specific FN: 1.0% → 0.2%
+- Obfuscation FN: 0.5% → 0.3%
+
+---
+
+### New Phases (Week 177-202) 🆕
+
+| Fase | Week | Title | Priority | ROI | Detail |
+|------|------|-------|----------|-----|--------|
+| **34** | 177-181 | Advanced Error Detectors | HIGH | 8.0 | [fase-34-advanced-error-detectors.md](phases/fase-34-advanced-error-detectors.md) |
+| **35** | 181-185 | Data Integrity Scanners | HIGH | 7.5 | [fase-35-data-integrity-scanners.md](phases/fase-35-data-integrity-scanners.md) |
+| **43** | 177-184 | **Zero-Complaints Strategy** | 🟢 HIGH | 8.0 | [GREEN-PAPER-MAINTENANCE-ZERO-COMPLAINTS-PLAN.md](../plans/GREEN-PAPER-MAINTENANCE-ZERO-COMPLAINTS-PLAN.md) |
+| **36** | 186-192 | Logic & Crypto Scanner | HIGH | 8.5 | [fase-36-logic-crypto-scanner.md](phases/fase-36-logic-crypto-scanner.md) |
+| **37** | 195-202 | Security Agent Integration | **CRITICAL** | 9.5 | [fase-37-security-agent-integration.md](phases/fase-37-security-agent-integration.md) |
+| **32** | 193-198 | Ralph Wiggum Autonomous Loop | HIGH | 8.5 | [fase-32-ralph-wiggum-loop.md](phases/fase-32-ralph-wiggum-loop.md) |
+| **33** | 189-194 | DevStats Developer Metrics | MEDIUM-HIGH | 7.0 | [fase-33-devstats-dashboard.md](phases/fase-33-devstats-dashboard.md) |
+
+### 🧠 ML-Based Detection (Week 203-218)
+
+| Fase | Week | Title | Priority | ROI | Detail |
+|------|------|-------|----------|-----|--------|
+| **50** | 203-218 | **ML Novel Vulnerability Detection** | MEDIUM-HIGH | 7.5 | [fase-50-ml-novel-vulnerability-detection.md](phases/fase-50-ml-novel-vulnerability-detection.md) |
+
+**Doel:** Detecteer de laatste 0.25% "novel patterns" (zero-days) die regex niet kan vangen.
+
+**Architectuur:** NIET in scan flow, maar als **separate learning pipeline**:
+- **Continuous Learning**: GitHub crawler + CVE monitor → train modellen 24/7
+- **Batch Analysis**: Nightly scan van hele codebase met ML → pre-computed findings
+- **Integration**: Orchestrator merged SAST + ML findings (geen performance impact)
+
+**Key Components:**
+- CodeBERT encoder voor code embeddings
+- Autoencoder voor anomaly detection
+- FAISS index voor similarity search tegen known vulnerabilities
+- Feedback loop voor continuous improvement
+
+**Expected Results:** FN rate van 2% → 1% (50% reductie van resterende gaps)
+
+---
 
 ### Future Enhancements (Week 233+)
 
 | Fase | Week | Title | Status | Detail |
 |------|------|-------|--------|--------|
 | **30** | 233-235 | LLM Council Improvements | PLANNED | [fase-30-llm-council-improvements.md](phases/fase-30-llm-council-improvements.md) |
+| **55** | 236+ | LLM-Explained Findings | FUTURE | GPT/Claude explains ML findings |
+| **56** | 240+ | Real-time ML Inference | FUTURE | Lightweight model for in-flow scanning |
 
 ### Supporting Documentation
 
@@ -111,9 +228,30 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 ├── Week 158: Fase 24-A4 Risk Heat Map ✅ COMPLETE (D3.js format, aggregation, 30 tests)
 ├── Week 158: Fase 24-E1 Visual Dependency Graph ✅ COMPLETE (D3.js/Cytoscape/DOT/Mermaid, 35 tests)
 ├── Week 158: Fase 24-J1 Context-Aware Documentation ✅ COMPLETE (AST parsing, multi-format, 34 tests)
-├── Week 157-174: Fase 24 - Quick Wins & Foundation (15 items) 🔄 IN PROGRESS (9/15 done)
-├── Week 175-180: Fase 32 - Ralph Wiggum Autonomous Loop 🆕 PLANNED
-├── Week 179-184: Fase 33 - DevStats Developer Metrics 🆕 PLANNED
+│
+├── 🔴 Week 159-166: Fase 41 - INJECTION VULNERABILITY SCANNERS 🆕 HIGHEST PRIORITY
+│   ├── Week 159: Tier 1A - XSS (CWE-79) + SQL Injection (CWE-89)
+│   ├── Week 160: Tier 1B - CMDi (CWE-78), Path (CWE-22), Deser (CWE-502), SSRF (CWE-918)
+│   ├── Week 161: Tier 2A - Code (CWE-94), XXE (CWE-611), LDAP (CWE-90)
+│   ├── Week 162: Tier 2B - NoSQL (CWE-943), SSTI (CWE-1336), CSRF (CWE-352)
+│   ├── Week 163: Tier 2C - File Upload (CWE-434), Command (CWE-77)
+│   ├── Week 164: Tier 3A - Auth logic (CWE-862, CWE-863, CWE-287)
+│   ├── Week 165: Tier 3B - Privilege (CWE-269, CWE-20, CWE-306)
+│   └── Week 166: Integration + Testing
+│
+├── Week ???: Fase 24-KB1 Famous-Bugs Knowledge Base 📋 PLANNED (ChromaDB integration)
+├── Week ???: Fase 24-KB2 Python-Errors Knowledge Base 📋 PLANNED (13 error categorieën)
+├── Week ???: Fase 24-KB3 Logical Errors C# 📋 PLANNED (.NET patterns)
+├── Week ???: Fase 24-KB4 Logical Errors C/Python 📋 PLANNED (multi-lang)
+├── Week ???: Fase 24-KB5 Post-Mortems Knowledge Base 📋 PLANNED (outage patterns)
+├── Week 157-174: Fase 24 - Quick Wins & Foundation (20 items) 🔄 IN PROGRESS (9/20 done)
+├── Week 167-171: Fase 34 - Advanced Error Detectors (Deadlock + Performance) 🆕 PLANNED
+├── Week 171-175: Fase 35 - Data Integrity Scanners (Race + Resource) 🆕 PLANNED
+├── Week 176-182: Fase 36 - Logic & Crypto Scanner (Crypto + Control Flow + Boolean) 🆕 PLANNED
+├── Week 177-184: Fase 43 - Zero-Complaints Green Paper & Maintenance 🆕 PLANNED
+├── Week 183-188: Fase 32 - Ralph Wiggum Autonomous Loop 🆕 PLANNED
+├── Week 185-192: Fase 37 - Security Agent Integration 🆕 CRITICAL (6 touchpoints, 130 tests)
+├── Week 187-192: Fase 33 - DevStats Developer Metrics 🆕 PLANNED
 ├── Week 185-200: Fase 25 - Core Platform Enhancement (18 items)
 ├── Week 201-214: Fase 26 - AI & Automation (12 items)
 ├── Week 215-224: Fase 27 - Testing Excellence (8 items)
@@ -135,11 +273,16 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 | Stage Council Review | 23.6 | ~120 | 4 | ✅ COMPLETE |
 | CWE Security Scanners | 31 | ~40 | 1 | ✅ COMPLETE |
 | Legacy Quickscan | 24-A1 | ~16 | 1 | ✅ COMPLETE |
+| **🔴 Injection Vulnerability Scanners** | 41 | ~200 | 8 | 🔴 **NEXT** |
+| **Advanced Error Detectors** | 34 | ~48 | 5 | 🆕 PLANNED |
+| **Data Integrity Scanners** | 35 | ~40 | 5 | 🆕 PLANNED |
+| **Logic & Crypto Scanner** | 36 | ~72 | 7 | 🆕 PLANNED |
+| **Security Agent Integration** | 37 | ~100 | 8 | 🆕 **CRITICAL** |
 | **Ralph Wiggum Loop** | 32 | ~160 | 5 | 🆕 PLANNED |
 | **DevStats Dashboard** | 33 | ~152 | 5 | 🆕 PLANNED |
 | GAP Analysis (Rest) | 24-29 | ~1484 | 80 | 🔄 IN PROGRESS |
 | Future | 30 | 72 | 2 | PLANNED |
-| **Total** | **17 phases** | **~2292** | **~110** | |
+| **Total** | **18 phases** | **~2392** | **~118** | |
 
 ---
 
@@ -193,14 +336,22 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 │   ✅ COMPLETE   │◄──────────────────│   ✅ COMPLETE   │
 └────────┬────────┘  (uses security)  └────────┬────────┘
          │                                     │
-         └──────────────────┬──────────────────┘
-                            │
-                            ▼
-                   ┌─────────────────┐
-                   │   Fase 24       │
-                   │ Quick Wins (K3) │
-                   │   🔄 NEXT       │
-                   └─────────────────┘
+         ├─────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────┐
+│    Fase 37      │
+│ Security Agent  │◄───── 6 workflow touchpoints
+│ Integration     │       (Quinn, Brown/Green Paper,
+│   🆕 CRITICAL   │        Kanban, Maintenance, Migration)
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Fase 24       │
+│ Quick Wins (K3) │
+│   🔄 NEXT       │
+└─────────────────┘
 ```
 
 ---
@@ -221,5 +372,12 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 | [fase-31-cwe-security-scanners.md](phases/fase-31-cwe-security-scanners.md) | CWE Top 25 security scanning |
 | [fase-32-ralph-wiggum-loop.md](phases/fase-32-ralph-wiggum-loop.md) | 🆕 Ralph Wiggum autonomous coding loop |
 | [fase-33-devstats-dashboard.md](phases/fase-33-devstats-dashboard.md) | 🆕 DevStats developer metrics dashboard |
+| [fase-34-advanced-error-detectors.md](phases/fase-34-advanced-error-detectors.md) | 🆕 Deadlock + Performance pattern detection |
+| [fase-35-data-integrity-scanners.md](phases/fase-35-data-integrity-scanners.md) | 🆕 Race condition + Resource lifecycle detection |
+| [fase-36-logic-crypto-scanner.md](phases/fase-36-logic-crypto-scanner.md) | 🆕 Crypto + Control flow + Boolean logic detection |
+| [fase-37-security-agent-integration.md](phases/fase-37-security-agent-integration.md) | 🆕 **CRITICAL** SecurityScanOrchestrator → Agent workflows (6 touchpoints) |
+| [fase-41-injection-vulnerability-scanners.md](phases/fase-41-injection-vulnerability-scanners.md) | 🔴 **HIGHEST** Complete CWE Top 25 coverage - 23 missing CWEs (XSS, SQLi, CMDi, etc.) |
+| [fase-24-kb-knowledge-base-integration.md](phases/fase-24-kb-knowledge-base-integration.md) | 🆕 KB1-KB5 Knowledge Base ChromaDB integration |
+| [fase-43-zero-complaints-strategy.md](../plans/GREEN-PAPER-MAINTENANCE-ZERO-COMPLAINTS-PLAN.md) | 🆕 Zero-Complaints Green Paper & Maintenance (4 pillars, 8 weken) |
 | [gap-phases.md](phases/gap-phases.md) | GAP Analysis Fasen 24-29 |
 | [technical-debt-backlog.md](phases/technical-debt-backlog.md) | Tech debt & Falcon H1R |
