@@ -1,8 +1,8 @@
 # MarQed Platform Roadmap
 
 **Project:** MarQed AI Agent Software Platform
-**Last Updated:** Week 158 (2026-01-15)
-**Total Phases:** 33+ | **Timeline:** Week 144-244
+**Last Updated:** Week 158 (2026-01-18)
+**Total Phases:** 35+ | **Timeline:** Week 144-250
 
 ---
 
@@ -32,7 +32,11 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 ├── Fase 28: Advanced Integrations (10 items)
 ├── Fase GAP-29: Innovation & Scale (9 items)
 ├── Fase 32: Ralph Wiggum Autonomous Loop (Week 175-180) 🆕
-└── Fase 33: DevStats Developer Metrics (Week 179-184) 🆕
+├── Fase 33: DevStats Developer Metrics (Week 179-184) 🆕
+├── Fase 43: Zero-Complaints Green Paper & Maintenance (Week 177-184) 🆕
+├── Fase 44: AI Code Complaints Strategy (Week 185-192) 🆕
+├── Fase 45: Reverse Traceability Service (Week 193-200) 🆕
+└── Fase 46: User Workflow Documentation (Week 201-208) 🆕
 ```
 
 ---
@@ -275,6 +279,153 @@ See: [docs/roadmap/phases/fase-33-devstats-dashboard.md](docs/roadmap/phases/fas
 
 ---
 
+## Fase 44: AI Code Complaints Strategy (Week 185-192)
+
+**Status:** PLANNED
+**Priority:** CRITICAL (ROI 9.0)
+**Effort:** 200 uur (~6-7 weken)
+
+Research reveals AI-generated code has 1.7x more problems than human code, with 51% containing security vulnerabilities. This fase implements systematic countermeasures using MarQed's agent ecosystem.
+
+| Component | Description |
+|-----------|-------------|
+| **AIComplaintDashboard** | Track metrics vs industry baselines (CodeRabbit, IEEE, Qodo) |
+| **ContextPreservationService** | ADR tracking across code generations |
+| **RealTimeQualityFeedback** | During-generation validation pipeline |
+| **AutomatedFixGenerator** | Security vulnerability auto-fixes with confidence scoring |
+| **LearningSystem** | Track patterns causing issues, continuous improvement |
+| **GuardrailsPipeline** | 6-layer guardrails: CodeGen, Security, Architecture, Debt, Context, LLM |
+
+**6 Attack Categories:**
+
+| Category | Agent Assignment | Target |
+|----------|------------------|--------|
+| Quality & Correctness | Quinn + LLM Council | < 0.5x human issues |
+| Security Vulnerabilities | Quinn + 21 Detectors | < 10% vulnerable |
+| Architecture Problems | Felix + Anti-Pattern | >= 85% alignment |
+| Technical Debt | Marcus + Clean Code | <= 3% duplication |
+| Context & Understanding | Felix + Diana | ADR tracking |
+| Productivity Paradox | Quinn + Tessa | < 5% incident rate |
+
+**Success Metrics:**
+
+| Metric | Industry AI | MarQed Target |
+|--------|-------------|---------------|
+| Major Issues/100 LOC | 1.7x human | < 0.5x human |
+| Security Finding Rate | 51% | < 10% |
+| SQL Injection Rate | 36% | < 1% |
+| Architecture Alignment | Unknown | >= 85% |
+| Test Coverage | Variable | >= 80% |
+| Incident Rate per PR | 23.5% | < 5% |
+
+See: [docs/roadmap/phases/fase-44-ai-code-complaints-strategy.md](docs/roadmap/phases/fase-44-ai-code-complaints-strategy.md)
+
+---
+
+## Fase 45: Reverse Traceability Service (Week 193-200)
+
+**Status:** PLANNED
+**Priority:** HIGH (ROI 7.5)
+**Effort:** 160 uur (~5 weken)
+
+Unified Code-to-Requirements reverse traceability service die bestaande services orkestreert om de vraag te beantwoorden: "Welke requirements implementeert deze code?"
+
+| Component | Description |
+|-----------|-------------|
+| **ReverseTraceabilityService** | Centrale orchestratie van rule extraction, deep extraction, requirement generatie |
+| **RequirementGenerator** | Business rules → User Stories transformatie met templates |
+| **Database Models** | 4 nieuwe tabellen: sessions, requirements, links, documents |
+| **RequirementsDocumentGenerator** | SRS en User Stories document generatie (PDF/DOCX/HTML) |
+| **TraceabilityMatrix Integration** | Bidirectionele code ↔ requirement links |
+| **Brown Paper Integration** | Optionele fase 6 in enhanced analysis |
+| **Standalone Support** | Analyse van willekeurige source repo (zonder project) |
+
+**Pipeline:**
+
+```
+Code → BusinessRuleExtractor → DeepExtraction → RequirementGenerator → TraceabilityMatrix
+                ↓                     ↓                    ↓                    ↓
+           IF-THEN rules        6-cycle hybrid      User Stories         Bidirectional
+           Validation           Static+LLM          Acceptance           Links + Metrics
+           Authorization        analysis            Criteria
+```
+
+**Identified Gaps (Addressed):**
+
+| Gap | Solution |
+|-----|----------|
+| Brown Paper ↔ TraceabilityMatrix niet geintegreerd | Unified service met Brown Paper hooks |
+| Business Rules extracted maar niet gelinkt | RequirementGenerator met rule→story links |
+| Geen reverse traceability workflow | Dedicated `/api/reverse-traceability/*` endpoints |
+| DeepExtraction niet verbonden aan requirements | Pipeline orchestratie in ReverseTraceabilityService |
+
+**Success Metrics:**
+
+| Metric | Target |
+|--------|--------|
+| Traceability Coverage | >= 80% code linked |
+| Rule-to-Requirement Linking | >= 90% rules linked |
+| Requirement Generation Accuracy | >= 75% human acceptance |
+| Processing Time | < 5 min per 10K LOC |
+
+See: [docs/roadmap/phases/fase-45-reverse-traceability-service.md](docs/roadmap/phases/fase-45-reverse-traceability-service.md)
+
+---
+
+## Fase 46: User Workflow Documentation (Week 201-208)
+
+**Status:** PLANNED
+**Priority:** HIGH (ROI 7.0)
+**Effort:** 140 uur (~4-5 weken)
+
+Automatische documentatie van user workflows door applicaties heen, met ASCII schermafbeeldingen, menu opties en navigatiepaden per gebruikerstype.
+
+| Component | Description |
+|-----------|-------------|
+| **WorkflowExtractorService** | Extract workflows uit routes, templates, auth decorators |
+| **ASCIIScreenGenerator** | Genereer ASCII representaties van schermen |
+| **UserPersona Detection** | Detecteer gebruikerstypen uit code (admin, user, guest) |
+| **WorkflowDocumentGenerator** | Markdown/HTML/PDF documentatie met flow diagrams |
+| **Mermaid Integration** | Visuele flowcharts van gebruikerspaden |
+
+**Workflow Documentatie Voorbeeld:**
+
+```
+WORKFLOW: Administrator - Gebruiker Aanmaken
+Persona: Administrator | Stappen: 5 | Geschatte tijd: 3 min
+
+STAP 1: Dashboard
+┌───────────────────────────────────────────┐
+│  ╔═══════════════════════════════════╗    │
+│  ║  Menu:                            ║    │
+│  ║  [1] Gebruikers  ◄── Keuze        ║    │
+│  ║  [2] Projecten                    ║    │
+│  ╚═══════════════════════════════════╝    │
+└───────────────────────────────────────────┘
+Keuzes: [1]→Stap 2 | [2]→Workflow B
+
+STAP 2: Gebruikersbeheer
+┌───────────────────────────────────────────┐
+│  [Nieuwe Gebruiker] [Zoeken]              │
+│  ─────────────────────────────            │
+│  Jan Jansen    jan@...    [Bewerk]        │
+└───────────────────────────────────────────┘
+Acties: [Nieuwe Gebruiker]→Stap 3
+```
+
+**Success Metrics:**
+
+| Metric | Target |
+|--------|--------|
+| Persona Detection Accuracy | >= 85% |
+| Screen Detection Coverage | >= 80% |
+| Workflow Completeness | >= 75% |
+| ASCII Readability | >= 90% |
+
+See: [docs/roadmap/phases/fase-46-user-workflow-documentation.md](docs/roadmap/phases/fase-46-user-workflow-documentation.md)
+
+---
+
 ## Design Principles
 
 1. **Small, Specialized Analyzers** - COBOL items (B2, B3, B4) blijven apart: kwaliteit boven snelheid
@@ -296,6 +447,10 @@ See: [docs/roadmap/phases/fase-33-devstats-dashboard.md](docs/roadmap/phases/fas
 | [workflow-separation-plan.md](docs/architecture/workflow-separation-plan.md) | Brown Paper/Migration/Quality separation |
 | [fase-32-ralph-wiggum-loop.md](docs/roadmap/phases/fase-32-ralph-wiggum-loop.md) | Ralph Wiggum autonomous loop |
 | [fase-33-devstats-dashboard.md](docs/roadmap/phases/fase-33-devstats-dashboard.md) | DevStats developer metrics |
+| [GREEN-PAPER-MAINTENANCE-ZERO-COMPLAINTS-PLAN.md](docs/plans/GREEN-PAPER-MAINTENANCE-ZERO-COMPLAINTS-PLAN.md) | 🆕 Fase 43: Zero-Complaints Strategy |
+| [fase-44-ai-code-complaints-strategy.md](docs/roadmap/phases/fase-44-ai-code-complaints-strategy.md) | 🆕 Fase 44: AI Code Complaints Strategy |
+| [fase-45-reverse-traceability-service.md](docs/roadmap/phases/fase-45-reverse-traceability-service.md) | 🆕 Fase 45: Reverse Traceability Service |
+| [fase-46-user-workflow-documentation.md](docs/roadmap/phases/fase-46-user-workflow-documentation.md) | 🆕 Fase 46: User Workflow Documentation |
 
 ---
 
@@ -320,10 +475,14 @@ See: [docs/roadmap/phases/fase-33-devstats-dashboard.md](docs/roadmap/phases/fas
 | **Secret Detection (K3)** | 157 | 50+ patterns, entropy detection ✅ |
 | **Ralph Wiggum Loop (Fase 32)** | 178 | Autonomous agent execution, guardrails, overnight coding |
 | **DevStats Dashboard (Fase 33)** | 184 | Git contribution analytics, release tracking, bus factor |
+| **Zero-Complaints Strategy (Fase 43)** | 184 | Zero critical complaints, <5% minor, schema hardening, quality metrics |
+| **AI Code Complaints Strategy (Fase 44)** | 185-192 | 3x improvement over industry AI code metrics |
+| **Reverse Traceability Service (Fase 45)** | 193-200 | Code→Requirements pipeline, DB opslag, requirements docs, >=80% coverage |
+| **User Workflow Documentation (Fase 46)** | 201-208 | ASCII schermen, user workflows, persona detection, >=85% accuracy |
 | **COBOL Support** | 185 | B1 Analyzer complete |
 | **LLM Collaboration** | 195 | B12 Framework active |
 | **Full Platform** | 250 | All 75+ items complete |
 
 ---
 
-*Generated: Week 157 (2026-01-14)*
+*Generated: Week 158 (2026-01-18)*

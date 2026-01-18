@@ -152,6 +152,53 @@ MarkdownTaskManager/
 └── docs/                 # Additional docs
 ```
 
+## Development Guidelines
+
+### Requirements Governance (Internal Developers)
+
+Before adding any new requirement or feature to the MarQed.ai platform, follow this process:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                 NEW REQUIREMENT GOVERNANCE                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  1. EXISTENCE CHECK                                              │
+│     └── Does this requirement already exist (fully/partially)?   │
+│         ├── Search existing Fases in ROADMAP.md                  │
+│         ├── Check gap-analysis-complete-roadmap.md               │
+│         └── Review related services in backend/app/services/     │
+│                                                                  │
+│  2. DECISION TREE                                                │
+│     ├── EXISTS FULLY    → Use existing, do not duplicate         │
+│     ├── EXISTS PARTIAL  → Extend existing requirement            │
+│     └── DOES NOT EXIST  → Proceed to alignment check             │
+│                                                                  │
+│  3. ALIGNMENT CHECK                                              │
+│     └── Does the new requirement align with existing ones?       │
+│         ├── Check for conflicts with current architecture        │
+│         ├── Verify consistency with existing Fases               │
+│         └── Ensure no duplicate functionality under new name     │
+│                                                                  │
+│  4. DOCUMENT & IMPLEMENT                                         │
+│     └── Only after checks pass:                                  │
+│         ├── Add to ROADMAP.md with proper Fase number            │
+│         ├── Create detailed spec in docs/roadmap/phases/         │
+│         └── Reference existing components where applicable       │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Key Principle:** Build upon what exists. Every new requirement should leverage existing capabilities rather than reinventing them.
+
+| Check | Where to Look |
+|-------|---------------|
+| Existing Fases | [ROADMAP.md](ROADMAP.md) |
+| Gap Analysis Items | [gap-analysis-complete-roadmap.md](docs/roadmap/gap-analysis-complete-roadmap.md) |
+| Services | `backend/app/services/` (290+ services) |
+| API Endpoints | `backend/app/api/` (800+ endpoints) |
+| Database Models | `backend/app/models/` |
+
 ## Contributing
 
 1. Fork the repository
