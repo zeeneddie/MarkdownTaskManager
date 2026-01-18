@@ -1,6 +1,6 @@
 {
   "model_key": "sp_effort_random_forest",
-  "version": "20260113_195935",
-  "saved_at": "2026-01-13T19:59:35.465888",
+  "version": "20260117_195319",
+  "saved_at": "2026-01-17T19:53:19.144526+00:00",
   "model_type": "forest"
 }
