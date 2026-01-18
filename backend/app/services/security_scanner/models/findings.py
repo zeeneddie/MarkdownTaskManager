@@ -53,6 +53,8 @@ class ScannerType(str, Enum):
     CONCURRENCY_ERROR = "concurrency_error"  # Fase 38: Concurrency/race condition detector (CWE-362)
     WEB_SECURITY = "web_security"  # Fase 39: Web security (CWE-1321, 1236, 1284)
     PATH_SECURITY = "path_security"  # Fase 39: Path security (CWE-427, 428, 1333)
+    INJECTION = "injection"  # Fase 41: Injection vulnerabilities (XSS, SQLi, CMDi, etc.)
+    AUTH_LOGIC = "auth_logic"  # Fase 41: Authorization logic (CWE-862, 863, 287, etc.)
 
 
 # CWE Top 25 (2023) mapping for quick reference

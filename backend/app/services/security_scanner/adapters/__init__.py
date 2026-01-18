@@ -137,6 +137,21 @@ from .path_security_detector import (
     create_path_security_detector,
 )
 
+# Fase 41: Injection Vulnerability Scanners
+from .injection_detector import (
+    InjectionDetector,
+    InjectionRule,
+    ALL_INJECTION_RULES,
+    create_injection_detector,
+)
+
+from .auth_logic_detector import (
+    AuthLogicDetector,
+    AuthLogicRule,
+    ALL_AUTH_LOGIC_RULES,
+    create_auth_logic_detector,
+)
+
 
 __all__ = [
     # Base classes
@@ -231,4 +246,14 @@ __all__ = [
     "PathSecurityRule",
     "PATH_SECURITY_RULES",
     "create_path_security_detector",
+    # Fase 41: Injection Detector
+    "InjectionDetector",
+    "InjectionRule",
+    "ALL_INJECTION_RULES",
+    "create_injection_detector",
+    # Fase 41: Auth Logic Detector
+    "AuthLogicDetector",
+    "AuthLogicRule",
+    "ALL_AUTH_LOGIC_RULES",
+    "create_auth_logic_detector",
 ]
