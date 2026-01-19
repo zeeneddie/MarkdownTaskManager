@@ -17,7 +17,7 @@ import asyncio
 import time
 import json
 import logging
-from typing import Dict, List, Optional, Any, Tuple
+from typing import AsyncGenerator, Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -28,6 +28,15 @@ from app.services.tier_provider_selector import (
     TierProviderSelector,
     LLMCallResult,
     PROVIDER_COSTS,
+)
+from app.services.llm_resilience import (
+    RetryPolicy,
+    get_retry_policy,
+    call_with_retry,
+    circuit_breaker_registry,
+    StreamChunk,
+    StreamingBuffer,
+    stream_with_retry,
 )
 
 
@@ -495,6 +504,104 @@ class ExtractionLLMAdapter:
                 error=str(e)
             )
 
+    async def call_ollama_streaming(
+        self,
+        model: str,
+        prompt: str,
+        system: Optional[str] = None,
+        timeout: int = 300,
+    ) -> AsyncGenerator[StreamChunk, None]:
+        """
+        Call Ollama local provider with streaming response.
+
+        Fase 24.5: Added streaming support for reduced time-to-first-token.
+
+        Yields:
+            StreamChunk objects with progressive response content
+        """
+        provider_id = f"ollama/{model}"
+        buffer = StreamingBuffer()
+
+        try:
+            session = await self._get_session()
+            payload = {
+                "model": model,
+                "prompt": prompt,
+                "stream": True,  # Enable streaming
+            }
+            if system:
+                payload["system"] = system
+
+            async with session.post(
+                f"{settings.OLLAMA_BASE_URL}/api/generate",
+                json=payload,
+                timeout=aiohttp.ClientTimeout(total=timeout)
+            ) as resp:
+                if resp.status != 200:
+                    error_text = await resp.text()
+                    yield StreamChunk(
+                        content="",
+                        is_final=True,
+                        metadata={"error": f"Ollama error {resp.status}: {error_text}"},
+                    )
+                    return
+
+                # Stream response line by line (Ollama uses JSON lines)
+                async for line in resp.content:
+                    if not line:
+                        continue
+
+                    try:
+                        data = json.loads(line.decode())
+                        content = data.get("response", "")
+
+                        if content:
+                            buffer.add_chunk(content)
+                            yield StreamChunk(
+                                content=content,
+                                token_count=1,  # Approximate, Ollama streams token-by-token
+                                is_final=False,
+                            )
+
+                        # Check if this is the final chunk
+                        if data.get("done", False):
+                            # Get final metadata
+                            tokens_in = data.get("prompt_eval_count", 0)
+                            tokens_out = data.get("eval_count", 0)
+
+                            self.selector.update_health(provider_id, True, buffer.total_time_ms)
+
+                            yield StreamChunk(
+                                content="",
+                                token_count=0,
+                                is_final=True,
+                                metadata={
+                                    "total_tokens_input": tokens_in,
+                                    "total_tokens_output": tokens_out,
+                                    "total_time_ms": buffer.total_time_ms,
+                                    "time_to_first_token_ms": buffer.time_to_first_token_ms,
+                                    "provider_id": provider_id,
+                                },
+                            )
+                            return
+
+                    except json.JSONDecodeError:
+                        continue  # Skip malformed lines
+
+        except asyncio.TimeoutError:
+            yield StreamChunk(
+                content="",
+                is_final=True,
+                metadata={"error": f"Timeout after {timeout}s", "partial": True},
+            )
+        except Exception as e:
+            logger.error(f"Ollama streaming error: {e}")
+            yield StreamChunk(
+                content="",
+                is_final=True,
+                metadata={"error": str(e), "partial": True},
+            )
+
     async def call_groq(
         self,
         model: str,
@@ -693,6 +800,164 @@ class ExtractionLLMAdapter:
                 error=str(e)
             )
 
+    async def call_anthropic_streaming(
+        self,
+        model: str,
+        prompt: str,
+        system: Optional[str] = None,
+        timeout: int = 180,
+    ) -> AsyncGenerator[StreamChunk, None]:
+        """
+        Call Anthropic Claude via CLI with streaming response.
+
+        Fase 24.5: Added streaming support for reduced time-to-first-token.
+
+        Uses the `claude` CLI with --stream mode for real-time responses.
+
+        Yields:
+            StreamChunk objects with progressive response content
+        """
+        import shutil
+        import subprocess
+
+        provider_id = f"anthropic/{model}"
+        buffer = StreamingBuffer()
+
+        # Map model names to CLI model flags
+        model_mapping = {
+            "claude-haiku-3.5": "haiku",
+            "claude-sonnet-4": "sonnet",
+            "claude-opus-4.5": "opus",
+            "haiku": "haiku",
+            "sonnet": "sonnet",
+            "opus": "opus",
+        }
+
+        cli_model = model_mapping.get(model, "sonnet")
+
+        # Check if claude CLI is available
+        if not shutil.which("claude"):
+            yield StreamChunk(
+                content="",
+                is_final=True,
+                metadata={"error": "Claude CLI not found. Install with: npm install -g @anthropic-ai/claude-code"},
+            )
+            return
+
+        try:
+            # Build command with streaming
+            cmd = ["claude", "--print", "--model", cli_model]
+            if system:
+                cmd.extend(["--system-prompt", system])
+
+            # Run claude CLI with async streaming
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+            # Send prompt
+            process.stdin.write(prompt.encode())
+            await process.stdin.drain()
+            process.stdin.close()
+
+            # Stream stdout character by character
+            chunk_buffer = ""
+            chunk_size = 50  # Yield every N characters for efficiency
+
+            try:
+                async def read_with_timeout():
+                    return await asyncio.wait_for(
+                        process.stdout.read(1024),
+                        timeout=timeout
+                    )
+
+                while True:
+                    try:
+                        data = await read_with_timeout()
+                        if not data:
+                            break
+
+                        content = data.decode()
+                        buffer.add_chunk(content, len(content.split()))
+                        chunk_buffer += content
+
+                        # Yield when we have enough content
+                        if len(chunk_buffer) >= chunk_size:
+                            yield StreamChunk(
+                                content=chunk_buffer,
+                                token_count=len(chunk_buffer.split()),
+                                is_final=False,
+                            )
+                            chunk_buffer = ""
+
+                    except asyncio.TimeoutError:
+                        if chunk_buffer:
+                            yield StreamChunk(
+                                content=chunk_buffer,
+                                is_final=True,
+                                metadata={"error": f"Timeout after {timeout}s", "partial": True},
+                            )
+                        else:
+                            yield StreamChunk(
+                                content="",
+                                is_final=True,
+                                metadata={"error": f"Timeout after {timeout}s", "partial": bool(buffer.content)},
+                            )
+                        return
+
+                # Yield remaining content
+                if chunk_buffer:
+                    yield StreamChunk(
+                        content=chunk_buffer,
+                        token_count=len(chunk_buffer.split()),
+                        is_final=False,
+                    )
+
+                # Wait for process to finish
+                await process.wait()
+
+                # Calculate cost based on model
+                tokens_input = len(prompt.split()) * 1.3
+                tokens_output = len(buffer.content.split()) * 1.3
+                cost_per_m = {
+                    "haiku": (1.0, 5.0),
+                    "sonnet": (3.0, 15.0),
+                    "opus": (15.0, 75.0),
+                }
+                input_rate, output_rate = cost_per_m.get(cli_model, (3.0, 15.0))
+                cost_usd = (tokens_input / 1_000_000 * input_rate) + (tokens_output / 1_000_000 * output_rate)
+
+                self.selector.update_health(provider_id, True, buffer.total_time_ms)
+
+                yield StreamChunk(
+                    content="",
+                    token_count=0,
+                    is_final=True,
+                    metadata={
+                        "total_tokens_input": int(tokens_input),
+                        "total_tokens_output": int(tokens_output),
+                        "cost_usd": cost_usd,
+                        "total_time_ms": buffer.total_time_ms,
+                        "time_to_first_token_ms": buffer.time_to_first_token_ms,
+                        "provider_id": provider_id,
+                    },
+                )
+
+            except asyncio.CancelledError:
+                process.kill()
+                raise
+
+        except Exception as e:
+            logger.error(f"Anthropic streaming error: {e}")
+            yield StreamChunk(
+                content="",
+                is_final=True,
+                metadata={"error": str(e), "partial": bool(buffer.content)},
+            )
+
     async def call_alibaba(
         self,
         model: str,
@@ -724,18 +989,24 @@ class ExtractionLLMAdapter:
         prompt: str,
         system: Optional[str] = None,
         timeout: int = 300,
+        retry_policy: Optional[RetryPolicy] = None,
+        use_circuit_breaker: bool = True,
     ) -> LLMCallResult:
         """
-        Call an LLM provider by provider_id.
+        Call an LLM provider by provider_id with retry and circuit breaker support.
 
         Args:
             provider_id: Full provider ID (e.g., "ollama/qwen2.5-coder:7b")
             prompt: The prompt to send
             system: Optional system message
             timeout: Timeout in seconds
+            retry_policy: Custom retry policy (default: tier-based policy)
+            use_circuit_breaker: Whether to use circuit breaker (default: True)
 
         Returns:
             LLMCallResult with response and metadata
+
+        Fase 24.5: Added retry logic with exponential backoff and circuit breaker.
         """
         if "/" not in provider_id:
             return LLMCallResult(
@@ -767,7 +1038,102 @@ class ExtractionLLMAdapter:
                 error=f"Unknown provider: {provider}"
             )
 
-        return await method(model, prompt, system, timeout)
+        # Get retry policy based on tier if not provided
+        if retry_policy is None:
+            tier = getattr(self.selector, "current_tier", "STANDARD")
+            retry_policy = get_retry_policy(tier)
+
+        # Get circuit breaker for this provider
+        circuit_breaker = None
+        if use_circuit_breaker:
+            circuit_breaker = await circuit_breaker_registry.get_breaker(provider)
+
+        # Wrap call with retry logic
+        success, result, attempts, error = await call_with_retry(
+            call_func=lambda: method(model, prompt, system, timeout),
+            policy=retry_policy,
+            circuit_breaker=circuit_breaker,
+            operation_name=f"call_llm({provider_id})",
+        )
+
+        if result is not None:
+            # Add retry metadata to result
+            if attempts > 1:
+                result.raw_response = result.raw_response or {}
+                if isinstance(result.raw_response, dict):
+                    result.raw_response["retry_attempts"] = attempts
+            return result
+
+        # If no result returned (all retries failed), create error result
+        return LLMCallResult(
+            provider_id=provider_id,
+            model=model,
+            content="",
+            success=False,
+            error=error or f"Failed after {attempts} attempts"
+        )
+
+    async def call_llm_streaming(
+        self,
+        provider_id: str,
+        prompt: str,
+        system: Optional[str] = None,
+        timeout: int = 300,
+    ) -> AsyncGenerator[StreamChunk, None]:
+        """
+        Call an LLM provider by provider_id with streaming response.
+
+        Fase 24.5: Unified streaming interface for supported providers.
+
+        Args:
+            provider_id: Full provider ID (e.g., "ollama/qwen2.5-coder:7b")
+            prompt: The prompt to send
+            system: Optional system message
+            timeout: Timeout in seconds
+
+        Yields:
+            StreamChunk objects with progressive response content
+
+        Supported providers:
+            - ollama: Full streaming support
+            - anthropic: Full streaming support
+
+        Unsupported providers will yield an error chunk.
+        """
+        if "/" not in provider_id:
+            yield StreamChunk(
+                content="",
+                is_final=True,
+                metadata={"error": f"Invalid provider_id format: {provider_id}"},
+            )
+            return
+
+        provider, model = provider_id.split("/", 1)
+
+        streaming_methods = {
+            "ollama": self.call_ollama_streaming,
+            "anthropic": self.call_anthropic_streaming,
+        }
+
+        method = streaming_methods.get(provider)
+        if not method:
+            yield StreamChunk(
+                content="",
+                is_final=True,
+                metadata={"error": f"Streaming not supported for provider: {provider}. Use call_llm() instead."},
+            )
+            return
+
+        # Use stream_with_retry for automatic retry on connection failures
+        tier = getattr(self.selector, "current_tier", "STANDARD")
+        policy = get_retry_policy(tier)
+
+        async for chunk in stream_with_retry(
+            stream_func=lambda: method(model, prompt, system, timeout),
+            policy=policy,
+            operation_name=f"call_llm_streaming({provider_id})",
+        ):
+            yield chunk
 
     async def call_llms_parallel(
         self,
