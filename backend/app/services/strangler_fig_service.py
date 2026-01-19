@@ -8,13 +8,23 @@ Agent: Miguel (Migration Architect)
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any, Set
+from typing import List, Dict, Optional, Any, Set, Union
 from enum import Enum
 from datetime import datetime
 from uuid import UUID, uuid4
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+def _to_uuid(session_id: Union[UUID, str]) -> UUID:
+    """Convert session_id to UUID, handling both string and UUID inputs."""
+    if isinstance(session_id, UUID):
+        return session_id
+    try:
+        return UUID(session_id)
+    except (ValueError, TypeError):
+        raise ValueError(f"Invalid session_id: {session_id}")
 
 
 # ==================== Enums ====================
@@ -220,15 +230,16 @@ class StranglerFigService:
 
         return session
 
-    async def get_session(self, session_id: UUID) -> Optional[StranglerSession]:
+    async def get_session(self, session_id: Union[UUID, str]) -> Optional[StranglerSession]:
         """Get session by ID."""
-        return self.sessions.get(session_id)
+        uuid_id = _to_uuid(session_id)
+        return self.sessions.get(uuid_id)
 
     # ==================== Feature Flags ====================
 
     async def create_feature_flag(
         self,
-        session_id: UUID,
+        session_id: Union[UUID, str],
         name: str,
         legacy_endpoint: str,
         new_endpoint: str,
@@ -236,7 +247,8 @@ class StranglerFigService:
         initial_status: FeatureFlagStatus = FeatureFlagStatus.OFF
     ) -> Optional[FeatureFlag]:
         """Create a new feature flag for traffic routing."""
-        session = self.sessions.get(session_id)
+        uuid_id = _to_uuid(session_id)
+        session = self.sessions.get(uuid_id)
         if not session:
             return None
 
@@ -259,13 +271,14 @@ class StranglerFigService:
 
     async def update_feature_flag_status(
         self,
-        session_id: UUID,
+        session_id: Union[UUID, str],
         flag_id: str,
         status: FeatureFlagStatus,
         rollout_percentage: Optional[float] = None
     ) -> Optional[FeatureFlag]:
         """Update feature flag status and rollout percentage."""
-        session = self.sessions.get(session_id)
+        uuid_id = _to_uuid(session_id)
+        session = self.sessions.get(uuid_id)
         if not session:
             return None
 
@@ -288,7 +301,7 @@ class StranglerFigService:
 
     async def create_traffic_rule(
         self,
-        session_id: UUID,
+        session_id: Union[UUID, str],
         feature_flag_id: str,
         strategy: TrafficSplitStrategy,
         condition: str,
@@ -296,7 +309,8 @@ class StranglerFigService:
         target: str
     ) -> Optional[TrafficRule]:
         """Create a traffic routing rule."""
-        session = self.sessions.get(session_id)
+        uuid_id = _to_uuid(session_id)
+        session = self.sessions.get(uuid_id)
         if not session:
             return None
 
@@ -315,7 +329,7 @@ class StranglerFigService:
 
     async def evaluate_traffic_routing(
         self,
-        session_id: UUID,
+        session_id: Union[UUID, str],
         flag_id: str,
         request_context: Dict[str, Any]
     ) -> str:
@@ -324,7 +338,8 @@ class StranglerFigService:
 
         Returns: "legacy" or "new"
         """
-        session = self.sessions.get(session_id)
+        uuid_id = _to_uuid(session_id)
+        session = self.sessions.get(uuid_id)
         if not session:
             return "legacy"
 
@@ -406,13 +421,14 @@ class StranglerFigService:
 
     async def create_rollout_plan(
         self,
-        session_id: UUID,
+        session_id: Union[UUID, str],
         component_id: str,
         name: str,
         steps: Optional[List[Dict[str, Any]]] = None
     ) -> Optional[RolloutPlan]:
         """Create a gradual rollout plan."""
-        session = self.sessions.get(session_id)
+        uuid_id = _to_uuid(session_id)
+        session = self.sessions.get(uuid_id)
         if not session:
             return None
 
@@ -480,11 +496,12 @@ class StranglerFigService:
 
     async def advance_rollout(
         self,
-        session_id: UUID,
+        session_id: Union[UUID, str],
         plan_id: str
     ) -> Optional[Dict[str, Any]]:
         """Advance to next rollout step if criteria met."""
-        session = self.sessions.get(session_id)
+        uuid_id = _to_uuid(session_id)
+        session = self.sessions.get(uuid_id)
         if not session:
             return None
 
@@ -530,12 +547,13 @@ class StranglerFigService:
 
     async def rollback_plan(
         self,
-        session_id: UUID,
+        session_id: Union[UUID, str],
         plan_id: str,
         reason: str = ""
     ) -> Optional[Dict[str, Any]]:
         """Rollback to previous step or disable entirely."""
-        session = self.sessions.get(session_id)
+        uuid_id = _to_uuid(session_id)
+        session = self.sessions.get(uuid_id)
         if not session:
             return None
 
@@ -615,11 +633,12 @@ class StranglerFigService:
 
     async def check_rollback_needed(
         self,
-        session_id: UUID,
+        session_id: Union[UUID, str],
         plan_id: str
     ) -> Optional[Dict[str, Any]]:
         """Check if automatic rollback is needed based on health."""
-        session = self.sessions.get(session_id)
+        uuid_id = _to_uuid(session_id)
+        session = self.sessions.get(uuid_id)
         if not session:
             return None
 
@@ -675,12 +694,13 @@ class StranglerFigService:
 
     async def update_component_phase(
         self,
-        session_id: UUID,
+        session_id: Union[UUID, str],
         component_id: str,
         phase: MigrationPhase
     ) -> Optional[MigrationComponent]:
         """Update component migration phase."""
-        session = self.sessions.get(session_id)
+        uuid_id = _to_uuid(session_id)
+        session = self.sessions.get(uuid_id)
         if not session:
             return None
 
@@ -702,10 +722,11 @@ class StranglerFigService:
 
     async def get_migration_progress(
         self,
-        session_id: UUID
+        session_id: Union[UUID, str]
     ) -> Optional[Dict[str, Any]]:
         """Get overall migration progress summary."""
-        session = self.sessions.get(session_id)
+        uuid_id = _to_uuid(session_id)
+        session = self.sessions.get(uuid_id)
         if not session:
             return None
 

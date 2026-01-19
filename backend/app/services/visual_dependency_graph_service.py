@@ -479,8 +479,8 @@ class VisualDependencyGraphService:
 
         # Track circular edges
         for cd in dep_result.circular_dependencies:
-            for i, node in enumerate(cd.nodes):
-                next_node = cd.nodes[(i + 1) % len(cd.nodes)]
+            for i, node in enumerate(cd.cycle):
+                next_node = cd.cycle[(i + 1) % len(cd.cycle)]
                 circular_edges.add((node, next_node))
 
         for edge in dep_result.edges:
