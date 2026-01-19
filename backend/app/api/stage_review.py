@@ -9,7 +9,7 @@ Phase 24.4: Performance metrics endpoints
 
 from typing import Dict, Any, Optional, List
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 import logging
 
 from app.services.stage_review import (
@@ -323,6 +323,8 @@ def get_performance_service() -> PerformanceTrackingService:
 
 class ModelPerformanceResponse(BaseModel):
     """Response model for model performance."""
+    model_config = ConfigDict(protected_namespaces=())
+
     model_name: str
     total_reviews: int
     successful_reviews: int

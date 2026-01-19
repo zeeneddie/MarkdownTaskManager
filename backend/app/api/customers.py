@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 from datetime import datetime
 
 from app.database import get_db
@@ -65,8 +65,7 @@ class CustomerResponse(BaseModel):
     updated_at: datetime
     project_count: int = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ProjectApplicationCreate(BaseModel):
@@ -84,8 +83,7 @@ class ProjectApplicationResponse(BaseModel):
     impact_level: Optional[str]
     linked_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ----- Customer CRUD Endpoints -----

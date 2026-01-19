@@ -8,7 +8,7 @@ for 3D visualization of software metrics.
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 
@@ -28,23 +28,22 @@ class ExportRequest(BaseModel):
     analysis_data: Dict[str, Any] = Field(..., description="Analysis data with files and dependencies")
     include_edges: bool = Field(True, description="Include dependency edges")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "project_name": "my-project",
-                "root_path": "/opt/projecten/my-project",
-                "analysis_data": {
-                    "files": [
-                        {"path": "/opt/projecten/my-project/src/main.py", "loc": 150, "complexity": 12},
-                        {"path": "/opt/projecten/my-project/src/utils.py", "loc": 80, "complexity": 5}
-                    ],
-                    "dependencies": [
-                        {"from": "src/main.py", "to": "src/utils.py", "calls": 5}
-                    ]
-                },
-                "include_edges": True
-            }
+    model_config = ConfigDict(json_schema_extra={
+        "example": {
+            "project_name": "my-project",
+            "root_path": "/opt/projecten/my-project",
+            "analysis_data": {
+                "files": [
+                    {"path": "/opt/projecten/my-project/src/main.py", "loc": 150, "complexity": 12},
+                    {"path": "/opt/projecten/my-project/src/utils.py", "loc": 80, "complexity": 5}
+                ],
+                "dependencies": [
+                    {"from": "src/main.py", "to": "src/utils.py", "calls": 5}
+                ]
+            },
+            "include_edges": True
         }
+    })
 
 
 class ExportFromSourceRequest(BaseModel):

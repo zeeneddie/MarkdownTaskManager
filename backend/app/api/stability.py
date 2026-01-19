@@ -12,7 +12,7 @@ from typing import List, Optional
 from datetime import datetime, timezone, date
 
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -67,8 +67,7 @@ class AnalyzeResponse(BaseModel):
     analysis_time_seconds: float
     message: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FindingResponse(BaseModel):
@@ -86,8 +85,7 @@ class FindingResponse(BaseModel):
     confidence: float
     status: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CategorySummaryResponse(BaseModel):
@@ -100,8 +98,7 @@ class CategorySummaryResponse(BaseModel):
     low_count: int
     severity_score: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ScanResponse(BaseModel):
@@ -116,8 +113,7 @@ class ScanResponse(BaseModel):
     categories: List[CategorySummaryResponse]
     findings: List[FindingResponse]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TrendDataPoint(BaseModel):
