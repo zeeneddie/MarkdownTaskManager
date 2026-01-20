@@ -38,14 +38,14 @@ from app.database import AsyncSessionLocal
 # Week 143: Vector DB Integration
 from app.services.chroma_service import ChromaService
 
-# Week 145: BMAD Session Database Models
-from app.models.bmad_session import (
-    BMADSession as BMADSessionDB,
-    BMADAnswer as BMADAnswerDB,
-    BMADSessionEvent as BMADSessionEventDB,
-    BMADSessionStatus,
-    BMADWorkflowType,
-    BMADEventType,
+# Week 145: MarQed Session Database Models
+from app.models.marqed_session import (
+    MarQedSession as MarQedSessionDB,
+    MarQedAnswer as MarQedAnswerDB,
+    MarQedSessionEvent as MarQedSessionEventDB,
+    MarQedSessionStatus,
+    MarQedWorkflowType,
+    MarQedEventType,
 )
 
 from app.services.application_registry_service import (
@@ -2050,7 +2050,7 @@ class BrownPaperService:
         6. Output: Consolidated documentation
 
         Args:
-            session_id: BMAD session ID
+            session_id: MarQed session ID
             request: EnhancedAnalysisRequest with tier and options
             db: Database session
 
@@ -2072,7 +2072,7 @@ class BrownPaperService:
         )
 
         try:
-            # Get session context - check both BrownPaper and BMAD sessions
+            # Get session context - check both BrownPaper and MarQed sessions
             session = self.get_session(session_id)
             project_path = None
 
@@ -2080,18 +2080,18 @@ class BrownPaperService:
                 # Regular BrownPaper session
                 project_path = session.project_path
             else:
-                # Try BMAD workflow session
-                bmad_workflow = get_bmad_brown_paper_workflow()
-                bmad_session = bmad_workflow.get_session(session_id)
-                if bmad_session:
-                    project_path = bmad_session.project_path
+                # Try MarQed workflow session
+                marqed_workflow = get_marqed_brown_paper_workflow()
+                marqed_session = marqed_workflow.get_session(session_id)
+                if marqed_session:
+                    project_path = marqed_session.project_path
                     # Store reference for later use in phase methods
-                    session = bmad_session
-                    logger.info(f"Using BMAD session {session_id} for enhanced analysis")
+                    session = marqed_session
+                    logger.info(f"Using MarQed session {session_id} for enhanced analysis")
 
             if not project_path:
                 response.status = "failed"
-                response.errors.append(f"Session {session_id} not found in BrownPaper or BMAD workflow")
+                response.errors.append(f"Session {session_id} not found in BrownPaper or MarQed workflow")
                 return response
 
             # Phase 1: Code Understanding
@@ -2769,10 +2769,10 @@ class BrownPaperService:
         response.summary = summary
 
         # Set output URLs
-        response.dependency_graph_url = f"/api/brown-paper/bmad/{session_id}/dependency-graph"
-        response.hierarchy_url = f"/api/brown-paper/bmad/{session_id}/hierarchy"
-        response.metrics_url = f"/api/brown-paper/bmad/{session_id}/metrics"
-        response.conflicts_url = f"/api/brown-paper/bmad/{session_id}/conflicts"
+        response.dependency_graph_url = f"/api/brown-paper/marqed/{session_id}/dependency-graph"
+        response.hierarchy_url = f"/api/brown-paper/marqed/{session_id}/hierarchy"
+        response.metrics_url = f"/api/brown-paper/marqed/{session_id}/metrics"
+        response.conflicts_url = f"/api/brown-paper/marqed/{session_id}/conflicts"
 
         return response
 
@@ -2853,12 +2853,12 @@ class BrownPaperService:
 
 
 # ============================================================================
-# BMAD BROWN-PAPER WORKFLOW (8 Strategic Questions)
+# MARQED BROWN-PAPER WORKFLOW (8 Strategic Questions)
 # ============================================================================
 
 @dataclass
-class BMADAnswer:
-    """A single BMAD question answer."""
+class MarQedAnswer:
+    """A single MarQed question answer."""
     question_number: int
     question_text: str
     answer: str
@@ -2879,14 +2879,14 @@ class MigrationAnalysisResult:
 
 
 @dataclass
-class BMADBrownPaperSession:
-    """A BMAD Brown-Paper session tracking the 8-question workflow."""
+class MarQedBrownPaperSession:
+    """A MarQed Brown-Paper session tracking the 8-question workflow."""
     id: str
     project_name: str
     project_path: Optional[str]
     status: str  # questions, analyzing, generating, review, approved, rejected
     current_question: int  # 1-8
-    answers: Dict[int, BMADAnswer]
+    answers: Dict[int, MarQedAnswer]
     migration_analysis: Optional[MigrationAnalysisResult]
     specification: Optional[Dict[str, Any]]
     tasks: Optional[Dict[str, Any]]
@@ -2902,8 +2902,8 @@ class BMADBrownPaperSession:
         return 8
 
 
-# The 8 BMAD Brown-Paper Questions
-BMAD_QUESTIONS = {
+# The 8 MarQed Brown-Paper Questions
+MARQED_QUESTIONS = {
     1: {
         "question": "Describe the current legacy system to be migrated",
         "description": "Technology stack, size (LOC, modules, pages, tables), age, known issues, deployment",
@@ -2955,13 +2955,13 @@ BMAD_QUESTIONS = {
 }
 
 
-class BMADBrownPaperWorkflow:
+class MarQedBrownPaperWorkflow:
     """
-    BMAD Brown-Paper Workflow for migration projects.
+    MarQed Brown-Paper Workflow for migration projects.
 
     This is distinct from the code-analysis Brown Paper:
     - Code-analysis: Bottom-up (analyze existing code → extract domains → generate epics)
-    - BMAD workflow: Top-down (8 questions → migration spec → task hierarchy)
+    - MarQed workflow: Top-down (8 questions → migration spec → task hierarchy)
 
     Workflow Stages:
     1. QUESTIONS: User answers 8 strategic questions
@@ -2970,13 +2970,13 @@ class BMADBrownPaperWorkflow:
     4. TASKS: Felix generates Epic/Feature/Story hierarchy
     5. REVIEW: Quinn reviews quality, user approves/rejects
 
-    Week 145: Database persistence via BMADSession model.
+    Week 145: Database persistence via MarQedSession model.
     Sessions are persisted to PostgreSQL with full answer history and event audit trail.
     """
 
     def __init__(self):
         # In-memory cache for quick access (synced with database)
-        self._sessions: Dict[str, BMADBrownPaperSession] = {}
+        self._sessions: Dict[str, MarQedBrownPaperSession] = {}
         # Vector DB service (lazy initialization)
         self._chroma_service: Optional[ChromaService] = None
 
@@ -2989,7 +2989,7 @@ class BMADBrownPaperWorkflow:
         if self._chroma_service is None:
             try:
                 self._chroma_service = ChromaService()
-                logger.info("ChromaDB service initialized for BMADBrownPaperWorkflow")
+                logger.info("ChromaDB service initialized for MarQedBrownPaperWorkflow")
             except Exception as e:
                 logger.warning(f"ChromaDB not available: {e}. Vector context will be skipped.")
                 return None
@@ -2999,7 +2999,7 @@ class BMADBrownPaperWorkflow:
         self,
         project_name: str,
         project_path: Optional[str] = None,
-        project_id: int = 1000  # Default to HCI-CRS project
+        project_id: int = 1000  # Default project for Vector DB
     ) -> Optional[Dict[str, Any]]:
         """
         Fetch relevant context from Vector DB for session pre-population.
@@ -3100,7 +3100,7 @@ class BMADBrownPaperWorkflow:
 
     async def _persist_session_to_db(
         self,
-        session: BMADBrownPaperSession,
+        session: MarQedBrownPaperSession,
         customer_id: Optional[int] = None
     ) -> None:
         """Persist session to database."""
@@ -3131,7 +3131,7 @@ class BMADBrownPaperWorkflow:
 
             # Check if session exists
             result = await db.execute(
-                select(BMADSessionDB).where(BMADSessionDB.id == session.id)
+                select(MarQedSessionDB).where(MarQedSessionDB.id == session.id)
             )
             db_session = result.scalar_one_or_none()
 
@@ -3148,14 +3148,14 @@ class BMADBrownPaperWorkflow:
                 db_session.updated_at = self._to_naive_utc(datetime.now(timezone.utc))
             else:
                 # Create new session
-                db_session = BMADSessionDB(
+                db_session = MarQedSessionDB(
                     id=session.id,
                     project_name=session.project_name,
                     project_path=session.project_path,
                     customer_id=customer_id,
                     status=session.status,
                     current_question=session.current_question,
-                    workflow_type=BMADWorkflowType.BROWN_PAPER,
+                    workflow_type=MarQedWorkflowType.BROWN_PAPER,
                     answers=answers_json,
                     migration_analysis=migration_json,
                     specification=session.specification,
@@ -3170,23 +3170,23 @@ class BMADBrownPaperWorkflow:
             await db.commit()
             logger.debug(f"Session {session.id} persisted to database")
 
-    async def _load_session_from_db(self, session_id: str) -> Optional[BMADBrownPaperSession]:
+    async def _load_session_from_db(self, session_id: str) -> Optional[MarQedBrownPaperSession]:
         """Load session from database."""
         async with AsyncSessionLocal() as db:
             result = await db.execute(
-                select(BMADSessionDB).where(BMADSessionDB.id == session_id)
+                select(MarQedSessionDB).where(MarQedSessionDB.id == session_id)
             )
             db_session = result.scalar_one_or_none()
 
             if not db_session:
                 return None
 
-            # Convert JSONB answers back to BMADAnswer dataclasses
+            # Convert JSONB answers back to MarQedAnswer dataclasses
             answers = {}
             if db_session.answers:
                 for q_num_str, answer_data in db_session.answers.items():
                     q_num = int(q_num_str)
-                    answers[q_num] = BMADAnswer(
+                    answers[q_num] = MarQedAnswer(
                         question_number=answer_data["question_number"],
                         question_text=answer_data["question_text"],
                         answer=answer_data["answer"],
@@ -3208,7 +3208,7 @@ class BMADBrownPaperWorkflow:
                     success=ma.get("success", True),
                 )
 
-            session = BMADBrownPaperSession(
+            session = MarQedBrownPaperSession(
                 id=db_session.id,
                 project_name=db_session.project_name,
                 project_path=db_session.project_path,
@@ -3235,7 +3235,7 @@ class BMADBrownPaperWorkflow:
     ) -> None:
         """Log an event for audit trail."""
         async with AsyncSessionLocal() as db:
-            event = BMADSessionEventDB(
+            event = MarQedSessionEventDB(
                 session_id=session_id,
                 event_type=event_type,
                 event_data=event_data,
@@ -3253,20 +3253,20 @@ class BMADBrownPaperWorkflow:
     ) -> None:
         """Save an answer version to database for audit trail."""
         async with AsyncSessionLocal() as db:
-            # Get question text from BMAD_QUESTIONS
-            q_info = BMAD_QUESTIONS.get(question_number, {})
+            # Get question text from MARQED_QUESTIONS
+            q_info = MARQED_QUESTIONS.get(question_number, {})
             question_text = q_info.get("question", f"Question {question_number}")
 
             # Mark previous versions as not current
             if version > 1:
                 await db.execute(
-                    update(BMADAnswerDB)
-                    .where(BMADAnswerDB.session_id == session_id)
-                    .where(BMADAnswerDB.question_number == question_number)
+                    update(MarQedAnswerDB)
+                    .where(MarQedAnswerDB.session_id == session_id)
+                    .where(MarQedAnswerDB.question_number == question_number)
                     .values(is_current=False)
                 )
 
-            answer_record = BMADAnswerDB(
+            answer_record = MarQedAnswerDB(
                 session_id=session_id,
                 question_number=question_number,
                 question_text=question_text,
@@ -3285,10 +3285,10 @@ class BMADBrownPaperWorkflow:
     ) -> List[Dict[str, Any]]:
         """Get answer history for a session, optionally filtered by question."""
         async with AsyncSessionLocal() as db:
-            query = select(BMADAnswerDB).where(BMADAnswerDB.session_id == session_id)
+            query = select(MarQedAnswerDB).where(MarQedAnswerDB.session_id == session_id)
             if question_number:
-                query = query.where(BMADAnswerDB.question_number == question_number)
-            query = query.order_by(BMADAnswerDB.question_number, BMADAnswerDB.version.desc())
+                query = query.where(MarQedAnswerDB.question_number == question_number)
+            query = query.order_by(MarQedAnswerDB.question_number, MarQedAnswerDB.version.desc())
 
             result = await db.execute(query)
             answers = result.scalars().all()
@@ -3311,9 +3311,9 @@ class BMADBrownPaperWorkflow:
         self,
         session_id: str,
         user_id: Optional[str] = None
-    ) -> Optional[BMADBrownPaperSession]:
+    ) -> Optional[MarQedBrownPaperSession]:
         """
-        Resume an existing BMAD session from database.
+        Resume an existing MarQed session from database.
 
         This method:
         1. Loads session from database
@@ -3339,7 +3339,7 @@ class BMADBrownPaperWorkflow:
         # Log resume event
         await self._log_event(
             session_id,
-            BMADEventType.SESSION_RESUMED,
+            MarQedEventType.SESSION_RESUMED,
             {
                 "resumed_at": datetime.now(timezone.utc).isoformat(),
                 "resumed_by": user_id,
@@ -3349,11 +3349,11 @@ class BMADBrownPaperWorkflow:
             created_by=user_id
         )
 
-        logger.info(f"Resumed BMAD session {session_id} at Q{session.current_question}")
+        logger.info(f"Resumed MarQed session {session_id} at Q{session.current_question}")
         return session
 
     async def get_session_status(self, session_id: str) -> Optional[Dict[str, Any]]:
-        """Get detailed status of a BMAD session."""
+        """Get detailed status of a MarQed session."""
         session = await self.get_session_async(session_id)
         if not session:
             return None
@@ -3385,7 +3385,7 @@ class BMADBrownPaperWorkflow:
         reason: Optional[str] = None,
         user_id: Optional[str] = None
     ) -> bool:
-        """Cancel a BMAD session."""
+        """Cancel a MarQed session."""
         session = await self.get_session_async(session_id)
         if not session:
             return False
@@ -3397,12 +3397,12 @@ class BMADBrownPaperWorkflow:
         await self._persist_session_to_db(session)
         await self._log_event(
             session_id,
-            BMADEventType.SESSION_CANCELLED,
+            MarQedEventType.SESSION_CANCELLED,
             {"reason": reason},
             created_by=user_id
         )
 
-        logger.info(f"Cancelled BMAD session {session_id}: {reason}")
+        logger.info(f"Cancelled MarQed session {session_id}: {reason}")
         return True
 
     # ========================================================================
@@ -3414,19 +3414,19 @@ class BMADBrownPaperWorkflow:
         project_name: str,
         project_path: Optional[str] = None,
         fetch_vector_context: bool = True,
-        project_id: int = 1000  # Default to HCI-CRS project for Vector DB
-    ) -> BMADBrownPaperSession:
+        project_id: int = 1000  # Default project for Vector DB
+    ) -> MarQedBrownPaperSession:
         """
-        Start a new BMAD Brown-Paper session (sync version for backward compatibility).
+        Start a new MarQed Brown-Paper session (sync version for backward compatibility).
 
         Args:
             project_name: Name of the project
             project_path: Optional path to project source code
             fetch_vector_context: Whether to pre-populate with Vector DB context (default: True)
-            project_id: Project ID for Vector DB queries (default: 1000 = HCI-CRS)
+            project_id: Project ID for Vector DB queries
 
         Returns:
-            BMADBrownPaperSession: New session with optional vector context
+            MarQedBrownPaperSession: New session with optional vector context
         """
         session_id = str(uuid.uuid4())
 
@@ -3439,7 +3439,7 @@ class BMADBrownPaperWorkflow:
                 project_id=project_id
             )
 
-        session = BMADBrownPaperSession(
+        session = MarQedBrownPaperSession(
             id=session_id,
             project_name=project_name,
             project_path=project_path,
@@ -3457,7 +3457,7 @@ class BMADBrownPaperWorkflow:
         self._sessions[session_id] = session
 
         context_info = f", {vector_context['total_docs_found']} docs from Vector DB" if vector_context else ""
-        logger.info(f"Started BMAD Brown-Paper session {session_id} for {project_name}{context_info}")
+        logger.info(f"Started MarQed Brown-Paper session {session_id} for {project_name}{context_info}")
 
         return session
 
@@ -3468,9 +3468,9 @@ class BMADBrownPaperWorkflow:
         customer_id: Optional[int] = None,
         fetch_vector_context: bool = True,
         project_id: int = 1000
-    ) -> BMADBrownPaperSession:
+    ) -> MarQedBrownPaperSession:
         """
-        Start a new BMAD Brown-Paper session with database persistence.
+        Start a new MarQed Brown-Paper session with database persistence.
 
         Args:
             project_name: Name of the project
@@ -3480,7 +3480,7 @@ class BMADBrownPaperWorkflow:
             project_id: Project ID for Vector DB queries
 
         Returns:
-            BMADBrownPaperSession: New persisted session with optional vector context
+            MarQedBrownPaperSession: New persisted session with optional vector context
         """
         session = self.start_session(
             project_name, project_path,
@@ -3502,18 +3502,18 @@ class BMADBrownPaperWorkflow:
 
         await self._log_event(
             session.id,
-            BMADEventType.SESSION_STARTED,
+            MarQedEventType.SESSION_STARTED,
             event_data,
         )
 
         return session
 
-    def get_session(self, session_id: str) -> Optional[BMADBrownPaperSession]:
-        """Get a BMAD session by ID (sync, cache only)."""
+    def get_session(self, session_id: str) -> Optional[MarQedBrownPaperSession]:
+        """Get a MarQed session by ID (sync, cache only)."""
         return self._sessions.get(session_id)
 
-    async def get_session_async(self, session_id: str) -> Optional[BMADBrownPaperSession]:
-        """Get a BMAD session by ID (async, with database fallback)."""
+    async def get_session_async(self, session_id: str) -> Optional[MarQedBrownPaperSession]:
+        """Get a MarQed session by ID (async, with database fallback)."""
         # Check cache first
         if session_id in self._sessions:
             return self._sessions[session_id]
@@ -3526,21 +3526,21 @@ class BMADBrownPaperWorkflow:
 
         return session
 
-    def list_sessions(self) -> List[BMADBrownPaperSession]:
-        """List all BMAD Brown-Paper sessions (sync, cache only)."""
+    def list_sessions(self) -> List[MarQedBrownPaperSession]:
+        """List all MarQed Brown-Paper sessions (sync, cache only)."""
         return sorted(
             self._sessions.values(),
             key=lambda s: s.created_at,
             reverse=True
         )
 
-    async def list_sessions_async(self) -> List[BMADBrownPaperSession]:
-        """List all BMAD Brown-Paper sessions from database."""
+    async def list_sessions_async(self) -> List[MarQedBrownPaperSession]:
+        """List all MarQed Brown-Paper sessions from database."""
         async with AsyncSessionLocal() as db:
             result = await db.execute(
-                select(BMADSessionDB)
-                .where(BMADSessionDB.workflow_type == BMADWorkflowType.BROWN_PAPER)
-                .order_by(BMADSessionDB.created_at.desc())
+                select(MarQedSessionDB)
+                .where(MarQedSessionDB.workflow_type == MarQedWorkflowType.BROWN_PAPER)
+                .order_by(MarQedSessionDB.created_at.desc())
             )
             db_sessions = result.scalars().all()
 
@@ -3564,7 +3564,7 @@ class BMADBrownPaperWorkflow:
         if q_num > 8:
             return None
 
-        q_info = BMAD_QUESTIONS[q_num]
+        q_info = MARQED_QUESTIONS[q_num]
         return {
             "question_number": q_num,
             "question": q_info["question"],
@@ -3603,6 +3603,54 @@ class BMADBrownPaperWorkflow:
 
         return question
 
+    async def get_current_question_async(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """Get the current question for a session (async, with database fallback)."""
+        session = await self.get_session_async(session_id)
+        if not session or session.status != "questions":
+            return None
+
+        q_num = session.current_question
+        if q_num > 8:
+            return None
+
+        q_info = MARQED_QUESTIONS[q_num]
+        return {
+            "question_number": q_num,
+            "question": q_info["question"],
+            "description": q_info["description"],
+            "required": q_info["required"],
+            "min_length": q_info["min_length"],
+            "total_questions": 8,
+            "progress_percent": ((q_num - 1) / 8) * 100,
+        }
+
+    async def get_current_question_with_context_async(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get the current question with relevant Vector DB context (async).
+
+        Week 158: Async version with database fallback for session retrieval.
+        """
+        question = await self.get_current_question_async(session_id)
+        if not question:
+            return None
+
+        session = await self.get_session_async(session_id)
+        if not session:
+            return question
+
+        # Add vector context if available
+        if session.vector_context:
+            question["vector_context"] = {
+                "architecture_summary": session.vector_context.get("architecture_summary"),
+                "relevant_docs": session.vector_context.get("relevant_docs", [])[:5],
+                "code_locations": session.vector_context.get("code_locations", [])[:10],
+                "context_available": True
+            }
+        else:
+            question["vector_context"] = {"context_available": False}
+
+        return question
+
     def get_session_vector_context(self, session_id: str) -> Optional[Dict[str, Any]]:
         """
         Get the full Vector DB context for a session.
@@ -3632,7 +3680,7 @@ class BMADBrownPaperWorkflow:
         if q_num > 8:
             return {"error": "All questions already answered"}
 
-        q_info = BMAD_QUESTIONS[q_num]
+        q_info = MARQED_QUESTIONS[q_num]
 
         # Validate answer
         if q_info["required"] and len(answer.strip()) < q_info["min_length"]:
@@ -3642,7 +3690,7 @@ class BMADBrownPaperWorkflow:
             }
 
         # Store answer
-        session.answers[q_num] = BMADAnswer(
+        session.answers[q_num] = MarQedAnswer(
             question_number=q_num,
             question_text=q_info["question"],
             answer=answer.strip(),
@@ -3687,7 +3735,7 @@ class BMADBrownPaperWorkflow:
         if q_num > 8:
             return {"error": "All questions already answered"}
 
-        q_info = BMAD_QUESTIONS[q_num]
+        q_info = MARQED_QUESTIONS[q_num]
 
         # Validate answer
         if q_info["required"] and len(answer.strip()) < q_info["min_length"]:
@@ -3697,7 +3745,7 @@ class BMADBrownPaperWorkflow:
             }
 
         # Store answer
-        session.answers[q_num] = BMADAnswer(
+        session.answers[q_num] = MarQedAnswer(
             question_number=q_num,
             question_text=q_info["question"],
             answer=answer.strip(),
@@ -3735,7 +3783,7 @@ class BMADBrownPaperWorkflow:
         # Log event
         await self._log_event(
             session_id,
-            BMADEventType.ANSWER_SUBMITTED,
+            MarQedEventType.ANSWER_SUBMITTED,
             {"question_number": q_num, "answer_length": len(answer.strip()), "version": version},
         )
 
@@ -3778,7 +3826,7 @@ class BMADBrownPaperWorkflow:
         # Log analysis start
         await self._log_event(
             session_id,
-            BMADEventType.ANALYSIS_STARTED,
+            MarQedEventType.ANALYSIS_STARTED,
             {"phase": "migration_analysis"},
         )
 
@@ -3801,7 +3849,7 @@ class BMADBrownPaperWorkflow:
         # Log analysis complete
         await self._log_event(
             session_id,
-            BMADEventType.ANALYSIS_COMPLETED,
+            MarQedEventType.ANALYSIS_COMPLETED,
             {"complexity": analysis.complexity, "risk_count": len(analysis.risk_register)},
         )
 
@@ -3989,7 +4037,7 @@ class BMADBrownPaperWorkflow:
                 "project_name": session.project_name,
                 "project_path": session.project_path,
                 "generated_at": datetime.now(timezone.utc).isoformat(),
-                "workflow": "BMAD_BROWN_PAPER",
+                "workflow": "MARQED_BROWN_PAPER",
                 "session_id": session_id,
             },
             "executive_summary": self._generate_executive_summary(session),
@@ -4011,7 +4059,7 @@ class BMADBrownPaperWorkflow:
         await self._persist_session_to_db(session)
         await self._log_event(
             session_id,
-            BMADEventType.SPECIFICATION_GENERATED,
+            MarQedEventType.SPECIFICATION_GENERATED,
             {"sections": list(specification.keys())},
         )
 
@@ -4037,7 +4085,7 @@ class BMADBrownPaperWorkflow:
             }
         }
 
-    def _generate_executive_summary(self, session: BMADBrownPaperSession) -> str:
+    def _generate_executive_summary(self, session: MarQedBrownPaperSession) -> str:
         """Generate executive summary."""
         q5 = session.answers.get(5)
         q8 = session.answers.get(8)
@@ -4055,7 +4103,7 @@ Complexity Assessment: {session.migration_analysis.complexity}
 Timeline: {timeline}
 """
 
-    def _generate_current_state(self, session: BMADBrownPaperSession) -> Dict[str, Any]:
+    def _generate_current_state(self, session: MarQedBrownPaperSession) -> Dict[str, Any]:
         """Generate current state section."""
         q1 = session.answers.get(1)
         return {
@@ -4063,14 +4111,14 @@ Timeline: {timeline}
             "pain_points": session.answers.get(5).answer if session.answers.get(5) else "",
         }
 
-    def _generate_target_state(self, session: BMADBrownPaperSession) -> Dict[str, Any]:
+    def _generate_target_state(self, session: MarQedBrownPaperSession) -> Dict[str, Any]:
         """Generate target state section."""
         q2 = session.answers.get(2)
         return {
             "description": q2.answer if q2 else "",
         }
 
-    def _generate_migration_approach(self, session: BMADBrownPaperSession) -> Dict[str, Any]:
+    def _generate_migration_approach(self, session: MarQedBrownPaperSession) -> Dict[str, Any]:
         """Generate migration approach section."""
         q3 = session.answers.get(3)
         q4 = session.answers.get(4)
@@ -4093,17 +4141,17 @@ Timeline: {timeline}
             "phases": session.migration_analysis.recommended_phases,
         }
 
-    def _generate_stakeholders(self, session: BMADBrownPaperSession) -> str:
+    def _generate_stakeholders(self, session: MarQedBrownPaperSession) -> str:
         """Generate stakeholders section."""
         q6 = session.answers.get(6)
         return q6.answer if q6 else ""
 
-    def _generate_success_criteria_spec(self, session: BMADBrownPaperSession) -> str:
+    def _generate_success_criteria_spec(self, session: MarQedBrownPaperSession) -> str:
         """Generate success criteria section."""
         q7 = session.answers.get(7)
         return q7.answer if q7 else ""
 
-    def _generate_timeline(self, session: BMADBrownPaperSession) -> Dict[str, Any]:
+    def _generate_timeline(self, session: MarQedBrownPaperSession) -> Dict[str, Any]:
         """Generate timeline section."""
         q8 = session.answers.get(8)
         phases = session.migration_analysis.recommended_phases
@@ -4272,7 +4320,7 @@ Timeline: {timeline}
         await self._persist_session_to_db(session)
         await self._log_event(
             session_id,
-            BMADEventType.TASKS_GENERATED,
+            MarQedEventType.TASKS_GENERATED,
             {
                 "total_epics": len(epics),
                 "total_features": len(features),
@@ -4290,7 +4338,7 @@ Timeline: {timeline}
     # ========================================================================
 
     def approve_session(self, session_id: str) -> bool:
-        """Approve the BMAD session."""
+        """Approve the MarQed session."""
         session = self.get_session(session_id)
         if not session or session.status != "review":
             return False
@@ -4300,7 +4348,7 @@ Timeline: {timeline}
         return True
 
     def reject_session(self, session_id: str, reason: str) -> bool:
-        """Reject the BMAD session."""
+        """Reject the MarQed session."""
         session = self.get_session(session_id)
         if not session:
             return False
@@ -4315,7 +4363,7 @@ Timeline: {timeline}
         session_id: str,
         reviewer: Optional[str] = None
     ) -> bool:
-        """Approve the BMAD session with database persistence."""
+        """Approve the MarQed session with database persistence."""
         session = await self.get_session_async(session_id)
         if not session or session.status != "review":
             return False
@@ -4327,7 +4375,7 @@ Timeline: {timeline}
         await self._persist_session_to_db(session)
         await self._log_event(
             session_id,
-            BMADEventType.SESSION_APPROVED,
+            MarQedEventType.SESSION_APPROVED,
             {"reviewer": reviewer},
             created_by=reviewer,
         )
@@ -4341,7 +4389,7 @@ Timeline: {timeline}
         reason: str,
         reviewer: Optional[str] = None
     ) -> bool:
-        """Reject the BMAD session with database persistence."""
+        """Reject the MarQed session with database persistence."""
         session = await self.get_session_async(session_id)
         if not session:
             return False
@@ -4354,7 +4402,7 @@ Timeline: {timeline}
         await self._persist_session_to_db(session)
         await self._log_event(
             session_id,
-            BMADEventType.SESSION_REJECTED,
+            MarQedEventType.SESSION_REJECTED,
             {"reason": reason, "reviewer": reviewer},
             created_by=reviewer,
         )
@@ -4374,7 +4422,7 @@ Timeline: {timeline}
         md = f"""# {session.project_name} - Migration Specification
 
 **Generated**: {spec['metadata']['generated_at']}
-**Workflow**: BMAD Brown-Paper
+**Workflow**: MarQed Brown-Paper
 **Status**: {session.status}
 
 ---
@@ -4517,7 +4565,7 @@ Timeline: {timeline}
 # ============================================================================
 
 _brown_paper_service: Optional[BrownPaperService] = None
-_bmad_workflow: Optional[BMADBrownPaperWorkflow] = None
+_marqed_workflow: Optional[MarQedBrownPaperWorkflow] = None
 
 
 def get_brown_paper_service() -> BrownPaperService:
@@ -4528,9 +4576,9 @@ def get_brown_paper_service() -> BrownPaperService:
     return _brown_paper_service
 
 
-def get_bmad_brown_paper_workflow() -> BMADBrownPaperWorkflow:
-    """Get or create the BMAD Brown-Paper workflow singleton."""
-    global _bmad_workflow
-    if _bmad_workflow is None:
-        _bmad_workflow = BMADBrownPaperWorkflow()
-    return _bmad_workflow
+def get_marqed_brown_paper_workflow() -> MarQedBrownPaperWorkflow:
+    """Get or create the MarQed Brown-Paper workflow singleton."""
+    global _marqed_workflow
+    if _marqed_workflow is None:
+        _marqed_workflow = MarQedBrownPaperWorkflow()
+    return _marqed_workflow

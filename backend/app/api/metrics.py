@@ -1,7 +1,7 @@
 """
 Metrics Layer API - Week 126
 
-Endpoints for the HCI-based Metrics Layer scanners.
+Endpoints for the Quality Metrics Layer scanners.
 
 Features:
 - Run 5 quality metrics scans (complexity, interfacing, coupling, balance, duplication)
@@ -10,11 +10,11 @@ Features:
 - Generate quality reports
 
 Scanners:
-- Complexity: Cyclomatic complexity (HCI deep_analyze.py wrapper)
-- Interfacing: Parameter count analysis (HCI unit_interfacing_analyzer.py wrapper)
-- Coupling: Fan-in/fan-out, instability (HCI module_coupling_analyzer.py wrapper)
-- Balance: Gini coefficient (HCI component_balance_analyzer.py wrapper)
-- Duplication: Type 1/2/3 clones (HCI code_clone_detector.py wrapper)
+- Complexity: Cyclomatic complexity (deep_analyze.py wrapper)
+- Interfacing: Parameter count analysis (unit_interfacing_analyzer.py wrapper)
+- Coupling: Fan-in/fan-out, instability (module_coupling_analyzer.py wrapper)
+- Balance: Gini coefficient (component_balance_analyzer.py wrapper)
+- Duplication: Type 1/2/3 clones (code_clone_detector.py wrapper)
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
@@ -223,7 +223,7 @@ async def run_metrics_scan(
     """
     Run a complete metrics scan on a project.
 
-    Executes up to 5 HCI-based quality scanners:
+    Executes up to 5 quality scanners:
     - complexity: Cyclomatic complexity analysis
     - interfacing: Function parameter count analysis
     - coupling: Module dependency analysis

@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pathlib import Path
-from app.api import epics, features, stories, tasks, sprints, auth, project, workflows, projects, scheduler, estimation, estimation_history, project_wizard, websocket, maintenance, ml_training, evolution, quality_dashboard, self_navigating, attribution, task_generation, continuous_learning, rollback, quality_gate_config, quality_gate_evaluation, agent_validation, ab_testing, llm_council, evolution_dashboard, spec_review, observability, council_human_review, stack_agents, project_registration, application_registry, test_organization, brown_paper, fp_estimation, hci_crs_knowledge, kanban, standards, spec_shaping, quick_spec, improve_skills, spec_verification, cctrace, codewiki, knowledge, knowledge_graph, security, rl_training, migration_analyzer, migration_security, migration_estimation, migration_architecture, migration_report, project_workflows, workflow_dashboard, mcp_proxy, anytool, memmachine, code_graph, claude_mem, layered_analysis, playwriter, bigagi, ccpm, ghostcrew, deep_extraction, graph_workflow, debt_categorization, code_analysis, hierarchical_extraction, rerun_upgrade, portal_features, portal_roadmap, harness, design, static_analysis, devops_analysis, orchestration, traceability, hybrid_extraction, requirements, portal_boost, portal_engagement, causality, metrics, migration_enhanced, research, dead_code, testing, code_transformation, data_architecture, migration_execution, decision_tables, state_machine_extraction, authorization_matrix, api_inventory, customers, codecharta, token_context, project_intake, stability, context_engineering, quality_impact, stage_review, streaming, workflow_checkpoints
+from app.api import epics, features, stories, tasks, sprints, auth, project, workflows, projects, scheduler, estimation, estimation_history, project_wizard, websocket, maintenance, ml_training, evolution, quality_dashboard, self_navigating, attribution, task_generation, continuous_learning, rollback, quality_gate_config, quality_gate_evaluation, agent_validation, ab_testing, llm_council, evolution_dashboard, spec_review, observability, council_human_review, stack_agents, project_registration, application_registry, test_organization, brown_paper, fp_estimation, kanban, standards, spec_shaping, quick_spec, improve_skills, spec_verification, cctrace, codewiki, knowledge, knowledge_graph, security, rl_training, migration_analyzer, migration_security, migration_estimation, migration_architecture, migration_report, project_workflows, workflow_dashboard, mcp_proxy, anytool, memmachine, code_graph, claude_mem, layered_analysis, playwriter, bigagi, ccpm, ghostcrew, deep_extraction, graph_workflow, debt_categorization, code_analysis, hierarchical_extraction, rerun_upgrade, portal_features, portal_roadmap, harness, design, static_analysis, devops_analysis, orchestration, traceability, hybrid_extraction, requirements, portal_boost, portal_engagement, causality, metrics, migration_enhanced, research, dead_code, testing, code_transformation, data_architecture, migration_execution, decision_tables, state_machine_extraction, authorization_matrix, api_inventory, customers, codecharta, token_context, project_intake, stability, context_engineering, quality_impact, stage_review, streaming, workflow_checkpoints
 from app.api.green_paper import green_paper_routes
 from app.api.task_generation import task_generation_routes
 from app.api.v2 import migration_router, quality_router
@@ -123,7 +123,7 @@ app.include_router(attribution.router)  # Week 21-22: Attribution tracking
 # app.include_router(task_generation.router)  # Week 23-24: needs ChromaDB (no tests)
 # app.include_router(rollback.router)  # Week 25-26: needs service dependencies (no tests)
 app.include_router(scheduler.router)
-app.include_router(green_paper_routes.router)  # Green Paper BMAD Workflow (6-question greenfield)
+app.include_router(green_paper_routes.router)  # Green Paper MarQed Workflow (6-question greenfield)
 app.include_router(task_generation_routes.router)  # Task Generation from Specifications
 app.include_router(quality_gate_config.router)  # Week 49: Quality Gates Configuration UI
 app.include_router(quality_gate_evaluation.router)  # Week 50: Quality Gate Evaluation API
@@ -140,7 +140,6 @@ app.include_router(application_registry.router, prefix="/api")  # Week 57: Multi
 app.include_router(test_organization.router, prefix="/api")  # Week 57: Test Organization for Projects
 app.include_router(brown_paper.router)  # Week 57: Brown Paper Reverse Engineering Workflow
 app.include_router(fp_estimation.router)  # Week 57: Function Point Estimation API
-app.include_router(hci_crs_knowledge.router)  # Week 57: HCI-CRS Project Knowledge API (RAG)
 app.include_router(kanban.router)  # Week 58: Kanban Dashboard with 6 Lanes
 app.include_router(standards.router)  # Week 59: Standards Loader Service (Agent OS)
 app.include_router(spec_shaping.router)  # Week 59: Spec Shaping Loop (Agent OS)
@@ -189,7 +188,7 @@ app.include_router(requirements.router)  # Week 117: rmtoo Requirements Manageme
 app.include_router(portal_boost.router)  # Week 118: Client Portal 2.0 Phase 2 (Priority Boost, Impact Preview, Duplicates)
 app.include_router(portal_engagement.router)  # Week 119-120: Client Portal 2.0 Phase 3 (Feedback, Gamification, Dashboard)
 app.include_router(causality.router)  # Week 123: CiRA Causality Detection (BERT-based cause-effect analysis)
-app.include_router(metrics.router, prefix="/api")  # Week 126: Metrics Layer (HCI Quality Scanners - Complexity, Coupling, Balance, Duplication)
+app.include_router(metrics.router, prefix="/api")  # Week 126: Metrics Layer (Quality Scanners - Complexity, Coupling, Balance, Duplication)
 app.include_router(migration_enhanced.router)  # Week 130: Migration Enhanced (7-Phase Execution Workflow)
 app.include_router(research.router)  # Research Services (Background Jobs, Load Estimation, Documentation Rules)
 app.include_router(code_transformation.router)  # Code Transformation Services (Code + DB Migration)

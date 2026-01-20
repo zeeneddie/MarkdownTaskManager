@@ -602,7 +602,7 @@ class PLSQLBusinessRuleExtractor(BaseBusinessRuleExtractor):
         # Table name patterns
         table_patterns = [
             r'\b(?:FROM|JOIN|INTO|UPDATE|MERGE\s+INTO)\s+(\w+(?:\.\w+)?)',
-            r'\bta_?([A-Z][a-z]+\w*)',                          # HCI-style prefix
+            r'\bta_?([A-Z][a-z]+\w*)',                          # Legacy table adapter prefix
             r'\btbl_?([A-Z][a-z]+)',                            # Common table prefix
             r'\b([A-Z][a-z]+)(?:_ID|ID)\b',                     # Entity ID columns
             r'%TYPE\b.*?(\w+)\.',                               # Type reference

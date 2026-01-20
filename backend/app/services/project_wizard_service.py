@@ -161,7 +161,7 @@ TEMPLATE_DEFAULTS = {
         "language": "csharp",
         "framework": "dotnet",
         "database": "sqlserver",
-        "workflow": "bmad",
+        "workflow": "marqed",
         "quality_gates": "full",
         "recommended_team_size": 5,
         "folder_structure": [
@@ -211,7 +211,7 @@ WORKFLOW_AGENT_MAPPING = {
         "description": "Full specification pipeline with Product Owner, Architect, and Documentation",
         "stages": ["Constitution", "Specification", "Tasks"]
     },
-    "bmad": {
+    "marqed": {
         "agents": ["Peter", "Felix", "Paul"],
         "description": "Strategic business analysis with 6-question framework",
         "stages": ["Green Paper", "Constitution", "Planning"]

@@ -1,8 +1,8 @@
 """
-Interfacing Analyzer - Wrapper for HCI Unit Interfacing Analyzer
+Interfacing Analyzer - Unit Interfacing Analyzer
 
 Week 126: Metrics Layer Integration
-Wraps the HCI-SoftwareKwaliteit-Migratie/tools/04-unit-interfacing-analyzer
+Wraps the Quality-Migration-Tools/04-unit-interfacing-analyzer
 
 Analyzes function/method parameter counts.
 
@@ -30,13 +30,13 @@ from ..base import (
 
 logger = logging.getLogger(__name__)
 
-# Path to HCI tools
-HCI_TOOLS_PATH = Path.home() / "Projects" / "HCI-projecten" / "HCI-SoftwareKwaliteit-Migratie" / "tools"
+# Path to quality analysis tools (configurable via QUALITY_TOOLS_PATH env var)
+QUALITY_TOOLS_PATH = Path(os.environ.get("QUALITY_TOOLS_PATH", str(Path.home() / "Projects" / "Quality-Migration-Tools")))
 
 
 class InterfacingAnalyzer(BaseScanner):
     """
-    Unit interfacing analyzer wrapping HCI unit_interfacing_analyzer.py.
+    Unit interfacing analyzer wrapping unit_interfacing_analyzer.py.
 
     Analyzes function/method parameter counts for interface quality.
     Supports: C#, VB.NET, SQL, JavaScript, TypeScript
@@ -79,7 +79,7 @@ class InterfacingAnalyzer(BaseScanner):
         """
         Count parameters in function signature.
 
-        Based on HCI unit_interfacing_analyzer.py logic.
+        Based on unit_interfacing_analyzer.py logic.
         """
         # Remove generics
         sig = re.sub(r'<[^>]+>', '', signature)
@@ -288,5 +288,5 @@ class InterfacingAnalyzer(BaseScanner):
         """Get default configuration"""
         return {
             "parameter_threshold": 4,
-            "hci_tools_path": str(HCI_TOOLS_PATH),
+            "quality_tools_path": str(QUALITY_TOOLS_PATH),
         }

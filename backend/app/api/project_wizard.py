@@ -75,7 +75,7 @@ class WizardCompleteRequest(BaseModel):
     # Workflow
     workflow: str = Field(
         default="spec-kit",
-        pattern="^(spec-kit|bmad|maintenance|custom)$",
+        pattern="^(spec-kit|marqed|maintenance|custom)$",
         description="Workflow type"
     )
     qualityGates: str = Field(
@@ -179,7 +179,7 @@ PROJECT_TEMPLATES = {
         icon="package",
         default_language="csharp",
         default_framework="dotnet",
-        default_workflow="bmad",
+        default_workflow="marqed",
         recommended_team_size=5,
         features=[
             "Code analysis",
@@ -214,7 +214,7 @@ PROJECT_TEMPLATES = {
 
 WORKFLOW_AGENTS = {
     "spec-kit": ["Peter", "Felix", "Diana"],
-    "bmad": ["Peter", "Felix", "Paul"],
+    "marqed": ["Peter", "Felix", "Paul"],
     "maintenance": ["Marcus", "Quinn", "Tessa"],
     "custom": []
 }

@@ -1,15 +1,15 @@
 """
-Enhanced Projects API - BMAD Integration
+Enhanced Projects API - MarQed Integration
 
 Provides endpoints for:
 - Creating new projects (greenfield/brownfield)
-- Starting BMAD sessions (green-paper/brown-paper)
+- Starting MarQed sessions (green-paper/brown-paper)
 - Running quality scans
 - Managing project lifecycle
 
 All project workflows are now project-first:
 1. Create project (select type)
-2. Run BMAD session (green or brown-paper)
+2. Run MarQed session (green or brown-paper)
 3. Project becomes active
 4. Start workflows (BUG, FEATURE, MAINTENANCE, etc.)
 """
@@ -49,7 +49,7 @@ class ProjectResponse(BaseModel):
     description: Optional[str]
     project_type: str
     project_status: str
-    bmad_session_id: Optional[str]
+    marqed_session_id: Optional[str]
     quality_scan_id: Optional[str]
     tech_stack: Optional[List[str]]
     created_at: datetime
@@ -90,8 +90,8 @@ class QualityScanResponse(BaseModel):
     scanned_at: datetime
 
 
-class BMADSessionResponse(BaseModel):
-    """BMAD session execution response"""
+class MarQedSessionResponse(BaseModel):
+    """MarQed session execution response"""
     session_id: str
     project_id: int
     session_type: str
@@ -128,7 +128,7 @@ async def create_new_project(request: ProjectCreateRequest) -> ProjectResponse:
       "project_type": "greenfield",
       "project_status": "draft",
       "next_steps": [
-        "Start BMAD green-paper session: POST /api/projects/123/green-paper"
+        "Start MarQed green-paper session: POST /api/projects/123/green-paper"
       ]
     }
     ```
@@ -145,7 +145,7 @@ async def create_new_project(request: ProjectCreateRequest) -> ProjectResponse:
         next_steps = []
         if request.project_type == "greenfield":
             next_steps = [
-                f"Start BMAD green-paper session: POST /api/projects/{project_id}/green-paper",
+                f"Start MarQed green-paper session: POST /api/projects/{project_id}/green-paper",
                 "Complete green-paper questions to define vision and scope",
                 "System will then run Spec-Kit workflow automatically"
             ]
@@ -153,7 +153,7 @@ async def create_new_project(request: ProjectCreateRequest) -> ProjectResponse:
             next_steps = [
                 f"Run quality scan: POST /api/projects/{project_id}/quality-scan",
                 "Wait 5-15 minutes for scan to complete",
-                f"Start BMAD brown-paper session: POST /api/projects/{project_id}/brown-paper"
+                f"Start MarQed brown-paper session: POST /api/projects/{project_id}/brown-paper"
             ]
 
         return ProjectResponse(
@@ -162,7 +162,7 @@ async def create_new_project(request: ProjectCreateRequest) -> ProjectResponse:
             description=request.description,
             project_type=request.project_type,
             project_status="draft",
-            bmad_session_id=None,
+            marqed_session_id=None,
             quality_scan_id=None,
             tech_stack=None,
             created_at=datetime.now(),
@@ -177,16 +177,16 @@ async def create_new_project(request: ProjectCreateRequest) -> ProjectResponse:
         )
 
 
-@router.post("/{project_id}/green-paper", response_model=BMADSessionResponse)
+@router.post("/{project_id}/green-paper", response_model=MarQedSessionResponse)
 async def start_green_paper_session(
     project_id: int,
     request: GreenPaperSessionRequest
-) -> BMADSessionResponse:
+) -> MarQedSessionResponse:
     """
-    Start BMAD green-paper session for greenfield project
+    Start MarQed green-paper session for greenfield project
 
     This triggers the GREEN_PAPER_PROJECT workflow:
-    1. BMAD facilitator guides session (6 questions)
+    1. MarQed facilitator guides session (6 questions)
     2. Generate green-paper.md document
     3. Store in ChromaDB
     4. Trigger Spec-Kit workflow (constitution → spec → tasks)
@@ -222,7 +222,7 @@ async def start_green_paper_session(
 
         session_id = f"green-paper-{project_id}-{datetime.now().strftime('%Y-%m-%d')}"
 
-        return BMADSessionResponse(
+        return MarQedSessionResponse(
             session_id=session_id,
             project_id=project_id,
             session_type="green-paper",
@@ -239,20 +239,20 @@ async def start_green_paper_session(
         )
 
 
-@router.post("/{project_id}/brown-paper", response_model=BMADSessionResponse)
+@router.post("/{project_id}/brown-paper", response_model=MarQedSessionResponse)
 async def start_brown_paper_session(
     project_id: int,
     request: BrownPaperSessionRequest
-) -> BMADSessionResponse:
+) -> MarQedSessionResponse:
     """
-    Start BMAD brown-paper session for brownfield project
+    Start MarQed brown-paper session for brownfield project
 
     Prerequisites: Quality scan MUST be completed first
 
     This triggers the BROWN_PAPER_PROJECT workflow:
     1. Load quality scan results from ChromaDB
     2. Pre-populate brown-paper form with scan data
-    3. BMAD facilitator guides session (7 questions)
+    3. MarQed facilitator guides session (7 questions)
     4. Generate brown-paper.md document (includes scan summary)
     5. Store in ChromaDB
     6. Trigger Spec-Kit workflow with migration context
@@ -291,7 +291,7 @@ async def start_brown_paper_session(
 
         session_id = f"brown-paper-{project_id}-{datetime.now().strftime('%Y-%m-%d')}"
 
-        return BMADSessionResponse(
+        return MarQedSessionResponse(
             session_id=session_id,
             project_id=project_id,
             session_type="brown-paper",
@@ -440,7 +440,7 @@ async def get_project(project_id: int) -> ProjectResponse:
 
     Returns complete project information including:
     - Project metadata
-    - BMAD session status
+    - MarQed session status
     - Quality scan status (if brownfield)
     - Current status and next steps
     """
@@ -456,11 +456,11 @@ async def get_project(project_id: int) -> ProjectResponse:
             description="Example description",
             project_type="greenfield",
             project_status="draft",
-            bmad_session_id=None,
+            marqed_session_id=None,
             quality_scan_id=None,
             tech_stack=None,
             created_at=datetime.now(),
-            next_steps=["Start BMAD session"]
+            next_steps=["Start MarQed session"]
         )
 
     except Exception as e:
@@ -474,7 +474,7 @@ async def get_project(project_id: int) -> ProjectResponse:
 @router.put("/{project_id}/activate")
 async def activate_project(project_id: int):
     """
-    Activate a project after BMAD session and Spec-Kit completion
+    Activate a project after MarQed session and Spec-Kit completion
 
     This is called automatically after Spec-Kit workflow completes.
 
@@ -485,7 +485,7 @@ async def activate_project(project_id: int):
 
         # TODO: Implement actual project activation
         # 1. Validate project exists
-        # 2. Validate BMAD session completed
+        # 2. Validate MarQed session completed
         # 3. Validate Spec-Kit workflow completed
         # 4. Update project_status to 'active'
         # 5. Set activated_at timestamp

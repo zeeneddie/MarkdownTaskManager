@@ -70,7 +70,7 @@ class TSQLBusinessRuleExtractor(BaseBusinessRuleExtractor):
             r'GRANT\s+',                                        # Grant permission
             r'DENY\s+',                                         # Deny permission
             r'REVOKE\s+',                                       # Revoke permission
-            r'@intCan\w+',                                      # HCI-CRS permission var
+            r'@intCan\w+',                                      # Permission variable pattern
             r'@CanView|@CanEdit|@CanDelete|@CanAdd',            # Permission flags
         ],
         RuleType.SCHEDULING: [
@@ -530,7 +530,7 @@ class TSQLBusinessRuleExtractor(BaseBusinessRuleExtractor):
         # Table name patterns
         table_patterns = [
             r'\b(?:FROM|JOIN|INTO|UPDATE|MERGE\s+INTO)\s+(\[?[a-zA-Z_]\w*\]?(?:\.\[?[a-zA-Z_]\w*\]?)?)',
-            r'\bta([A-Z][a-z]+\w*)',                    # HCI-CRS table prefix
+            r'\bta([A-Z][a-z]+\w*)',                    # Legacy table adapter prefix
             r'\btbl([A-Z][a-z]+)',                      # Common table prefix
             r'\b([A-Z][a-z]+)(?:ID|Id)\b',              # Entity ID columns
         ]

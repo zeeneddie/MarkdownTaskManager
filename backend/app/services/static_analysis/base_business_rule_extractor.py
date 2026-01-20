@@ -363,7 +363,7 @@ class BaseBusinessRuleExtractor(ABC):
         # Common entity patterns
         entity_patterns = [
             r'\b([A-Z][a-z]+(?:[A-Z][a-z]+)*)\b',  # PascalCase
-            r'ta([A-Z][a-z]+)',  # HCI-CRS table prefix
+            r'ta([A-Z][a-z]+)',  # Legacy table adapter prefix
             r'tbl([A-Z][a-z]+)',  # Common table prefix
             r'(?:record|row|item|entry)_?([A-Z][a-z]+)',
         ]

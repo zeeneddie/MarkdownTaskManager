@@ -354,7 +354,7 @@ async def get_review_vector_context(
     Args:
         section: Specific section being reviewed (e.g., "architecture")
         topics: Comma-separated list of topics (e.g., "authentication,database")
-        project_id: Project ID for Vector DB query (default: 1000 = HCI-CRS)
+        project_id: Project ID for Vector DB query (default: 1000)
 
     Returns:
         Dict with architecture docs, best practices, and code patterns

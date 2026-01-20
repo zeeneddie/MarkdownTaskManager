@@ -53,7 +53,7 @@ class Customer(Base):
 
     # Relationships
     projects = relationship("Project", back_populates="customer", cascade="all, delete-orphan")
-    bmad_sessions = relationship("BMADSession", back_populates="customer")
+    marqed_sessions = relationship("MarQedSession", back_populates="customer")
 
     def __repr__(self):
         return f"<Customer(id={self.id}, name='{self.name}', tier='{self.tier}')>"

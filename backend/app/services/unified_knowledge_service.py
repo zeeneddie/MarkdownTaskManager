@@ -7,7 +7,7 @@ Combines multiple knowledge sources:
 - CodeWiki (module structure, documentation)
 - CodeRAG (semantic code search)
 - ChromaDB (general embeddings)
-- HCI-CRS Knowledge (project-specific docs)
+- Project Docs (project-specific documentation)
 
 Provides unified query interface for agents.
 """
@@ -30,7 +30,7 @@ class KnowledgeSource(str, Enum):
     CODEWIKI = "codewiki"
     CODERAG = "coderag"
     CHROMADB = "chromadb"
-    HCI_CRS = "hci_crs"
+    PROJECT_DOCS = "project_docs"
     ALL = "all"
 
 

@@ -123,8 +123,8 @@ async def initialize_test_structure(request: InitializeTestStructureRequest):
     **Example Request:**
     ```json
     {
-      "project_path": "/opt/projecten/hci-crs",
-      "project_name": "HCI-CRS"
+      "project_path": "/opt/projects/my-app",
+      "project_name": "My Application"
     }
     ```
     """
@@ -168,7 +168,7 @@ async def register_test_result(request: RegisterTestResultRequest):
     **Example Request:**
     ```json
     {
-      "project_name": "HCI-CRS",
+      "project_name": "My Application",
       "test_type": "e2e",
       "test_name": "TC001_client_aanmaken",
       "status": "passed",
@@ -254,8 +254,8 @@ async def generate_test_report(request: GenerateReportRequest):
     **Example Request:**
     ```json
     {
-      "project_path": "/opt/projecten/hci-crs",
-      "project_name": "HCI-CRS"
+      "project_path": "/opt/projects/my-app",
+      "project_name": "My Application"
     }
     ```
     """

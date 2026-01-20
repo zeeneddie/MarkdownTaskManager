@@ -6,7 +6,7 @@ Phase 20 (Week 128-129): Enhanced 6-phase deep analysis integration.
 
 THREE WORKFLOW TYPES:
 1. Code-Analysis (bottom-up) - Analyze existing codebase to extract structure
-2. BMAD Brown-Paper (top-down) - 8-question guided workflow for migration projects
+2. MarQed Brown-Paper (top-down) - 8-question guided workflow for migration projects
 3. Enhanced Analysis (Phase 20) - 6-phase deep analysis with service integration
 
 CODE-ANALYSIS ENDPOINTS (prefix: /api/brown-paper/sessions):
@@ -23,23 +23,23 @@ CODE-ANALYSIS ENDPOINTS (prefix: /api/brown-paper/sessions):
 - POST /sessions/{id}/approve  - Approve session
 - POST /sessions/{id}/reject   - Reject session
 
-BMAD BROWN-PAPER ENDPOINTS (prefix: /api/brown-paper/bmad):
-- POST /bmad/start                   - Start 8-question workflow
-- GET  /bmad/{id}/question           - Get current question
-- POST /bmad/{id}/answer             - Submit answer
-- GET  /bmad/{id}/status             - Get full session status
-- POST /bmad/{id}/analyze            - Run migration analysis (Miguel)
-- POST /bmad/{id}/specification      - Generate specification (Peter)
-- POST /bmad/{id}/tasks              - Generate tasks (Felix)
-- GET  /bmad/{id}/export             - Export to markdown
-- GET  /bmad/questions               - List all 8 questions
+MARQED BROWN-PAPER ENDPOINTS (prefix: /api/brown-paper/marqed):
+- POST /marqed/start                   - Start 8-question workflow
+- GET  /marqed/{id}/question           - Get current question
+- POST /marqed/{id}/answer             - Submit answer
+- GET  /marqed/{id}/status             - Get full session status
+- POST /marqed/{id}/analyze            - Run migration analysis (Miguel)
+- POST /marqed/{id}/specification      - Generate specification (Peter)
+- POST /marqed/{id}/tasks              - Generate tasks (Felix)
+- GET  /marqed/{id}/export             - Export to markdown
+- GET  /marqed/questions               - List all 8 questions
 
-ENHANCED ANALYSIS ENDPOINTS (Phase 20 - prefix: /api/brown-paper/bmad):
-- POST /bmad/{id}/enhanced-analyze   - Run 6-phase deep analysis
-- GET  /bmad/{id}/dependency-graph   - Get D3.js graph visualization data
-- GET  /bmad/{id}/hierarchy          - Get Epic/Feature/Story/Task tree
-- GET  /bmad/{id}/conflicts          - Get LLM Council conflicts
-- GET  /bmad/{id}/metrics            - Get code quality metrics
+ENHANCED ANALYSIS ENDPOINTS (Phase 20 - prefix: /api/brown-paper/marqed):
+- POST /marqed/{id}/enhanced-analyze   - Run 6-phase deep analysis
+- GET  /marqed/{id}/dependency-graph   - Get D3.js graph visualization data
+- GET  /marqed/{id}/hierarchy          - Get Epic/Feature/Story/Task tree
+- GET  /marqed/{id}/conflicts          - Get LLM Council conflicts
+- GET  /marqed/{id}/metrics            - Get code quality metrics
 
 Enhanced Analysis Phases:
 1. Code Understanding: DependencyGraph + CodeAnalysis + LayeredAnalysis
@@ -58,7 +58,7 @@ import logging
 
 from app.services.brown_paper_service import (
     get_brown_paper_service,
-    get_bmad_brown_paper_workflow,
+    get_marqed_brown_paper_workflow,
     BrownPaperStatus,
 )
 
@@ -687,7 +687,7 @@ async def sessions_enhanced_analysis(
         service = get_brown_paper_service()
 
         # Verify session exists
-        session = service.get_session(session_id)
+        session = await service.get_session_async(session_id)
         if not session:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -759,7 +759,7 @@ async def sessions_dependency_graph(session_id: str):
     """
     try:
         service = get_brown_paper_service()
-        session = service.get_session(session_id)
+        session = await service.get_session_async(session_id)
 
         if not session:
             raise HTTPException(
@@ -806,7 +806,7 @@ async def sessions_hierarchy(session_id: str):
     """
     try:
         service = get_brown_paper_service()
-        session = service.get_session(session_id)
+        session = await service.get_session_async(session_id)
 
         if not session:
             raise HTTPException(
@@ -860,7 +860,7 @@ async def sessions_metrics(session_id: str):
     """
     try:
         service = get_brown_paper_service()
-        session = service.get_session(session_id)
+        session = await service.get_session_async(session_id)
 
         if not session:
             raise HTTPException(
@@ -975,32 +975,32 @@ async def list_module_types():
 
 
 # ============================================================================
-# BMAD BROWN-PAPER WORKFLOW ENDPOINTS (8-Question Migration Planning)
+# MARQED BROWN-PAPER WORKFLOW ENDPOINTS (8-Question Migration Planning)
 # ============================================================================
 #
-# These endpoints implement the BMAD Brown-Paper workflow for migration projects.
+# These endpoints implement the MarQed Brown-Paper workflow for migration projects.
 # Unlike the code-analysis endpoints above (bottom-up), these are top-down planning
 # endpoints that guide the user through 8 strategic questions.
 #
 # Flow:
-# 1. POST /bmad/start              - Start interactive session
-# 2. GET  /bmad/{id}/question      - Get current question
-# 3. POST /bmad/{id}/answer        - Submit answer, advance to next
-# 4. POST /bmad/{id}/analyze       - Run migration analysis (Miguel agent)
-# 5. POST /bmad/{id}/specification - Generate specification (Peter agent)
-# 6. POST /bmad/{id}/tasks         - Generate task hierarchy (Felix agent)
-# 7. GET  /bmad/{id}/export        - Export to markdown
+# 1. POST /marqed/start              - Start interactive session
+# 2. GET  /marqed/{id}/question      - Get current question
+# 3. POST /marqed/{id}/answer        - Submit answer, advance to next
+# 4. POST /marqed/{id}/analyze       - Run migration analysis (Miguel agent)
+# 5. POST /marqed/{id}/specification - Generate specification (Peter agent)
+# 6. POST /marqed/{id}/tasks         - Generate task hierarchy (Felix agent)
+# 7. GET  /marqed/{id}/export        - Export to markdown
 # ============================================================================
 
 
-class BMADStartRequest(BaseModel):
-    """Request to start a BMAD Brown-Paper session."""
+class MarQedStartRequest(BaseModel):
+    """Request to start a MarQed Brown-Paper session."""
     project_name: str = Field(..., description="Name of the migration project")
     project_path: Optional[str] = Field(None, description="Path to the project (optional)")
 
 
-class BMADStartResponse(BaseModel):
-    """Response from starting a BMAD session."""
+class MarQedStartResponse(BaseModel):
+    """Response from starting a MarQed session."""
     session_id: str
     project_name: str
     total_questions: int
@@ -1008,7 +1008,7 @@ class BMADStartResponse(BaseModel):
     status: str
 
 
-class BMADQuestionResponse(BaseModel):
+class MarQedQuestionResponse(BaseModel):
     """Response with current question details."""
     question_number: int
     total_questions: int
@@ -1020,12 +1020,12 @@ class BMADQuestionResponse(BaseModel):
     is_complete: bool
 
 
-class BMADAnswerRequest(BaseModel):
+class MarQedAnswerRequest(BaseModel):
     """Request to submit an answer."""
     answer: str = Field(..., min_length=30, description="Answer to the current question (min 30 chars)")
 
 
-class BMADAnswerResponse(BaseModel):
+class MarQedAnswerResponse(BaseModel):
     """Response after submitting an answer."""
     accepted: bool
     question_answered: int
@@ -1034,7 +1034,7 @@ class BMADAnswerResponse(BaseModel):
     message: str
 
 
-class BMADStatusResponse(BaseModel):
+class MarQedStatusResponse(BaseModel):
     """Full session status."""
     session_id: str
     project_name: str
@@ -1049,7 +1049,7 @@ class BMADStatusResponse(BaseModel):
     updated_at: str
 
 
-class BMADAnalysisResponse(BaseModel):
+class MarQedAnalysisResponse(BaseModel):
     """Response from migration analysis."""
     success: bool = True
     complexity: str
@@ -1060,7 +1060,7 @@ class BMADAnalysisResponse(BaseModel):
     go_no_go_checkpoints: List[str]
 
 
-class BMADSpecificationResponse(BaseModel):
+class MarQedSpecificationResponse(BaseModel):
     """Response from specification generation."""
     project_name: str
     mission: str
@@ -1071,7 +1071,7 @@ class BMADSpecificationResponse(BaseModel):
     success_criteria: List[Dict[str, Any]]
 
 
-class BMADTasksResponse(BaseModel):
+class MarQedTasksResponse(BaseModel):
     """Response from task generation."""
     epics: List[Dict[str, Any]]
     total_epics: int
@@ -1083,10 +1083,10 @@ class BMADTasksResponse(BaseModel):
     fp_analysis: Optional[Dict[str, Any]] = None
 
 
-@router.post("/bmad/start", response_model=BMADStartResponse)
-async def bmad_start_session(request: BMADStartRequest):
+@router.post("/marqed/start", response_model=MarQedStartResponse)
+async def marqed_start_session(request: MarQedStartRequest):
     """
-    Start a new BMAD Brown-Paper session for migration planning.
+    Start a new MarQed Brown-Paper session for migration planning.
 
     This begins the interactive 8-question workflow that guides the user
     through defining a brownfield/migration project.
@@ -1104,13 +1104,13 @@ async def bmad_start_session(request: BMADStartRequest):
     **Example Request:**
     ```json
     {
-      "project_name": "HCI-CRS Migration",
-      "project_path": "/opt/projecten/hci-crs"
+      "project_name": "Legacy System Migration",
+      "project_path": "/opt/projects/legacy-system"
     }
     ```
     """
     try:
-        workflow = get_bmad_brown_paper_workflow()
+        workflow = get_marqed_brown_paper_workflow()
         # Use async version for database persistence (required for restart functionality)
         session = await workflow.start_session_async(
             project_name=request.project_name,
@@ -1118,7 +1118,7 @@ async def bmad_start_session(request: BMADStartRequest):
             customer_id=getattr(request, 'customer_id', None)
         )
 
-        return BMADStartResponse(
+        return MarQedStartResponse(
             session_id=session.id,
             project_name=session.project_name,
             total_questions=session.total_questions,
@@ -1127,17 +1127,17 @@ async def bmad_start_session(request: BMADStartRequest):
         )
 
     except Exception as e:
-        logger.error(f"Failed to start BMAD session: {e}", exc_info=True)
+        logger.error(f"Failed to start MarQed session: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to start BMAD session: {str(e)}",
+            detail=f"Failed to start MarQed session: {str(e)}",
         )
 
 
-@router.get("/bmad/{session_id}/question", response_model=BMADQuestionResponse)
-async def bmad_get_question(session_id: str):
+@router.get("/marqed/{session_id}/question", response_model=MarQedQuestionResponse)
+async def marqed_get_question(session_id: str):
     """
-    Get the current question for the BMAD session.
+    Get the current question for the MarQed session.
 
     Returns the question text, which agent will process the answer,
     a description, and validation requirements.
@@ -1155,8 +1155,8 @@ async def bmad_get_question(session_id: str):
     }
 
     try:
-        workflow = get_bmad_brown_paper_workflow()
-        question = workflow.get_current_question(session_id)
+        workflow = get_marqed_brown_paper_workflow()
+        question = await workflow.get_current_question_async(session_id)
 
         if not question:
             raise HTTPException(
@@ -1166,7 +1166,7 @@ async def bmad_get_question(session_id: str):
 
         q_num = question["question_number"]
         total_q = question.get("total_questions", 8)
-        return BMADQuestionResponse(
+        return MarQedQuestionResponse(
             question_number=q_num,
             total_questions=total_q,
             question=question["question"],
@@ -1180,15 +1180,15 @@ async def bmad_get_question(session_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get BMAD question: {e}", exc_info=True)
+        logger.error(f"Failed to get MarQed question: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get question: {str(e)}",
         )
 
 
-@router.get("/bmad/{session_id}/question-with-context")
-async def bmad_get_question_with_context(session_id: str):
+@router.get("/marqed/{session_id}/question-with-context")
+async def marqed_get_question_with_context(session_id: str):
     """
     Get the current question with Vector DB context for answer assistance.
 
@@ -1213,8 +1213,8 @@ async def bmad_get_question_with_context(session_id: str):
     }
 
     try:
-        workflow = get_bmad_brown_paper_workflow()
-        question = workflow.get_current_question_with_context(session_id)
+        workflow = get_marqed_brown_paper_workflow()
+        question = await workflow.get_current_question_with_context_async(session_id)
 
         if not question:
             raise HTTPException(
@@ -1240,17 +1240,17 @@ async def bmad_get_question_with_context(session_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get BMAD question with context: {e}", exc_info=True)
+        logger.error(f"Failed to get MarQed question with context: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get question with context: {str(e)}",
         )
 
 
-@router.get("/bmad/{session_id}/vector-context")
-async def bmad_get_vector_context(session_id: str):
+@router.get("/marqed/{session_id}/vector-context")
+async def marqed_get_vector_context(session_id: str):
     """
-    Get the full Vector DB context for a BMAD session.
+    Get the full Vector DB context for a MarQed session.
 
     Week 143: Returns all fetched context including:
     - Architecture summary
@@ -1260,7 +1260,7 @@ async def bmad_get_vector_context(session_id: str):
     This is the complete context fetched at session start.
     """
     try:
-        workflow = get_bmad_brown_paper_workflow()
+        workflow = get_marqed_brown_paper_workflow()
         context = workflow.get_session_vector_context(session_id)
 
         if context is None:
@@ -1287,15 +1287,15 @@ async def bmad_get_vector_context(session_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get BMAD vector context: {e}", exc_info=True)
+        logger.error(f"Failed to get MarQed vector context: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get vector context: {str(e)}",
         )
 
 
-@router.post("/bmad/{session_id}/answer", response_model=BMADAnswerResponse)
-async def bmad_submit_answer(session_id: str, request: BMADAnswerRequest):
+@router.post("/marqed/{session_id}/answer", response_model=MarQedAnswerResponse)
+async def marqed_submit_answer(session_id: str, request: MarQedAnswerRequest):
     """
     Submit an answer to the current question.
 
@@ -1306,7 +1306,7 @@ async def bmad_submit_answer(session_id: str, request: BMADAnswerRequest):
     **Minimum answer length:** 30 characters
     """
     try:
-        workflow = get_bmad_brown_paper_workflow()
+        workflow = get_marqed_brown_paper_workflow()
         # Use async version for database persistence (required for restart functionality)
         result = await workflow.submit_answer_async(session_id, request.answer)
 
@@ -1332,7 +1332,7 @@ async def bmad_submit_answer(session_id: str, request: BMADAnswerRequest):
         else:
             message = f"Answer accepted for question {question_answered}. Next: question {next_q_num}."
 
-        return BMADAnswerResponse(
+        return MarQedAnswerResponse(
             accepted=accepted,
             question_answered=question_answered,
             next_question=next_q_num,
@@ -1348,23 +1348,23 @@ async def bmad_submit_answer(session_id: str, request: BMADAnswerRequest):
             detail=str(e),
         )
     except Exception as e:
-        logger.error(f"Failed to submit BMAD answer: {e}", exc_info=True)
+        logger.error(f"Failed to submit MarQed answer: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to submit answer: {str(e)}",
         )
 
 
-@router.get("/bmad/{session_id}/status", response_model=BMADStatusResponse)
-async def bmad_get_status(session_id: str):
+@router.get("/marqed/{session_id}/status", response_model=MarQedStatusResponse)
+async def marqed_get_status(session_id: str):
     """
-    Get full status of a BMAD Brown-Paper session.
+    Get full status of a MarQed Brown-Paper session.
 
     Includes all answers, analysis results, specifications, and tasks
     if they have been generated.
     """
     try:
-        workflow = get_bmad_brown_paper_workflow()
+        workflow = get_marqed_brown_paper_workflow()
         # Use async version for database fallback when not in cache
         session = await workflow.get_session_async(session_id)
 
@@ -1374,7 +1374,7 @@ async def bmad_get_status(session_id: str):
                 detail=f"Session not found: {session_id}",
             )
 
-        # Convert answers from Dict[int, BMADAnswer] to Dict[str, str]
+        # Convert answers from Dict[int, MarQedAnswer] to Dict[str, str]
         answers_dict = {
             f"Q{k}": v.answer for k, v in session.answers.items()
         }
@@ -1392,7 +1392,7 @@ async def bmad_get_status(session_id: str):
                 "go_no_go_checkpoints": ma.go_no_go_checkpoints,
             }
 
-        return BMADStatusResponse(
+        return MarQedStatusResponse(
             session_id=session.id,
             project_name=session.project_name,
             status=session.status,
@@ -1409,15 +1409,15 @@ async def bmad_get_status(session_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get BMAD status: {e}", exc_info=True)
+        logger.error(f"Failed to get MarQed status: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get status: {str(e)}",
         )
 
 
-@router.post("/bmad/{session_id}/analyze", response_model=BMADAnalysisResponse)
-async def bmad_run_analysis(session_id: str):
+@router.post("/marqed/{session_id}/analyze", response_model=MarQedAnalysisResponse)
+async def marqed_run_analysis(session_id: str):
     """
     Run migration analysis using the Miguel agent.
 
@@ -1431,11 +1431,11 @@ async def bmad_run_analysis(session_id: str):
     **Requires:** All 8 questions must be answered first.
     """
     try:
-        workflow = get_bmad_brown_paper_workflow()
+        workflow = get_marqed_brown_paper_workflow()
         result = await workflow.run_migration_analysis(session_id)
 
         # BUG-001 FIX: MigrationAnalysisResult now has success field
-        return BMADAnalysisResponse(
+        return MarQedAnalysisResponse(
             success=result.success,
             complexity=result.complexity,
             complexity_justification=result.complexity_justification,
@@ -1453,15 +1453,15 @@ async def bmad_run_analysis(session_id: str):
             detail=str(e),
         )
     except Exception as e:
-        logger.error(f"BMAD analysis failed: {e}", exc_info=True)
+        logger.error(f"MarQed analysis failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Analysis failed: {str(e)}",
         )
 
 
-@router.post("/bmad/{session_id}/specification", response_model=BMADSpecificationResponse)
-async def bmad_generate_specification(session_id: str):
+@router.post("/marqed/{session_id}/specification", response_model=MarQedSpecificationResponse)
+async def marqed_generate_specification(session_id: str):
     """
     Generate project specification using the Peter (PO) agent.
 
@@ -1476,7 +1476,7 @@ async def bmad_generate_specification(session_id: str):
     **Requires:** Migration analysis must be completed first.
     """
     try:
-        workflow = get_bmad_brown_paper_workflow()
+        workflow = get_marqed_brown_paper_workflow()
         result = await workflow.generate_specification(session_id)
 
         if not result.get("success", False):
@@ -1486,7 +1486,7 @@ async def bmad_generate_specification(session_id: str):
             )
 
         spec = result["specification"]
-        return BMADSpecificationResponse(
+        return MarQedSpecificationResponse(
             project_name=spec["project_name"],
             mission=spec["mission"],
             vision=spec["vision"],
@@ -1504,15 +1504,15 @@ async def bmad_generate_specification(session_id: str):
             detail=str(e),
         )
     except Exception as e:
-        logger.error(f"BMAD specification failed: {e}", exc_info=True)
+        logger.error(f"MarQed specification failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Specification generation failed: {str(e)}",
         )
 
 
-@router.post("/bmad/{session_id}/tasks", response_model=BMADTasksResponse)
-async def bmad_generate_tasks(session_id: str):
+@router.post("/marqed/{session_id}/tasks", response_model=MarQedTasksResponse)
+async def marqed_generate_tasks(session_id: str):
     """
     Generate task hierarchy using the Felix (Architect) agent.
 
@@ -1525,7 +1525,7 @@ async def bmad_generate_tasks(session_id: str):
     **Requires:** Specification must be completed first.
     """
     try:
-        workflow = get_bmad_brown_paper_workflow()
+        workflow = get_marqed_brown_paper_workflow()
         result = await workflow.generate_tasks(session_id)
 
         if not result.get("success", False):
@@ -1535,7 +1535,7 @@ async def bmad_generate_tasks(session_id: str):
             )
 
         tasks = result["tasks"]
-        return BMADTasksResponse(
+        return MarQedTasksResponse(
             epics=tasks["epics"],
             total_epics=tasks["summary"]["total_epics"],
             total_features=tasks["summary"]["total_features"],
@@ -1554,17 +1554,17 @@ async def bmad_generate_tasks(session_id: str):
             detail=str(e),
         )
     except Exception as e:
-        logger.error(f"BMAD task generation failed: {e}", exc_info=True)
+        logger.error(f"MarQed task generation failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Task generation failed: {str(e)}",
         )
 
 
-@router.get("/bmad/{session_id}/export")
-async def bmad_export_markdown(session_id: str):
+@router.get("/marqed/{session_id}/export")
+async def marqed_export_markdown(session_id: str):
     """
-    Export the complete BMAD Brown-Paper session to markdown.
+    Export the complete MarQed Brown-Paper session to markdown.
 
     This generates a PROJECT_CONSTITUTION.md file that can be saved
     to the project's documentation folder.
@@ -1577,7 +1577,7 @@ async def bmad_export_markdown(session_id: str):
     - Timeline and risk information
     """
     try:
-        workflow = get_bmad_brown_paper_workflow()
+        workflow = get_marqed_brown_paper_workflow()
         markdown = workflow.export_to_markdown(session_id)
 
         if not markdown:
@@ -1596,22 +1596,22 @@ async def bmad_export_markdown(session_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"BMAD export failed: {e}", exc_info=True)
+        logger.error(f"MarQed export failed: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Export failed: {str(e)}",
         )
 
 
-@router.get("/bmad/questions")
-async def bmad_list_questions():
+@router.get("/marqed/questions")
+async def marqed_list_questions():
     """
-    List all 8 BMAD Brown-Paper questions.
+    List all 8 MarQed Brown-Paper questions.
 
     Use this for documentation, UI reference, or previewing
     the workflow before starting a session.
     """
-    from app.services.brown_paper_service import BMAD_QUESTIONS
+    from app.services.brown_paper_service import MARQED_QUESTIONS
 
     # Agent mapping for each question
     AGENT_MAPPING = {
@@ -1626,7 +1626,7 @@ async def bmad_list_questions():
     }
 
     questions = []
-    for num, q in sorted(BMAD_QUESTIONS.items()):
+    for num, q in sorted(MARQED_QUESTIONS.items()):
         questions.append({
             "number": num,
             "question": q["question"],
@@ -1639,22 +1639,22 @@ async def bmad_list_questions():
     return {
         "total_questions": len(questions),
         "workflow_type": "BROWN_PAPER",
-        "description": "BMAD Brown-Paper workflow for brownfield/migration projects",
+        "description": "MarQed Brown-Paper workflow for brownfield/migration projects",
         "questions": questions,
     }
 
 
 # ============================================================================
-# PHASE 20: BROWN PAPER ENHANCED - 6-PHASE DEEP ANALYSIS ENDPOINTS (BMAD)
+# PHASE 20: BROWN PAPER ENHANCED - 6-PHASE DEEP ANALYSIS ENDPOINTS (MARQED)
 # ============================================================================
 
-@router.post("/bmad/{session_id}/enhanced-analyze", response_model=EnhancedAnalysisResponseModel)
+@router.post("/marqed/{session_id}/enhanced-analyze", response_model=EnhancedAnalysisResponseModel)
 async def start_enhanced_analysis(
     session_id: str,
     request: EnhancedAnalysisRequestModel
 ):
     """
-    Start 6-phase enhanced analysis for a BMAD session.
+    Start 6-phase enhanced analysis for a MarQed session.
 
     This endpoint integrates 5 existing services:
     - Phase 1: DependencyGraph + CodeAnalysis + LayeredAnalysis
@@ -1735,7 +1735,7 @@ async def start_enhanced_analysis(
         )
 
 
-@router.get("/bmad/{session_id}/dependency-graph")
+@router.get("/marqed/{session_id}/dependency-graph")
 async def get_dependency_graph(session_id: str):
     """
     Get dependency graph visualization data for a session.
@@ -1744,7 +1744,7 @@ async def get_dependency_graph(session_id: str):
     """
     try:
         service = get_brown_paper_service()
-        session = service.get_session(session_id)
+        session = await service.get_session_async(session_id)
 
         if not session:
             raise HTTPException(
@@ -1790,7 +1790,7 @@ async def get_dependency_graph(session_id: str):
         )
 
 
-@router.get("/bmad/{session_id}/foundation")
+@router.get("/marqed/{session_id}/foundation")
 async def get_foundation(session_id: str):
     """
     Get foundation/infrastructure modules for a session.
@@ -1811,15 +1811,15 @@ async def get_foundation(session_id: str):
         # Use async version for database fallback
         session = await service.get_session_async(session_id)
 
-        # If not found, try BMAD workflow session
+        # If not found, try MarQed workflow session
         if not session:
-            workflow = get_bmad_brown_paper_workflow()
+            workflow = get_marqed_brown_paper_workflow()
             session = await workflow.get_session_async(session_id)
 
         if not session:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Session {session_id} not found in BrownPaper or BMAD workflow",
+                detail=f"Session {session_id} not found in BrownPaper or MarQed workflow",
             )
 
         # Check for enhanced analysis results
@@ -1860,7 +1860,7 @@ async def get_foundation(session_id: str):
         )
 
 
-@router.get("/bmad/{session_id}/hierarchy")
+@router.get("/marqed/{session_id}/hierarchy")
 async def get_hierarchy(session_id: str):
     """
     Get Epic/Feature/Story/Task hierarchy for a session.
@@ -1869,7 +1869,7 @@ async def get_hierarchy(session_id: str):
     """
     try:
         service = get_brown_paper_service()
-        session = service.get_session(session_id)
+        session = await service.get_session_async(session_id)
 
         if not session:
             raise HTTPException(
@@ -1908,7 +1908,7 @@ async def get_hierarchy(session_id: str):
         )
 
 
-@router.get("/bmad/{session_id}/conflicts")
+@router.get("/marqed/{session_id}/conflicts")
 async def get_conflicts(session_id: str):
     """
     Get detected conflicts from deep extraction.
@@ -1917,7 +1917,7 @@ async def get_conflicts(session_id: str):
     """
     try:
         service = get_brown_paper_service()
-        session = service.get_session(session_id)
+        session = await service.get_session_async(session_id)
 
         if not session:
             raise HTTPException(
@@ -1957,7 +1957,7 @@ async def get_conflicts(session_id: str):
         )
 
 
-@router.get("/bmad/{session_id}/metrics")
+@router.get("/marqed/{session_id}/metrics")
 async def get_metrics(session_id: str):
     """
     Get code quality metrics for a session.
@@ -1966,7 +1966,7 @@ async def get_metrics(session_id: str):
     """
     try:
         service = get_brown_paper_service()
-        session = service.get_session(session_id)
+        session = await service.get_session_async(session_id)
 
         if not session:
             raise HTTPException(

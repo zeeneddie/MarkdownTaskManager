@@ -118,7 +118,7 @@ class SpecReviewService:
         db_session: AsyncSession,
         ollama_base_url: str = "http://localhost:11434",
         project_profile: Optional[ProjectProfile] = None,
-        project_id: int = 1000  # Week 143: Default to HCI-CRS project for Vector DB
+        project_id: int = 1000  # Week 143: Default project for Vector DB
     ):
         self.db = db_session
         self.ollama_url = ollama_base_url

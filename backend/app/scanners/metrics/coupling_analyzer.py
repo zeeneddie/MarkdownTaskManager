@@ -1,8 +1,8 @@
 """
-Coupling Analyzer - Wrapper for HCI Module Coupling Analyzer
+Coupling Analyzer - Module Coupling Analyzer
 
 Week 126: Metrics Layer Integration
-Wraps the HCI-SoftwareKwaliteit-Migratie/tools/05-module-coupling-analyzer
+Wraps the Quality-Migration-Tools/05-module-coupling-analyzer
 
 Analyzes module dependencies: fan-in, fan-out, instability index.
 
@@ -35,13 +35,13 @@ from ..base import (
 
 logger = logging.getLogger(__name__)
 
-# Path to HCI tools
-HCI_TOOLS_PATH = Path.home() / "Projects" / "HCI-projecten" / "HCI-SoftwareKwaliteit-Migratie" / "tools"
+# Path to quality analysis tools (configurable via QUALITY_TOOLS_PATH env var)
+QUALITY_TOOLS_PATH = Path(os.environ.get("QUALITY_TOOLS_PATH", str(Path.home() / "Projects" / "Quality-Migration-Tools")))
 
 
 class CouplingAnalyzer(BaseScanner):
     """
-    Module coupling analyzer wrapping HCI module_coupling_analyzer.py.
+    Module coupling analyzer wrapping module_coupling_analyzer.py.
 
     Calculates fan-in, fan-out, and instability metrics.
     Supports: C#, VB.NET, JavaScript, TypeScript, SQL
@@ -268,5 +268,5 @@ class CouplingAnalyzer(BaseScanner):
         return {
             "instability_threshold": 0.5,
             "fan_out_threshold": 10,
-            "hci_tools_path": str(HCI_TOOLS_PATH),
+            "quality_tools_path": str(QUALITY_TOOLS_PATH),
         }

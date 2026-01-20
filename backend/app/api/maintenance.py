@@ -135,7 +135,7 @@ async def run_maintenance_workflow(request: MaintenanceRequest) -> MaintenanceRe
 
     **Prerequisites**:
     - Project must exist and be active
-    - Project must have completed BMAD session
+    - Project must have completed MarQed session
     - For brownfield: Quality scan required
 
     **Example Request**:

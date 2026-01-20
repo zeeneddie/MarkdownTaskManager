@@ -5,7 +5,7 @@ Detects language-agnostic security anti-patterns across all programming language
 These patterns represent fundamental security issues that manifest similarly
 regardless of the specific language syntax.
 
-Based on CVD-2025-001 findings from HCI-CRS security audit.
+Based on CVD-2025-001 findings from legacy system security audit.
 
 Detected Anti-Patterns:
 - CWE-337/330: Weak PRNG for security contexts

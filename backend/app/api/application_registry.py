@@ -588,7 +588,7 @@ async def get_application_backlog(app_id: int):
     **Example Response:**
     ```json
     {
-      "name": "HCI-CRS",
+      "name": "Sample Application",
       "status": "ACTIVE",
       "total_story_points": 39,
       "total_function_points": 50,
@@ -737,7 +737,7 @@ async def get_application_backlog_nested(app_id: int):
     **Example Response:**
     ```json
     {
-      "name": "HCI-CRS",
+      "name": "Sample Application",
       "status": "ACTIVE",
       "total_story_points": 39,
       "epics": [

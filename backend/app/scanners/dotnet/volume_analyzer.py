@@ -396,8 +396,8 @@ def main():
     parser.add_argument(
         'path',
         nargs='?',
-        default=r'G:\Src\Projects\HCI-projecten\HCI-SoftwareKwaliteit-Migratie\eddie',
-        help='Path to analyze (default: eddie folder)'
+        default='.',
+        help='Path to analyze (default: current directory)'
     )
     parser.add_argument(
         '--csv',

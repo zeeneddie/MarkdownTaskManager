@@ -1,4 +1,4 @@
-# Week 10: BMAD Green-Paper Workflow
+# Week 10: MarQed Green-Paper Workflow
 
 **Target Start Date**: December 23, 2025 (5 weeks from now)
 **Status**: Pre-work Complete ✅
@@ -8,9 +8,9 @@
 
 ## 📋 Objectives
 
-Implement the **BMAD Green-Paper Workflow** for greenfield project creation:
+Implement the **MarQed Green-Paper Workflow** for greenfield project creation:
 
-1. ✅ 6-Question BMAD Session Interface
+1. ✅ 6-Question MarQed Session Interface
 2. ✅ Constitution → Specification Pipeline (Spec-Kit)
 3. ✅ Progressive Validation Checkpoints
 4. ✅ Integration with Peter (Product Owner) and Felix (Feature Architect)
@@ -22,13 +22,13 @@ Implement the **BMAD Green-Paper Workflow** for greenfield project creation:
 
 ### Core Features
 
-1. **BMAD Session Interface**
+1. **MarQed Session Interface**
    - 6 strategic questions for greenfield projects
    - Answer validation and progress tracking
    - Session state management
 
 2. **Constitution Generation**
-   - Peter (Product Owner) analyzes BMAD answers
+   - Peter (Product Owner) analyzes MarQed answers
    - Generates comprehensive project constitution
    - Structured output: Problem, Stakeholders, Functions, Criteria, Constraints, Timeline, Risks
 
@@ -92,7 +92,7 @@ Implement the **BMAD Green-Paper Workflow** for greenfield project creation:
 - Ollama local AI integration
 - Performance and error handling
 
-### 3. BMAD Template ✅
+### 3. MarQed Template ✅
 **File**: `agents/templates/week10/green_paper_template.md`
 
 **Contents**:
@@ -151,12 +151,12 @@ Implement the **BMAD Green-Paper Workflow** for greenfield project creation:
 - Diana (Documentation Writer) - `mistral:latest`
 
 **Tasks**:
-1. Analyze BMAD Answers (Peter)
+1. Analyze MarQed Answers (Peter)
 2. Generate Constitution (Peter)
 3. Format Documentation (Diana)
 
 **Functions**:
-- `executeGreenPaperWorkflow()` - Run workflow with BMAD answers
+- `executeGreenPaperWorkflow()` - Run workflow with MarQed answers
 - `handleConstitutionValidation()` - Process user review
 
 ---
@@ -182,7 +182,7 @@ agents/
 │       └── greenPaperWorkflow.ts      # KaibanJS workflow
 └── templates/
     └── week10/
-        └── green_paper_template.md    # BMAD template
+        └── green_paper_template.md    # MarQed template
 
 tests/
 ├── api/
@@ -205,7 +205,7 @@ tests/
 1. User creates project (draft status)
    ↓
 2. User starts green-paper session
-   GET 6 BMAD questions
+   GET 6 MarQed questions
    ↓
 3. User answers questions 1-6
    (1-4 required, 5-6 optional)
@@ -244,7 +244,7 @@ tests/
 
 ```
 Peter (Product Owner)
-  ├─ Receives: 6 BMAD answers
+  ├─ Receives: 6 MarQed answers
   ├─ Analyzes: Problem, stakeholders, functions, criteria
   ├─ Generates: Project Constitution
   └─ Collaborates with: Diana (documentation)
@@ -297,25 +297,25 @@ Paul (Project Lead)
   - [ ] Implement Diana documentation formatting
   - [ ] Add retry mechanism (max 3)
   - [ ] Add quality gates integration
-  - [ ] Test with sample BMAD answers
+  - [ ] Test with sample MarQed answers
 
 - [ ] **Testing** (Day 5-6)
   - [ ] Implement all API test cases
   - [ ] Implement all workflow test cases
-  - [ ] Run E2E test: Complete BMAD → Tasks flow
+  - [ ] Run E2E test: Complete MarQed → Tasks flow
   - [ ] Verify ChromaDB storage
   - [ ] Verify Ollama local execution
 
 - [ ] **Documentation** (Day 6)
   - [ ] Update main README
-  - [ ] Create user guide for BMAD session
+  - [ ] Create user guide for MarQed session
   - [ ] Document API with examples
   - [ ] Create demo video/screenshots
 
 - [ ] **Optional Enhancements**
   - [ ] Add rate limiting middleware
   - [ ] Add webhook support for async events
-  - [ ] Create frontend UI for BMAD session
+  - [ ] Create frontend UI for MarQed session
   - [ ] Add analytics/metrics tracking
 
 ---
@@ -333,7 +333,7 @@ Paul (Project Lead)
 - ChromaDB storage and retrieval
 
 ### E2E Tests
-1. Complete BMAD session (6 questions)
+1. Complete MarQed session (6 questions)
 2. Constitution generation
 3. User review (approve/reject)
 4. Specification generation
@@ -403,13 +403,13 @@ curl -X POST http://localhost:8000/api/projects/{project_id}/green-paper/{sessio
 
 ## 📊 Success Metrics
 
-- ✅ 6-question BMAD interface implemented
+- ✅ 6-question MarQed interface implemented
 - ✅ Peter generates 1000-1500 word constitution
 - ✅ Felix generates HLD specification
 - ✅ Complete workflow < 30 minutes
 - ✅ 100% local AI execution (no cloud APIs)
 - ✅ All API tests passing (100+ test cases)
-- ✅ E2E test: BMAD → Tasks workflow succeeds
+- ✅ E2E test: MarQed → Tasks workflow succeeds
 
 ---
 

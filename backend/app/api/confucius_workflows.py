@@ -210,7 +210,7 @@ async def start_migration_workflow(
     """
     Start a Migration planning workflow.
 
-    Executes BMAD 8-question migration planning:
+    Executes MarQed 8-question migration planning:
     1. Validate Answers
     2. Technical Analysis (Miguel)
     3. Generate Specification (Peter, Betty)

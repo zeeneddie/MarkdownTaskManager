@@ -18,7 +18,8 @@ WorkType = Literal[
     "QUALITY_IMPROVEMENT",
     "TESTING",
     "GREEN_PAPER",      # Greenfield project definition (Spec-Kit)
-    "BROWN_PAPER"       # Brownfield/Migration project definition
+    "BROWN_PAPER",      # Brownfield/Migration project definition
+    "BACKLOG_GENERATION"  # Backlog generation workflow
 ]
 
 
@@ -385,8 +386,8 @@ class BrownPaperWorkflowRequest(BaseModel):
             "stakeholders": "200 healthcare workers (daily), 15 IT admins, CTO, Compliance Officer",
             "success_criteria": "100% functional parity, <2s page load, 100% test coverage, OWASP A+ rating, zero data loss",
             "timeline_constraints": "72 weeks total. Hard deadline: NEN 7510 audit in 18 months. Solo developer Phase 1, then 8-10 FTE.",
-            "project_name": "HCI-CRS Migration",
-            "project_path": "/opt/projecten/hci-crs"
+            "project_name": "Legacy System Migration",
+            "project_path": None
         }
     })
 
@@ -428,7 +429,7 @@ class BrownPaperWorkflowResult(BaseModel):
                 "go_no_go_checkpoints": ["Week 14: Foundation complete", "Week 36: Core modules complete"]
             },
             "specification": {
-                "executive_summary": "Migration of HCI-CRS from ASP.NET Web Forms to .NET 8/Blazor...",
+                "executive_summary": "Migration of legacy system from ASP.NET Web Forms to .NET 8/Blazor...",
                 "current_state": {},
                 "target_state": {},
                 "migration_approach": {},

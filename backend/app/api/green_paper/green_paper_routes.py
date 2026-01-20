@@ -1,7 +1,7 @@
 """
 Green-Paper Workflow API Routes
 
-FastAPI endpoints for BMAD green-paper workflow (6-question greenfield):
+FastAPI endpoints for MarQed green-paper workflow (6-question greenfield):
 - Session & Answer Management (4 endpoints)
 - Constitution Management (5 endpoints)
 - Specification Management (4 endpoints)
@@ -187,7 +187,7 @@ async def get_green_paper_service(
 @router.post(
     "/sessions",
     status_code=status.HTTP_201_CREATED,
-    summary="Start BMAD green-paper session",
+    summary="Start MarQed green-paper session",
     response_description="Session created with 6 questions"
 )
 async def start_green_paper_session(
@@ -195,13 +195,13 @@ async def start_green_paper_session(
     service: GreenPaperService = Depends(get_green_paper_service)
 ):
     """
-    Initialize a new BMAD green-paper session for a project.
+    Initialize a new MarQed green-paper session for a project.
 
     **Requirements**:
     - Project must exist
     - No active session already exists
 
-    **Returns**: Session data with 6 BMAD questions
+    **Returns**: Session data with 6 MarQed questions
 
     **Example Request**:
     ```json
@@ -229,7 +229,7 @@ async def start_green_paper_session(
         }
       ],
       "created_at": "2025-11-19T10:00:00Z",
-      "message": "BMAD session started successfully"
+      "message": "MarQed session started successfully"
     }
     ```
     """
@@ -324,7 +324,7 @@ async def get_session_status(
 
 @router.post(
     "/sessions/{session_id}/answers",
-    summary="Submit answer to BMAD question",
+    summary="Submit answer to MarQed question",
     response_description="Answer accepted with progress update"
 )
 async def submit_answer(
@@ -333,7 +333,7 @@ async def submit_answer(
     service: GreenPaperService = Depends(get_green_paper_service)
 ):
     """
-    Submit or update an answer to a BMAD question.
+    Submit or update an answer to a MarQed question.
 
     **Validation**:
     - Answer must not exceed max_length for question
@@ -476,7 +476,7 @@ async def generate_constitution(
     - Session must be completed
 
     **Process**:
-    - Peter receives BMAD answers
+    - Peter receives MarQed answers
     - Analyzes and generates comprehensive constitution
     - Returns async task for monitoring
 

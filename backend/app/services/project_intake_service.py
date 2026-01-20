@@ -36,7 +36,7 @@ from app.models.project_intake import (
     BrownPaperDecision,
     PREDEFINED_FEATURES,
 )
-from app.models.bmad_session import BmadSession
+from app.models.marqed_session import MarQedSession
 
 
 logger = logging.getLogger(__name__)
@@ -292,7 +292,7 @@ class ProjectIntakeService:
         self,
         intake_id: UUID,
         analysis_results: Dict[str, Any],
-        bmad_session_id: Optional[str] = None,
+        marqed_session_id: Optional[str] = None,
     ) -> ProjectIntake:
         """Complete Brown Paper analysis with results."""
         intake = await self.get_intake(intake_id)
@@ -303,10 +303,10 @@ class ProjectIntakeService:
         intake.analysis_results = analysis_results
 
         # Create source record linking to Brown Paper session
-        if bmad_session_id:
+        if marqed_session_id:
             source = ProjectIntakeSource(
                 intake_id=intake_id,
-                brown_paper_session_id=bmad_session_id,
+                brown_paper_session_id=marqed_session_id,
                 system_name=intake.name,
                 system_path=intake.scope.system_path if intake.scope else None,
                 module_count=analysis_results.get("module_count"),
@@ -621,11 +621,11 @@ class ProjectIntakeService:
         analysis_summary = None
         if brown_paper_session_id:
             result = await self.db.execute(
-                select(BmadSession).filter(BmadSession.id == brown_paper_session_id)
+                select(MarQedSession).filter(MarQedSession.id == brown_paper_session_id)
             )
-            bmad_session = result.scalar_one_or_none()
-            if bmad_session and bmad_session.analysis_result:
-                analysis_summary = bmad_session.analysis_result
+            marqed_session = result.scalar_one_or_none()
+            if marqed_session and marqed_session.analysis_result:
+                analysis_summary = marqed_session.analysis_result
 
         source = ProjectIntakeSource(
             intake_id=intake_id,

@@ -44,7 +44,7 @@ class TaskGenerationService:
         self,
         db: AsyncSession,
         agent_service: AgentService,
-        project_id: int = 1000  # Week 143: Default to HCI-CRS for Vector DB
+        project_id: int = 1000  # Week 143: Default project for Vector DB
     ):
         self.db = db
         self.agent_service = agent_service

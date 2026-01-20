@@ -102,7 +102,7 @@ class BacklogService:
         Read the complete backlog for an application.
 
         Args:
-            app_root_path: Root path of the application (e.g., /opt/projecten/hci-crs)
+            app_root_path: Root path of the application (e.g., /opt/projects/my-app)
 
         Returns:
             ProjectBacklog with all epics, features, stories, tasks

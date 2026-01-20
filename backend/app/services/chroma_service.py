@@ -13,7 +13,7 @@ Collections:
 - project_documents: All project documentation embeddings (constitution, spec, tasks, PRD, etc.)
 - historical_projects: Full project metadata for cross-project similarity search
 - code_analysis: Quality scan results and technical debt tracking
-- bmad_sessions: Green-paper and brown-paper session outputs
+- marqed_sessions: Green-paper and brown-paper session outputs
 - project_constitutions: Week 10 - Constitution embeddings
 - famous_bugs (KB1): Historical famous software bugs for educational context
 - post_mortems (KB5): Incident post-mortems and outage analysis patterns
@@ -98,13 +98,13 @@ class ChromaService:
                 }
             )
 
-            # Collection 4: BMAD Sessions
+            # Collection 4: MarQed Sessions
             # Green-paper and brown-paper session outputs
-            self.bmad_sessions = self.client.get_or_create_collection(
-                name="bmad_sessions",
+            self.marqed_sessions = self.client.get_or_create_collection(
+                name="marqed_sessions",
                 embedding_function=self.embedding_function,
                 metadata={
-                    "description": "BMAD green-paper and brown-paper session outputs",
+                    "description": "MarQed green-paper and brown-paper session outputs",
                     "hnsw:space": "cosine"
                 }
             )
@@ -470,9 +470,9 @@ class ChromaService:
             logger.error(f"Failed to get quality scan: {str(e)}")
             raise
 
-    # ========== BMAD SESSIONS OPERATIONS ==========
+    # ========== MARQED SESSIONS OPERATIONS ==========
 
-    def store_bmad_session(
+    def store_marqed_session(
         self,
         project_id: int,
         session_type: str,  # 'green-paper' or 'brown-paper'
@@ -480,7 +480,7 @@ class ChromaService:
         session_content: str
     ) -> str:
         """
-        Store BMAD session (green-paper or brown-paper)
+        Store MarQed session (green-paper or brown-paper)
 
         Args:
             project_id: ID of the project
@@ -496,7 +496,7 @@ class ChromaService:
             doc_id = f"{session_type}-{project_id}-{datetime.now().isoformat()}"
 
             # Store in collection
-            self.bmad_sessions.add(
+            self.marqed_sessions.add(
                 documents=[session_content],
                 metadatas=[{
                     "project_id": str(project_id),
@@ -507,16 +507,16 @@ class ChromaService:
                 ids=[doc_id]
             )
 
-            logger.info(f"Stored BMAD {session_type} session for project {project_id}")
+            logger.info(f"Stored MarQed {session_type} session for project {project_id}")
             return doc_id
 
         except Exception as e:
-            logger.error(f"Failed to store BMAD session: {str(e)}")
+            logger.error(f"Failed to store MarQed session: {str(e)}")
             raise
 
-    def get_bmad_session(self, session_id: str) -> Optional[Dict[str, Any]]:
+    def get_marqed_session(self, session_id: str) -> Optional[Dict[str, Any]]:
         """
-        Retrieve a BMAD session by ID
+        Retrieve a MarQed session by ID
 
         Args:
             session_id: ID of the session
@@ -525,7 +525,7 @@ class ChromaService:
             Session data or None if not found
         """
         try:
-            result = self.bmad_sessions.get(ids=[session_id])
+            result = self.marqed_sessions.get(ids=[session_id])
 
             if not result["documents"]:
                 return None
@@ -537,7 +537,7 @@ class ChromaService:
             }
 
         except Exception as e:
-            logger.error(f"Failed to get BMAD session: {str(e)}")
+            logger.error(f"Failed to get MarQed session: {str(e)}")
             raise
 
     # ========== FAMOUS BUGS OPERATIONS (KB1) ==========
@@ -990,14 +990,14 @@ class ChromaService:
                     "project_documents": self.project_documents.count(),
                     "historical_projects": self.historical_projects.count(),
                     "code_analysis": self.code_analysis.count(),
-                    "bmad_sessions": self.bmad_sessions.count(),
+                    "marqed_sessions": self.marqed_sessions.count(),
                     "project_constitutions": self.project_constitutions.count()
                 },
                 "total_documents": sum([
                     self.project_documents.count(),
                     self.historical_projects.count(),
                     self.code_analysis.count(),
-                    self.bmad_sessions.count(),
+                    self.marqed_sessions.count(),
                     self.project_constitutions.count()
                 ]),
                 "healthy": self.health_check()

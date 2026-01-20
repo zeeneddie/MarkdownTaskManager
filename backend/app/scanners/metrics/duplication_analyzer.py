@@ -1,8 +1,8 @@
 """
-Duplication Analyzer - Wrapper for HCI Code Clone Detector
+Duplication Analyzer - Code Clone Detector
 
 Week 126: Metrics Layer Integration
-Wraps the HCI-SoftwareKwaliteit-Migratie/tools/02-duplication-detector
+Wraps the Quality-Migration-Tools/02-duplication-detector
 
 Supports Type 1, 2, 3 clone detection:
 - Type 1: Exact clones (identical code, whitespace ignored)
@@ -35,13 +35,13 @@ from ..base import (
 
 logger = logging.getLogger(__name__)
 
-# Path to HCI tools
-HCI_TOOLS_PATH = Path.home() / "Projects" / "HCI-projecten" / "HCI-SoftwareKwaliteit-Migratie" / "tools"
+# Path to quality analysis tools (configurable via QUALITY_TOOLS_PATH env var)
+QUALITY_TOOLS_PATH = Path(os.environ.get("QUALITY_TOOLS_PATH", str(Path.home() / "Projects" / "Quality-Migration-Tools")))
 
 
 class DuplicationAnalyzer(BaseScanner):
     """
-    Code duplication analyzer wrapping HCI code_clone_detector.py.
+    Code duplication analyzer wrapping code_clone_detector.py.
 
     Detects Type 1, 2, and 3 code clones.
     Supports: C#, VB.NET, SQL, JavaScript, TypeScript, ASP
@@ -105,7 +105,7 @@ class DuplicationAnalyzer(BaseScanner):
     def _normalize_identifiers(self, code: str) -> str:
         """Normalize identifiers for Type 2 detection"""
         # Replace identifiers with placeholders
-        # This is a simplified version - HCI tool has more sophisticated logic
+        # This is a simplified version - full tool has more sophisticated logic
         normalized = re.sub(r'\b[a-z_][a-zA-Z0-9_]*\b', 'ID', code)
         normalized = re.sub(r'\b[A-Z][a-zA-Z0-9_]*\b', 'TYPE', normalized)
         normalized = re.sub(r'\b\d+\b', 'NUM', normalized)
@@ -360,5 +360,5 @@ class DuplicationAnalyzer(BaseScanner):
             "duplication_threshold": 5,  # percentage
             "min_block_size": self.MIN_BLOCK_SIZE,
             "type3_similarity_threshold": 0.7,
-            "hci_tools_path": str(HCI_TOOLS_PATH),
+            "quality_tools_path": str(QUALITY_TOOLS_PATH),
         }

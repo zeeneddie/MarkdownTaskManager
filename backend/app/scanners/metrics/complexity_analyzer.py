@@ -1,8 +1,8 @@
 """
-Complexity Analyzer - Wrapper for HCI Unit Complexity Analyzer
+Complexity Analyzer - Unit Complexity Analyzer
 
 Week 126: Metrics Layer Integration
-Wraps the HCI-SoftwareKwaliteit-Migratie/tools/03-unit-complexity-analyzer
+Wraps the Quality-Migration-Tools/03-unit-complexity-analyzer
 
 5-Star Rating (lower is better - simpler code is more maintainable):
 - 5 stars: avg < 10 (simple, excellent maintainability)
@@ -26,13 +26,13 @@ from ..base import (
 
 logger = logging.getLogger(__name__)
 
-# Path to HCI tools
-HCI_TOOLS_PATH = Path.home() / "Projects" / "HCI-projecten" / "HCI-SoftwareKwaliteit-Migratie" / "tools"
+# Path to quality analysis tools (configurable via QUALITY_TOOLS_PATH env var)
+QUALITY_TOOLS_PATH = Path(os.environ.get("QUALITY_TOOLS_PATH", str(Path.home() / "Projects" / "Quality-Migration-Tools")))
 
 
 class ComplexityAnalyzer(BaseScanner):
     """
-    Cyclomatic complexity analyzer wrapping HCI deep_analyze.py.
+    Cyclomatic complexity analyzer wrapping deep_analyze.py.
 
     Supports: C#, VB.NET, SQL, JavaScript, TypeScript, ASP
     """
@@ -70,33 +70,33 @@ class ComplexityAnalyzer(BaseScanner):
         """Convert numeric rating to star string"""
         return '★' * rating + '☆' * (5 - rating)
 
-    def _import_hci_analyzer(self):
-        """Import the HCI analyzer module"""
-        hci_complexity_path = HCI_TOOLS_PATH / "03-unit-complexity-analyzer"
+    def _import_quality_analyzer(self):
+        """Import the quality analyzer module"""
+        complexity_path = QUALITY_TOOLS_PATH / "03-unit-complexity-analyzer"
 
-        if not hci_complexity_path.exists():
-            raise ImportError(f"HCI complexity analyzer not found at {hci_complexity_path}")
+        if not complexity_path.exists():
+            raise ImportError(f"Complexity analyzer not found at {complexity_path}")
 
-        # Add HCI tools to path
-        if str(HCI_TOOLS_PATH) not in sys.path:
-            sys.path.insert(0, str(HCI_TOOLS_PATH))
-        if str(hci_complexity_path) not in sys.path:
-            sys.path.insert(0, str(hci_complexity_path))
+        # Add quality tools to path
+        if str(QUALITY_TOOLS_PATH) not in sys.path:
+            sys.path.insert(0, str(QUALITY_TOOLS_PATH))
+        if str(complexity_path) not in sys.path:
+            sys.path.insert(0, str(complexity_path))
 
         try:
             from deep_analyze import BaseFileAnalyzer, FileMetrics
             return BaseFileAnalyzer, FileMetrics
         except ImportError as e:
-            logger.warning(f"Could not import HCI analyzer: {e}")
+            logger.warning(f"Could not import quality analyzer: {e}")
             return None, None
 
     async def scan(self) -> ScanResult:
-        """Execute the complexity analysis using HCI tools"""
+        """Execute the complexity analysis using quality tools"""
         started_at = datetime.now()
         findings: List[ScanFinding] = []
 
-        # Try to import HCI analyzer
-        BaseFileAnalyzer, FileMetrics = self._import_hci_analyzer()
+        # Try to import quality analyzer
+        BaseFileAnalyzer, FileMetrics = self._import_quality_analyzer()
 
         files_scanned = 0
         total_loc = 0
@@ -143,7 +143,7 @@ class ComplexityAnalyzer(BaseScanner):
                         continue
 
                     # Calculate complexity using simplified method
-                    # (same logic as HCI tools)
+                    # (same logic as quality tools)
                     file_complexity = self._calculate_file_complexity(content, ext)
 
                     if file_complexity > 0:
@@ -212,7 +212,7 @@ class ComplexityAnalyzer(BaseScanner):
                 "average_complexity": round(avg_complexity, 2),
                 "max_complexity": max_complexity,
                 "complexity_distribution": complexity_distribution,
-                "hci_tools_available": BaseFileAnalyzer is not None
+                "quality_tools_available": BaseFileAnalyzer is not None
             }
 
             completed_at = datetime.now()
@@ -251,7 +251,7 @@ class ComplexityAnalyzer(BaseScanner):
         """
         Calculate cyclomatic complexity for a file.
 
-        Based on HCI deep_analyze.py logic:
+        Based on deep_analyze.py logic:
         Counts decision points: if, else if, for, foreach, while, case, catch, &&, ||, ?:
         """
         import re
@@ -333,5 +333,5 @@ class ComplexityAnalyzer(BaseScanner):
         """Get default configuration"""
         return {
             "complexity_threshold": 10,
-            "hci_tools_path": str(HCI_TOOLS_PATH),
+            "quality_tools_path": str(QUALITY_TOOLS_PATH),
         }

@@ -1,8 +1,8 @@
 """
-Balance Analyzer - Wrapper for HCI Component Balance Analyzer
+Balance Analyzer - Component Balance Analyzer
 
 Week 126: Metrics Layer Integration
-Wraps the HCI-SoftwareKwaliteit-Migratie/tools/06-component-balance-analyzer
+Wraps the Quality-Migration-Tools/06-component-balance-analyzer
 
 Analyzes code distribution across components using Gini coefficient.
 
@@ -33,13 +33,13 @@ from ..base import (
 
 logger = logging.getLogger(__name__)
 
-# Path to HCI tools
-HCI_TOOLS_PATH = Path.home() / "Projects" / "HCI-projecten" / "HCI-SoftwareKwaliteit-Migratie" / "tools"
+# Path to quality analysis tools (configurable via QUALITY_TOOLS_PATH env var)
+QUALITY_TOOLS_PATH = Path(os.environ.get("QUALITY_TOOLS_PATH", str(Path.home() / "Projects" / "Quality-Migration-Tools")))
 
 
 class BalanceAnalyzer(BaseScanner):
     """
-    Component balance analyzer wrapping HCI component_balance_analyzer.py.
+    Component balance analyzer wrapping component_balance_analyzer.py.
 
     Uses Gini coefficient to measure code distribution.
     Supports: C#, VB.NET, SQL, JavaScript, TypeScript
@@ -308,5 +308,5 @@ class BalanceAnalyzer(BaseScanner):
         return {
             "gini_threshold": 0.5,
             "god_component_threshold": 30,  # percentage
-            "hci_tools_path": str(HCI_TOOLS_PATH),
+            "quality_tools_path": str(QUALITY_TOOLS_PATH),
         }

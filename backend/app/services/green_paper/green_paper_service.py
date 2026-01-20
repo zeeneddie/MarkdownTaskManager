@@ -1,7 +1,7 @@
 """
 Green-Paper Workflow Service
 
-Handles business logic for BMAD green-paper sessions:
+Handles business logic for MarQed green-paper sessions:
 - Session creation and management
 - Answer submission and validation
 - Constitution generation (via Peter agent)
@@ -26,7 +26,7 @@ from app.services.chroma_service import ChromaService
 
 
 class GreenPaperService:
-    """Service for managing BMAD green-paper workflow."""
+    """Service for managing MarQed green-paper workflow."""
 
     def __init__(
         self,
@@ -46,7 +46,7 @@ class GreenPaperService:
         metadata: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
-        Start a new BMAD green-paper session.
+        Start a new MarQed green-paper session.
 
         Args:
             project_id: The project ID (string, int, or UUID)
@@ -176,7 +176,7 @@ class GreenPaperService:
 
     async def get_questions(self) -> List[Dict[str, Any]]:
         """
-        Get the 6 BMAD green-paper questions.
+        Get the 6 MarQed green-paper questions.
 
         Returns:
             List of question dictionaries
@@ -243,7 +243,7 @@ class GreenPaperService:
         project_id: Optional[UUID] = None
     ) -> Dict[str, Any]:
         """
-        Submit or update an answer to a BMAD question.
+        Submit or update an answer to a MarQed question.
 
         Args:
             session_id: The session UUID
@@ -481,7 +481,7 @@ class GreenPaperService:
         workflow_request = {
             "agent_name": "Peter",
             "workflow_type": "NEW_FEATURE",
-            "task_description": "Generate project constitution from BMAD answers",
+            "task_description": "Generate project constitution from MarQed answers",
             "prompt": peter_prompt,
             "model": "deepseek-r1:latest",
             "project_id": str(project_id),
@@ -665,17 +665,17 @@ class GreenPaperService:
         self,
         answers: List[Dict[str, Any]]
     ) -> str:
-        """Format BMAD answers into Peter's prompt."""
+        """Format MarQed answers into Peter's prompt."""
         # Create answer lookup by question number
         answer_map = {a["question_number"]: a["answer"] for a in answers}
 
         # Format the prompt using the template from green_paper_template.md
         prompt = f"""You are Peter, the Product Owner agent using deepseek-r1:latest model.
 
-You have received a completed BMAD Green-Paper session for a new greenfield project.
+You have received a completed MarQed Green-Paper session for a new greenfield project.
 Your task is to analyze these 6 answers and generate a comprehensive PROJECT CONSTITUTION.
 
-## Input: BMAD Answers
+## Input: MarQed Answers
 
 **Q1 - Problem Statement**: {answer_map.get(1, "Not provided")}
 

@@ -346,7 +346,7 @@ class ProjectIntakeSource(Base):
     intake_id = Column(UUID(as_uuid=True), ForeignKey('project_intakes.id', ondelete='CASCADE'), nullable=False, index=True)
 
     # Link to Brown Paper session
-    brown_paper_session_id = Column(String(36), ForeignKey('bmad_sessions.id', ondelete='SET NULL'), nullable=True, index=True)
+    brown_paper_session_id = Column(String(36), ForeignKey('marqed_sessions.id', ondelete='SET NULL'), nullable=True, index=True)
 
     # System info (denormalized for quick access)
     system_name = Column(String(255), nullable=False, index=True)

@@ -34,13 +34,20 @@ from app.models.council_human_review import (
 )
 from app.models.application import Application, Component, StackAgent
 from app.models.customer import Customer, ProjectApplication
-from app.models.bmad_session import (
+from app.models.marqed_session import (
+    MarQedSession,
+    MarQedAnswer,
+    MarQedSessionEvent,
+    MarQedSessionStatus,
+    MarQedWorkflowType,
+    MarQedEventType,
+    # Backwards compatibility aliases
     BMADSession,
     BMADAnswer,
     BMADSessionEvent,
     BMADSessionStatus,
     BMADWorkflowType,
-    BMADEventType
+    BMADEventType,
 )
 from app.models.bug import Bug, BugComment, BugSeverity, BugStatus
 from app.models.kanban_retry import KanbanRetryLog, KanbanAgentAction, RetryResult

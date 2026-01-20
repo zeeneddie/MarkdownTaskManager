@@ -39,7 +39,7 @@ class ClassicASPExtractor(BaseBusinessRuleExtractor):
     Extracts business rules from Classic ASP (VBScript) source code.
 
     Handles mixed HTML/ASP content by extracting <% %> blocks.
-    Tested against HCI-CRS Agenda module (~1800 LOC, 329+ rules detected).
+    Tested against legacy ASP modules (~1800 LOC, 329+ rules detected).
     """
 
     SUPPORTED_EXTENSIONS = ['.asp', '.asa']
@@ -486,16 +486,16 @@ class ClassicASPExtractor(BaseBusinessRuleExtractor):
         """Extract domain entities from VBScript code."""
         entities = set()
 
-        # HCI-CRS specific entity patterns
-        hci_patterns = [
-            r'\bta([A-Z][a-z]+\w*)',           # taAfspraak, taClient
+        # Classic ASP legacy entity patterns (common naming conventions)
+        asp_entity_patterns = [
+            r'\bta([A-Z][a-z]+\w*)',           # taAfspraak, taClient (table adapter)
             r'\brst([A-Z][a-z]+)',             # rstAfspraak (recordset)
             r'\btbl([A-Z][a-z]+)',             # tblAfspraak (table)
             r'\b([A-Z][a-z]+)ID\b',            # AfspraakID, ClientID
             r'"ta(\w+)"',                       # Table name in SQL
         ]
 
-        for pattern in hci_patterns:
+        for pattern in asp_entity_patterns:
             matches = re.findall(pattern, text)
             entities.update(matches)
 

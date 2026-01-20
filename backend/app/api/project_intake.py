@@ -41,7 +41,7 @@ from app.models.project_intake import (
     IntakeEventType,
     PREDEFINED_FEATURES,
 )
-from app.models.bmad_session import BMADSession
+from app.models.marqed_session import MarQedSession
 
 
 router = APIRouter(prefix="/api/intake", tags=["Project Intake Wizard"])
@@ -732,10 +732,10 @@ async def get_available_migration_sources(
 
     # Get completed Brown Paper sessions
     result = await db.execute(
-        select(BMADSession)
-        .where(BMADSession.workflow_type == "brown_paper")
-        .where(BMADSession.status.in_(["approved", "completed", "review"]))
-        .order_by(BMADSession.created_at.desc())
+        select(MarQedSession)
+        .where(MarQedSession.workflow_type == "brown_paper")
+        .where(MarQedSession.status.in_(["approved", "completed", "review"]))
+        .order_by(MarQedSession.created_at.desc())
     )
     sessions = result.scalars().all()
 
@@ -802,7 +802,7 @@ async def add_migration_source(
 
     # Check if Brown Paper session exists
     result = await db.execute(
-        select(BMADSession).where(BMADSession.id == request.brown_paper_session_id)
+        select(MarQedSession).where(MarQedSession.id == request.brown_paper_session_id)
     )
     session = result.scalar_one_or_none()
     if not session:

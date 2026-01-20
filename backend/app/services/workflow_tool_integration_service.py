@@ -4,11 +4,11 @@ Workflow Tool Integration Service - Week 79
 Integrates external tools into existing workflows:
 
 GREEN_PAPER Integration:
-- Option A: Claude-Mem context injection for 6 BMAD questions
+- Option A: Claude-Mem context injection for 6 MarQed questions
 - Option B: CCPM PRD decomposition after constitution approval
 
 BROWN_PAPER Integration:
-- Option A: Claude-Mem context injection for 8 BMAD questions + scan data
+- Option A: Claude-Mem context injection for 8 MarQed questions + scan data
 - Option B: CCPM migration task decomposition after analysis approval
 
 QUALITY_AUDIT Integration:
@@ -120,7 +120,7 @@ class WorkflowToolIntegrationService:
             # Capture initial observation
             await self.claude_mem.capture_observation(
                 session_id=mem_session_id,
-                content="GREEN_PAPER workflow session started. User will answer 6 BMAD questions to define project.",
+                content="GREEN_PAPER workflow session started. User will answer 6 MarQed questions to define project.",
                 observation_type="progress",
                 priority="normal",
                 tags=["green_paper", "session_start", "workflow"]
@@ -160,7 +160,7 @@ class WorkflowToolIntegrationService:
         priority = "high" if question_number <= 4 else "normal"
 
         # Auto-detect relevant tags
-        tags = [f"q{question_number}", "bmad_answer"]
+        tags = [f"q{question_number}", "marqed_answer"]
 
         if question_number == 1:
             tags.extend(["problem_statement", "decision"])
@@ -661,7 +661,7 @@ class WorkflowToolIntegrationService:
             await self.claude_mem.capture_observation(
                 session_id=mem_session_id,
                 content=f"BROWN_PAPER migration analysis started for: {application_name or 'legacy system'}. "
-                        "User will answer 8 BMAD questions to analyze current state, technical debt, "
+                        "User will answer 8 MarQed questions to analyze current state, technical debt, "
                         "security issues, and migration strategy.",
                 observation_type="progress",
                 priority="high",
@@ -704,8 +704,8 @@ class WorkflowToolIntegrationService:
         # Q5-8: Migration strategy (high)
         priority = "critical" if question_number <= 4 else "high"
 
-        # Migration-specific tagging based on BMAD brown paper questions
-        tags = [f"q{question_number}", "bmad_answer", "migration"]
+        # Migration-specific tagging based on MarQed brown paper questions
+        tags = [f"q{question_number}", "marqed_answer", "migration"]
 
         if question_number == 1:
             tags.extend(["current_state", "tech_stack", "architecture"])

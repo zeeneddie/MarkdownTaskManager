@@ -38,7 +38,7 @@ class VBNetBusinessRuleExtractor(BaseBusinessRuleExtractor):
     Extracts business rules from VB.NET source code.
 
     Uses regex-enhanced extraction (Tier 2) with optional LLM validation.
-    Tested against HCI-CRS Agenda module (~1500 LOC, 235+ rules detected).
+    Tested against legacy VB.NET modules (~1500 LOC, 235+ rules detected).
     """
 
     SUPPORTED_EXTENSIONS = ['.vb', '.aspx.vb', '.ascx.vb', '.aspx.cs']
@@ -439,15 +439,15 @@ class VBNetBusinessRuleExtractor(BaseBusinessRuleExtractor):
         """Extract domain entities from VB.NET code."""
         entities = set()
 
-        # HCI-CRS specific entity patterns
-        hci_patterns = [
-            r'\bta([A-Z][a-z]+\w*)',           # taAfspraak, taClient
+        # VB.NET legacy entity patterns (common naming conventions)
+        vbnet_entity_patterns = [
+            r'\bta([A-Z][a-z]+\w*)',           # taAfspraak, taClient (table adapter)
             r'\b([A-Z][a-z]+(?:ID|Id))\b',     # AfspraakID, ClientId
             r'\brst([A-Z][a-z]+)',             # rstAfspraak (recordset)
-            r'\btbl([A-Z][a-z]+)',             # tblAfspraak
+            r'\btbl([A-Z][a-z]+)',             # tblAfspraak (table)
         ]
 
-        for pattern in hci_patterns:
+        for pattern in vbnet_entity_patterns:
             matches = re.findall(pattern, text)
             entities.update(matches)
 

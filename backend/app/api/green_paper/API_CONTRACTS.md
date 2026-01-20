@@ -8,7 +8,7 @@
 
 ## Overview
 
-API contracts for the BMAD Green-Paper Workflow implementation. This workflow enables greenfield project creation through a 6-question BMAD session interface, following the Spec-Kit pipeline: **Constitution → Specification → Tasks**.
+API contracts for the MarQed Green-Paper Workflow implementation. This workflow enables greenfield project creation through a 6-question MarQed session interface, following the Spec-Kit pipeline: **Constitution → Specification → Tasks**.
 
 ---
 
@@ -18,7 +18,7 @@ API contracts for the BMAD Green-Paper Workflow implementation. This workflow en
 
 **POST** `/api/projects/{project_id}/green-paper/start`
 
-Initializes a new BMAD green-paper session for a project.
+Initializes a new MarQed green-paper session for a project.
 
 #### Request
 
@@ -128,7 +128,7 @@ Authorization: Bearer {token}
 
 **POST** `/api/projects/{project_id}/green-paper/{session_id}/answer`
 
-Submits an answer to a specific BMAD question.
+Submits an answer to a specific MarQed question.
 
 #### Request
 
@@ -230,7 +230,7 @@ Retrieves current status of a green-paper session.
 
 **POST** `/api/projects/{project_id}/green-paper/{session_id}/generate-constitution`
 
-Triggers AI agents to generate project constitution from BMAD answers.
+Triggers AI agents to generate project constitution from MarQed answers.
 
 #### Request
 
@@ -257,7 +257,7 @@ Triggers AI agents to generate project constitution from BMAD answers.
   "task_id": "uuid",
   "status": "processing",
   "estimated_completion": "2025-11-18T10:20:00Z",
-  "message": "Peter (Product Owner) is analyzing BMAD answers and generating constitution",
+  "message": "Peter (Product Owner) is analyzing MarQed answers and generating constitution",
   "workflow": {
     "workflow_id": "uuid",
     "workflow_type": "NEW_FEATURE",
@@ -341,7 +341,7 @@ Retrieves the generated project constitution.
       "duration_weeks": 40,
       "milestones": [
         {
-          "name": "Week 10: BMAD Green-Paper",
+          "name": "Week 10: MarQed Green-Paper",
           "target_date": "2025-12-23",
           "deliverables": ["6-question interface", "Constitution pipeline"]
         }
@@ -350,7 +350,7 @@ Retrieves the generated project constitution.
   },
   "metadata": {
     "generated_by": "Peter",
-    "generation_method": "BMAD_green_paper",
+    "generation_method": "MarQed_green_paper",
     "llm_model": "deepseek-r1:latest",
     "generated_at": "2025-11-18T10:15:00Z",
     "word_count": 1250
@@ -618,7 +618,7 @@ interface Change {
 |------|-------------|-------------|
 | `validation_error` | 400 | Request validation failed |
 | `not_found` | 404 | Resource not found |
-| `incomplete_session` | 400 | BMAD session incomplete |
+| `incomplete_session` | 400 | MarQed session incomplete |
 | `constitution_not_approved` | 400 | Constitution not approved |
 | `duplicate_session` | 409 | Active session already exists |
 | `invalid_status` | 400 | Invalid resource status |
@@ -634,7 +634,7 @@ interface Change {
 ### Agent Workflow Sequence
 
 ```
-User → Green-Paper Session → BMAD Answers
+User → Green-Paper Session → MarQed Answers
   ↓
 Peter (Product Owner) → Generate Constitution
   ↓
