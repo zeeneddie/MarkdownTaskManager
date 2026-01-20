@@ -2,7 +2,7 @@
 Project Model
 
 Matches the existing database schema for projects table.
-Used for BMAD workflow project definitions.
+Used for MarQed workflow project definitions.
 """
 
 from sqlalchemy import Column, String, Integer, Text, DateTime, CheckConstraint, ForeignKey
@@ -27,7 +27,7 @@ class Project(Base):
     project_type = Column(String(20), nullable=False)  # greenfield, brownfield
     project_status = Column(String(20), nullable=False, default="draft", index=True)  # draft, active, archived
 
-    # BMAD/Quality references
+    # MarQed/Quality references
     bmad_session_id = Column(String(100), index=True)
     quality_scan_id = Column(String(100), index=True)
     chroma_collection_id = Column(String(100))

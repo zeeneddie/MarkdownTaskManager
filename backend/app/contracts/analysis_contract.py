@@ -21,7 +21,7 @@ from .stability_contract import StabilityInfo
 class AnalysisSourceType(Enum):
     """Source of the analysis contract."""
     BROWN_PAPER = "brown_paper"      # From Brown Paper workflow
-    GREEN_PAPER = "green_paper"      # From Green Paper (BMAD) workflow
+    GREEN_PAPER = "green_paper"      # From Green Paper (MarQed) workflow
     MANUAL_IMPORT = "manual_import"  # Handmatige JSON/YAML import
     EXTERNAL_TOOL = "external_tool"  # Third-party analysis tool
 

@@ -33,7 +33,7 @@ class SpecificationStatus:
 
 class GreenPaperSession(Base):
     """
-    Green-paper session tracking for BMAD workflow.
+    Green-paper session tracking for MarQed workflow.
     One session contains 6 strategic questions.
     """
     __tablename__ = "green_paper_sessions"
@@ -64,7 +64,7 @@ class GreenPaperSession(Base):
 
 class Answer(Base):
     """
-    Individual answer to a BMAD question.
+    Individual answer to a MarQed question.
     Questions 1-4 are required, 5-6 are optional.
     """
     __tablename__ = "green_paper_answers"
@@ -93,7 +93,7 @@ class Answer(Base):
 
 class Constitution(Base):
     """
-    Generated project constitution from BMAD answers.
+    Generated project constitution from MarQed answers.
     Created by Peter (Product Owner agent) using deepseek-r1:latest.
     Target: 1000-1500 words, 7 sections.
     """

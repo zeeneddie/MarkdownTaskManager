@@ -1,7 +1,7 @@
 """
 Migration Workflow Orchestrator.
 
-Orchestrates the BMAD 8-question migration planning workflow
+Orchestrates the MarQed 8-question migration planning workflow
 through Confucius with quality gates and agent coordination.
 
 Stages:
@@ -85,7 +85,7 @@ MIGRATION_QUESTIONS = [
 
 class MigrationOrchestrator(WorkflowOrchestrator):
     """
-    Orchestrates the BMAD migration planning workflow.
+    Orchestrates the MarQed migration planning workflow.
 
     The Migration workflow follows a top-down approach:
     1. Collect answers to 8 strategic questions

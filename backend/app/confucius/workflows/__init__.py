@@ -6,7 +6,7 @@ for unified agent coordination, quality gates, and cross-session learning.
 
 Workflows:
 - BrownPaperWorkflow: Legacy code analysis (bottom-up)
-- MigrationWorkflow: BMAD 8-question migration planning
+- MigrationWorkflow: MarQed 8-question migration planning
 - GreenPaperWorkflow: Greenfield project specification
 - QualityWorkflow: Quality gate and scanning orchestration
 """
