@@ -1,7 +1,7 @@
 """Add Confucius memory tables.
 
-Revision ID: 071_add_confucius_memory_tables
-Revises: 070_add_workflow_separation_tables
+Revision ID: 071
+Revises: 070
 Create Date: 2026-01-13
 
 Tables:
@@ -16,8 +16,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
 # revision identifiers, used by Alembic.
-revision = '071_add_confucius_memory_tables'
-down_revision = '070_add_workflow_separation_tables'
+revision = '071'
+down_revision = '070'
 branch_labels = None
 depends_on = None
 

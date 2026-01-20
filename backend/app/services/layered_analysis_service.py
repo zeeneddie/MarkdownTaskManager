@@ -9,6 +9,7 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.models.layered_analysis import (
@@ -41,7 +42,7 @@ class LayeredAnalysisService:
     Layer 4: Improvement Planning (actionable backlog)
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
         self.vbscript_analyzer = VBScriptAnalyzerService()
         self.sp_analyzer = StoredProcedureAnalyzerService()
@@ -95,13 +96,13 @@ class LayeredAnalysisService:
         Returns:
             Complete analysis results across all layers
         """
-        session = self.db.get(LayeredAnalysisSession, session_id)
+        session = await self.db.get(LayeredAnalysisSession, session_id)
         if not session:
             raise ValueError(f"Session not found: {session_id}")
 
         session.status = "running"
         session.started_at = datetime.now(timezone.utc)
-        self.db.commit()
+        await self.db.commit()
 
         results = {
             "session_id": str(session_id),
@@ -113,7 +114,7 @@ class LayeredAnalysisService:
             # Layer 1: VBScript Analysis
             if vbscript_code:
                 session.current_layer = 1
-                self.db.commit()
+                await self.db.commit()
 
                 vb_result = await self._run_vbscript_layer(session_id, vbscript_code)
                 results["layers"]["vbscript"] = vb_result
@@ -121,14 +122,14 @@ class LayeredAnalysisService:
             # Layer 2: Stored Procedure Analysis
             if sp_code:
                 session.current_layer = 2
-                self.db.commit()
+                await self.db.commit()
 
                 sp_result = await self._run_sp_layer(session_id, sp_code)
                 results["layers"]["stored_procedures"] = sp_result
 
             # Layer 3: SWOT Generation
             session.current_layer = 3
-            self.db.commit()
+            await self.db.commit()
 
             swot_result = await self._run_swot_layer(
                 session_id,
@@ -139,7 +140,7 @@ class LayeredAnalysisService:
 
             # Layer 4: Improvement Planning
             session.current_layer = 4
-            self.db.commit()
+            await self.db.commit()
 
             plan_result = await self._run_improvement_layer(
                 session_id,
@@ -151,7 +152,7 @@ class LayeredAnalysisService:
             # Mark session complete
             session.status = "completed"
             session.completed_at = datetime.now(timezone.utc)
-            self.db.commit()
+            await self.db.commit()
 
             results["status"] = "completed"
 
@@ -159,7 +160,7 @@ class LayeredAnalysisService:
             logger.error(f"Analysis failed at layer {session.current_layer}: {e}")
             session.status = "failed"
             session.error_message = str(e)
-            self.db.commit()
+            await self.db.commit()
 
             results["status"] = "failed"
             results["errors"].append(str(e))
@@ -193,7 +194,7 @@ class LayeredAnalysisService:
             created_at=datetime.now(timezone.utc)
         )
         self.db.add(db_analysis)
-        self.db.commit()
+        await self.db.commit()
 
         return result
 
@@ -224,7 +225,7 @@ class LayeredAnalysisService:
             created_at=datetime.now(timezone.utc)
         )
         self.db.add(db_analysis)
-        self.db.commit()
+        await self.db.commit()
 
         return result
 
@@ -254,7 +255,7 @@ class LayeredAnalysisService:
             created_at=datetime.now(timezone.utc)
         )
         self.db.add(db_swot)
-        self.db.commit()
+        await self.db.commit()
 
         return result
 
@@ -293,32 +294,36 @@ class LayeredAnalysisService:
             )
             self.db.add(db_item)
 
-        self.db.commit()
+        await self.db.commit()
 
         return result
 
     async def get_session(self, session_id: UUID) -> Optional[Dict[str, Any]]:
         """Get session details with all analysis results."""
-        session = self.db.get(LayeredAnalysisSession, session_id)
+        session = await self.db.get(LayeredAnalysisSession, session_id)
         if not session:
             return None
 
         # Get all layer results
-        vb_analysis = self.db.execute(
+        vb_result = await self.db.execute(
             select(VBScriptAnalysis).where(VBScriptAnalysis.session_id == session_id)
-        ).scalar_one_or_none()
+        )
+        vb_analysis = vb_result.scalar_one_or_none()
 
-        sp_analysis = self.db.execute(
+        sp_result = await self.db.execute(
             select(StoredProcedureAnalysis).where(StoredProcedureAnalysis.session_id == session_id)
-        ).scalar_one_or_none()
+        )
+        sp_analysis = sp_result.scalar_one_or_none()
 
-        swot_analysis = self.db.execute(
+        swot_result = await self.db.execute(
             select(SWOTAnalysis).where(SWOTAnalysis.session_id == session_id)
-        ).scalar_one_or_none()
+        )
+        swot_analysis = swot_result.scalar_one_or_none()
 
-        improvements = self.db.execute(
+        improvements_result = await self.db.execute(
             select(ImprovementItemModel).where(ImprovementItemModel.session_id == session_id)
-        ).scalars().all()
+        )
+        improvements = improvements_result.scalars().all()
 
         return {
             "id": str(session.id),
@@ -417,7 +422,8 @@ class LayeredAnalysisService:
 
         query = query.order_by(LayeredAnalysisSession.created_at.desc()).limit(limit)
 
-        sessions = self.db.execute(query).scalars().all()
+        result = await self.db.execute(query)
+        sessions = result.scalars().all()
 
         return [
             {
@@ -439,7 +445,7 @@ class LayeredAnalysisService:
         code: Optional[str] = None
     ) -> Dict[str, Any]:
         """Run a single layer of analysis."""
-        session = self.db.get(LayeredAnalysisSession, session_id)
+        session = await self.db.get(LayeredAnalysisSession, session_id)
         if not session:
             raise ValueError(f"Session not found: {session_id}")
 
@@ -455,13 +461,15 @@ class LayeredAnalysisService:
 
         elif layer == 3:
             # Get previous layer results
-            vb_analysis = self.db.execute(
+            vb_result = await self.db.execute(
                 select(VBScriptAnalysis).where(VBScriptAnalysis.session_id == session_id)
-            ).scalar_one_or_none()
+            )
+            vb_analysis = vb_result.scalar_one_or_none()
 
-            sp_analysis = self.db.execute(
+            sp_result = await self.db.execute(
                 select(StoredProcedureAnalysis).where(StoredProcedureAnalysis.session_id == session_id)
-            ).scalar_one_or_none()
+            )
+            sp_analysis = sp_result.scalar_one_or_none()
 
             return await self._run_swot_layer(
                 session_id,
@@ -471,9 +479,10 @@ class LayeredAnalysisService:
 
         elif layer == 4:
             # Get SWOT results
-            swot_analysis = self.db.execute(
+            swot_result = await self.db.execute(
                 select(SWOTAnalysis).where(SWOTAnalysis.session_id == session_id)
-            ).scalar_one_or_none()
+            )
+            swot_analysis = swot_result.scalar_one_or_none()
 
             if not swot_analysis:
                 raise ValueError("SWOT analysis required for Layer 4")
@@ -493,7 +502,7 @@ class LayeredAnalysisService:
         status: str
     ) -> Dict[str, Any]:
         """Update the status of an improvement item."""
-        item = self.db.get(ImprovementItemModel, item_id)
+        item = await self.db.get(ImprovementItemModel, item_id)
         if not item:
             raise ValueError(f"Improvement item not found: {item_id}")
 
@@ -503,32 +512,36 @@ class LayeredAnalysisService:
 
         item.status = status
         item.updated_at = datetime.now(timezone.utc)
-        self.db.commit()
+        await self.db.commit()
 
         return self._serialize_improvement(item)
 
     async def get_session_summary(self, session_id: UUID) -> Dict[str, Any]:
         """Get a summary of the analysis session."""
-        session = self.db.get(LayeredAnalysisSession, session_id)
+        session = await self.db.get(LayeredAnalysisSession, session_id)
         if not session:
             raise ValueError(f"Session not found: {session_id}")
 
         # Count items in each layer
-        vb_count = self.db.execute(
+        vb_result = await self.db.execute(
             select(VBScriptAnalysis).where(VBScriptAnalysis.session_id == session_id)
-        ).scalar_one_or_none()
+        )
+        vb_count = vb_result.scalar_one_or_none()
 
-        sp_count = self.db.execute(
+        sp_result = await self.db.execute(
             select(StoredProcedureAnalysis).where(StoredProcedureAnalysis.session_id == session_id)
-        ).scalar_one_or_none()
+        )
+        sp_count = sp_result.scalar_one_or_none()
 
-        swot = self.db.execute(
+        swot_result = await self.db.execute(
             select(SWOTAnalysis).where(SWOTAnalysis.session_id == session_id)
-        ).scalar_one_or_none()
+        )
+        swot = swot_result.scalar_one_or_none()
 
-        improvements = self.db.execute(
+        improvements_result = await self.db.execute(
             select(ImprovementItemModel).where(ImprovementItemModel.session_id == session_id)
-        ).scalars().all()
+        )
+        improvements = improvements_result.scalars().all()
 
         # Calculate summary stats
         total_effort = sum(i.effort_days for i in improvements) if improvements else 0

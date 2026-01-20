@@ -4,9 +4,11 @@ Base Workflow Orchestrator for Confucius Integration.
 Provides the foundation for orchestrating multi-stage workflows
 through the Confucius agent system with quality gates,
 progress streaming, and cross-session learning.
+
+Week 158 - Fase 24.6: Added checkpoint/resume support for restartable workflows.
 """
 
-from typing import Dict, Any, List, Optional, Callable, Awaitable, TypeVar, Generic
+from typing import Dict, Any, List, Optional, Callable, Awaitable, TypeVar, Generic, TYPE_CHECKING
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -27,6 +29,9 @@ from ..quality import (
     create_iteration_controller,
     create_escalation_service,
 )
+
+if TYPE_CHECKING:
+    from app.services.checkpoint_service import CheckpointService
 
 logger = logging.getLogger(__name__)
 
@@ -220,6 +225,7 @@ class WorkflowOrchestrator(ABC):
         router: Optional[WorkflowRouter] = None,
         evaluator: Optional[QualityGateEvaluator] = None,
         stream: Optional[QualityProgressStream] = None,
+        checkpoint_service: Optional["CheckpointService"] = None,
     ):
         """
         Initialize orchestrator.
@@ -228,11 +234,13 @@ class WorkflowOrchestrator(ABC):
             router: Extension router (created if not provided)
             evaluator: Quality gate evaluator (created if not provided)
             stream: Progress stream (created if not provided)
+            checkpoint_service: Optional checkpoint service for restartable workflows
         """
         self._router = router or create_default_router()
         self._evaluator = evaluator or create_evaluator()
         self._stream = stream or QualityProgressStream()
         self._escalation = create_escalation_service()
+        self._checkpoint_service = checkpoint_service
         self._running_workflows: Dict[str, WorkflowContext] = {}
 
     @property
@@ -270,6 +278,8 @@ class WorkflowOrchestrator(ABC):
         input_data: Dict[str, Any],
         start_from_stage: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
+        resume_from_checkpoint: bool = False,
+        workflow_id_override: Optional[str] = None,
     ) -> WorkflowResult:
         """
         Execute the complete workflow.
@@ -279,25 +289,73 @@ class WorkflowOrchestrator(ABC):
             input_data: Input data for workflow
             start_from_stage: Stage to start from (for resume)
             metadata: Additional metadata
+            resume_from_checkpoint: If True, load and resume from existing checkpoint
+            workflow_id_override: Use specific workflow ID (for resume)
 
         Returns:
             WorkflowResult with final outcome
         """
         import uuid
 
-        workflow_id = str(uuid.uuid4())[:8]
         stages = self.get_stages()
         started_at = datetime.now(timezone.utc)
 
-        # Create context
-        context = WorkflowContext(
-            workflow_id=workflow_id,
-            workflow_type=self.workflow_type,
-            session_id=session_id,
-            started_at=started_at,
-            shared_data=input_data.copy(),
-            metadata=metadata or {},
-        )
+        # Resume from checkpoint if requested
+        restored_context = None
+        if resume_from_checkpoint and self._checkpoint_service:
+            checkpoint = await self._checkpoint_service.load_checkpoint(
+                session_id=session_id,
+                workflow_type=self.workflow_type,
+                workflow_id=workflow_id_override,
+            )
+            if checkpoint:
+                restored_context = await self._checkpoint_service.restore_context(checkpoint)
+                start_from_stage = checkpoint.resume_stage
+                logger.info(
+                    f"Resuming workflow {checkpoint.workflow_id} from stage {start_from_stage}"
+                )
+
+        # Determine workflow ID
+        if restored_context:
+            workflow_id = restored_context["workflow_id"]
+            started_at = restored_context.get("started_at", started_at)
+        elif workflow_id_override:
+            workflow_id = workflow_id_override
+        else:
+            workflow_id = str(uuid.uuid4())[:8]
+
+        # Create or restore context
+        if restored_context:
+            context = WorkflowContext(
+                workflow_id=workflow_id,
+                workflow_type=self.workflow_type,
+                session_id=session_id,
+                started_at=started_at,
+                completed_stages=restored_context.get("completed_stages", []),
+                shared_data=restored_context.get("shared_data", input_data.copy()),
+                metadata=restored_context.get("metadata", metadata or {}),
+            )
+            # Rebuild stage_results from restored data
+            for stage_name, stage_data in restored_context.get("stage_results", {}).items():
+                if isinstance(stage_data, dict) and "agent_results" in stage_data:
+                    context.stage_results[stage_name] = StageResult(
+                        stage_name=stage_name,
+                        status=WorkflowStatus.COMPLETED,
+                        started_at=started_at,
+                        completed_at=started_at,
+                        agent_results=stage_data.get("agent_results", {}),
+                        quality_score=stage_data.get("quality_score", 0.85),
+                        passed_quality_gate=True,
+                    )
+        else:
+            context = WorkflowContext(
+                workflow_id=workflow_id,
+                workflow_type=self.workflow_type,
+                session_id=session_id,
+                started_at=started_at,
+                shared_data=input_data.copy(),
+                metadata=metadata or {},
+            )
 
         self._running_workflows[workflow_id] = context
 
@@ -305,6 +363,7 @@ class WorkflowOrchestrator(ABC):
             "workflow_type": self.workflow_type,
             "session_id": session_id,
             "stages": [s.name for s in stages],
+            "resumed": resume_from_checkpoint and restored_context is not None,
         })
 
         result = WorkflowResult(
@@ -313,6 +372,7 @@ class WorkflowOrchestrator(ABC):
             status=WorkflowStatus.RUNNING,
             started_at=started_at,
             stages_total=len(stages),
+            stages_completed=len(context.completed_stages),
             context=context,
         )
 
@@ -328,6 +388,11 @@ class WorkflowOrchestrator(ABC):
             # Execute stages
             for i, stage in enumerate(stages[start_index:], start=start_index):
                 context.current_stage = stage.name
+
+                # Skip already completed stages (idempotent)
+                if stage.name in context.completed_stages:
+                    logger.info(f"Skipping already completed stage: {stage.name}")
+                    continue
 
                 # Check dependencies
                 if not self._check_dependencies(stage, context):
@@ -351,6 +416,17 @@ class WorkflowOrchestrator(ABC):
                 })
 
                 if stage_result.status == WorkflowStatus.FAILED:
+                    # Record error in checkpoint
+                    if self._checkpoint_service:
+                        await self._checkpoint_service.record_error(
+                            session_id=session_id,
+                            workflow_type=self.workflow_type,
+                            workflow_id=workflow_id,
+                            stage_name=stage.name,
+                            error=stage_result.error or "Stage execution failed",
+                            error_context={"stage_result": stage_result.to_dict()},
+                        )
+
                     if stage.required:
                         result.status = WorkflowStatus.FAILED
                         result.error = f"Required stage {stage.name} failed: {stage_result.error}"
@@ -360,6 +436,24 @@ class WorkflowOrchestrator(ABC):
                     break
 
                 result.stages_completed += 1
+
+                # Save checkpoint after successful stage
+                if self._checkpoint_service:
+                    await self._checkpoint_service.save_checkpoint(
+                        session_id=session_id,
+                        workflow_type=self.workflow_type,
+                        workflow_id=workflow_id,
+                        current_stage=stage.name,
+                        completed_stages=context.completed_stages.copy(),
+                        stage_result={
+                            "agent_results": stage_result.agent_results,
+                            "quality_score": stage_result.quality_score,
+                            "passed_quality_gate": stage_result.passed_quality_gate,
+                        },
+                        shared_data=context.shared_data,
+                        input_data=input_data if i == start_index else None,
+                        metadata=context.metadata,
+                    )
 
             # Calculate final score
             if context.stage_results:
@@ -373,11 +467,31 @@ class WorkflowOrchestrator(ABC):
             result.completed_at = datetime.now(timezone.utc)
             result.final_output = self._build_final_output(context)
 
+            # Mark checkpoint as completed
+            if self._checkpoint_service and result.status == WorkflowStatus.COMPLETED:
+                await self._checkpoint_service.mark_completed(
+                    session_id=session_id,
+                    workflow_type=self.workflow_type,
+                    workflow_id=workflow_id,
+                    final_output=result.final_output,
+                )
+
         except Exception as e:
             logger.exception(f"Workflow {workflow_id} failed: {e}")
             result.status = WorkflowStatus.FAILED
             result.error = str(e)
             result.completed_at = datetime.now(timezone.utc)
+
+            # Record exception in checkpoint
+            if self._checkpoint_service:
+                await self._checkpoint_service.record_error(
+                    session_id=session_id,
+                    workflow_type=self.workflow_type,
+                    workflow_id=workflow_id,
+                    stage_name=context.current_stage or "unknown",
+                    error=str(e),
+                    error_context={"exception_type": type(e).__name__},
+                )
 
         finally:
             self._running_workflows.pop(workflow_id, None)
@@ -508,3 +622,50 @@ class WorkflowOrchestrator(ABC):
     def list_running_workflows(self) -> List[str]:
         """List all running workflow IDs."""
         return list(self._running_workflows.keys())
+
+    async def resume(
+        self,
+        session_id: str,
+        workflow_id: str,
+        skip_failed_stage: bool = False,
+        override_input: Optional[Dict[str, Any]] = None,
+    ) -> WorkflowResult:
+        """
+        Resume a workflow from its last checkpoint.
+
+        Args:
+            session_id: Session identifier
+            workflow_id: Workflow ID to resume
+            skip_failed_stage: If True, skip the stage that failed
+            override_input: Optional input data overrides
+
+        Returns:
+            WorkflowResult with final outcome
+
+        Raises:
+            ValueError: If no checkpoint service configured or no checkpoint found
+        """
+        if not self._checkpoint_service:
+            raise ValueError("Cannot resume: no checkpoint service configured")
+
+        # Prepare for resume (clears error state, optionally skips failed stage)
+        restored = await self._checkpoint_service.prepare_for_resume(
+            session_id=session_id,
+            workflow_type=self.workflow_type,
+            workflow_id=workflow_id,
+            skip_failed_stage=skip_failed_stage,
+        )
+
+        if not restored:
+            raise ValueError(f"Cannot resume: no checkpoint found for workflow {workflow_id}")
+
+        # Use override input or restored input
+        input_data = override_input or restored.get("input_data", {})
+
+        # Resume execution
+        return await self.run(
+            session_id=session_id,
+            input_data=input_data,
+            resume_from_checkpoint=True,
+            workflow_id_override=workflow_id,
+        )

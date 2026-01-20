@@ -49,10 +49,10 @@ class LayeredAnalysisSession(Base):
     error_message = Column(Text)
 
     # Timing
-    started_at = Column(DateTime)
-    completed_at = Column(DateTime)
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    started_at = Column(DateTime(timezone=True))
+    completed_at = Column(DateTime(timezone=True))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     # Relationships
     vbscript_analysis = relationship("VBScriptAnalysis", back_populates="session", uselist=False, cascade="all, delete-orphan")

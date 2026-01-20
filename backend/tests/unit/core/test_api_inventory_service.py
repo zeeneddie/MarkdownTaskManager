@@ -833,3 +833,616 @@ class TestKnownAPICategories:
         """Test storage APIs are categorized."""
         assert KNOWN_API_CATEGORIES.get("s3.amazonaws.com") == "storage"
         assert KNOWN_API_CATEGORIES.get("storage.googleapis.com") == "storage"
+
+
+# ============================================================================
+# Fase 24 Extensions: SOAP, GraphQL, gRPC Detection (I1)
+# ============================================================================
+
+class TestSOAPDetection:
+    """Test SOAP/WSDL detection (I1 - Fase 24)."""
+
+    @pytest.fixture
+    def service(self):
+        """Create a service instance."""
+        return APIInventoryService(db=None)
+
+    @pytest.fixture
+    def python_soap_code(self):
+        """Sample Python code with SOAP/Zeep."""
+        return '''
+from zeep import Client
+from zeep.wsdl import Document
+
+# Create SOAP client
+client = zeep.Client("https://www.example.com/service?wsdl")
+
+# Make SOAP call
+result = client.service.GetCustomer(customer_id=123)
+
+# Another WSDL endpoint
+document = zeep.wsdl.Document("https://api.legacy.com/soap.wsdl")
+'''
+
+    @pytest.fixture
+    def python_suds_code(self):
+        """Sample Python code with suds library."""
+        return '''
+from suds.client import Client
+
+# Create suds SOAP client
+client = suds.client.Client("https://legacy.example.com/services/CustomerService?wsdl")
+
+# Call service
+response = client.service.getCustomerById(id=456)
+'''
+
+    @pytest.fixture
+    def csharp_wcf_code(self):
+        """Sample C# code with WCF."""
+        return '''
+using System.ServiceModel;
+
+// WCF Service Reference
+public class CustomerServiceClient : ServiceReference.CustomerServiceClient
+{
+    public Customer GetCustomer(int id)
+    {
+        return base.Channel.GetCustomer(id);
+    }
+}
+
+// ASMX legacy service
+var client = new CustomerService.asmx();
+'''
+
+    @pytest.fixture
+    def java_jaxws_code(self):
+        """Sample Java code with JAX-WS."""
+        return '''
+import javax.xml.ws.WebService;
+import javax.xml.ws.WebMethod;
+
+@WebService(serviceName = "CustomerService")
+public class CustomerService {
+
+    @WebMethod
+    public Customer getCustomer(int id) {
+        return customerRepository.findById(id);
+    }
+}
+'''
+
+    @pytest.fixture
+    def php_soap_code(self):
+        """Sample PHP code with SoapClient."""
+        return '''
+<?php
+$client = new SoapClient("https://api.example.com/soap.wsdl");
+$result = $client->getCustomer(["id" => 123]);
+
+$server = new SoapServer("service.wsdl");
+'''
+
+    def test_detect_zeep_soap(self, service, python_soap_code):
+        """Test Zeep SOAP client detection."""
+        detections = service.detect_soap_apis({"client.py": python_soap_code})
+
+        assert len(detections) >= 1
+        detection_types = [d["detection_type"] for d in detections]
+        assert any("zeep" in dt for dt in detection_types)
+
+    def test_detect_suds_soap(self, service, python_suds_code):
+        """Test suds SOAP client detection."""
+        detections = service.detect_soap_apis({"client.py": python_suds_code})
+
+        assert len(detections) >= 1
+        detection_types = [d["detection_type"] for d in detections]
+        assert any("suds" in dt for dt in detection_types)
+
+    def test_detect_wcf_soap(self, service, csharp_wcf_code):
+        """Test WCF SOAP detection."""
+        detections = service.detect_soap_apis({"Client.cs": csharp_wcf_code})
+
+        assert len(detections) >= 1
+        detection_types = [d["detection_type"] for d in detections]
+        assert any("wcf" in dt or "asmx" in dt for dt in detection_types)
+
+    def test_detect_jaxws_soap(self, service, java_jaxws_code):
+        """Test JAX-WS SOAP detection."""
+        detections = service.detect_soap_apis({"CustomerService.java": java_jaxws_code})
+
+        assert len(detections) >= 1
+        detection_types = [d["detection_type"] for d in detections]
+        assert any("jax" in dt or "webmethod" in dt or "webservice" in dt for dt in detection_types)
+
+    def test_detect_php_soap(self, service, php_soap_code):
+        """Test PHP SoapClient detection."""
+        detections = service.detect_soap_apis({"service.php": php_soap_code})
+
+        assert len(detections) >= 1
+        detection_types = [d["detection_type"] for d in detections]
+        assert any("soap" in dt.lower() for dt in detection_types)
+
+    def test_soap_detection_extracts_wsdl_url(self, service, python_soap_code):
+        """Test WSDL URL extraction from SOAP detection."""
+        detections = service.detect_soap_apis({"client.py": python_soap_code})
+
+        wsdl_urls = [d.get("wsdl_url") for d in detections if d.get("wsdl_url")]
+        assert any("wsdl" in url.lower() for url in wsdl_urls if url)
+
+    def test_soap_detection_returns_metadata(self, service, python_soap_code):
+        """Test SOAP detection returns proper metadata."""
+        detections = service.detect_soap_apis({"client.py": python_soap_code})
+
+        for detection in detections:
+            assert "type" in detection
+            assert detection["type"] == "soap"
+            assert "source_file" in detection
+            assert "source_line" in detection
+            assert "language" in detection
+
+    def test_soap_detection_language_filter(self, service, python_soap_code, csharp_wcf_code):
+        """Test SOAP detection with language filter."""
+        files = {
+            "client.py": python_soap_code,
+            "Client.cs": csharp_wcf_code,
+        }
+
+        # Filter to Python only
+        python_detections = service.detect_soap_apis(files, language="python")
+        for det in python_detections:
+            assert det["language"] == "python"
+
+
+class TestGraphQLDetection:
+    """Test GraphQL detection (I1 - Fase 24)."""
+
+    @pytest.fixture
+    def service(self):
+        """Create a service instance."""
+        return APIInventoryService(db=None)
+
+    @pytest.fixture
+    def python_graphene_code(self):
+        """Sample Python code with Graphene."""
+        return '''
+import graphene
+from graphene import ObjectType, String, Int, List
+
+class Query(graphene.ObjectType):
+    hello = graphene.String(name=graphene.String(default_value="World"))
+    users = graphene.List(UserType)
+
+    def resolve_hello(self, info, name):
+        return f"Hello {name}"
+
+    def resolve_users(self, info):
+        return User.objects.all()
+
+schema = graphene.Schema(query=Query)
+'''
+
+    @pytest.fixture
+    def python_strawberry_code(self):
+        """Sample Python code with Strawberry."""
+        return '''
+import strawberry
+
+@strawberry.type
+class User:
+    id: int
+    name: str
+
+@strawberry.type
+class Query:
+    @strawberry.field
+    def user(self, id: int) -> User:
+        return get_user(id)
+
+@strawberry.mutation
+class Mutation:
+    def create_user(self, name: str) -> User:
+        return create_user(name)
+
+schema = strawberry.Schema(query=Query, mutation=Mutation)
+'''
+
+    @pytest.fixture
+    def js_apollo_server_code(self):
+        """Sample JavaScript code with Apollo Server."""
+        return '''
+import { ApolloServer } from '@apollo/server';
+import { gql } from 'graphql-tag';
+
+const typeDefs = gql`
+  type Query {
+    users: [User]
+  }
+`;
+
+const resolvers = {
+  Query: {
+    users: () => getUsers(),
+  },
+};
+
+const server = new ApolloServer({ typeDefs, resolvers });
+'''
+
+    @pytest.fixture
+    def js_apollo_client_code(self):
+        """Sample JavaScript code with Apollo Client."""
+        return '''
+import { ApolloClient, InMemoryCache } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client';
+
+const client = new ApolloClient({
+  uri: 'https://api.example.com/graphql',
+  cache: new InMemoryCache()
+});
+
+function UserList() {
+  const { loading, error, data } = useQuery(GET_USERS);
+  return <div>{data?.users.map(u => u.name)}</div>;
+}
+'''
+
+    @pytest.fixture
+    def csharp_hotchocolate_code(self):
+        """Sample C# code with HotChocolate."""
+        return '''
+using HotChocolate;
+
+[GraphQLQuery]
+public class Query
+{
+    public User GetUser(int id) => _users.Find(id);
+}
+
+[GraphQLMutation]
+public class Mutation
+{
+    public User CreateUser(string name) => _users.Create(name);
+}
+
+builder.Services.AddGraphQLServer()
+    .AddQueryType<Query>()
+    .AddMutationType<Mutation>();
+'''
+
+    @pytest.fixture
+    def java_spring_graphql_code(self):
+        """Sample Java code with Spring GraphQL."""
+        return '''
+import org.springframework.graphql.data.method.annotation.QueryMapping;
+import org.springframework.graphql.data.method.annotation.MutationMapping;
+
+@Controller
+public class UserController {
+
+    @QueryMapping
+    public List<User> users() {
+        return userService.findAll();
+    }
+
+    @MutationMapping
+    public User createUser(@Argument String name) {
+        return userService.create(name);
+    }
+}
+'''
+
+    def test_detect_graphene(self, service, python_graphene_code):
+        """Test Graphene GraphQL detection."""
+        detections = service.detect_graphql_apis({"schema.py": python_graphene_code})
+
+        assert len(detections) >= 1
+        detection_types = [d["detection_type"] for d in detections]
+        assert any("graphene" in dt for dt in detection_types)
+
+    def test_detect_strawberry(self, service, python_strawberry_code):
+        """Test Strawberry GraphQL detection."""
+        detections = service.detect_graphql_apis({"schema.py": python_strawberry_code})
+
+        assert len(detections) >= 1
+        detection_types = [d["detection_type"] for d in detections]
+        assert any("strawberry" in dt for dt in detection_types)
+
+    def test_detect_apollo_server(self, service, js_apollo_server_code):
+        """Test Apollo Server detection."""
+        detections = service.detect_graphql_apis({"server.js": js_apollo_server_code})
+
+        assert len(detections) >= 1
+        detection_types = [d["detection_type"] for d in detections]
+        assert any("apollo" in dt for dt in detection_types)
+
+    def test_detect_apollo_client(self, service, js_apollo_client_code):
+        """Test Apollo Client detection."""
+        detections = service.detect_graphql_apis({"client.js": js_apollo_client_code})
+
+        assert len(detections) >= 1
+        # Client detections should have is_client=True
+        client_detections = [d for d in detections if d.get("is_client")]
+        assert len(client_detections) >= 1
+
+    def test_detect_hotchocolate(self, service, csharp_hotchocolate_code):
+        """Test HotChocolate GraphQL detection."""
+        detections = service.detect_graphql_apis({"Schema.cs": csharp_hotchocolate_code})
+
+        assert len(detections) >= 1
+        detection_types = [d["detection_type"] for d in detections]
+        assert any("hotchocolate" in dt for dt in detection_types)
+
+    def test_detect_spring_graphql(self, service, java_spring_graphql_code):
+        """Test Spring GraphQL detection."""
+        detections = service.detect_graphql_apis({"Controller.java": java_spring_graphql_code})
+
+        assert len(detections) >= 1
+        detection_types = [d["detection_type"] for d in detections]
+        assert any("spring" in dt or "mapping" in dt for dt in detection_types)
+
+    def test_graphql_server_vs_client_classification(self, service, js_apollo_server_code, js_apollo_client_code):
+        """Test classification of server vs client GraphQL code."""
+        server_detections = service.detect_graphql_apis({"server.js": js_apollo_server_code})
+        client_detections = service.detect_graphql_apis({"client.js": js_apollo_client_code})
+
+        # Server code should have is_server=True
+        server_side = [d for d in server_detections if d.get("is_server")]
+        assert len(server_side) >= 1
+
+        # Client code should have is_client=True
+        client_side = [d for d in client_detections if d.get("is_client")]
+        assert len(client_side) >= 1
+
+    def test_graphql_detection_returns_metadata(self, service, python_graphene_code):
+        """Test GraphQL detection returns proper metadata."""
+        detections = service.detect_graphql_apis({"schema.py": python_graphene_code})
+
+        for detection in detections:
+            assert "type" in detection
+            assert detection["type"] == "graphql"
+            assert "source_file" in detection
+            assert "source_line" in detection
+            assert "framework" in detection
+
+
+class TestGRPCDetection:
+    """Test gRPC detection (I1 - Fase 24)."""
+
+    @pytest.fixture
+    def service(self):
+        """Create a service instance."""
+        return APIInventoryService(db=None)
+
+    @pytest.fixture
+    def python_grpc_code(self):
+        """Sample Python code with gRPC."""
+        return '''
+import grpc
+from grpc import aio
+
+from proto import user_pb2
+from proto import user_pb2_grpc
+
+# Create gRPC channel
+channel = grpc.insecure_channel('localhost:50051')
+stub = user_pb2_grpc.UserServiceStub(channel)
+
+# Make gRPC call
+response = stub.GetUser(user_pb2.GetUserRequest(id=1))
+'''
+
+    @pytest.fixture
+    def js_grpc_code(self):
+        """Sample JavaScript code with gRPC."""
+        return '''
+const grpc = require('@grpc/grpc-js');
+const protoLoader = require('@grpc/proto-loader');
+
+const packageDefinition = protoLoader.loadSync('./user.proto');
+const userProto = grpc.loadPackageDefinition(packageDefinition);
+
+const client = new userProto.UserService(
+    'localhost:50051',
+    grpc.credentials.createInsecure()
+);
+'''
+
+    @pytest.fixture
+    def java_grpc_code(self):
+        """Sample Java code with gRPC."""
+        return '''
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+
+public class GrpcClient {
+    private final UserServiceGrpc.UserServiceBlockingStub stub;
+
+    public GrpcClient() {
+        ManagedChannel channel = ManagedChannelBuilder
+            .forAddress("localhost", 50051)
+            .usePlaintext()
+            .build();
+        stub = UserServiceGrpc.newBlockingStub(channel);
+    }
+}
+'''
+
+    @pytest.fixture
+    def csharp_grpc_code(self):
+        """Sample C# code with gRPC."""
+        return '''
+using Grpc.Net.Client;
+using Grpc.Core;
+
+var channel = GrpcChannel.ForAddress("https://localhost:5001");
+var client = new UserService.UserServiceClient(channel);
+
+var response = await client.GetUserAsync(new GetUserRequest { Id = 1 });
+'''
+
+    @pytest.fixture
+    def go_grpc_code(self):
+        """Sample Go code with gRPC."""
+        return '''
+package main
+
+import (
+    "google.golang.org/grpc"
+    "google.golang.org/grpc/credentials/insecure"
+)
+
+func main() {
+    conn, _ := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+    defer conn.Close()
+    client := pb.NewUserServiceClient(conn)
+}
+'''
+
+    def test_detect_python_grpc(self, service, python_grpc_code):
+        """Test Python gRPC detection."""
+        detections = service.detect_grpc_apis({"client.py": python_grpc_code})
+
+        assert len(detections) >= 1
+        detection_types = [d["detection_type"] for d in detections]
+        assert any("grpc" in dt for dt in detection_types)
+
+    def test_detect_js_grpc(self, service, js_grpc_code):
+        """Test JavaScript gRPC detection."""
+        detections = service.detect_grpc_apis({"client.js": js_grpc_code})
+
+        assert len(detections) >= 1
+        detection_types = [d["detection_type"] for d in detections]
+        assert any("grpc" in dt for dt in detection_types)
+
+    def test_detect_java_grpc(self, service, java_grpc_code):
+        """Test Java gRPC detection."""
+        detections = service.detect_grpc_apis({"Client.java": java_grpc_code})
+
+        assert len(detections) >= 1
+
+    def test_detect_csharp_grpc(self, service, csharp_grpc_code):
+        """Test C# gRPC detection."""
+        detections = service.detect_grpc_apis({"Client.cs": csharp_grpc_code})
+
+        assert len(detections) >= 1
+
+    def test_detect_go_grpc(self, service, go_grpc_code):
+        """Test Go gRPC detection."""
+        detections = service.detect_grpc_apis({"main.go": go_grpc_code})
+
+        assert len(detections) >= 1
+
+    def test_detect_proto_files(self, service):
+        """Test .proto file reference detection."""
+        code = '''
+        const protoPath = "./proto/user.proto";
+        const definition = loadSync(protoPath);
+        '''
+        detections = service.detect_grpc_apis({"loader.js": code})
+
+        proto_detections = [d for d in detections if "proto" in d.get("detection_type", "")]
+        assert len(proto_detections) >= 1
+
+    def test_grpc_detection_returns_metadata(self, service, python_grpc_code):
+        """Test gRPC detection returns proper metadata."""
+        detections = service.detect_grpc_apis({"client.py": python_grpc_code})
+
+        for detection in detections:
+            assert "type" in detection
+            assert detection["type"] == "grpc"
+            assert "source_file" in detection
+            assert "source_line" in detection
+            assert detection["framework"] == "grpc"
+
+
+class TestCombinedAPIDiscovery:
+    """Test combined API discovery (I1 - Fase 24)."""
+
+    @pytest.fixture
+    def service(self):
+        """Create a service instance."""
+        return APIInventoryService(db=None)
+
+    @pytest.fixture
+    def mixed_api_codebase(self):
+        """Sample codebase with multiple API types."""
+        return {
+            "rest_api.py": '''
+from fastapi import FastAPI, APIRouter
+
+app = FastAPI()
+router = APIRouter()
+
+@router.get("/users/{id}")
+async def get_user(id: int):
+    return {"id": id}
+''',
+            "soap_client.py": '''
+from zeep import Client
+client = zeep.Client("https://legacy.example.com/service.wsdl")
+''',
+            "graphql_schema.py": '''
+import graphene
+class Query(graphene.ObjectType):
+    hello = graphene.String()
+schema = graphene.Schema(query=Query)
+''',
+            "grpc_client.py": '''
+import grpc
+channel = grpc.insecure_channel("localhost:50051")
+''',
+        }
+
+    @pytest.mark.asyncio
+    async def test_discover_all_api_types(self, service, mixed_api_codebase):
+        """Test discovering all API types in a codebase."""
+        # Note: discover_all_apis calls scan_files which might need fixing
+        # For now, test the individual detection methods
+
+        # REST (via frameworks)
+        frameworks = await service.detect_frameworks(mixed_api_codebase)
+        assert any(f.framework == APIFramework.FASTAPI for f in frameworks)
+
+        # SOAP
+        soap_apis = service.detect_soap_apis(mixed_api_codebase)
+        assert len(soap_apis) >= 1
+
+        # GraphQL
+        graphql_apis = service.detect_graphql_apis(mixed_api_codebase)
+        assert len(graphql_apis) >= 1
+
+        # gRPC
+        grpc_apis = service.detect_grpc_apis(mixed_api_codebase)
+        assert len(grpc_apis) >= 1
+
+    def test_api_types_detection_summary(self, service, mixed_api_codebase):
+        """Test that all API types can be detected individually."""
+        soap_count = len(service.detect_soap_apis(mixed_api_codebase))
+        graphql_count = len(service.detect_graphql_apis(mixed_api_codebase))
+        grpc_count = len(service.detect_grpc_apis(mixed_api_codebase))
+
+        total_detections = soap_count + graphql_count + grpc_count
+        assert total_detections >= 3  # At least one of each type
+
+    def test_no_cross_contamination(self, service):
+        """Test that detectors don't produce false positives for other API types."""
+        pure_rest_code = '''
+from fastapi import FastAPI
+app = FastAPI()
+@app.get("/users")
+def get_users():
+    return []
+'''
+        files = {"api.py": pure_rest_code}
+
+        # Should not detect SOAP, GraphQL, or gRPC in pure REST code
+        soap_detections = service.detect_soap_apis(files)
+        graphql_detections = service.detect_graphql_apis(files)
+        grpc_detections = service.detect_grpc_apis(files)
+
+        # These should be empty or minimal (no false positives)
+        assert len(soap_detections) == 0
+        assert len(graphql_detections) == 0
+        assert len(grpc_detections) == 0

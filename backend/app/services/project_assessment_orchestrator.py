@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 # Optional: LLM Provider for agent reasoning
 try:
-    from app.providers.registry import get_provider_registry
+    from app.providers.registry import get_registry
     LLM_AVAILABLE = True
 except ImportError:
     LLM_AVAILABLE = False
@@ -197,7 +197,7 @@ class ProjectAssessmentOrchestrator:
         self.llm_provider = None
         if self.use_llm:
             try:
-                registry = get_provider_registry()
+                registry = get_registry()
                 self.llm_provider = registry.get_provider("ollama")  # Default to local
                 logger.info("LLM provider initialized for agent reasoning")
                 self._log_verbose("init", "SYSTEM", "LLM provider initialized (ollama)")

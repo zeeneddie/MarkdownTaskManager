@@ -145,6 +145,16 @@ class MigrationOrchestrator(WorkflowOrchestrator):
                 depends_on=["technical_analysis"],
             ),
             WorkflowStage(
+                name="user_journey_extraction",
+                description="Extract end-user workflows with migration enrichment",
+                agents=["Vicky", "Peter"],  # UX Designer + Product Owner
+                required=True,
+                parallel_agents=False,
+                quality_threshold=0.70,
+                max_iterations=2,
+                depends_on=["security_analysis"],
+            ),
+            WorkflowStage(
                 name="generate_specification",
                 description="Generate comprehensive migration specification",
                 agents=["Peter", "Betty"],  # Product Owner + Business Analyst
@@ -152,7 +162,7 @@ class MigrationOrchestrator(WorkflowOrchestrator):
                 parallel_agents=True,
                 quality_threshold=0.85,
                 max_iterations=3,
-                depends_on=["security_analysis"],  # Fase 37: Now depends on security analysis
+                depends_on=["user_journey_extraction"],
             ),
             WorkflowStage(
                 name="generate_tasks",
@@ -203,6 +213,9 @@ class MigrationOrchestrator(WorkflowOrchestrator):
             # Fase 37: Security analysis stage
             elif stage.name == "security_analysis":
                 agent_results = await self._execute_security_analysis(context)
+
+            elif stage.name == "user_journey_extraction":
+                agent_results = await self._execute_user_journey_extraction(context)
 
             elif stage.name == "generate_specification":
                 agent_results = await self._execute_specification(context)
@@ -414,10 +427,45 @@ class MigrationOrchestrator(WorkflowOrchestrator):
             if quinn_result.success:
                 results["quinn_recommendations"] = quinn_result.output.get("recommendations", [])
 
-        # Store in shared data for specification generation
-        context.shared_data["security_analysis"] = results
-
         return results
+
+    async def _execute_user_journey_extraction(
+        self,
+        context: WorkflowContext,
+    ) -> Dict[str, Any]:
+        """
+        Execute user journey extraction with Migration enrichment.
+
+        Enrichment from 8 questions:
+        - Q5: Why migrate? → Journey improvement targets
+        - Q6: Stakeholders? → Persona business impact
+        - Q7: Success criteria? → Journey KPIs
+        - Q8: Timeline? → Priority ranking
+        """
+        from ..stages.user_journey_extraction import UserJourneyExtractionStage
+
+        # Prepare enrichment from answers
+        answers = context.shared_data.get("answers", {})
+        enrichment = {
+            "answers": answers,
+            "migration_context": {
+                "target_state": answers.get("q2_migration_target", ""),
+                "strategy": answers.get("q3_migration_strategy", ""),
+                "problem_statement": answers.get("q5_problem_statement", ""),
+                "stakeholders": answers.get("q6_stakeholders", ""),
+                "success_criteria": answers.get("q7_success_criteria", ""),
+                "timeline": answers.get("q8_timeline", ""),
+            },
+        }
+
+        stage = UserJourneyExtractionStage()
+        stage_result = await stage.execute(context, enrichment=enrichment)
+
+        if stage_result.status == WorkflowStatus.COMPLETED:
+            return stage_result.agent_results.get("final_result", {})
+        else:
+            logger.warning(f"User journey extraction had issues: {stage_result.error}")
+            return stage_result.agent_results
 
     async def _execute_specification(
         self,
@@ -587,6 +635,12 @@ class MigrationOrchestrator(WorkflowOrchestrator):
         all_results = {
             "technical_analysis": context.shared_data.get(
                 "technical_analysis_result", {}
+            ),
+            "security_analysis": context.shared_data.get(
+                "security_analysis_result", {}
+            ),
+            "user_journeys": context.shared_data.get(
+                "user_journey_extraction_result", {}
             ),
             "specification": context.shared_data.get(
                 "generate_specification_result", {}

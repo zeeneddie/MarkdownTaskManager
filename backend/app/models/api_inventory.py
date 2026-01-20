@@ -51,10 +51,14 @@ class APIType(Enum):
     INTERNAL = "internal"      # Defined in codebase (routes)
     EXTERNAL = "external"      # Called from codebase (http calls)
     WEBHOOK = "webhook"        # Incoming webhooks
+    SOAP = "soap"              # SOAP/WSDL services
+    GRAPHQL = "graphql"        # GraphQL APIs
+    GRPC = "grpc"              # gRPC services
 
 
 class APIFramework(Enum):
     """Detected web framework."""
+    # REST Frameworks
     FASTAPI = "fastapi"
     FLASK = "flask"
     DJANGO = "django"
@@ -67,6 +71,20 @@ class APIFramework(Enum):
     RAILS = "rails"
     GIN = "gin"
     ACTIX = "actix"
+    # GraphQL Frameworks
+    APOLLO = "apollo"
+    GRAPHENE = "graphene"
+    STRAWBERRY = "strawberry"
+    ARIADNE = "ariadne"
+    HOTCHOCOLATE = "hotchocolate"
+    # SOAP Frameworks
+    ZEEP = "zeep"
+    SUDS = "suds"
+    WCF = "wcf"
+    JAX_WS = "jax_ws"
+    # gRPC
+    GRPC = "grpc"
+    # Unknown
     UNKNOWN = "unknown"
 
 

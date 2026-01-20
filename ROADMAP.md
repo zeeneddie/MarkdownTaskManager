@@ -1,7 +1,7 @@
 # MarQed Platform Roadmap
 
 **Project:** MarQed AI Agent Software Platform
-**Last Updated:** Week 158 (2026-01-18)
+**Last Updated:** Week 158 (2026-01-19)
 **Total Phases:** 35+ | **Timeline:** Week 144-250
 
 ---
@@ -13,19 +13,20 @@ De MarQed roadmap combineert de bestaande geplande fases met een uitgebreide gap
 ### Roadmap Overview
 
 ```
-WEEK 144-157: CRITICAL FOUNDATION + ORCHESTRATOR + SECURITY ✅ COMPLETE
+WEEK 144-158: CRITICAL FOUNDATION + ORCHESTRATOR + SECURITY ✅ COMPLETE
 ├── Fase 21: Stability Analyzer ✅ COMPLETE
 ├── Fase 21.5: Workflow Separation ✅ COMPLETE (Week 145-146)
 ├── Fase 22: FP Methodology Overhaul ✅ COMPLETE (Week 146-147)
 ├── Fase 23: Context Engineering ✅ COMPLETE (Week 155)
 ├── Fase 23.5: Confucius Orchestrator ✅ COMPLETE (Week 149-154)
 ├── Fase 23.6: Stage Council Review ✅ COMPLETE (Week 157)
+├── Fase 24.6: Restartable Workflows ✅ COMPLETE (Week 158)
 ├── Fase 29: Quality-Functionality Impact Mapping ✅ COMPLETE (Week 156-157)
 ├── Fase 31: CWE Security Scanner Suite ✅ COMPLETE (Week 157)
 └── Fase 24-A1: Legacy Quickscan ✅ COMPLETE (Week 157)
 
 WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
-├── Fase 24: Quick Wins & Foundation (15 items) 🔄 9/15 DONE (A1+K3+D1+D2+K1+K2+A4+E1+J1)
+├── Fase 24: Quick Wins & Foundation (15 items) 🔄 14/15 DONE (A1+K3+D1+D2+K1+K2+A4+E1+J1+B12+I1+F3+A3+A5)
 ├── Fase 25: Core Platform Enhancement (18 items)
 ├── Fase 26: AI & Automation (12 items)
 ├── Fase 27: Testing Excellence (8 items)
@@ -41,10 +42,35 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 
 ---
 
-## Current Focus (Week 157)
+## Current Focus (Week 158)
+
+### IMMEDIATE: Restartable Workflows + Brown Paper Test
+
+| Task | Status | Details |
+|------|--------|---------|
+| **Fase 24.6 Restartable Workflows** | ✅ COMPLETE | Generic checkpoint/resume system for all workflows |
+| **Brown Paper HCI-CRS Test** | 🔄 IN PROGRESS | Test workflow op /opt/projecten/hci-crs met lokale Ollama LLMs |
+
+**Doel:** Validate Brown Paper workflow end-to-end met HCI-CRS legacy applicatie (793K LOC, ASP Classic/VBScript)
+
+**Configuratie:**
+- Path: `/opt/projecten/hci-crs`
+- LLM Provider: Ollama (lokaal)
+- Models: qwen2.5-coder:7b, qwen2.5:7b, deepseek-r1:7b, mistral:latest
+- VBScript Analyse: Enabled (`skip_vbscript: false`)
+
+**Endpoints:**
+- Start: `POST /api/brown-paper/bmad/start`
+- Answer: `POST /api/brown-paper/bmad/{session_id}/answer`
+- Analyze: `POST /api/brown-paper/bmad/{session_id}/enhanced-analyze`
+
+---
+
+### Completed This Week
 
 | Area | Status | Details |
 |------|--------|---------|
+| **Fase 24.6 Restartable Workflows** | ✅ COMPLETE | Checkpoint/resume system for all workflow types |
 | **Fase 31 CWE Security Scanner** | ✅ COMPLETE | Multi-scanner suite, 288+ findings on HCI-CRS |
 | **Fase 24-A1 Legacy Quickscan** | ✅ COMPLETE | 15-min assessment, Go/No-Go recommendation |
 | **Fase 23.6 Stage Council Review** | ✅ COMPLETE | Multi-model LLM reviews per stage |
@@ -52,7 +78,7 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 | **Fase 23.5 Confucius Orchestrator** | ✅ COMPLETE | 4 workflow orchestrators, PIV loop |
 | **Fase 23 Context Engineering** | ✅ COMPLETE | 60-80% token reduction |
 | **Test Suite** | ✅ COMPLETE | 2,700+ tests, 97.8% pass rate |
-| **GAP Analysis** | 🔄 IN PROGRESS | 9/15 Fase 24 items done (A1+K3+D1+D2+K1+K2+A4+E1+J1) |
+| **GAP Analysis** | 🔄 IN PROGRESS | 14/15 Fase 24 items done (A1+K3+D1+D2+K1+K2+A4+E1+J1+B12+I1+F3+A3+A5) |
 
 See: [phases-current.md](docs/roadmap/phases-current.md)
 
@@ -485,4 +511,4 @@ See: [docs/roadmap/phases/fase-46-user-workflow-documentation.md](docs/roadmap/p
 
 ---
 
-*Generated: Week 158 (2026-01-18)*
+*Generated: Week 158 (2026-01-19)*

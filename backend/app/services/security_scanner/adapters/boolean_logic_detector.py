@@ -508,6 +508,226 @@ BOOLEAN_LOGIC_RULES: List[BooleanLogicRule] = [
         },
         fix_suggestion="Remove the dead code or fix the logic error causing the condition to always be false.",
     ),
+
+    # =========================================================================
+    # KB2/KB3/KB4 PATTERNS - Added from Python-Errors and LogicalErrors repos
+    # =========================================================================
+
+    # =========================================================================
+    # BL050: Python 'is' vs '==' for Value Comparison (CWE-595)
+    # =========================================================================
+    BooleanLogicRule(
+        id="BL050",
+        title="Using 'is' operator for value comparison instead of '=='",
+        description=(
+            "The 'is' operator checks identity (same object in memory), not equality. "
+            "While it works for small integers (-5 to 256) and interned strings due to "
+            "Python's caching, it fails for larger values. Use '==' for value comparison."
+        ),
+        severity=Severity.HIGH,
+        cwe_ids=["CWE-595", "CWE-480"],
+        category="comparison_error",
+        patterns={
+            "python": LanguagePattern(
+                r'if\s+\w+\s+is\s+(?:\d{4,}|["\'][^"\']{2,}["\']|\[|\{|\()',
+            ),
+        },
+        fix_suggestion="Use '==' for value comparison. Reserve 'is' for identity checks (None, True, False, singletons).",
+        false_positive_patterns=[
+            r'is\s+None', r'is\s+True', r'is\s+False', r'is\s+not\s+None',
+        ],
+    ),
+
+    # =========================================================================
+    # BL051: Mutable Default Argument (CWE-547)
+    # =========================================================================
+    BooleanLogicRule(
+        id="BL051",
+        title="Mutable default argument in function definition",
+        description=(
+            "A mutable object (list, dict, set) is used as a default argument. "
+            "Default arguments are evaluated once at function definition, not at each call. "
+            "Mutations persist across calls, causing unexpected behavior."
+        ),
+        severity=Severity.HIGH,
+        cwe_ids=["CWE-547"],
+        category="logic_error",
+        patterns={
+            "python": LanguagePattern(
+                r'def\s+\w+\s*\([^)]*=\s*(?:\[\]|\{\}|set\(\))',
+            ),
+        },
+        fix_suggestion="Use None as default and create the mutable object inside the function: def func(items=None): items = items or []",
+    ),
+
+    # =========================================================================
+    # BL052: Division by Zero Risk (CWE-369)
+    # =========================================================================
+    BooleanLogicRule(
+        id="BL052",
+        title="Potential division by zero without guard",
+        description=(
+            "A division operation uses a variable that could be zero without "
+            "a preceding check. Division by zero causes ZeroDivisionError in Python, "
+            "undefined behavior in C/C++, and ArithmeticException in Java/C#."
+        ),
+        severity=Severity.MEDIUM,
+        cwe_ids=["CWE-369"],
+        category="arithmetic_error",
+        patterns={
+            "python": LanguagePattern(
+                r'(?<!/)\s*/\s*(?!\*|/)\s*\w+(?!\s*(?:!=|>|if\s+\w+))',
+                flags=re.MULTILINE
+            ),
+            "javascript": LanguagePattern(
+                r'(?<!/)\s*/\s*(?!/)\s*\w+(?!\s*(?:!==?|>|&&))',
+            ),
+            "java": LanguagePattern(
+                r'(?<!/)\s*/\s*(?!/)\s*\w+(?!\s*(?:!=|>|&&))',
+            ),
+            "csharp": LanguagePattern(
+                r'(?<!/)\s*/\s*(?!/)\s*\w+(?!\s*(?:!=|>|&&))',
+            ),
+            "cpp": LanguagePattern(
+                r'(?<!/)\s*/\s*(?!/)\s*\w+(?!\s*(?:!=|>|&&))',
+            ),
+        },
+        fix_suggestion="Add a zero check before division: if (divisor != 0) { result = dividend / divisor; }",
+        false_positive_patterns=[
+            r'if\s*\([^)]*!=\s*0', r'if\s*\([^)]*>\s*0', r'\.length', r'\.size',
+        ],
+    ),
+
+    # =========================================================================
+    # BL053: Integer Literal Comparison with 'is' (Python) (CWE-595)
+    # =========================================================================
+    BooleanLogicRule(
+        id="BL053",
+        title="Comparing integers using 'is' instead of '=='",
+        description=(
+            "Python caches small integers (-5 to 256), so 'is' works for them by accident. "
+            "For larger integers, 'is' fails because Python creates new objects. "
+            "This leads to bugs that only manifest with certain values."
+        ),
+        severity=Severity.HIGH,
+        cwe_ids=["CWE-595"],
+        category="comparison_error",
+        patterns={
+            "python": LanguagePattern(
+                r'\w+\s+is\s+(?:25[7-9]|2[6-9]\d|[3-9]\d{2,}|\d{4,})',
+            ),
+        },
+        fix_suggestion="Always use '==' for integer comparison. 'is' only checks object identity.",
+    ),
+
+    # =========================================================================
+    # BL054: String Concatenation in Loop (Performance Anti-Pattern)
+    # =========================================================================
+    BooleanLogicRule(
+        id="BL054",
+        title="String concatenation inside loop (performance issue)",
+        description=(
+            "Strings are immutable, so concatenation creates new objects each iteration. "
+            "For N iterations, this is O(N^2) complexity. Use list.append() + ''.join() "
+            "or StringBuilder/StringBuffer for O(N) performance."
+        ),
+        severity=Severity.LOW,
+        cwe_ids=["CWE-407"],
+        category="performance_error",
+        patterns={
+            "python": LanguagePattern(
+                r'for\s+.*:\s*\n(?:[^\n]*\n)*?[^\n]*\w+\s*\+=\s*["\']',
+                flags=re.MULTILINE | re.DOTALL
+            ),
+            "java": LanguagePattern(
+                r'for\s*\([^)]+\)\s*\{[^}]*\w+\s*\+=\s*["\']',
+                flags=re.DOTALL
+            ),
+            "csharp": LanguagePattern(
+                r'for(?:each)?\s*\([^)]+\)\s*\{[^}]*\w+\s*\+=\s*["\']',
+                flags=re.DOTALL
+            ),
+        },
+        fix_suggestion="Use StringBuilder (Java/C#) or list.append() + ''.join() (Python) for string building in loops.",
+    ),
+
+    # =========================================================================
+    # BL055: Late Binding Closure in Loop (Python) (CWE-758)
+    # =========================================================================
+    BooleanLogicRule(
+        id="BL055",
+        title="Late binding closure captures loop variable",
+        description=(
+            "A lambda or nested function inside a loop captures the loop variable by reference. "
+            "All closures will see the final value of the loop variable, not the value at creation. "
+            "This is a common source of bugs in callbacks and event handlers."
+        ),
+        severity=Severity.HIGH,
+        cwe_ids=["CWE-758"],
+        category="logic_error",
+        patterns={
+            "python": LanguagePattern(
+                r'for\s+(\w+)\s+in\s+.*:\s*\n(?:[^\n]*\n)*?[^\n]*lambda[^:]*:\s*[^\n]*\1',
+                flags=re.MULTILINE
+            ),
+        },
+        fix_suggestion="Capture the value with a default argument: lambda x=i: x, or use functools.partial().",
+    ),
+
+    # =========================================================================
+    # BL056: Modifying Collection While Iterating (CWE-672)
+    # =========================================================================
+    BooleanLogicRule(
+        id="BL056",
+        title="Modifying collection while iterating over it",
+        description=(
+            "Adding or removing items from a collection while iterating causes "
+            "RuntimeError in Python, ConcurrentModificationException in Java, "
+            "or undefined behavior in C++. Iterate over a copy instead."
+        ),
+        severity=Severity.HIGH,
+        cwe_ids=["CWE-672"],
+        category="logic_error",
+        patterns={
+            "python": LanguagePattern(
+                r'for\s+\w+\s+in\s+(\w+)\s*:\s*\n(?:[^\n]*\n)*?[^\n]*\1\.(?:append|remove|pop|clear|insert)',
+                flags=re.MULTILINE
+            ),
+            "java": LanguagePattern(
+                r'for\s*\([^)]+:\s*(\w+)\)\s*\{[^}]*\1\.(?:add|remove|clear)',
+                flags=re.DOTALL
+            ),
+        },
+        fix_suggestion="Iterate over a copy: for item in list(items): or collect modifications and apply after loop.",
+    ),
+
+    # =========================================================================
+    # BL057: Accidental Boolean Expression (C#/Java) (CWE-480)
+    # =========================================================================
+    BooleanLogicRule(
+        id="BL057",
+        title="Semicolon after if/while creates empty body",
+        description=(
+            "A semicolon immediately after if/while condition creates an empty statement body. "
+            "The intended block executes unconditionally. This is a common typo that compiles "
+            "but produces wrong behavior."
+        ),
+        severity=Severity.CRITICAL,
+        cwe_ids=["CWE-480", "CWE-483"],
+        category="logic_error",
+        patterns={
+            "csharp": LanguagePattern(
+                r'if\s*\([^)]+\)\s*;',
+            ),
+            "java": LanguagePattern(
+                r'if\s*\([^)]+\)\s*;',
+            ),
+            "cpp": LanguagePattern(
+                r'if\s*\([^)]+\)\s*;',
+            ),
+        },
+        fix_suggestion="Remove the semicolon and add braces: if (condition) { statement; }",
+    ),
 ]
 
 
@@ -523,7 +743,7 @@ class BooleanLogicDetector(BaseScanner):
     null checking errors, and tautologies/contradictions.
     """
 
-    SCANNER_VERSION = "1.0.0"
+    SCANNER_VERSION = "1.1.0"  # KB2/KB3/KB4 patterns added
 
     def __init__(self):
         super().__init__()

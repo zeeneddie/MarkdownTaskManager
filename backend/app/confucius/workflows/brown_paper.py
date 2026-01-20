@@ -84,13 +84,23 @@ class BrownPaperOrchestrator(WorkflowOrchestrator):
                 depends_on=["code_understanding"],
             ),
             WorkflowStage(
+                name="user_journey_extraction",
+                description="Extract end-user workflows, personas, and screen flows",
+                agents=["Vicky", "Peter"],  # UX Designer + Product Owner
+                required=True,
+                parallel_agents=False,
+                quality_threshold=0.70,
+                max_iterations=2,
+                depends_on=["domain_extraction"],
+            ),
+            WorkflowStage(
                 name="story_extraction",
                 description="Generate user stories from domains",
                 agents=["Peter"],  # Product Owner
                 required=True,
                 quality_threshold=0.80,
                 max_iterations=3,
-                depends_on=["domain_extraction"],
+                depends_on=["user_journey_extraction"],
             ),
             WorkflowStage(
                 name="deep_extraction",
@@ -137,6 +147,9 @@ class BrownPaperOrchestrator(WorkflowOrchestrator):
 
             elif stage.name == "domain_extraction":
                 agent_results = await self._execute_domain_extraction(context)
+
+            elif stage.name == "user_journey_extraction":
+                agent_results = await self._execute_user_journey_extraction(context)
 
             elif stage.name == "story_extraction":
                 agent_results = await self._execute_story_extraction(context)
@@ -265,6 +278,22 @@ class BrownPaperOrchestrator(WorkflowOrchestrator):
                 )
 
         return results
+
+    async def _execute_user_journey_extraction(
+        self,
+        context: WorkflowContext,
+    ) -> Dict[str, Any]:
+        """Execute user journey extraction phase."""
+        from ..stages.user_journey_extraction import UserJourneyExtractionStage
+
+        stage = UserJourneyExtractionStage()
+        stage_result = await stage.execute(context)
+
+        if stage_result.status == WorkflowStatus.COMPLETED:
+            return stage_result.agent_results.get("final_result", {})
+        else:
+            logger.warning(f"User journey extraction had issues: {stage_result.error}")
+            return stage_result.agent_results
 
     async def _execute_story_extraction(
         self,
@@ -410,6 +439,7 @@ class BrownPaperOrchestrator(WorkflowOrchestrator):
         all_results = {
             "code_analysis": context.shared_data.get("code_understanding_result", {}),
             "domains": context.shared_data.get("domain_extraction_result", {}),
+            "user_journeys": context.shared_data.get("user_journey_extraction_result", {}),
             "stories": context.shared_data.get("story_extraction_result", {}),
             "deep_analysis": context.shared_data.get("deep_extraction_result", {}),
             "estimation": context.shared_data.get("estimation_result", {}),

@@ -179,6 +179,25 @@ STACK_TEMPLATES: Dict[str, Dict[str, Any]] = {
             "api": "APIBridge",
         },
         "specialist_agents": ["Miguel", "LegacyCodeAnalyst", "DatabaseMigration", "DataMigration", "RegressionTester"],
+        "model_preferences": {
+            # Confucius agents - all Ollama (local)
+            "Miguel": "qwen2.5-coder:7b",      # Metrics specialist
+            "Peter": "qwen2.5:7b",             # Product Owner
+            "Betty": "qwen2.5:7b",             # Business Analyst
+            "Vicky": "qwen2.5:7b",             # UX Designer
+            "Felix": "deepseek-r1:7b",         # Architecture
+            "Quinn": "deepseek-r1:7b",         # Quality
+            "Marcus": "deepseek-r1:7b",        # Maintenance
+            "Eliza": "qwen2.5:7b",             # Estimation
+            "Diana": "mistral:latest",         # Documentation
+            "Paul": "qwen2.5:7b",              # Planning
+            "Tessa": "qwen2.5-coder:7b",       # Testing
+            # Specialist agents
+            "LegacyCodeAnalyst": "qwen2.5-coder:14b",
+            "DatabaseMigration": "qwen2.5-coder:7b",
+            "DataMigration": "qwen2.5:7b",
+            "RegressionTester": "qwen2.5-coder:7b",
+        },
         "extra_dod_criteria": {
             "test": [
                 {"name": "regression_tests_pass", "description": "All regression tests pass", "required": True},

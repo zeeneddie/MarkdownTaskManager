@@ -55,6 +55,36 @@ open http://localhost:8000
 | `make status` | Check service health |
 | `make help` | Show all commands |
 
+## Service Management
+
+Use the unified service manager script for development:
+
+```bash
+# Start all services
+./scripts/marqed-services.sh start
+
+# Stop all services
+./scripts/marqed-services.sh stop
+
+# Check status
+./scripts/marqed-services.sh status
+
+# Tail all logs
+./scripts/marqed-services.sh logs
+```
+
+### Port Assignments
+
+| Service | Port | Description |
+|---------|------|-------------|
+| ChromaDB | 8001 | Vector database (Docker: 8000→8001) |
+| Backend API | 8003 | FastAPI REST API |
+| Portal | 8004 | MarQed Portal (Next.js) |
+| Agents | 8005 | TypeScript agent executor |
+| Redis | 6379 | Celery task broker |
+| PostgreSQL | 5432 | Main database |
+| Ollama | 11434 | Local LLM inference |
+
 ## Architecture
 
 ```

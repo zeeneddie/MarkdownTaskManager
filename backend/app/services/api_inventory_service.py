@@ -236,6 +236,158 @@ class APIInventoryService:
         ],
     }
 
+    # SOAP/WSDL detection patterns (I1 - Fase 24)
+    SOAP_PATTERNS: Dict[str, List[Tuple[str, str]]] = {
+        "python": [
+            # zeep library
+            (r"from\s+zeep\s+import", "zeep_import"),
+            (r"zeep\.Client\s*\(\s*['\"]([^'\"]+)['\"]", "zeep_client"),
+            (r"zeep\.wsdl\.Document", "zeep_wsdl"),
+            # suds library
+            (r"from\s+suds\.client\s+import", "suds_import"),
+            (r"suds\.client\.Client\s*\(\s*['\"]([^'\"]+)['\"]", "suds_client"),
+            # Generic SOAP patterns
+            (r"SOAPAction", "soap_action"),
+            (r"\.wsdl['\"]?\s*\)", "wsdl_file"),
+        ],
+        "csharp": [
+            # WCF
+            (r"ServiceReference", "wcf_reference"),
+            (r"\.asmx", "asmx_service"),
+            (r"SoapHttpClientProtocol", "soap_protocol"),
+            (r"WebServiceAttribute", "webservice_attr"),
+            (r"\[WebMethod\]", "webmethod_attr"),
+            # Generic SOAP
+            (r"SoapClient", "soap_client"),
+            (r"\.wsdl", "wsdl_file"),
+        ],
+        "java": [
+            # JAX-WS
+            (r"@WebService", "jax_ws_annotation"),
+            (r"@WebMethod", "webmethod_annotation"),
+            (r"javax\.xml\.ws", "jax_ws_import"),
+            (r"jakarta\.xml\.ws", "jakarta_ws_import"),
+            # Apache CXF
+            (r"org\.apache\.cxf", "cxf_import"),
+            # Generic SOAP
+            (r"SOAPConnection", "soap_connection"),
+            (r"\.wsdl", "wsdl_file"),
+        ],
+        "javascript": [
+            # soap npm package
+            (r"require\s*\(\s*['\"]soap['\"]", "soap_require"),
+            (r"import.*from\s+['\"]soap['\"]", "soap_import"),
+            (r"soap\.createClient", "soap_create_client"),
+            # Generic SOAP
+            (r"\.wsdl", "wsdl_file"),
+        ],
+        "php": [
+            # PHP SoapClient
+            (r"new\s+SoapClient\s*\(\s*['\"]([^'\"]+)['\"]", "soap_client"),
+            (r"SoapServer", "soap_server"),
+            (r"\.wsdl", "wsdl_file"),
+        ],
+    }
+
+    # GraphQL detection patterns (I1 - Fase 24)
+    GRAPHQL_PATTERNS: Dict[str, List[Tuple[str, str]]] = {
+        "python": [
+            # Graphene
+            (r"import\s+graphene", "graphene_import"),
+            (r"from\s+graphene\s+import", "graphene_from"),
+            (r"graphene\.ObjectType", "graphene_objecttype"),
+            (r"class\s+\w+\s*\(\s*graphene\.ObjectType\s*\)", "graphene_class"),
+            # Strawberry
+            (r"import\s+strawberry", "strawberry_import"),
+            (r"@strawberry\.type", "strawberry_type"),
+            (r"@strawberry\.mutation", "strawberry_mutation"),
+            (r"@strawberry\.query", "strawberry_query"),
+            # Ariadne
+            (r"from\s+ariadne\s+import", "ariadne_import"),
+            (r"make_executable_schema", "ariadne_schema"),
+            # Generic GraphQL
+            (r"graphql\s*\(", "graphql_call"),
+            (r"\.graphql['\"]", "graphql_file"),
+        ],
+        "javascript": [
+            # Apollo Server
+            (r"from\s+['\"]@apollo/server['\"]", "apollo_server_import"),
+            (r"from\s+['\"]apollo-server['\"]", "apollo_server_legacy"),
+            (r"new\s+ApolloServer", "apollo_server_new"),
+            # Apollo Client
+            (r"from\s+['\"]@apollo/client['\"]", "apollo_client_import"),
+            (r"ApolloClient", "apollo_client"),
+            (r"useQuery|useMutation|useLazyQuery", "apollo_hooks"),
+            # graphql-js
+            (r"from\s+['\"]graphql['\"]", "graphql_import"),
+            (r"buildSchema", "graphql_build_schema"),
+            (r"GraphQLSchema", "graphql_schema"),
+            # Express GraphQL
+            (r"express-graphql", "express_graphql"),
+            (r"graphqlHTTP", "graphql_http"),
+            # Generic
+            (r"gql`", "gql_template"),
+            (r"\.graphql['\"]", "graphql_file"),
+        ],
+        "csharp": [
+            # HotChocolate
+            (r"HotChocolate", "hotchocolate_import"),
+            (r"AddGraphQLServer", "hotchocolate_server"),
+            (r"\[GraphQLQuery\]", "hotchocolate_query"),
+            (r"\[GraphQLMutation\]", "hotchocolate_mutation"),
+            # GraphQL.NET
+            (r"GraphQL\.Types", "graphql_dotnet_import"),
+            (r"ObjectGraphType", "graphql_objecttype"),
+            (r"ISchema", "graphql_schema"),
+        ],
+        "java": [
+            # graphql-java
+            (r"graphql\.GraphQL", "graphql_java"),
+            (r"GraphQLSchema", "graphql_schema"),
+            (r"DataFetcher", "data_fetcher"),
+            # Spring GraphQL
+            (r"@QueryMapping", "spring_query_mapping"),
+            (r"@MutationMapping", "spring_mutation_mapping"),
+            (r"@SchemaMapping", "spring_schema_mapping"),
+        ],
+        "ruby": [
+            # graphql-ruby
+            (r"GraphQL::Schema", "graphql_ruby_schema"),
+            (r"GraphQL::ObjectType", "graphql_ruby_objecttype"),
+            (r"field\s+:", "graphql_ruby_field"),
+        ],
+    }
+
+    # gRPC detection patterns (I1 - Fase 24)
+    GRPC_PATTERNS: Dict[str, List[Tuple[str, str]]] = {
+        "python": [
+            (r"import\s+grpc", "grpc_import"),
+            (r"from\s+grpc\s+import", "grpc_from"),
+            (r"\.proto['\"]", "proto_file"),
+            (r"_pb2\.py", "protobuf_generated"),
+            (r"_pb2_grpc\.py", "grpc_generated"),
+        ],
+        "javascript": [
+            (r"@grpc/grpc-js", "grpc_js"),
+            (r"grpc-web", "grpc_web"),
+            (r"\.proto['\"]", "proto_file"),
+        ],
+        "java": [
+            (r"io\.grpc", "grpc_import"),
+            (r"\.proto['\"]", "proto_file"),
+            (r"ManagedChannel", "grpc_channel"),
+        ],
+        "csharp": [
+            (r"Grpc\.Core", "grpc_core"),
+            (r"Grpc\.Net\.Client", "grpc_net_client"),
+            (r"\.proto['\"]", "proto_file"),
+        ],
+        "go": [
+            (r"google\.golang\.org/grpc", "grpc_import"),
+            (r"\.proto['\"]", "proto_file"),
+        ],
+    }
+
     def __init__(self, db=None):
         """Initialize the API Inventory Service."""
         self.db = db
@@ -898,3 +1050,309 @@ class APIInventoryService:
             )
 
         return "\n".join(lines)
+
+    # ========================================================================
+    # SOAP/WSDL Detection (I1 - Fase 24)
+    # ========================================================================
+
+    def detect_soap_apis(
+        self,
+        files: Dict[str, str],
+        language: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Detect SOAP/WSDL services and clients in source code.
+
+        Args:
+            files: Dict of filepath -> content
+            language: Optional language filter
+
+        Returns:
+            List of SOAP API detections with metadata
+        """
+        detections: List[Dict[str, Any]] = []
+
+        for filepath, content in files.items():
+            file_ext = os.path.splitext(filepath)[1].lower()
+            file_lang = self._get_language(file_ext)
+
+            # Determine which patterns to use
+            if language:
+                langs_to_check = [language]
+            else:
+                langs_to_check = [file_lang] if file_lang in self.SOAP_PATTERNS else list(self.SOAP_PATTERNS.keys())
+
+            for lang in langs_to_check:
+                if lang not in self.SOAP_PATTERNS:
+                    continue
+
+                for pattern, detection_type in self.SOAP_PATTERNS[lang]:
+                    for match in re.finditer(pattern, content, re.IGNORECASE):
+                        line_num = content[:match.start()].count("\n") + 1
+
+                        # Extract WSDL URL if present
+                        wsdl_url = None
+                        groups = match.groups()
+                        if groups and groups[0]:
+                            url_candidate = groups[0]
+                            if "wsdl" in url_candidate.lower() or "http" in url_candidate.lower():
+                                wsdl_url = url_candidate
+
+                        detection = {
+                            "type": APIType.SOAP.value,
+                            "detection_type": detection_type,
+                            "source_file": filepath,
+                            "source_line": line_num,
+                            "language": lang,
+                            "matched_text": match.group(0)[:100],
+                            "wsdl_url": wsdl_url,
+                            "framework": self._detect_soap_framework(detection_type),
+                        }
+                        detections.append(detection)
+
+        logger.info(f"Detected {len(detections)} SOAP API patterns")
+        return detections
+
+    def _detect_soap_framework(self, detection_type: str) -> str:
+        """Determine SOAP framework from detection type."""
+        framework_map = {
+            "zeep": APIFramework.ZEEP.value,
+            "suds": APIFramework.SUDS.value,
+            "wcf": APIFramework.WCF.value,
+            "asmx": APIFramework.ASPNET.value,
+            "jax_ws": APIFramework.JAX_WS.value,
+            "cxf": APIFramework.JAX_WS.value,
+            "soap_client": APIFramework.UNKNOWN.value,
+        }
+
+        for key, framework in framework_map.items():
+            if key in detection_type.lower():
+                return framework
+        return APIFramework.UNKNOWN.value
+
+    # ========================================================================
+    # GraphQL Detection (I1 - Fase 24)
+    # ========================================================================
+
+    def detect_graphql_apis(
+        self,
+        files: Dict[str, str],
+        language: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Detect GraphQL schemas and clients in source code.
+
+        Args:
+            files: Dict of filepath -> content
+            language: Optional language filter
+
+        Returns:
+            List of GraphQL API detections with metadata
+        """
+        detections: List[Dict[str, Any]] = []
+
+        for filepath, content in files.items():
+            file_ext = os.path.splitext(filepath)[1].lower()
+            file_lang = self._get_language(file_ext)
+
+            # Determine which patterns to use
+            if language:
+                langs_to_check = [language]
+            else:
+                langs_to_check = [file_lang] if file_lang in self.GRAPHQL_PATTERNS else list(self.GRAPHQL_PATTERNS.keys())
+
+            for lang in langs_to_check:
+                if lang not in self.GRAPHQL_PATTERNS:
+                    continue
+
+                for pattern, detection_type in self.GRAPHQL_PATTERNS[lang]:
+                    for match in re.finditer(pattern, content, re.IGNORECASE):
+                        line_num = content[:match.start()].count("\n") + 1
+
+                        # Determine if this is server or client
+                        is_server = any(x in detection_type.lower() for x in
+                                       ["schema", "server", "objecttype", "mapping", "mutation", "query"])
+
+                        detection = {
+                            "type": APIType.GRAPHQL.value,
+                            "detection_type": detection_type,
+                            "source_file": filepath,
+                            "source_line": line_num,
+                            "language": lang,
+                            "matched_text": match.group(0)[:100],
+                            "is_server": is_server,
+                            "is_client": not is_server,
+                            "framework": self._detect_graphql_framework(detection_type),
+                        }
+                        detections.append(detection)
+
+        logger.info(f"Detected {len(detections)} GraphQL API patterns")
+        return detections
+
+    def _detect_graphql_framework(self, detection_type: str) -> str:
+        """Determine GraphQL framework from detection type."""
+        framework_map = {
+            "apollo": APIFramework.APOLLO.value,
+            "graphene": APIFramework.GRAPHENE.value,
+            "strawberry": APIFramework.STRAWBERRY.value,
+            "ariadne": APIFramework.ARIADNE.value,
+            "hotchocolate": APIFramework.HOTCHOCOLATE.value,
+            "spring": APIFramework.SPRING.value,
+            "graphql_ruby": APIFramework.RAILS.value,
+        }
+
+        for key, framework in framework_map.items():
+            if key in detection_type.lower():
+                return framework
+        return APIFramework.UNKNOWN.value
+
+    # ========================================================================
+    # gRPC Detection (I1 - Fase 24)
+    # ========================================================================
+
+    def detect_grpc_apis(
+        self,
+        files: Dict[str, str],
+        language: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Detect gRPC services and clients in source code.
+
+        Args:
+            files: Dict of filepath -> content
+            language: Optional language filter
+
+        Returns:
+            List of gRPC API detections with metadata
+        """
+        detections: List[Dict[str, Any]] = []
+
+        for filepath, content in files.items():
+            file_ext = os.path.splitext(filepath)[1].lower()
+            file_lang = self._get_language(file_ext)
+
+            # Determine which patterns to use
+            if language:
+                langs_to_check = [language]
+            else:
+                langs_to_check = [file_lang] if file_lang in self.GRPC_PATTERNS else list(self.GRPC_PATTERNS.keys())
+
+            for lang in langs_to_check:
+                if lang not in self.GRPC_PATTERNS:
+                    continue
+
+                for pattern, detection_type in self.GRPC_PATTERNS[lang]:
+                    for match in re.finditer(pattern, content, re.IGNORECASE):
+                        line_num = content[:match.start()].count("\n") + 1
+
+                        detection = {
+                            "type": APIType.GRPC.value,
+                            "detection_type": detection_type,
+                            "source_file": filepath,
+                            "source_line": line_num,
+                            "language": lang,
+                            "matched_text": match.group(0)[:100],
+                            "framework": APIFramework.GRPC.value,
+                        }
+                        detections.append(detection)
+
+        logger.info(f"Detected {len(detections)} gRPC API patterns")
+        return detections
+
+    # ========================================================================
+    # Combined API Discovery (I1 - Fase 24)
+    # ========================================================================
+
+    async def discover_all_apis(
+        self,
+        files: Dict[str, str],
+        session_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Discover all API types: REST, SOAP, GraphQL, gRPC.
+
+        Args:
+            files: Dict of filepath -> content
+            session_id: Optional session to use
+
+        Returns:
+            Combined API discovery result
+        """
+        start_time = time.time()
+
+        # Create session if not provided
+        if not session_id:
+            session_id = await self.create_session()
+
+        # Run existing REST/framework detection
+        rest_result = await self.scan_files(files, session_id)
+
+        # Detect SOAP APIs
+        soap_apis = self.detect_soap_apis(files)
+
+        # Detect GraphQL APIs
+        graphql_apis = self.detect_graphql_apis(files)
+
+        # Detect gRPC APIs
+        grpc_apis = self.detect_grpc_apis(files)
+
+        # Build combined result
+        result = {
+            "session_id": session_id,
+            "scan_duration_seconds": time.time() - start_time,
+            "files_scanned": len(files),
+            "rest": {
+                "endpoints": rest_result.total_internal if rest_result else 0,
+                "external_apis": rest_result.total_external if rest_result else 0,
+                "frameworks": [f.framework.value for f in (rest_result.frameworks_detected if rest_result else [])],
+            },
+            "soap": {
+                "detections": len(soap_apis),
+                "apis": soap_apis,
+            },
+            "graphql": {
+                "detections": len(graphql_apis),
+                "servers": len([d for d in graphql_apis if d.get("is_server")]),
+                "clients": len([d for d in graphql_apis if d.get("is_client")]),
+                "apis": graphql_apis,
+            },
+            "grpc": {
+                "detections": len(grpc_apis),
+                "apis": grpc_apis,
+            },
+            "summary": {
+                "total_rest_endpoints": rest_result.total_internal if rest_result else 0,
+                "total_soap_detections": len(soap_apis),
+                "total_graphql_detections": len(graphql_apis),
+                "total_grpc_detections": len(grpc_apis),
+                "api_types_found": self._get_api_types_found(
+                    rest_result, soap_apis, graphql_apis, grpc_apis
+                ),
+            },
+        }
+
+        logger.info(
+            f"Discovered APIs: REST={result['rest']['endpoints']}, "
+            f"SOAP={len(soap_apis)}, GraphQL={len(graphql_apis)}, gRPC={len(grpc_apis)}"
+        )
+
+        return result
+
+    def _get_api_types_found(
+        self,
+        rest_result,
+        soap_apis: List[Dict],
+        graphql_apis: List[Dict],
+        grpc_apis: List[Dict],
+    ) -> List[str]:
+        """Get list of API types found in the scan."""
+        types = []
+        if rest_result and (rest_result.total_internal > 0 or rest_result.total_external > 0):
+            types.append("REST")
+        if soap_apis:
+            types.append("SOAP")
+        if graphql_apis:
+            types.append("GraphQL")
+        if grpc_apis:
+            types.append("gRPC")
+        return types

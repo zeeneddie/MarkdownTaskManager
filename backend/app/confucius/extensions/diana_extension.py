@@ -201,25 +201,70 @@ class DianaExtension(BaseAgentExtension):
             return "general"
 
     async def _generate_api_docs(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate API documentation."""
-        return {
-            "documents": [],
-            "content": "",
-            "format": "openapi",
-            "sections": ["endpoints", "schemas", "examples"],
-        }
+        """Generate API documentation using LLM."""
+        import json
+        code_analysis = context.get("code_analysis", {})
+
+        prompt = f"""Generate API documentation from the code analysis.
+
+## Code Analysis
+{json.dumps(code_analysis, indent=2, default=str)[:8000]}
+
+## Task
+Create OpenAPI-style documentation with:
+1. List of API endpoints
+2. Request/response schemas
+3. Usage examples
+
+## Output Schema
+Return JSON:
+{{
+    "documents": [{{"title": "...", "type": "api"}}],
+    "content": "# API Documentation\\n...",
+    "format": "openapi",
+    "sections": ["endpoints", "schemas", "examples"],
+    "endpoints": [{{"path": "/api/...", "method": "GET", "description": "..."}}]
+}}"""
+
+        result = await self.call_llm(prompt)
+        return result if result else {"documents": [], "content": "", "format": "openapi", "sections": []}
 
     async def _generate_tech_docs(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate technical documentation."""
-        return {
-            "documents": [],
-            "content": "",
-            "format": "markdown",
-            "sections": ["overview", "architecture", "components", "deployment"],
-        }
+        """Generate technical documentation using LLM."""
+        import json
+        code_analysis = context.get("code_analysis", {})
+        architecture = context.get("architecture", {})
+
+        prompt = f"""Generate technical documentation for this system.
+
+## Code Analysis
+{json.dumps(code_analysis, indent=2, default=str)[:6000]}
+
+## Architecture
+{json.dumps(architecture, indent=2, default=str)[:2000]}
+
+## Task
+Create technical documentation with:
+1. System overview
+2. Architecture description
+3. Component descriptions
+4. Deployment guide
+
+## Output Schema
+Return JSON:
+{{
+    "documents": [{{"title": "Technical Documentation", "type": "technical"}}],
+    "content": "# Technical Documentation\\n## Overview\\n...",
+    "format": "markdown",
+    "sections": ["overview", "architecture", "components", "deployment"]
+}}"""
+
+        result = await self.call_llm(prompt)
+        return result if result else {"documents": [], "content": "", "format": "markdown", "sections": []}
 
     async def _generate_migration_report(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate migration report."""
+        """Generate migration report using LLM."""
+        import json
         service = self._get_report_service()
         if service and hasattr(service, "generate"):
             try:
@@ -227,40 +272,125 @@ class DianaExtension(BaseAgentExtension):
             except Exception as e:
                 logger.warning(f"Report generation failed: {e}")
 
-        return {
-            "documents": [],
-            "content": "",
-            "format": "markdown",
-            "sections": ["summary", "progress", "issues", "next_steps"],
-        }
+        # Fallback to LLM generation
+        analysis = context.get("migration_analysis", {})
+        answers = context.get("answers", {})
+
+        prompt = f"""Generate a migration assessment report.
+
+## Migration Analysis
+{json.dumps(analysis, indent=2, default=str)[:6000]}
+
+## Migration Answers
+{json.dumps(answers, indent=2, default=str)[:2000]}
+
+## Task
+Create a migration report with:
+1. Executive summary
+2. Current state assessment
+3. Migration strategy
+4. Risk analysis
+5. Recommendations
+
+## Output Schema
+Return JSON:
+{{
+    "documents": [{{"title": "Migration Report", "type": "report"}}],
+    "content": "# Migration Assessment Report\\n## Executive Summary\\n...",
+    "format": "markdown",
+    "sections": ["summary", "current_state", "strategy", "risks", "recommendations"]
+}}"""
+
+        result = await self.call_llm(prompt)
+        return result if result else {"documents": [], "content": "", "format": "markdown", "sections": []}
 
     async def _generate_adr(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate Architecture Decision Record."""
-        return {
-            "documents": [],
-            "content": "",
-            "format": "markdown",
-            "sections": ["context", "decision", "consequences", "alternatives"],
-        }
+        """Generate Architecture Decision Record using LLM."""
+        import json
+        decision_context = context.get("decision_context", {})
+
+        prompt = f"""Generate an Architecture Decision Record (ADR).
+
+## Context
+{json.dumps(decision_context, indent=2, default=str)[:4000]}
+
+## Task
+Create an ADR with:
+1. Context (why this decision is needed)
+2. Decision (what was decided)
+3. Consequences (positive and negative)
+4. Alternatives considered
+
+## Output Schema
+Return JSON:
+{{
+    "documents": [{{"title": "ADR-001: ...", "type": "adr"}}],
+    "content": "# ADR-001: [Title]\\n\\n## Context\\n...\\n\\n## Decision\\n...\\n\\n## Consequences\\n...\\n\\n## Alternatives\\n...",
+    "format": "markdown",
+    "sections": ["context", "decision", "consequences", "alternatives"]
+}}"""
+
+        result = await self.call_llm(prompt)
+        return result if result else {"documents": [], "content": "", "format": "markdown", "sections": []}
 
     async def _generate_readme(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate README documentation."""
-        return {
-            "documents": [],
-            "content": "",
-            "format": "markdown",
-            "sections": ["overview", "installation", "usage", "contributing"],
-        }
+        """Generate README documentation using LLM."""
+        import json
+        project_info = context.get("project_info", {})
+        tech_stack = context.get("tech_stack", [])
+
+        prompt = f"""Generate a README for this project.
+
+## Project Info
+{json.dumps(project_info, indent=2, default=str)[:4000]}
+
+## Tech Stack
+{json.dumps(tech_stack, indent=2, default=str)[:2000]}
+
+## Task
+Create a README with:
+1. Project overview
+2. Installation instructions
+3. Usage examples
+4. Contributing guidelines
+
+## Output Schema
+Return JSON:
+{{
+    "documents": [{{"title": "README.md", "type": "readme"}}],
+    "content": "# Project Name\\n\\n## Overview\\n...\\n\\n## Installation\\n...\\n\\n## Usage\\n...\\n\\n## Contributing\\n...",
+    "format": "markdown",
+    "sections": ["overview", "installation", "usage", "contributing"]
+}}"""
+
+        result = await self.call_llm(prompt)
+        return result if result else {"documents": [], "content": "", "format": "markdown", "sections": []}
 
     async def _generate_general_docs(
         self,
         task: str,
         context: Dict[str, Any],
     ) -> Dict[str, Any]:
-        """Generate general documentation."""
-        return {
-            "documents": [],
-            "content": "",
-            "format": context.get("output_format", "markdown"),
-            "sections": [],
-        }
+        """Generate general documentation using LLM."""
+        import json
+        output_format = context.get("output_format", "markdown")
+
+        prompt = f"""Generate documentation based on the following task.
+
+## Task
+{task}
+
+## Context
+{json.dumps(context, indent=2, default=str)[:8000]}
+
+## Output Schema
+Return JSON:
+{{
+    "documents": [{{"title": "...", "type": "general"}}],
+    "content": "...",
+    "format": "{output_format}",
+    "sections": []
+}}"""
+
+        result = await self.call_llm(prompt)
+        return result if result else {"documents": [], "content": "", "format": output_format, "sections": []}

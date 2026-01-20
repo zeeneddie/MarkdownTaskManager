@@ -3,10 +3,13 @@ Betty Extension - Business Analyst Specialist.
 
 Wraps business analysis services for Confucius orchestrator integration.
 Handles business process analysis, ROI calculation, and stakeholder management.
+
+Week 158: Fixed to use local Ollama LLM for analysis.
 """
 
 from typing import Dict, Any, Optional, List
 import logging
+import json
 
 from .base import BaseAgentExtension, ExtensionMetadata
 
@@ -178,64 +181,204 @@ class BettyExtension(BaseAgentExtension):
             return "general"
 
     async def _analyze_process(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze business process."""
-        return {
-            "processes": [],
-            "pain_points": [],
-            "improvement_opportunities": [],
-        }
+        """Analyze business process using LLM."""
+        code_analysis = context.get("code_analysis", {})
+        domains = context.get("domains", [])
+
+        prompt = f"""Analyze the business processes in this software system.
+
+## Code Analysis
+{json.dumps(code_analysis, indent=2, default=str)[:6000]}
+
+## Business Domains
+{json.dumps(domains, indent=2, default=str)[:2000]}
+
+## Task
+Identify:
+1. Business processes implemented in the code
+2. Pain points and inefficiencies
+3. Improvement opportunities
+
+## Output Schema
+Return JSON:
+{{
+    "processes": [
+        {{"name": "...", "description": "...", "steps": [], "actors": []}}
+    ],
+    "pain_points": ["Pain point 1", "..."],
+    "improvement_opportunities": ["Opportunity 1", "..."]
+}}"""
+
+        result = await self.call_llm(prompt)
+        return result if result else {"processes": [], "pain_points": [], "improvement_opportunities": []}
 
     async def _calculate_roi(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Calculate ROI."""
-        return {
-            "roi_metrics": {
-                "investment": 0,
-                "return": 0,
-                "roi_percentage": 0.0,
-                "payback_period_months": 0,
-            },
-        }
+        """Calculate ROI using LLM analysis."""
+        code_analysis = context.get("code_analysis", {})
+        project_info = context.get("project_info", {})
+
+        prompt = f"""Calculate ROI for modernizing this legacy system.
+
+## Code Analysis
+{json.dumps(code_analysis, indent=2, default=str)[:4000]}
+
+## Project Info
+{json.dumps(project_info, indent=2, default=str)[:2000]}
+
+## Task
+Estimate:
+1. Investment costs (development, infrastructure, training)
+2. Expected returns (efficiency gains, risk reduction, maintenance savings)
+3. ROI percentage and payback period
+
+## Output Schema
+Return JSON:
+{{
+    "roi_metrics": {{
+        "investment": 500000,
+        "return": 750000,
+        "roi_percentage": 50.0,
+        "payback_period_months": 18
+    }},
+    "cost_breakdown": {{"development": 0, "infrastructure": 0, "training": 0}},
+    "benefit_breakdown": {{"efficiency": 0, "risk_reduction": 0, "maintenance": 0}}
+}}"""
+
+        result = await self.call_llm(prompt)
+        return result if result else {"roi_metrics": {"investment": 0, "return": 0, "roi_percentage": 0, "payback_period_months": 0}}
 
     async def _analyze_cost_benefit(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze cost-benefit."""
-        return {
-            "costs": [],
-            "benefits": [],
-            "net_benefit": 0,
-            "benefit_cost_ratio": 0.0,
-        }
+        """Analyze cost-benefit using LLM."""
+        code_analysis = context.get("code_analysis", {})
+
+        prompt = f"""Perform cost-benefit analysis for this system modernization.
+
+## Code Analysis
+{json.dumps(code_analysis, indent=2, default=str)[:6000]}
+
+## Task
+Identify:
+1. All costs (one-time and recurring)
+2. All benefits (tangible and intangible)
+3. Net benefit and benefit-cost ratio
+
+## Output Schema
+Return JSON:
+{{
+    "costs": [
+        {{"category": "...", "description": "...", "amount": 0, "type": "one-time|recurring"}}
+    ],
+    "benefits": [
+        {{"category": "...", "description": "...", "value": 0, "type": "tangible|intangible"}}
+    ],
+    "net_benefit": 100000,
+    "benefit_cost_ratio": 1.5
+}}"""
+
+        result = await self.call_llm(prompt)
+        return result if result else {"costs": [], "benefits": [], "net_benefit": 0, "benefit_cost_ratio": 0}
 
     async def _manage_stakeholders(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Manage stakeholders."""
-        return {
-            "stakeholders": [],
-            "communication_plan": [],
-            "engagement_strategy": [],
-        }
+        """Manage stakeholders using LLM analysis."""
+        project_info = context.get("project_info", {})
+        domains = context.get("domains", [])
+
+        prompt = f"""Identify and manage stakeholders for this modernization project.
+
+## Project Info
+{json.dumps(project_info, indent=2, default=str)[:4000]}
+
+## Business Domains
+{json.dumps(domains, indent=2, default=str)[:2000]}
+
+## Task
+Identify:
+1. All stakeholders and their interests
+2. Communication plan for each stakeholder group
+3. Engagement strategy
+
+## Output Schema
+Return JSON:
+{{
+    "stakeholders": [
+        {{"role": "...", "name": "...", "interest": "high|medium|low", "influence": "high|medium|low", "concerns": []}}
+    ],
+    "communication_plan": [
+        {{"stakeholder": "...", "frequency": "...", "channel": "...", "content": "..."}}
+    ],
+    "engagement_strategy": ["Strategy 1", "..."]
+}}"""
+
+        result = await self.call_llm(prompt)
+        return result if result else {"stakeholders": [], "communication_plan": [], "engagement_strategy": []}
 
     async def _create_business_case(self, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Create business case."""
-        return {
-            "business_case": {
-                "executive_summary": "",
-                "problem_statement": "",
-                "proposed_solution": "",
-                "benefits": [],
-                "costs": [],
-                "risks": [],
-                "timeline": {},
-                "recommendation": "",
-            },
-        }
+        """Create business case using LLM."""
+        code_analysis = context.get("code_analysis", {})
+        project_info = context.get("project_info", {})
+        answers = context.get("answers", {})
+
+        prompt = f"""Create a business case for this modernization project.
+
+## Code Analysis
+{json.dumps(code_analysis, indent=2, default=str)[:4000]}
+
+## Project Info
+{json.dumps(project_info, indent=2, default=str)[:2000]}
+
+## Migration Answers
+{json.dumps(answers, indent=2, default=str)[:2000]}
+
+## Task
+Create a comprehensive business case with:
+1. Executive summary
+2. Problem statement
+3. Proposed solution
+4. Benefits and costs
+5. Risks and mitigations
+6. Timeline and recommendation
+
+## Output Schema
+Return JSON:
+{{
+    "business_case": {{
+        "executive_summary": "...",
+        "problem_statement": "...",
+        "proposed_solution": "...",
+        "benefits": ["Benefit 1", "..."],
+        "costs": ["Cost 1", "..."],
+        "risks": [{{"risk": "...", "mitigation": "..."}}],
+        "timeline": {{"phase1": "...", "phase2": "..."}},
+        "recommendation": "..."
+    }}
+}}"""
+
+        result = await self.call_llm(prompt)
+        return result if result else {"business_case": {"executive_summary": "", "problem_statement": "", "proposed_solution": "", "benefits": [], "costs": [], "risks": [], "timeline": {}, "recommendation": ""}}
 
     async def _general_analysis(
         self,
         task: str,
         context: Dict[str, Any],
     ) -> Dict[str, Any]:
-        """Execute general business analysis."""
-        return {
-            "processes": [],
-            "stakeholders": [],
-            "roi_metrics": {},
-        }
+        """Execute general business analysis using LLM."""
+        prompt = f"""As a Business Analyst, analyze the following context.
+
+## Task
+{task}
+
+## Context
+{json.dumps(context, indent=2, default=str)[:8000]}
+
+## Output Schema
+Return JSON:
+{{
+    "processes": [],
+    "stakeholders": [],
+    "roi_metrics": {{}},
+    "recommendations": [],
+    "analysis": "..."
+}}"""
+
+        result = await self.call_llm(prompt)
+        return result if result else {"processes": [], "stakeholders": [], "roi_metrics": {}}

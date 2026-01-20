@@ -3,6 +3,8 @@ Base Agent Extension for Confucius Orchestrator.
 
 Each MarQed agent (Felix, Quinn, etc.) is wrapped as an extension
 with four lifecycle hooks for modular integration.
+
+Week 158: Added LLM helper method for Ollama integration.
 """
 
 from abc import ABC, abstractmethod
@@ -10,11 +12,31 @@ from typing import Dict, Any, Optional, List, TYPE_CHECKING
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 import logging
+import json
 
 if TYPE_CHECKING:
     from ..orchestrator import ConfuciusOrchestrator
 
 logger = logging.getLogger(__name__)
+
+# Lazy import to avoid circular imports
+def _get_llm_provider(provider_name: str = "ollama"):
+    """Get LLM provider lazily to avoid circular imports."""
+    try:
+        from app.providers.registry import get_provider
+        return get_provider(provider_name)
+    except ImportError:
+        logger.warning("Provider registry not available")
+        return None
+
+def _create_llm_request(prompt: str, system: str = None, **kwargs):
+    """Create LLM request lazily to avoid circular imports."""
+    try:
+        from app.providers.base import LLMRequest
+        return LLMRequest(prompt=prompt, system=system, **kwargs)
+    except ImportError:
+        logger.warning("LLMRequest not available")
+        return None
 
 
 @dataclass
@@ -244,6 +266,88 @@ class BaseAgentExtension(ABC):
         return executed_output  # Default: no post-processing
 
     # ========== UTILITY METHODS ==========
+
+    async def call_llm(
+        self,
+        prompt: str,
+        system: str = None,
+        provider_name: str = "ollama",
+        max_tokens: int = 4096,
+        temperature: float = 0.3,
+        timeout: int = 120,
+    ) -> Dict[str, Any]:
+        """
+        Call LLM (Ollama by default) and parse JSON response.
+
+        Week 158: Added to enable local LLM integration for all extensions.
+
+        Args:
+            prompt: The prompt to send to the LLM
+            system: Optional system prompt
+            provider_name: LLM provider name (default: ollama)
+            max_tokens: Maximum tokens in response
+            temperature: Temperature for generation
+            timeout: Request timeout in seconds
+
+        Returns:
+            Parsed JSON response as dict, or empty dict on failure
+        """
+        provider = _get_llm_provider(provider_name)
+        if not provider:
+            logger.error(f"Provider {provider_name} not available")
+            return {}
+
+        default_system = f"""You are {self.name}, an AI agent specialized in {self.metadata.description}.
+Analyze the provided context and respond with structured information.
+Always respond with valid JSON matching the requested schema. No markdown code blocks, no explanations outside JSON."""
+
+        request = _create_llm_request(
+            prompt=prompt,
+            system=system or default_system,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            timeout=timeout,
+        )
+
+        if not request:
+            return {}
+
+        try:
+            response = await provider.generate(request)
+            if not response.success:
+                logger.error(f"LLM call failed: {response.error}")
+                return {}
+
+            # Parse JSON from response
+            content = response.content.strip()
+
+            # Handle markdown code blocks
+            if content.startswith("```"):
+                parts = content.split("```")
+                if len(parts) >= 2:
+                    content = parts[1]
+                    if content.startswith("json"):
+                        content = content[4:]
+                    content = content.strip()
+
+            # Try to extract JSON from response
+            try:
+                return json.loads(content)
+            except json.JSONDecodeError:
+                # Try to find JSON object in content
+                start = content.find('{')
+                end = content.rfind('}')
+                if start != -1 and end != -1:
+                    return json.loads(content[start:end+1])
+                raise
+
+        except json.JSONDecodeError as e:
+            logger.warning(f"Failed to parse LLM JSON response: {e}")
+            logger.debug(f"Raw response: {content[:500] if content else 'empty'}")
+            return {}
+        except Exception as e:
+            logger.error(f"LLM call error: {e}")
+            return {}
 
     def get_partial(self) -> Dict[str, Any]:
         """Get partial result (for timeout scenarios)."""

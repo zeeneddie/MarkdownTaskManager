@@ -553,6 +553,194 @@ CONTROL_FLOW_RULES: List[ControlFlowRule] = [
         },
         fix_suggestion="Catch specific exception types. If catching all is necessary, ensure critical exceptions are re-thrown.",
     ),
+
+    # =========================================================================
+    # KB2/KB3/KB4 PATTERNS - Added from Python-Errors and LogicalErrors repos
+    # =========================================================================
+
+    # =========================================================================
+    # CF040: Unreachable Code After Return/Throw/Break (CWE-561)
+    # =========================================================================
+    ControlFlowRule(
+        id="CF040",
+        title="Unreachable code after return/throw/break statement",
+        description=(
+            "Code exists after a return, throw, break, or continue statement within "
+            "the same block. This code will never execute. It may indicate "
+            "a logic error or forgotten code that should be moved."
+        ),
+        severity=Severity.MEDIUM,
+        cwe_ids=["CWE-561"],
+        category="unreachable_code",
+        patterns={
+            "python": LanguagePattern(
+                r'(?:return|raise|break|continue)\s+[^\n]+\n\s+(?!(?:elif|else|except|finally|#))[a-zA-Z]',
+                flags=re.MULTILINE
+            ),
+            "javascript": LanguagePattern(
+                r'(?:return|throw|break|continue)\s*[^;]*;\s*\n\s*(?!(?:\}|case|default|//|/\*|\*/))[a-zA-Z]',
+                flags=re.MULTILINE
+            ),
+            "java": LanguagePattern(
+                r'(?:return|throw|break|continue)\s*[^;]*;\s*\n\s*(?!(?:\}|case|default|//|/\*|\*/))[a-zA-Z]',
+                flags=re.MULTILINE
+            ),
+            "csharp": LanguagePattern(
+                r'(?:return|throw|break|continue)\s*[^;]*;\s*\n\s*(?!(?:\}|case|default|//|/\*|\*/))[a-zA-Z]',
+                flags=re.MULTILINE
+            ),
+        },
+        fix_suggestion="Remove unreachable code or restructure logic to make it reachable.",
+    ),
+
+    # =========================================================================
+    # CF041: Redundant Condition (Same Branch) (CWE-570/571)
+    # =========================================================================
+    ControlFlowRule(
+        id="CF041",
+        title="If-else branches contain identical code",
+        description=(
+            "Both the if and else branches contain the same or very similar code. "
+            "This makes the condition redundant and suggests a copy-paste error "
+            "or incomplete implementation."
+        ),
+        severity=Severity.MEDIUM,
+        cwe_ids=["CWE-561"],
+        category="logic_error",
+        patterns={
+            "python": LanguagePattern(
+                r'if\s+[^:]+:\s*\n\s+(\w+[^\n]+)\n\s*else:\s*\n\s+\1',
+                flags=re.MULTILINE
+            ),
+        },
+        fix_suggestion="Remove the condition or differentiate the branches.",
+    ),
+
+    # =========================================================================
+    # CF042: Wrong Variable in Loop Update (CWE-670)
+    # =========================================================================
+    ControlFlowRule(
+        id="CF042",
+        title="Loop updates different variable than condition checks",
+        description=(
+            "A for/while loop condition checks variable X but the loop body "
+            "updates variable Y. This often causes infinite loops or wrong "
+            "iteration counts."
+        ),
+        severity=Severity.HIGH,
+        cwe_ids=["CWE-670", "CWE-835"],
+        category="loop_error",
+        patterns={
+            "cpp": LanguagePattern(
+                r'for\s*\(\s*\w+\s+(\w+)\s*=[^;]+;\s*\1\s*[<>]=?[^;]+;\s*(?!\1)\w+\+\+',
+            ),
+            "java": LanguagePattern(
+                r'for\s*\(\s*\w+\s+(\w+)\s*=[^;]+;\s*\1\s*[<>]=?[^;]+;\s*(?!\1)\w+\+\+',
+            ),
+            "csharp": LanguagePattern(
+                r'for\s*\(\s*\w+\s+(\w+)\s*=[^;]+;\s*\1\s*[<>]=?[^;]+;\s*(?!\1)\w+\+\+',
+            ),
+        },
+        fix_suggestion="Ensure the loop condition variable matches the increment/decrement variable.",
+    ),
+
+    # =========================================================================
+    # CF043: Python Bare Except (CWE-396)
+    # =========================================================================
+    ControlFlowRule(
+        id="CF043",
+        title="Bare except clause catches all exceptions including system exits",
+        description=(
+            "A bare 'except:' without specifying exception type catches everything "
+            "including KeyboardInterrupt and SystemExit. This prevents graceful "
+            "program termination and hides programming errors."
+        ),
+        severity=Severity.HIGH,
+        cwe_ids=["CWE-396"],
+        category="exception_error",
+        patterns={
+            "python": LanguagePattern(
+                r'except\s*:\s*\n',
+            ),
+        },
+        fix_suggestion="Use 'except Exception:' to exclude system-exit exceptions, or catch specific exception types.",
+    ),
+
+    # =========================================================================
+    # CF044: Using Exception Variable Outside Block (Python) (CWE-457)
+    # =========================================================================
+    ControlFlowRule(
+        id="CF044",
+        title="Exception variable used outside except block",
+        description=(
+            "In Python 3, exception variables are deleted after the except block. "
+            "Accessing them outside the block causes NameError. In Python 2, "
+            "the variable persists but this pattern is error-prone."
+        ),
+        severity=Severity.MEDIUM,
+        cwe_ids=["CWE-457"],
+        category="exception_error",
+        patterns={
+            "python": LanguagePattern(
+                r'except\s+\w+\s+as\s+(\w+)\s*:[^\n]*\n(?:[^\n]*\n)*?(?:except|finally|else|\S).*\1',
+                flags=re.MULTILINE
+            ),
+        },
+        fix_suggestion="Save the exception to another variable inside the except block if needed later.",
+    ),
+
+    # =========================================================================
+    # CF045: Return in Finally Block (CWE-584)
+    # =========================================================================
+    ControlFlowRule(
+        id="CF045",
+        title="Return statement in finally block",
+        description=(
+            "A return in the finally block overrides any return from try/except blocks "
+            "and suppresses any exceptions being propagated. This leads to lost "
+            "exceptions and unexpected behavior."
+        ),
+        severity=Severity.HIGH,
+        cwe_ids=["CWE-584"],
+        category="exception_error",
+        patterns={
+            "python": LanguagePattern(
+                r'finally\s*:\s*\n(?:[^\n]*\n)*?[^\n]*return\s+',
+                flags=re.MULTILINE
+            ),
+            "java": LanguagePattern(
+                r'finally\s*\{[^}]*return\s+',
+                flags=re.DOTALL
+            ),
+            "csharp": LanguagePattern(
+                r'finally\s*\{[^}]*return\s+',
+                flags=re.DOTALL
+            ),
+        },
+        fix_suggestion="Move the return statement outside the finally block. Use finally only for cleanup.",
+    ),
+
+    # =========================================================================
+    # CF046: Incorrect Range Bounds (CWE-193)
+    # =========================================================================
+    ControlFlowRule(
+        id="CF046",
+        title="Range function with potentially wrong bounds",
+        description=(
+            "A range() call may have incorrect bounds. Common errors: "
+            "range(len(x)+1) causes IndexError, range(1, n) skips first element, "
+            "range(n, 0) produces empty range (should be range(n, 0, -1))."
+        ),
+        severity=Severity.MEDIUM,
+        cwe_ids=["CWE-193"],
+        category="loop_error",
+        patterns={
+            "python": LanguagePattern(
+                r'range\s*\(\s*len\s*\([^)]+\)\s*\+\s*1\s*\)',
+            ),
+        },
+        fix_suggestion="Review range bounds: range(len(x)) for all indices, range(len(x)-1) to exclude last.",
+    ),
 ]
 
 
@@ -568,7 +756,7 @@ class ControlFlowLogicDetector(BaseScanner):
     and exception handling problems.
     """
 
-    SCANNER_VERSION = "1.0.0"
+    SCANNER_VERSION = "1.1.0"  # KB2/KB3/KB4 patterns added
 
     def __init__(self):
         super().__init__()

@@ -2,17 +2,21 @@
 ChromaDB Service - Vector Database for RAG Knowledge Storage
 
 This service manages all ChromaDB operations including:
-- Collection initialization (project_documents, historical_projects, code_analysis, bmad_sessions)
+- Collection initialization (7 collections)
 - Document embedding and storage
 - Semantic search and similarity queries
 - Project knowledge retrieval
 - Historical project comparison
+- Knowledge base queries (KB1, KB5)
 
 Collections:
 - project_documents: All project documentation embeddings (constitution, spec, tasks, PRD, etc.)
 - historical_projects: Full project metadata for cross-project similarity search
 - code_analysis: Quality scan results and technical debt tracking
 - bmad_sessions: Green-paper and brown-paper session outputs
+- project_constitutions: Week 10 - Constitution embeddings
+- famous_bugs (KB1): Historical famous software bugs for educational context
+- post_mortems (KB5): Incident post-mortems and outage analysis patterns
 """
 
 import os
@@ -116,7 +120,31 @@ class ChromaService:
                 }
             )
 
-            logger.info("All ChromaDB collections initialized successfully")
+            # Collection 6: Famous Bugs (KB1)
+            # Historical famous software bugs for educational context
+            self.famous_bugs = self.client.get_or_create_collection(
+                name="famous_bugs",
+                embedding_function=self.embedding_function,
+                metadata={
+                    "description": "KB1 - Famous historical software bugs (Ariane 5, Y2K, etc.)",
+                    "hnsw:space": "cosine",
+                    "source": "https://github.com/zeeneddie/famous-bugs"
+                }
+            )
+
+            # Collection 7: Post-Mortems (KB5)
+            # Incident post-mortems and outage analysis
+            self.post_mortems = self.client.get_or_create_collection(
+                name="post_mortems",
+                embedding_function=self.embedding_function,
+                metadata={
+                    "description": "KB5 - Incident post-mortems and outage patterns",
+                    "hnsw:space": "cosine",
+                    "source": "https://github.com/danluu/post-mortems"
+                }
+            )
+
+            logger.info("All ChromaDB collections initialized successfully (7 collections)")
 
         except Exception as e:
             logger.error(f"Failed to initialize ChromaDB collections: {str(e)}")
@@ -511,6 +539,300 @@ class ChromaService:
         except Exception as e:
             logger.error(f"Failed to get BMAD session: {str(e)}")
             raise
+
+    # ========== FAMOUS BUGS OPERATIONS (KB1) ==========
+
+    def store_famous_bug(
+        self,
+        bug_id: str,
+        title: str,
+        description: str,
+        category: str,
+        year: Optional[int] = None,
+        impact: Optional[str] = None,
+        root_cause: Optional[str] = None,
+        lessons_learned: Optional[str] = None,
+        cwe_ids: Optional[List[str]] = None,
+        technologies: Optional[List[str]] = None,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> str:
+        """
+        Store a famous bug entry in ChromaDB
+
+        Args:
+            bug_id: Unique identifier for the bug
+            title: Bug title (e.g., "Ariane 5 Explosion")
+            description: Full description of the bug
+            category: Category (problems, outages, bugs, worms, ai)
+            year: Year the bug occurred
+            impact: Description of impact (financial, human, etc.)
+            root_cause: Technical root cause
+            lessons_learned: Key lessons from the incident
+            cwe_ids: Related CWE identifiers
+            technologies: Technologies involved
+            metadata: Additional metadata
+
+        Returns:
+            Document ID
+        """
+        try:
+            # Build full content for embedding
+            content_parts = [title, description]
+            if root_cause:
+                content_parts.append(f"Root Cause: {root_cause}")
+            if lessons_learned:
+                content_parts.append(f"Lessons Learned: {lessons_learned}")
+            full_content = "\n\n".join(content_parts)
+
+            # Build metadata
+            doc_metadata = {
+                "title": title,
+                "category": category,
+                "year": str(year) if year else "unknown",
+                "impact": impact or "",
+                "root_cause": root_cause or "",
+                "cwe_ids": ",".join(cwe_ids) if cwe_ids else "",
+                "technologies": ",".join(technologies) if technologies else "",
+                "created_at": datetime.now().isoformat(),
+                **(metadata or {})
+            }
+
+            # Store in collection
+            self.famous_bugs.add(
+                documents=[full_content],
+                metadatas=[doc_metadata],
+                ids=[bug_id]
+            )
+
+            logger.info(f"Stored famous bug: {title} ({bug_id})")
+            return bug_id
+
+        except Exception as e:
+            logger.error(f"Failed to store famous bug: {str(e)}")
+            raise
+
+    def query_famous_bugs(
+        self,
+        query: str,
+        category: Optional[str] = None,
+        cwe_id: Optional[str] = None,
+        top_k: int = 5
+    ) -> Dict[str, Any]:
+        """
+        Query famous bugs knowledge base
+
+        Args:
+            query: Search query (semantic search)
+            category: Filter by category (problems, outages, bugs, worms, ai)
+            cwe_id: Filter by CWE ID
+            top_k: Number of results
+
+        Returns:
+            Dict with matching bugs and similarity scores
+        """
+        try:
+            # Build where filter
+            where_filter = {}
+            if category:
+                where_filter["category"] = category
+            if cwe_id:
+                where_filter["cwe_ids"] = {"$contains": cwe_id}
+
+            results = self.famous_bugs.query(
+                query_texts=[query],
+                n_results=top_k,
+                where=where_filter if where_filter else None
+            )
+
+            return {
+                "query": query,
+                "results": [
+                    {
+                        "bug_id": results["ids"][0][i],
+                        "content": results["documents"][0][i],
+                        "metadata": results["metadatas"][0][i],
+                        "similarity": 1 - results["distances"][0][i]
+                    }
+                    for i in range(len(results["ids"][0]))
+                ],
+                "count": len(results["ids"][0])
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to query famous bugs: {str(e)}")
+            raise
+
+    def get_famous_bug(self, bug_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific famous bug by ID"""
+        try:
+            result = self.famous_bugs.get(ids=[bug_id])
+            if not result["documents"]:
+                return None
+            return {
+                "bug_id": bug_id,
+                "content": result["documents"][0],
+                "metadata": result["metadatas"][0]
+            }
+        except Exception as e:
+            logger.error(f"Failed to get famous bug: {str(e)}")
+            raise
+
+    # ========== POST-MORTEMS OPERATIONS (KB5) ==========
+
+    def store_post_mortem(
+        self,
+        post_mortem_id: str,
+        title: str,
+        content: str,
+        company: Optional[str] = None,
+        date: Optional[str] = None,
+        duration: Optional[str] = None,
+        affected_services: Optional[List[str]] = None,
+        root_cause_category: Optional[str] = None,
+        impact_category: Optional[str] = None,
+        remediation_actions: Optional[List[str]] = None,
+        tags: Optional[List[str]] = None,
+        source_url: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> str:
+        """
+        Store a post-mortem entry in ChromaDB
+
+        Args:
+            post_mortem_id: Unique identifier
+            title: Post-mortem title
+            content: Full post-mortem content
+            company: Company name
+            date: Date of incident
+            duration: Duration of outage
+            affected_services: List of affected services
+            root_cause_category: Category (config, deployment, hardware, etc.)
+            impact_category: Impact level (partial, major, complete)
+            remediation_actions: Actions taken to prevent recurrence
+            tags: Searchable tags
+            source_url: Original source URL
+            metadata: Additional metadata
+
+        Returns:
+            Document ID
+        """
+        try:
+            # Build metadata
+            doc_metadata = {
+                "title": title,
+                "company": company or "unknown",
+                "date": date or "unknown",
+                "duration": duration or "",
+                "affected_services": ",".join(affected_services) if affected_services else "",
+                "root_cause_category": root_cause_category or "",
+                "impact_category": impact_category or "",
+                "remediation_actions": ",".join(remediation_actions) if remediation_actions else "",
+                "tags": ",".join(tags) if tags else "",
+                "source_url": source_url or "",
+                "created_at": datetime.now().isoformat(),
+                **(metadata or {})
+            }
+
+            # Store in collection
+            self.post_mortems.add(
+                documents=[content],
+                metadatas=[doc_metadata],
+                ids=[post_mortem_id]
+            )
+
+            logger.info(f"Stored post-mortem: {title} ({post_mortem_id})")
+            return post_mortem_id
+
+        except Exception as e:
+            logger.error(f"Failed to store post-mortem: {str(e)}")
+            raise
+
+    def query_post_mortems(
+        self,
+        query: str,
+        company: Optional[str] = None,
+        root_cause_category: Optional[str] = None,
+        impact_category: Optional[str] = None,
+        top_k: int = 5
+    ) -> Dict[str, Any]:
+        """
+        Query post-mortems knowledge base
+
+        Args:
+            query: Search query (semantic search)
+            company: Filter by company
+            root_cause_category: Filter by root cause type
+            impact_category: Filter by impact level
+            top_k: Number of results
+
+        Returns:
+            Dict with matching post-mortems and similarity scores
+        """
+        try:
+            # Build where filter
+            where_filter = {}
+            if company:
+                where_filter["company"] = company
+            if root_cause_category:
+                where_filter["root_cause_category"] = root_cause_category
+            if impact_category:
+                where_filter["impact_category"] = impact_category
+
+            results = self.post_mortems.query(
+                query_texts=[query],
+                n_results=top_k,
+                where=where_filter if where_filter else None
+            )
+
+            return {
+                "query": query,
+                "results": [
+                    {
+                        "post_mortem_id": results["ids"][0][i],
+                        "content": results["documents"][0][i],
+                        "metadata": results["metadatas"][0][i],
+                        "similarity": 1 - results["distances"][0][i]
+                    }
+                    for i in range(len(results["ids"][0]))
+                ],
+                "count": len(results["ids"][0])
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to query post-mortems: {str(e)}")
+            raise
+
+    def get_post_mortem(self, post_mortem_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific post-mortem by ID"""
+        try:
+            result = self.post_mortems.get(ids=[post_mortem_id])
+            if not result["documents"]:
+                return None
+            return {
+                "post_mortem_id": post_mortem_id,
+                "content": result["documents"][0],
+                "metadata": result["metadatas"][0]
+            }
+        except Exception as e:
+            logger.error(f"Failed to get post-mortem: {str(e)}")
+            raise
+
+    def get_kb_statistics(self) -> Dict[str, Any]:
+        """Get statistics for knowledge base collections"""
+        try:
+            return {
+                "famous_bugs": {
+                    "count": self.famous_bugs.count(),
+                    "description": "Historical famous software bugs"
+                },
+                "post_mortems": {
+                    "count": self.post_mortems.count(),
+                    "description": "Incident post-mortems and outage analysis"
+                }
+            }
+        except Exception as e:
+            logger.error(f"Failed to get KB statistics: {str(e)}")
+            return {"error": str(e)}
 
     # ========== GENERIC COLLECTION OPERATIONS ==========
 

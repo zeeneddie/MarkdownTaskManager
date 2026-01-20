@@ -469,8 +469,8 @@ class DataLineageSession(Base):
     edge_count = Column(Integer, default=0)
     field_mapping_count = Column(Integer, default=0)
     graph_data = Column(JSON, nullable=True)  # Full LineageGraph as JSON
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 
 class DataLineageFieldMapping(Base):

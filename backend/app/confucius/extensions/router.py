@@ -294,6 +294,34 @@ class WorkflowRouter(ExtensionRouter):
         ],
     }
 
+    # Model preferences per workflow (all Ollama/local by default)
+    WORKFLOW_MODEL_PREFERENCES = {
+        "brown_paper": {
+            "Miguel": "qwen2.5-coder:7b",      # Code metrics
+            "Peter": "qwen2.5:7b",             # Product Owner
+            "Betty": "qwen2.5:7b",             # Business Analyst
+            "Vicky": "qwen2.5:7b",             # UX Designer
+            "Felix": "deepseek-r1:7b",         # Architecture
+            "Quinn": "deepseek-r1:7b",         # Quality
+            "Marcus": "deepseek-r1:7b",        # Maintenance
+            "Eliza": "qwen2.5:7b",             # Estimation
+            "Diana": "mistral:latest",         # Documentation
+        },
+        "migration": {
+            "Miguel": "qwen2.5-coder:7b",
+            "Peter": "qwen2.5:7b",
+            "Betty": "qwen2.5:7b",
+            "Vicky": "qwen2.5:7b",
+            "Felix": "deepseek-r1:7b",
+            "Quinn": "deepseek-r1:7b",
+            "Marcus": "deepseek-r1:7b",
+            "Eliza": "qwen2.5:7b",
+            "Diana": "mistral:latest",
+            "Paul": "qwen2.5:7b",
+            "Tessa": "qwen2.5-coder:7b",
+        },
+    }
+
     def route_workflow(
         self,
         workflow_type: str,

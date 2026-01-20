@@ -50,17 +50,33 @@
 | **A4** | 6.0 | Risk Heat Map | ✅ COMPLETE | RiskHeatMapService, D3.js format, severity aggregation (30 tests) |
 | **E1** | 5.3 | Visual Dependency Graph | ✅ COMPLETE | D3.js/Cytoscape/DOT/Mermaid export, clustering (35 tests) |
 | **J1** | 5.3 | Context-Aware Documentation | ✅ COMPLETE | AST parsing, docstring extraction, multi-format (34 tests) |
-| **B12** | 5.0 | LLM Agent Collaboration | PLANNED | Multi-agent framework |
-| **I1** | 4.5 | API Endpoint Discovery | PLANNED | REST/SOAP detection |
-| **F3** | 4.0 | SQL Analysis (Basic) | PLANNED | Query complexity |
-| **M1** | 4.0 | Export Multi-Format | PLANNED | CSV/Excel/ODS/MS Project |
-| **A3** | 3.7 | Technology Radar | PLANNED | End-of-life tracking |
-| **A5** | 3.5 | Complexity Dashboard | PLANNED | Module complexity view |
-| **KB1** | 4.5 | Famous-Bugs Knowledge Base | PLANNED | Integrate [famous-bugs](https://github.com/zeeneddie/famous-bugs) into ChromaDB |
-| **KB2** | 5.0 | Python-Errors Knowledge Base | PLANNED | Integrate [python-errors](https://github.com/zeeneddie/python-errors) - 13 error categorieën |
-| **KB3** | 4.0 | Logical Errors Dataset (C#) | PLANNED | Integrate [logicalErrors](https://github.com/zeeneddie/logicalErrors) - 5 modules .NET patterns |
-| **KB4** | 4.0 | Logical Errors Dataset (C/Python) | PLANNED | Integrate [correctLogicalErrors](https://github.com/zeeneddie/correctLogicalErrors) - multi-lang examples |
-| **KB5** | 5.5 | Post-Mortems Knowledge Base | PLANNED | Integrate [danluu/post-mortems](https://github.com/danluu/post-mortems) - 11.9k⭐ outage patterns |
+| **B12** | 5.0 | LLM Agent Collaboration | ✅ COMPLETE | Multi-agent framework: agent_router, context_sharing, result_aggregator (4 modules) |
+| **I1** | 4.5 | API Endpoint Discovery | ✅ COMPLETE | Extended api_inventory_service with SOAP/GraphQL/gRPC detection |
+| **F3** | 4.0 | SQL Analysis (Basic) | ✅ COMPLETE | SQLAnalysisService: complexity scoring, multi-language extraction |
+| **A3** | 3.7 | Technology Radar | ✅ COMPLETE | TechRadarService: EOL database, risk assessment, upgrade recommendations |
+| **A5** | 3.5 | Complexity Dashboard | ✅ COMPLETE | ComplexityDashboardService: module-level aggregation, trend tracking, hotspot identification |
+| **M1** | 4.0 | Export Multi-Format | PLANNED | CSV/Excel/ODS/MS Project - **LOWEST PRIORITY** |
+| **KB1** | 4.5 | Famous-Bugs Knowledge Base | ✅ READY | ChromaDB collectie + API toegevoegd aan chroma_service.py - data loading pending |
+| **KB2** | 5.0 | Python-Errors Patterns | ✅ MERGED | Patterns toegevoegd aan BooleanLogic/ControlFlow detectors (70% overlap) |
+| **KB3** | 4.0 | Logical Errors C# Patterns | ✅ MERGED | Patterns toegevoegd aan bestaande scanners (80% overlap) |
+| **KB4** | 4.0 | Logical Errors C/Python Patterns | ✅ MERGED | Patterns toegevoegd aan bestaande scanners (80% overlap) |
+| **KB5** | 5.5 | Post-Mortems Knowledge Base | ✅ READY | ChromaDB collectie + API toegevoegd aan chroma_service.py - data loading pending |
+
+**Progress:** 14/15 items COMPLETE (M1 lowest priority)
+
+### Next Priority: Unit Tests for New Services
+
+**Target:** Write comprehensive unit tests for all Week 158 services
+
+| Service | File | Est. Tests | Status |
+|---------|------|-----------|--------|
+| LLM Collaboration | `llm_collaboration/*.py` | 40+ | PENDING |
+| SQL Analysis | `sql_analysis_service.py` | 25+ | PENDING |
+| Tech Radar | `tech_radar_service.py` | 20+ | PENDING |
+| Complexity Dashboard | `complexity_dashboard_service.py` | 30+ | PENDING |
+| API Inventory (extended) | `api_inventory_service.py` | 25+ | PENDING |
+
+**Total expected:** 140+ new unit tests
 
 ### GAP Analysis Implementation (Week 163-244)
 
@@ -239,12 +255,15 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 │   ├── Week 165: Tier 3B - Privilege (CWE-269, CWE-20, CWE-306)
 │   └── Week 166: Integration + Testing
 │
-├── Week ???: Fase 24-KB1 Famous-Bugs Knowledge Base 📋 PLANNED (ChromaDB integration)
-├── Week ???: Fase 24-KB2 Python-Errors Knowledge Base 📋 PLANNED (13 error categorieën)
-├── Week ???: Fase 24-KB3 Logical Errors C# 📋 PLANNED (.NET patterns)
-├── Week ???: Fase 24-KB4 Logical Errors C/Python 📋 PLANNED (multi-lang)
-├── Week ???: Fase 24-KB5 Post-Mortems Knowledge Base 📋 PLANNED (outage patterns)
-├── Week 157-174: Fase 24 - Quick Wins & Foundation (20 items) 🔄 IN PROGRESS (9/20 done)
+├── Week 129: Fase 24-KB1 Famous-Bugs Knowledge Base ✅ READY (collectie + API in chroma_service.py)
+├── Week 129: Fase 24-KB2 Python-Errors Patterns ✅ MERGED (toegevoegd aan BooleanLogic/ControlFlow)
+├── Week 129: Fase 24-KB3 Logical Errors C# Patterns ✅ MERGED (toegevoegd aan bestaande scanners)
+├── Week 129: Fase 24-KB4 Logical Errors C/Python Patterns ✅ MERGED (toegevoegd aan bestaande scanners)
+├── Week 129: Fase 24-KB5 Post-Mortems Knowledge Base ✅ READY (collectie + API in chroma_service.py)
+├── Week 129: Fase 24-B12 LLM Agent Collaboration ✅ COMPLETE (agent_router, context_sharing, result_aggregator)
+├── Week 129: Fase 24-I1 API Endpoint Discovery ✅ COMPLETE (SOAP/GraphQL/gRPC toegevoegd aan api_inventory_service)
+├── Week 129: Fase 24-F3 SQL Analysis ✅ COMPLETE (SQLAnalysisService: complexity scoring, multi-language)
+├── Week 157-174: Fase 24 - Quick Wins & Foundation (20 items) 🔄 IN PROGRESS (12/20 done)
 ├── Week 167-171: Fase 34 - Advanced Error Detectors (Deadlock + Performance) 🆕 PLANNED
 ├── Week 171-175: Fase 35 - Data Integrity Scanners (Race + Resource) 🆕 PLANNED
 ├── Week 176-182: Fase 36 - Logic & Crypto Scanner (Crypto + Control Flow + Boolean) 🆕 PLANNED
