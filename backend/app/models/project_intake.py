@@ -371,7 +371,7 @@ class ProjectIntakeSource(Base):
 
     # Relationships
     intake = relationship("ProjectIntake", back_populates="sources")
-    brown_paper_session = relationship("BMADSession", foreign_keys=[brown_paper_session_id])
+    brown_paper_session = relationship("MarQedSession", foreign_keys=[brown_paper_session_id])
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API response."""
