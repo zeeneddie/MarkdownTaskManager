@@ -28,7 +28,8 @@ def utc_now() -> datetime:
 
         created_at = utc_now()
     """
-    return datetime.now(timezone.utc)
+    # Get current UTC time and strip timezone info for database compatibility
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 def ensure_naive(dt: datetime) -> datetime:

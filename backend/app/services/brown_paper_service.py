@@ -3089,6 +3089,15 @@ class BMADBrownPaperWorkflow:
     # DATABASE PERSISTENCE (Week 145)
     # ========================================================================
 
+    def _to_naive_utc(self, dt: Optional[datetime]) -> Optional[datetime]:
+        """Convert timezone-aware datetime to timezone-naive UTC for database storage."""
+        if dt is None:
+            return None
+        if dt.tzinfo is not None:
+            # Convert to UTC then remove timezone info
+            return dt.astimezone(timezone.utc).replace(tzinfo=None)
+        return dt
+
     async def _persist_session_to_db(
         self,
         session: BMADBrownPaperSession,
@@ -3136,7 +3145,7 @@ class BMADBrownPaperWorkflow:
                 db_session.tasks = session.tasks
                 db_session.enhanced_analysis = session.enhanced_analysis
                 db_session.error_message = session.error_message
-                db_session.updated_at = datetime.now(timezone.utc)
+                db_session.updated_at = self._to_naive_utc(datetime.now(timezone.utc))
             else:
                 # Create new session
                 db_session = BMADSessionDB(
@@ -3153,8 +3162,8 @@ class BMADBrownPaperWorkflow:
                     tasks=session.tasks,
                     enhanced_analysis=session.enhanced_analysis,
                     error_message=session.error_message,
-                    created_at=session.created_at,
-                    updated_at=session.updated_at,
+                    created_at=self._to_naive_utc(session.created_at),
+                    updated_at=self._to_naive_utc(session.updated_at),
                 )
                 db.add(db_session)
 

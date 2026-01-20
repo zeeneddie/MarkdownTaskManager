@@ -21,6 +21,7 @@ WEEK 144-158: CRITICAL FOUNDATION + ORCHESTRATOR + SECURITY ✅ COMPLETE
 ├── Fase 23.5: Confucius Orchestrator ✅ COMPLETE (Week 149-154)
 ├── Fase 23.6: Stage Council Review ✅ COMPLETE (Week 157)
 ├── Fase 24.6: Restartable Workflows ✅ COMPLETE (Week 158)
+├── Fase 24.7: Async Database Persistence 🔄 NEXT (Week 158-159)
 ├── Fase 29: Quality-Functionality Impact Mapping ✅ COMPLETE (Week 156-157)
 ├── Fase 31: CWE Security Scanner Suite ✅ COMPLETE (Week 157)
 └── Fase 24-A1: Legacy Quickscan ✅ COMPLETE (Week 157)
@@ -44,11 +45,52 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 
 ## Current Focus (Week 158)
 
+### CRITICAL: Async Database Persistence Refactoring
+
+**Priority:** CRITICAL (Prerequisite for all persistence)
+**Status:** 🔄 NEXT
+**Effort:** ~40 uur (~1 week)
+
+**Probleem:** Python's sync/async dichotomie vereist dat alle code die database persistence nodig heeft async moet zijn. Momenteel hebben we zowel sync (`start_session()`) als async (`start_session_async()`) versies, wat leidt tot code duplicatie en vergeten persistence.
+
+**Oplossing:** Alle workflow code omzetten naar async-first. Sync wrappers alleen waar nodig (CLI, tests).
+
+| Component | Current | Target |
+|-----------|---------|--------|
+| BrownPaperService | sync + async methods | async-only + sync wrappers |
+| MigrationOrchestrator | sync methods | async-only |
+| GreenPaperOrchestrator | sync methods | async-only |
+| QualityOrchestrator | sync methods | async-only |
+| All Workflow Services | mixed | async-first |
+
+**Pattern:**
+```python
+# Target: async-first with sync wrapper
+async def start_session(self, ...) -> Session:
+    """Primary async implementation with DB persistence."""
+    session = await self._create_session(...)
+    await self._persist_to_db(session)
+    return session
+
+def start_session_sync(self, ...) -> Session:
+    """Sync wrapper for CLI/tests only."""
+    return asyncio.run(self.start_session(...))
+```
+
+**Success Criteria:**
+- Alle workflow methods zijn async-first
+- Database persistence is automatisch (niet optioneel)
+- Geen code duplicatie tussen sync/async versies
+- Alle tests blijven groen
+
+---
+
 ### IMMEDIATE: Restartable Workflows + Brown Paper Test
 
 | Task | Status | Details |
 |------|--------|---------|
 | **Fase 24.6 Restartable Workflows** | ✅ COMPLETE | Generic checkpoint/resume system for all workflows |
+| **Fase 24.7 Async Refactoring** | 🔄 NEXT | Alle workflow code async-first maken |
 | **Brown Paper HCI-CRS Test** | 🔄 IN PROGRESS | Test workflow op /opt/projecten/hci-crs met lokale Ollama LLMs |
 
 **Doel:** Validate Brown Paper workflow end-to-end met HCI-CRS legacy applicatie (793K LOC, ASP Classic/VBScript)

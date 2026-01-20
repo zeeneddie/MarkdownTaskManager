@@ -1111,9 +1111,11 @@ async def bmad_start_session(request: BMADStartRequest):
     """
     try:
         workflow = get_bmad_brown_paper_workflow()
-        session = workflow.start_session(
+        # Use async version for database persistence (required for restart functionality)
+        session = await workflow.start_session_async(
             project_name=request.project_name,
-            project_path=request.project_path
+            project_path=request.project_path,
+            customer_id=getattr(request, 'customer_id', None)
         )
 
         return BMADStartResponse(
@@ -1262,8 +1264,8 @@ async def bmad_get_vector_context(session_id: str):
         context = workflow.get_session_vector_context(session_id)
 
         if context is None:
-            # Check if session exists
-            session = workflow.get_session(session_id)
+            # Check if session exists (use async for database fallback)
+            session = await workflow.get_session_async(session_id)
             if not session:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -1305,7 +1307,8 @@ async def bmad_submit_answer(session_id: str, request: BMADAnswerRequest):
     """
     try:
         workflow = get_bmad_brown_paper_workflow()
-        result = workflow.submit_answer(session_id, request.answer)
+        # Use async version for database persistence (required for restart functionality)
+        result = await workflow.submit_answer_async(session_id, request.answer)
 
         # Handle error responses from service
         if "error" in result:
@@ -1362,7 +1365,8 @@ async def bmad_get_status(session_id: str):
     """
     try:
         workflow = get_bmad_brown_paper_workflow()
-        session = workflow.get_session(session_id)
+        # Use async version for database fallback when not in cache
+        session = await workflow.get_session_async(session_id)
 
         if not session:
             raise HTTPException(
@@ -1804,12 +1808,13 @@ async def get_foundation(session_id: str):
     try:
         # Try regular BrownPaper session first
         service = get_brown_paper_service()
-        session = service.get_session(session_id)
+        # Use async version for database fallback
+        session = await service.get_session_async(session_id)
 
         # If not found, try BMAD workflow session
         if not session:
             workflow = get_bmad_brown_paper_workflow()
-            session = workflow.get_session(session_id)
+            session = await workflow.get_session_async(session_id)
 
         if not session:
             raise HTTPException(
