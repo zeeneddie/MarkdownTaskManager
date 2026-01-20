@@ -10,6 +10,7 @@ This enables multi-tenant support and proper organizational structure.
 from sqlalchemy import Column, String, Integer, Text, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
+from app.utils.datetime_utils import utc_now
 from app.database import Base
 
 
@@ -47,8 +48,8 @@ class Customer(Base):
     is_active = Column(Boolean, nullable=False, default=True)
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    updated_at = Column(DateTime, nullable=False, default=utc_now, onupdate=utc_now)
 
     # Relationships
     projects = relationship("Project", back_populates="customer", cascade="all, delete-orphan")
@@ -97,7 +98,7 @@ class ProjectApplication(Base):
     impact_level = Column(String(20), nullable=True)  # high, medium, low
 
     # Timestamps
-    linked_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    linked_at = Column(DateTime, nullable=False, default=utc_now)
 
     def __repr__(self):
         return f"<ProjectApplication(project_id={self.project_id}, application_id={self.application_id}, role='{self.role}')>"

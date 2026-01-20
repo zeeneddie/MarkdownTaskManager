@@ -10,9 +10,9 @@ Generic checkpoint/resume system for all MarQed workflow types:
 - Quality (5 stages)
 """
 
-from sqlalchemy import Column, String, Integer, Text, DateTime
+from sqlalchemy import Column, String, Integer, Text, DateTime, func
 from sqlalchemy.dialects.postgresql import JSONB
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 from enum import Enum
 from pydantic import BaseModel, Field
@@ -62,9 +62,9 @@ class WorkflowCheckpoint(Base):
     checkpoint_version = Column(Integer, nullable=False, default=1)
     status = Column(String(50), nullable=False, default=CheckpointStatus.RUNNING.value, index=True)
 
-    # Timestamps
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    # Timestamps (use func.now() for server-side defaults)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
     started_at = Column(DateTime, nullable=False)
     last_checkpoint_at = Column(DateTime, nullable=True)
 

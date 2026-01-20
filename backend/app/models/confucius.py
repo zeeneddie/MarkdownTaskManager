@@ -9,6 +9,7 @@ Tables:
 """
 
 from datetime import datetime
+from app.utils.datetime_utils import utc_now
 from typing import Optional, List
 from sqlalchemy import (
     Column,
@@ -43,8 +44,8 @@ class ConfuciusSession(Base):
     patterns = Column(JSONB, default=list)
     decisions = Column(JSONB, default=list)
     preferences = Column(JSONB, default=dict)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utc_now)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
 
     # Relationships
     entries = relationship(
@@ -87,7 +88,7 @@ class ConfuciusEntry(Base):
     iterations_used = Column(Integer, default=1)
     extensions_called = Column(JSONB, default=list)
     entry_metadata = Column(JSONB, default=dict)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=utc_now, index=True)
     completed_at = Column(DateTime, nullable=True)
 
     # Relationships
@@ -125,7 +126,7 @@ class ConfuciusRunnable(Base):
     duration_ms = Column(Integer, default=0)
     success = Column(Boolean, default=True)
     error_message = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=utc_now, index=True)
 
     # Relationships
     entry = relationship("ConfuciusEntry", back_populates="runnables")
@@ -163,7 +164,7 @@ class ConfuciusNote(Base):
     insights = Column(JSONB, default=list)
     context_tags = Column(JSONB, default=list)
     quality_score = Column(Float, default=0.0)
-    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, default=utc_now, index=True)
 
     # Relationships
     session = relationship("ConfuciusSession", back_populates="notes")

@@ -13,6 +13,7 @@ from enum import Enum
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Any
 from datetime import datetime, timezone
+from app.utils.datetime_utils import utc_now
 import uuid
 
 
@@ -110,7 +111,7 @@ class QualityScanResult:
     files_scanned: int = 0
     rules_evaluated: int = 0
     scan_duration_seconds: float = 0.0
-    scan_timestamp: datetime = field(default_factory=datetime.utcnow)
+    scan_timestamp: datetime = field(default_factory=utc_now)
 
     # Source info
     schedule_id: Optional[str] = None
@@ -205,7 +206,7 @@ class QualityGateResult:
     blocking_issues: List[str] = field(default_factory=list)
 
     # Metadata
-    evaluated_at: datetime = field(default_factory=datetime.utcnow)
+    evaluated_at: datetime = field(default_factory=utc_now)
     scan_id: Optional[str] = None
 
     @property
@@ -247,7 +248,7 @@ class QualitySchedule:
     next_run_at: Optional[datetime] = None
     last_run_at: Optional[datetime] = None
     last_scan_id: Optional[str] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=utc_now)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -348,8 +349,8 @@ class QualityContract:
     scan_history: List[Dict[str, Any]] = field(default_factory=list)
 
     # Metadata
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=utc_now)
+    updated_at: datetime = field(default_factory=utc_now)
 
     def to_dict(self) -> Dict[str, Any]:
         return {

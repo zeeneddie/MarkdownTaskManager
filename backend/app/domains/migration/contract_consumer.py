@@ -11,6 +11,7 @@
 from typing import Optional, List, Dict, Any, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from app.utils.datetime_utils import utc_now
 import logging
 
 from ...contracts import (
@@ -87,7 +88,7 @@ class MigrationContext:
 
     # === Metadata ===
     source_type: str = "brown_paper"
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=utc_now)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""

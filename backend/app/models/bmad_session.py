@@ -15,6 +15,7 @@ from sqlalchemy import Column, String, Integer, Text, DateTime, Boolean, Foreign
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from datetime import datetime
+from app.utils.datetime_utils import utc_now
 from typing import Optional, Dict, Any, List
 from app.database import Base
 
@@ -67,8 +68,8 @@ class BMADSession(Base):
     error_message = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    updated_at = Column(DateTime, nullable=False, default=utc_now, onupdate=utc_now)
     completed_at = Column(DateTime, nullable=True)
 
     # Tracking
@@ -145,7 +146,7 @@ class BMADAnswer(Base):
     question_number = Column(Integer, nullable=False, index=True)
     question_text = Column(Text, nullable=False)
     answer = Column(Text, nullable=False)
-    answered_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    answered_at = Column(DateTime, nullable=False, default=utc_now)
     version = Column(Integer, nullable=False, default=1)
     is_current = Column(Boolean, nullable=False, default=True, index=True)
 
@@ -187,7 +188,7 @@ class BMADSessionEvent(Base):
     session_id = Column(String(36), ForeignKey('bmad_sessions.id', ondelete='CASCADE'), nullable=False, index=True)
     event_type = Column(String(50), nullable=False, index=True)  # started, answer_submitted, etc.
     event_data = Column(JSONB, nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, nullable=False, default=utc_now, index=True)
     created_by = Column(String(255), nullable=True)
 
     # Relationship

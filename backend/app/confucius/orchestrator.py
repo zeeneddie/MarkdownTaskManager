@@ -11,6 +11,7 @@ Based on Meta/Harvard CCA Research (December 2025).
 from typing import Dict, Any, List, Optional, AsyncGenerator
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from app.utils.datetime_utils import utc_now
 from enum import Enum
 import asyncio
 import logging
@@ -74,7 +75,7 @@ class StreamEvent:
     """Event for SSE streaming."""
     type: str
     data: Dict[str, Any]
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=utc_now)
 
     def to_sse(self) -> str:
         """Convert to SSE format."""

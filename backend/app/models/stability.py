@@ -8,6 +8,7 @@
 # - StabilityCategorySummary: Category aggregates per scan
 
 from datetime import datetime, date
+from app.utils.datetime_utils import utc_now
 from typing import List, Optional
 from sqlalchemy import (
     Column, Integer, String, Text, Float, DateTime, Date,
@@ -29,7 +30,7 @@ class StabilityScan(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
-    scan_timestamp = Column(DateTime, default=datetime.utcnow, nullable=False)
+    scan_timestamp = Column(DateTime, default=utc_now, nullable=False)
     total_files_scanned = Column(Integer, default=0)
     total_files_with_issues = Column(Integer, default=0)
     categories_analyzed = Column(ARRAY(String), nullable=True)
@@ -38,7 +39,7 @@ class StabilityScan(Base):
     overall_score = Column(Integer, default=100)
     analysis_time_seconds = Column(Float, default=0.0)
     base_path = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
     created_by = Column(String(50), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
     # Relationships
@@ -101,8 +102,8 @@ class StabilityFinding(Base):
     notes = Column(Text, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
     # Relationships
     scan = relationship("StabilityScan", back_populates="findings")
@@ -164,7 +165,7 @@ class StabilityMetric(Base):
     overall_score = Column(Integer, default=100)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
 
     __table_args__ = (
         UniqueConstraint('project_id', 'metric_date', name='uq_stability_metrics_project_date'),

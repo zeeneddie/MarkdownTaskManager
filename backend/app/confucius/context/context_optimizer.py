@@ -8,6 +8,7 @@ token usage while maintaining task-relevant information.
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
+from app.utils.datetime_utils import utc_now
 import logging
 
 from .reference_selector import (
@@ -35,7 +36,7 @@ class OptimizedContext:
     token_savings: int
     optimization_ratio: float
     agent_name: Optional[str] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=utc_now)
 
     def get_enriched_context(self) -> Dict[str, Any]:
         """

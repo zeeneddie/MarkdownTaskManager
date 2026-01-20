@@ -9,6 +9,7 @@ escalation, and alternative resolution paths.
 from typing import Dict, Any, List, Optional, Callable, Awaitable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from app.utils.datetime_utils import utc_now
 from enum import Enum
 import logging
 import json
@@ -52,7 +53,7 @@ class EscalationTicket:
     iterations_attempted: int = 0
     violations_summary: List[Dict[str, Any]] = field(default_factory=list)
     recommended_action: Optional[str] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=utc_now)
     resolved_at: Optional[datetime] = None
     resolution: Optional[str] = None
     resolved_by: Optional[str] = None

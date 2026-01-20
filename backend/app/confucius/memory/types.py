@@ -10,6 +10,7 @@ Based on the CCA paper's three-scope memory architecture:
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from app.utils.datetime_utils import utc_now
 from enum import Enum
 import uuid
 
@@ -70,8 +71,8 @@ class SessionMemory:
     patterns: List[Dict[str, Any]] = field(default_factory=list)
     decisions: List[Dict[str, Any]] = field(default_factory=list)
     preferences: Dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=utc_now)
+    updated_at: datetime = field(default_factory=utc_now)
 
     @classmethod
     def create(cls, project_id: str) -> "SessionMemory":
@@ -141,7 +142,7 @@ class EntryMemory:
     extensions_called: List[str] = field(default_factory=list)
     runnable_ids: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=utc_now)
     completed_at: Optional[datetime] = None
 
     @classmethod
@@ -201,7 +202,7 @@ class RunnableMemory:
     duration_ms: int = 0
     success: bool = True
     error_message: Optional[str] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=utc_now)
 
     @classmethod
     def create(cls, entry_id: str, extension_name: str) -> "RunnableMemory":

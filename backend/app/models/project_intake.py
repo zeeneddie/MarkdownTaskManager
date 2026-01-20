@@ -13,6 +13,7 @@ from sqlalchemy import Column, String, Integer, Text, DateTime, Boolean, Date, F
 from sqlalchemy.dialects.postgresql import UUID, JSONB, ENUM
 from sqlalchemy.orm import relationship
 from datetime import datetime, date
+from app.utils.datetime_utils import utc_now
 from typing import Optional, Dict, Any, List
 from uuid import uuid4
 from app.database import Base
@@ -213,8 +214,8 @@ class ProjectIntake(Base):
     analysis_results = Column(JSONB, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now, index=True)
+    updated_at = Column(DateTime, nullable=False, default=utc_now, onupdate=utc_now)
     completed_at = Column(DateTime, nullable=True)
 
     # Tracking
@@ -366,7 +367,7 @@ class ProjectIntakeSource(Base):
     # Order for display
     display_order = Column(Integer, nullable=False, default=0)
 
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
 
     # Relationships
     intake = relationship("ProjectIntake", back_populates="sources")
@@ -438,8 +439,8 @@ class ProjectIntakeIntegration(Base):
     # Notes
     decision_notes = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    updated_at = Column(DateTime, nullable=False, default=utc_now, onupdate=utc_now)
 
     # Relationships
     intake = relationship("ProjectIntake", back_populates="integrations")
@@ -516,8 +517,8 @@ class ProjectIntakeScope(Base):
     has_local_files = Column(Boolean, nullable=False, default=True)
     has_database_access = Column(Boolean, nullable=False, default=False)
 
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
+    updated_at = Column(DateTime, nullable=False, default=utc_now, onupdate=utc_now)
 
     # Relationships
     intake = relationship("ProjectIntake", back_populates="scope")
@@ -599,7 +600,7 @@ class ProjectIntakeFeature(Base):
     # Display order
     display_order = Column(Integer, nullable=False, default=0)
 
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(DateTime, nullable=False, default=utc_now)
 
     # Relationships
     intake = relationship("ProjectIntake", back_populates="features")
@@ -642,7 +643,7 @@ class ProjectIntakeEvent(Base):
     old_value = Column(Text, nullable=True)
     new_value = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
+    created_at = Column(DateTime, nullable=False, default=utc_now, index=True)
     created_by = Column(String(255), nullable=True)
 
     # Relationships

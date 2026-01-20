@@ -11,6 +11,7 @@ from enum import Enum
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Any
 from datetime import datetime, timezone
+from app.utils.datetime_utils import utc_now
 import uuid
 import json
 
@@ -276,7 +277,7 @@ class AnalysisContract:
     business_rules: List[BusinessRuleSummary] = field(default_factory=list)
 
     # === Metadata ===
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=utc_now)
     version: str = "1.0"
 
     # === Computed Properties ===

@@ -9,6 +9,7 @@ from typing import Dict, Any, Optional, List, Set
 from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime, timezone
+from app.utils.datetime_utils import utc_now
 import hashlib
 
 
@@ -186,7 +187,7 @@ class ScanResult:
     files_scanned: int
     errors: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
-    started_at: datetime = field(default_factory=datetime.utcnow)
+    started_at: datetime = field(default_factory=utc_now)
     completed_at: Optional[datetime] = None
 
     @property

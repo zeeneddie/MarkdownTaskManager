@@ -6,6 +6,7 @@ Fase 24 - A1: Data models for 15-minute legacy assessment.
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from app.utils.datetime_utils import utc_now
 from enum import Enum
 from typing import Dict, List, Optional, Any
 from pathlib import Path
@@ -244,7 +245,7 @@ class QuickscanReport:
     project_path: str = ""
 
     # Timing
-    started_at: datetime = field(default_factory=datetime.utcnow)
+    started_at: datetime = field(default_factory=utc_now)
     completed_at: Optional[datetime] = None
     duration_seconds: float = 0.0
 

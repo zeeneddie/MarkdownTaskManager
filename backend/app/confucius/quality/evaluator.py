@@ -8,6 +8,7 @@ and determines if output meets quality gates for the PIV loop.
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
+from app.utils.datetime_utils import utc_now
 from enum import Enum
 import logging
 
@@ -64,7 +65,7 @@ class EvaluationResult:
     critical_violations: List[RuleViolation]
     rule_results: List[RuleResult]
     iteration: int
-    evaluated_at: datetime = field(default_factory=datetime.utcnow)
+    evaluated_at: datetime = field(default_factory=utc_now)
     feedback_for_retry: Optional[str] = None
 
     @property

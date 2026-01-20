@@ -8,6 +8,7 @@ updates during PIV (Plan-Implement-Validate) iteration cycles.
 from typing import Dict, Any, AsyncIterator, Optional, Callable, Awaitable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from app.utils.datetime_utils import utc_now
 from enum import Enum
 import asyncio
 import json
@@ -54,7 +55,7 @@ class StreamEvent:
     event_type: StreamEventType
     entry_id: str
     data: Dict[str, Any]
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=utc_now)
     sequence: int = 0
 
     def to_sse(self) -> str:
