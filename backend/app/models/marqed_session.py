@@ -226,12 +226,3 @@ class MarQedEventType:
     SESSION_REJECTED = "session_rejected"
     SESSION_RESUMED = "session_resumed"
     SESSION_CANCELLED = "session_cancelled"
-
-
-# Backwards compatibility aliases (deprecated, will be removed in future version)
-BMADSessionStatus = MarQedSessionStatus
-BMADWorkflowType = MarQedWorkflowType
-BMADSession = MarQedSession
-BMADAnswer = MarQedAnswer
-BMADSessionEvent = MarQedSessionEvent
-BMADEventType = MarQedEventType
