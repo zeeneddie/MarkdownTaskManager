@@ -25,7 +25,7 @@ class TestBMADSessionLifecycleInMemory:
 
     def test_create_session_sync(self, workflow):
         """Test creating a new BMAD session (sync version)."""
-        session = workflow.start_session(
+        session = workflow.start_session_sync(
             project_name="Test Project",
             project_path="/test/path"
         )
@@ -39,12 +39,12 @@ class TestBMADSessionLifecycleInMemory:
 
     def test_get_session_after_create(self, workflow):
         """Test getting session after creation."""
-        session = workflow.start_session(
+        session = workflow.start_session_sync(
             project_name="Get Test",
             project_path="/test/get"
         )
 
-        retrieved = workflow.get_session(session.id)
+        retrieved = workflow.get_session_sync(session.id)
 
         assert retrieved is not None
         assert retrieved.id == session.id
@@ -53,11 +53,11 @@ class TestBMADSessionLifecycleInMemory:
     def test_list_sessions(self, workflow):
         """Test listing all sessions."""
         # Create multiple sessions
-        session1 = workflow.start_session("Project 1", "/path/1")
-        session2 = workflow.start_session("Project 2", "/path/2")
-        session3 = workflow.start_session("Project 3", "/path/3")
+        session1 = workflow.start_session_sync("Project 1", "/path/1")
+        session2 = workflow.start_session_sync("Project 2", "/path/2")
+        session3 = workflow.start_session_sync("Project 3", "/path/3")
 
-        sessions = workflow.list_sessions()
+        sessions = workflow.list_sessions_sync()
 
         assert len(sessions) >= 3
         session_ids = [s.id for s in sessions]
@@ -67,63 +67,63 @@ class TestBMADSessionLifecycleInMemory:
 
     def test_submit_answer_sync(self, workflow):
         """Test submitting answer using sync method."""
-        session = workflow.start_session("Answer Test", "/test/answer")
+        session = workflow.start_session_sync("Answer Test", "/test/answer")
 
         # Submit answer to question 1 (min_length varies by question)
         # Question 1 requires min 100 chars
         answer_text = "This is a comprehensive answer about the system context that provides enough detail to meet the minimum requirements for question 1."
-        result = workflow.submit_answer(session.id, answer_text)
+        result = workflow.submit_answer_sync(session.id, answer_text)
 
         assert result is not None
         assert "success" in result and result["success"] is True
         assert result["answered_question"] == 1
 
         # Verify session updated
-        updated_session = workflow.get_session(session.id)
+        updated_session = workflow.get_session_sync(session.id)
         assert updated_session.current_question == 2
 
     def test_submit_answer_returns_error_when_too_short(self, workflow):
         """Test that too short answers return error."""
-        session = workflow.start_session("Short Answer Test", "/test/short")
+        session = workflow.start_session_sync("Short Answer Test", "/test/short")
 
         # Question 1 requires min 100 chars
-        result = workflow.submit_answer(session.id, "Too short")
+        result = workflow.submit_answer_sync(session.id, "Too short")
 
         assert "error" in result
         assert "Answer too short" in result["error"]
 
     def test_submit_answer_to_nonexistent_session(self, workflow):
         """Test submitting answer to nonexistent session returns error."""
-        result = workflow.submit_answer("nonexistent-id", "Some answer")
+        result = workflow.submit_answer_sync("nonexistent-id", "Some answer")
 
         assert "error" in result
         assert "Session not found" in result["error"]
 
     def test_complete_all_questions_sync(self, workflow):
         """Test completing all 8 BMAD questions."""
-        session = workflow.start_session("Complete Test", "/test/complete")
+        session = workflow.start_session_sync("Complete Test", "/test/complete")
 
         # Answer all 8 questions with sufficient length
         for q_num in range(1, 9):
             long_answer = f"This is a comprehensive answer to question {q_num}. " * 10
-            result = workflow.submit_answer(session.id, long_answer)
+            result = workflow.submit_answer_sync(session.id, long_answer)
             assert "success" in result and result["success"] is True
             assert result["answered_question"] == q_num
 
         # Verify final state
-        final_session = workflow.get_session(session.id)
+        final_session = workflow.get_session_sync(session.id)
         assert len(final_session.answers) == 8
         # After Q8, status becomes "analyzing"
         assert final_session.status == "analyzing"
 
 
 class TestBMADSessionModel:
-    """Test BMADBrownPaperSession model."""
+    """Test MarQedBrownPaperSession model."""
 
     def test_session_creation_with_all_fields(self):
         """Test creating session with all fields."""
         now = datetime.now(timezone.utc)
-        session = BMADBrownPaperSession(
+        session = MarQedBrownPaperSession(
             id="test-id",
             project_name="Test",
             project_path="/test",
@@ -144,7 +144,7 @@ class TestBMADSessionModel:
     def test_session_with_answers(self):
         """Test session with answers dict."""
         now = datetime.now(timezone.utc)
-        session = BMADBrownPaperSession(
+        session = MarQedBrownPaperSession(
             id="test-id",
             project_name="Test",
             project_path="/test",
@@ -172,33 +172,33 @@ class TestBMADSessionEdgeCases:
 
     def test_get_nonexistent_session(self, workflow):
         """Test getting session that doesn't exist."""
-        result = workflow.get_session("nonexistent-id")
+        result = workflow.get_session_sync("nonexistent-id")
         assert result is None
 
     def test_approve_nonexistent_session(self, workflow):
         """Test approving nonexistent session returns False."""
-        result = workflow.approve_session("nonexistent-id")
+        result = workflow.approve_session_sync("nonexistent-id")
         assert result is False
 
     def test_reject_nonexistent_session(self, workflow):
         """Test rejecting nonexistent session returns False."""
-        result = workflow.reject_session("nonexistent-id", "Reason")
+        result = workflow.reject_session_sync("nonexistent-id", "Reason")
         assert result is False
 
     def test_multiple_sessions_isolation(self, workflow):
         """Test that multiple sessions are isolated."""
-        session1 = workflow.start_session("Isolation 1", "/path/1")
-        session2 = workflow.start_session("Isolation 2", "/path/2")
+        session1 = workflow.start_session_sync("Isolation 1", "/path/1")
+        session2 = workflow.start_session_sync("Isolation 2", "/path/2")
 
         # Answer different questions in each (with sufficient length)
         long_answer = "This is a comprehensive answer with sufficient length. " * 10
-        workflow.submit_answer(session1.id, long_answer + " Session 1")
-        workflow.submit_answer(session2.id, long_answer + " Session 2")
-        workflow.submit_answer(session2.id, long_answer + " Session 2 Q2")
+        workflow.submit_answer_sync(session1.id, long_answer + " Session 1")
+        workflow.submit_answer_sync(session2.id, long_answer + " Session 2")
+        workflow.submit_answer_sync(session2.id, long_answer + " Session 2 Q2")
 
         # Verify isolation
-        s1 = workflow.get_session(session1.id)
-        s2 = workflow.get_session(session2.id)
+        s1 = workflow.get_session_sync(session1.id)
+        s2 = workflow.get_session_sync(session2.id)
 
         assert s1.current_question == 2
         assert s2.current_question == 3
@@ -216,7 +216,7 @@ class TestBMADSessionProgressTracking:
 
     def test_progress_increases_with_answers(self, workflow):
         """Test that progress increases as answers are submitted."""
-        session = workflow.start_session("Progress Test", "/test/progress")
+        session = workflow.start_session_sync("Progress Test", "/test/progress")
         session_id = session.id
 
         assert session.current_question == 1
@@ -224,26 +224,26 @@ class TestBMADSessionProgressTracking:
         # Submit 5 answers
         for i in range(1, 6):
             long_answer = f"This is answer {i} with sufficient length. " * 10
-            result = workflow.submit_answer(session_id, long_answer)
+            result = workflow.submit_answer_sync(session_id, long_answer)
             assert "success" in result and result["success"] is True
 
             # Check session state
-            updated = workflow.get_session(session_id)
+            updated = workflow.get_session_sync(session_id)
             assert updated.current_question == i + 1
             assert len(updated.answers) == i
 
     def test_status_changes_after_all_questions(self, workflow):
         """Test status changes to 'analyzing' after all questions."""
-        session = workflow.start_session("Status Test", "/test/status")
+        session = workflow.start_session_sync("Status Test", "/test/status")
         session_id = session.id
 
         # Complete all questions
         for i in range(1, 9):
             long_answer = f"This is answer {i} with sufficient length. " * 10
-            workflow.submit_answer(session_id, long_answer)
+            workflow.submit_answer_sync(session_id, long_answer)
 
         # Status should change to "analyzing"
-        final = workflow.get_session(session_id)
+        final = workflow.get_session_sync(session_id)
         assert final.status == "analyzing"
 
 
@@ -257,23 +257,23 @@ class TestBMADSessionApprovalRejection:
 
     def test_cannot_approve_non_review_session(self, workflow):
         """Test that sessions not in 'review' status cannot be approved."""
-        session = workflow.start_session("Approve Test", "/test/approve")
+        session = workflow.start_session_sync("Approve Test", "/test/approve")
 
         # Session starts in "questions" status, not "review"
-        result = workflow.approve_session(session.id)
+        result = workflow.approve_session_sync(session.id)
 
         # Should return False because status is not "review"
         assert result is False
 
     def test_reject_any_session(self, workflow):
         """Test that any session can be rejected."""
-        session = workflow.start_session("Reject Test", "/test/reject")
+        session = workflow.start_session_sync("Reject Test", "/test/reject")
 
         # Reject should work regardless of current status
-        result = workflow.reject_session(session.id, "Project cancelled")
+        result = workflow.reject_session_sync(session.id, "Project cancelled")
 
         assert result is True
-        rejected = workflow.get_session(session.id)
+        rejected = workflow.get_session_sync(session.id)
         assert rejected.status == "rejected"
         assert rejected.error_message == "Project cancelled"
 

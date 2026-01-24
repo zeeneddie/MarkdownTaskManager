@@ -98,6 +98,10 @@ from app.models.brown_paper_enhanced import (
     TIER_PROVIDERS,
 )
 
+# Fase 24.7: Async refactoring utilities
+import warnings
+from app.services.async_helpers import deprecated_sync_wrapper, log_deprecated_sync_call
+
 # Week 158: Epic Searchers for journey-based and folder-based epic detection
 from app.services.epic_searchers import (
     CombinedEpicSearcher,
@@ -333,12 +337,21 @@ class BrownPaperService:
 
         return session
 
-    def get_session(self, session_id: str) -> Optional[BrownPaperSession]:
-        """Get a Brown Paper session by ID (sync, from cache)."""
+    @deprecated_sync_wrapper("get_session", "26.0")
+    def get_session_sync(self, session_id: str) -> Optional[BrownPaperSession]:
+        """Get a Brown Paper session by ID (sync, from cache only).
+
+        DEPRECATED: Use get_session() (async) instead. This sync method will be
+        removed in v26.0. Only accesses in-memory cache, does not load from DB.
+        """
         return self._sessions.get(session_id)
 
-    async def get_session_async(self, session_id: str) -> Optional[BrownPaperSession]:
-        """Get a Brown Paper session by ID (async, with database fallback)."""
+    async def get_session(self, session_id: str) -> Optional[BrownPaperSession]:
+        """Get a Brown Paper session by ID (async, with database fallback).
+
+        Primary async method - loads from cache first, falls back to database.
+        This is the recommended method for all new code.
+        """
         # Check cache first
         if session_id in self._sessions:
             return self._sessions[session_id]
@@ -400,15 +413,24 @@ class BrownPaperService:
 
         return None
 
-    def list_sessions(self, application_id: Optional[int] = None) -> List[BrownPaperSession]:
-        """List all Brown Paper sessions (sync, from cache only)."""
+    @deprecated_sync_wrapper("list_sessions", "26.0")
+    def list_sessions_sync(self, application_id: Optional[int] = None) -> List[BrownPaperSession]:
+        """List all Brown Paper sessions (sync, from cache only).
+
+        DEPRECATED: Use list_sessions() (async) instead. This sync method will be
+        removed in v26.0. Only accesses in-memory cache, does not load from DB.
+        """
         sessions = list(self._sessions.values())
         if application_id is not None:
             sessions = [s for s in sessions if s.application_id == application_id]
         return sorted(sessions, key=lambda s: s.created_at, reverse=True)
 
-    async def list_sessions_async(self, application_id: Optional[int] = None) -> List[BrownPaperSession]:
-        """List all Brown Paper sessions (async, from database)."""
+    async def list_sessions(self, application_id: Optional[int] = None) -> List[BrownPaperSession]:
+        """List all Brown Paper sessions (async, from database).
+
+        Primary async method - loads from database with cache integration.
+        This is the recommended method for all new code.
+        """
         try:
             async with AsyncSessionLocal() as db:
                 query = select(BrownPaperSessionDB)
@@ -446,8 +468,11 @@ class BrownPaperService:
 
         except Exception as e:
             logger.error(f"Failed to list sessions from database: {e}")
-            # Fallback to cache
-            return self.list_sessions(application_id)
+            # Fallback to cache (sync, no deprecation warning in this case)
+            sessions = list(self._sessions.values())
+            if application_id is not None:
+                sessions = [s for s in sessions if s.application_id == application_id]
+            return sorted(sessions, key=lambda s: s.created_at, reverse=True)
 
     async def _persist_analysis_to_db(
         self,
@@ -818,7 +843,7 @@ class BrownPaperService:
         import time
         start_time = time.time()
 
-        session = self.get_session(session_id)
+        session = await self.get_session(session_id)
         if not session:
             raise ValueError(f"Session not found: {session_id}")
 
@@ -1695,7 +1720,7 @@ class BrownPaperService:
         6. Scope Definition
         7. Success Criteria
         """
-        session = self.get_session(session_id)
+        session = await self.get_session(session_id)
         if not session or not session.analysis:
             raise ValueError(f"Session not found or no analysis: {session_id}")
 
@@ -1936,7 +1961,7 @@ class BrownPaperService:
         Returns:
             List of enhanced BusinessDomain objects
         """
-        session = self.get_session(session_id)
+        session = self._sessions.get(session_id)  # Direct cache access (sync method)
         if not session or not session.analysis:
             logger.warning(f"Cannot enhance domains: session {session_id} not found")
             return []
@@ -2064,7 +2089,7 @@ class BrownPaperService:
 
         Each domain becomes an Epic with Features for each major use case group.
         """
-        session = self.get_session(session_id)
+        session = await self.get_session(session_id)
         if not session or not session.analysis:
             raise ValueError(f"Session not found or no analysis: {session_id}")
 
@@ -2141,7 +2166,7 @@ class BrownPaperService:
 
     async def approve_session(self, session_id: str, reviewer: str) -> bool:
         """Approve a Brown Paper session after review."""
-        session = self.get_session(session_id)
+        session = await self.get_session(session_id)
         if not session:
             return False
 
@@ -2164,7 +2189,7 @@ class BrownPaperService:
         reason: str
     ) -> bool:
         """Reject a Brown Paper session."""
-        session = self.get_session(session_id)
+        session = await self.get_session(session_id)
         if not session:
             return False
 
@@ -2220,7 +2245,7 @@ class BrownPaperService:
 
         try:
             # Get session context - check both BrownPaper and MarQed sessions
-            session = self.get_session(session_id)
+            session = await self.get_session(session_id)
             project_path = None
 
             if session:
@@ -2229,7 +2254,7 @@ class BrownPaperService:
             else:
                 # Try MarQed workflow session
                 marqed_workflow = get_marqed_brown_paper_workflow()
-                marqed_session = marqed_workflow.get_session(session_id)
+                marqed_session = await marqed_workflow.get_session(session_id)
                 if marqed_session:
                     project_path = marqed_session.project_path
                     # Store reference for later use in phase methods
@@ -3454,13 +3479,15 @@ class MarQedBrownPaperWorkflow:
                 for a in answers
             ]
 
-    async def resume_session_async(
+    async def resume_session(
         self,
         session_id: str,
         user_id: Optional[str] = None
     ) -> Optional[MarQedBrownPaperSession]:
         """
         Resume an existing MarQed session from database.
+
+        Primary async method for session resumption.
 
         This method:
         1. Loads session from database
@@ -3501,7 +3528,7 @@ class MarQedBrownPaperWorkflow:
 
     async def get_session_status(self, session_id: str) -> Optional[Dict[str, Any]]:
         """Get detailed status of a MarQed session."""
-        session = await self.get_session_async(session_id)
+        session = await self.get_session(session_id)
         if not session:
             return None
 
@@ -3526,14 +3553,17 @@ class MarQedBrownPaperWorkflow:
             "error_message": session.error_message,
         }
 
-    async def cancel_session_async(
+    async def cancel_session(
         self,
         session_id: str,
         reason: Optional[str] = None,
         user_id: Optional[str] = None
     ) -> bool:
-        """Cancel a MarQed session."""
-        session = await self.get_session_async(session_id)
+        """Cancel a MarQed session.
+
+        Primary async method for session cancellation.
+        """
+        session = await self.get_session(session_id)
         if not session:
             return False
 
@@ -3556,7 +3586,8 @@ class MarQedBrownPaperWorkflow:
     # SESSION MANAGEMENT
     # ========================================================================
 
-    def start_session(
+    @deprecated_sync_wrapper("start_session", "26.0")
+    def start_session_sync(
         self,
         project_name: str,
         project_path: Optional[str] = None,
@@ -3564,7 +3595,10 @@ class MarQedBrownPaperWorkflow:
         project_id: int = 1000  # Default project for Vector DB
     ) -> MarQedBrownPaperSession:
         """
-        Start a new MarQed Brown-Paper session (sync version for backward compatibility).
+        Start a new MarQed Brown-Paper session (sync, cache only).
+
+        DEPRECATED: Use start_session() (async) instead. This sync method will be
+        removed in v26.0. Does NOT persist to database.
 
         Args:
             project_name: Name of the project
@@ -3573,7 +3607,7 @@ class MarQedBrownPaperWorkflow:
             project_id: Project ID for Vector DB queries
 
         Returns:
-            MarQedBrownPaperSession: New session with optional vector context
+            MarQedBrownPaperSession: New session with optional vector context (cache only)
         """
         session_id = str(uuid.uuid4())
 
@@ -3608,7 +3642,7 @@ class MarQedBrownPaperWorkflow:
 
         return session
 
-    async def start_session_async(
+    async def start_session(
         self,
         project_name: str,
         project_path: Optional[str] = None,
@@ -3618,6 +3652,9 @@ class MarQedBrownPaperWorkflow:
     ) -> MarQedBrownPaperSession:
         """
         Start a new MarQed Brown-Paper session with database persistence.
+
+        Primary async method - creates session and persists to database.
+        This is the recommended method for all new code.
 
         Args:
             project_name: Name of the project
@@ -3629,11 +3666,36 @@ class MarQedBrownPaperWorkflow:
         Returns:
             MarQedBrownPaperSession: New persisted session with optional vector context
         """
-        session = self.start_session(
-            project_name, project_path,
-            fetch_vector_context=fetch_vector_context,
-            project_id=project_id
+        session_id = str(uuid.uuid4())
+
+        # Optionally fetch vector context for pre-population
+        vector_context = None
+        if fetch_vector_context:
+            vector_context = self._fetch_vector_context(
+                project_name=project_name,
+                project_path=project_path,
+                project_id=project_id
+            )
+
+        session = MarQedBrownPaperSession(
+            id=session_id,
+            project_name=project_name,
+            project_path=project_path,
+            status="questions",
+            current_question=1,
+            answers={},
+            migration_analysis=None,
+            specification=None,
+            tasks=None,
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
+            vector_context=vector_context,
         )
+
+        self._sessions[session_id] = session
+
+        context_info = f", {vector_context['total_docs_found']} docs from Vector DB" if vector_context else ""
+        logger.info(f"Started MarQed Brown-Paper session {session_id} for {project_name}{context_info}")
 
         # Persist to database
         await self._persist_session_to_db(session, customer_id)
@@ -3655,12 +3717,21 @@ class MarQedBrownPaperWorkflow:
 
         return session
 
-    def get_session(self, session_id: str) -> Optional[MarQedBrownPaperSession]:
-        """Get a MarQed session by ID (sync, cache only)."""
+    @deprecated_sync_wrapper("get_session", "26.0")
+    def get_session_sync(self, session_id: str) -> Optional[MarQedBrownPaperSession]:
+        """Get a MarQed session by ID (sync, cache only).
+
+        DEPRECATED: Use get_session() (async) instead. This sync method will be
+        removed in v26.0. Only accesses in-memory cache, does not load from DB.
+        """
         return self._sessions.get(session_id)
 
-    async def get_session_async(self, session_id: str) -> Optional[MarQedBrownPaperSession]:
-        """Get a MarQed session by ID (async, with database fallback)."""
+    async def get_session(self, session_id: str) -> Optional[MarQedBrownPaperSession]:
+        """Get a MarQed session by ID (async, with database fallback).
+
+        Primary async method - loads from cache first, falls back to database.
+        This is the recommended method for all new code.
+        """
         # Check cache first
         if session_id in self._sessions:
             return self._sessions[session_id]
@@ -3673,16 +3744,25 @@ class MarQedBrownPaperWorkflow:
 
         return session
 
-    def list_sessions(self) -> List[MarQedBrownPaperSession]:
-        """List all MarQed Brown-Paper sessions (sync, cache only)."""
+    @deprecated_sync_wrapper("list_sessions", "26.0")
+    def list_sessions_sync(self) -> List[MarQedBrownPaperSession]:
+        """List all MarQed Brown-Paper sessions (sync, cache only).
+
+        DEPRECATED: Use list_sessions() (async) instead. This sync method will be
+        removed in v26.0. Only accesses in-memory cache, does not load from DB.
+        """
         return sorted(
             self._sessions.values(),
             key=lambda s: s.created_at,
             reverse=True
         )
 
-    async def list_sessions_async(self) -> List[MarQedBrownPaperSession]:
-        """List all MarQed Brown-Paper sessions from database."""
+    async def list_sessions(self) -> List[MarQedBrownPaperSession]:
+        """List all MarQed Brown-Paper sessions from database.
+
+        Primary async method - loads from database with cache integration.
+        This is the recommended method for all new code.
+        """
         async with AsyncSessionLocal() as db:
             result = await db.execute(
                 select(MarQedSessionDB)
@@ -3701,9 +3781,14 @@ class MarQedBrownPaperWorkflow:
 
             return sessions
 
-    def get_current_question(self, session_id: str) -> Optional[Dict[str, Any]]:
-        """Get the current question for a session."""
-        session = self.get_session(session_id)
+    @deprecated_sync_wrapper("get_current_question", "26.0")
+    def get_current_question_sync(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """Get the current question for a session (sync, cache only).
+
+        DEPRECATED: Use get_current_question() (async) instead. This sync method
+        will be removed in v26.0. Only accesses in-memory cache.
+        """
+        session = self._sessions.get(session_id)  # Direct cache access
         if not session or session.status != "questions":
             return None
 
@@ -3722,20 +3807,33 @@ class MarQedBrownPaperWorkflow:
             "progress_percent": ((q_num - 1) / 8) * 100,
         }
 
-    def get_current_question_with_context(self, session_id: str) -> Optional[Dict[str, Any]]:
+    @deprecated_sync_wrapper("get_current_question_with_context", "26.0")
+    def get_current_question_with_context_sync(self, session_id: str) -> Optional[Dict[str, Any]]:
         """
-        Get the current question with relevant Vector DB context for answer assistance.
+        Get the current question with relevant Vector DB context (sync, cache only).
 
-        Week 143: Enhanced question retrieval with pre-populated context.
-        Returns question info plus relevant docs and architecture context.
+        DEPRECATED: Use get_current_question_with_context() (async) instead.
+        This sync method will be removed in v26.0. Only accesses in-memory cache.
         """
-        question = self.get_current_question(session_id)
-        if not question:
+        # Get question using internal sync logic (avoid double deprecation warning)
+        session = self._sessions.get(session_id)
+        if not session or session.status != "questions":
             return None
 
-        session = self.get_session(session_id)
-        if not session:
-            return question
+        q_num = session.current_question
+        if q_num > 8:
+            return None
+
+        q_info = MARQED_QUESTIONS[q_num]
+        question = {
+            "question_number": q_num,
+            "question": q_info["question"],
+            "description": q_info["description"],
+            "required": q_info["required"],
+            "min_length": q_info["min_length"],
+            "total_questions": 8,
+            "progress_percent": ((q_num - 1) / 8) * 100,
+        }
 
         # Add vector context if available
         if session.vector_context:
@@ -3750,9 +3848,13 @@ class MarQedBrownPaperWorkflow:
 
         return question
 
-    async def get_current_question_async(self, session_id: str) -> Optional[Dict[str, Any]]:
-        """Get the current question for a session (async, with database fallback)."""
-        session = await self.get_session_async(session_id)
+    async def get_current_question(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """Get the current question for a session (async, with database fallback).
+
+        Primary async method - loads from cache first, falls back to database.
+        This is the recommended method for all new code.
+        """
+        session = await self.get_session(session_id)
         if not session or session.status != "questions":
             return None
 
@@ -3771,17 +3873,18 @@ class MarQedBrownPaperWorkflow:
             "progress_percent": ((q_num - 1) / 8) * 100,
         }
 
-    async def get_current_question_with_context_async(self, session_id: str) -> Optional[Dict[str, Any]]:
+    async def get_current_question_with_context(self, session_id: str) -> Optional[Dict[str, Any]]:
         """
         Get the current question with relevant Vector DB context (async).
 
-        Week 158: Async version with database fallback for session retrieval.
+        Primary async method - loads from database with cache integration.
+        This is the recommended method for all new code.
         """
-        question = await self.get_current_question_async(session_id)
+        question = await self.get_current_question(session_id)
         if not question:
             return None
 
-        session = await self.get_session_async(session_id)
+        session = await self.get_session(session_id)
         if not session:
             return question
 
@@ -3803,20 +3906,26 @@ class MarQedBrownPaperWorkflow:
         Get the full Vector DB context for a session.
 
         Week 143: Returns all fetched context including docs, architecture, and code locations.
+        Note: This is a sync method that uses direct cache access.
         """
-        session = self.get_session(session_id)
+        session = self._sessions.get(session_id)  # Direct cache access
         if not session:
             return None
 
         return session.vector_context
 
-    def submit_answer(
+    @deprecated_sync_wrapper("submit_answer", "26.0")
+    def submit_answer_sync(
         self,
         session_id: str,
         answer: str
     ) -> Dict[str, Any]:
-        """Submit answer to current question."""
-        session = self.get_session(session_id)
+        """Submit answer to current question (sync, cache only).
+
+        DEPRECATED: Use submit_answer() (async) instead. This sync method will be
+        removed in v26.0. Does NOT persist to database.
+        """
+        session = self._sessions.get(session_id)  # Direct cache access
         if not session:
             return {"error": "Session not found"}
 
@@ -3849,7 +3958,22 @@ class MarQedBrownPaperWorkflow:
         # Move to next question or complete
         if q_num < 8:
             session.current_question = q_num + 1
-            next_q = self.get_current_question(session_id)
+            # Get next question using direct cache access
+            next_session = self._sessions.get(session_id)
+            next_q = None
+            if next_session and next_session.status == "questions":
+                q_num_next = next_session.current_question
+                if q_num_next <= 8:
+                    q_info_next = MARQED_QUESTIONS[q_num_next]
+                    next_q = {
+                        "question_number": q_num_next,
+                        "question": q_info_next["question"],
+                        "description": q_info_next["description"],
+                        "required": q_info_next["required"],
+                        "min_length": q_info_next["min_length"],
+                        "total_questions": 8,
+                        "progress_percent": ((q_num_next - 1) / 8) * 100,
+                    }
             return {
                 "success": True,
                 "answered_question": q_num,
@@ -3864,14 +3988,18 @@ class MarQedBrownPaperWorkflow:
                 "next_step": "Run migration analysis (Miguel)",
             }
 
-    async def submit_answer_async(
+    async def submit_answer(
         self,
         session_id: str,
         answer: str
     ) -> Dict[str, Any]:
-        """Submit answer to current question with database persistence."""
+        """Submit answer to current question with database persistence.
+
+        Primary async method - persists to database with full audit trail.
+        This is the recommended method for all new code.
+        """
         # First try to get from cache, then from database
-        session = await self.get_session_async(session_id)
+        session = await self.get_session(session_id)
         if not session:
             return {"error": "Session not found"}
 
@@ -3907,7 +4035,7 @@ class MarQedBrownPaperWorkflow:
             result = {
                 "success": True,
                 "answered_question": q_num,
-                "next_question": self.get_current_question(session_id),
+                "next_question": await self.get_current_question(session_id),
             }
         else:
             session.status = "analyzing"
@@ -3956,7 +4084,7 @@ class MarQedBrownPaperWorkflow:
         - Go/No-Go checkpoints
         """
         # Use async session retrieval with database fallback
-        session = await self.get_session_async(session_id)
+        session = await self.get_session(session_id)
         if not session:
             raise ValueError(f"Session not found: {session_id}")
 
@@ -4168,7 +4296,7 @@ class MarQedBrownPaperWorkflow:
 
         This creates a comprehensive specification document.
         """
-        session = await self.get_session_async(session_id)
+        session = await self.get_session(session_id)
         if not session:
             raise ValueError(f"Session not found: {session_id}")
 
@@ -4326,7 +4454,7 @@ Timeline: {timeline}
 
         Includes IFPUG Function Point estimation if project_path is available.
         """
-        session = await self.get_session_async(session_id)
+        session = await self.get_session(session_id)
         if not session:
             raise ValueError(f"Session not found: {session_id}")
 
@@ -4484,9 +4612,14 @@ Timeline: {timeline}
     # APPROVAL / EXPORT
     # ========================================================================
 
-    def approve_session(self, session_id: str) -> bool:
-        """Approve the MarQed session."""
-        session = self.get_session(session_id)
+    @deprecated_sync_wrapper("approve_session", "26.0")
+    def approve_session_sync(self, session_id: str) -> bool:
+        """Approve the MarQed session (sync, cache only).
+
+        DEPRECATED: Use approve_session() (async) instead. This sync method will be
+        removed in v26.0. Does NOT persist to database.
+        """
+        session = self._sessions.get(session_id)  # Direct cache access
         if not session or session.status != "review":
             return False
 
@@ -4494,9 +4627,14 @@ Timeline: {timeline}
         session.updated_at = datetime.now(timezone.utc)
         return True
 
-    def reject_session(self, session_id: str, reason: str) -> bool:
-        """Reject the MarQed session."""
-        session = self.get_session(session_id)
+    @deprecated_sync_wrapper("reject_session", "26.0")
+    def reject_session_sync(self, session_id: str, reason: str) -> bool:
+        """Reject the MarQed session (sync, cache only).
+
+        DEPRECATED: Use reject_session() (async) instead. This sync method will be
+        removed in v26.0. Does NOT persist to database.
+        """
+        session = self._sessions.get(session_id)  # Direct cache access
         if not session:
             return False
 
@@ -4505,13 +4643,17 @@ Timeline: {timeline}
         session.updated_at = datetime.now(timezone.utc)
         return True
 
-    async def approve_session_async(
+    async def approve_session(
         self,
         session_id: str,
         reviewer: Optional[str] = None
     ) -> bool:
-        """Approve the MarQed session with database persistence."""
-        session = await self.get_session_async(session_id)
+        """Approve the MarQed session with database persistence.
+
+        Primary async method - persists to database with audit logging.
+        This is the recommended method for all new code.
+        """
+        session = await self.get_session(session_id)
         if not session or session.status != "review":
             return False
 
@@ -4530,14 +4672,18 @@ Timeline: {timeline}
         logger.info(f"Session {session_id} approved by {reviewer}")
         return True
 
-    async def reject_session_async(
+    async def reject_session(
         self,
         session_id: str,
         reason: str,
         reviewer: Optional[str] = None
     ) -> bool:
-        """Reject the MarQed session with database persistence."""
-        session = await self.get_session_async(session_id)
+        """Reject the MarQed session with database persistence.
+
+        Primary async method - persists to database with audit logging.
+        This is the recommended method for all new code.
+        """
+        session = await self.get_session(session_id)
         if not session:
             return False
 
@@ -4558,8 +4704,11 @@ Timeline: {timeline}
         return True
 
     def export_to_markdown(self, session_id: str) -> Optional[str]:
-        """Export session results to Markdown."""
-        session = self.get_session(session_id)
+        """Export session results to Markdown.
+
+        Note: This is a sync method that uses direct cache access.
+        """
+        session = self._sessions.get(session_id)  # Direct cache access
         if not session or not session.specification:
             return None
 

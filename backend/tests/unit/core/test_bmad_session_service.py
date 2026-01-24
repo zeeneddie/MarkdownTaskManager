@@ -152,7 +152,7 @@ class TestBMADSessionResume:
     async def test_resume_session_not_found(self, service, sample_session_id):
         """Test resuming a session that doesn't exist."""
         with patch.object(service, '_load_session_from_db', return_value=None):
-            result = await service.resume_session_async(sample_session_id)
+            result = await service.resume_session(sample_session_id)
 
         assert result is None
 
@@ -160,10 +160,10 @@ class TestBMADSessionResume:
     async def test_resume_session_success(self, service, sample_session_id):
         """Test successfully resuming an existing session."""
         # Create mock session object (not dict)
-        from app.services.brown_paper_service import BMADBrownPaperSession
+        from app.services.brown_paper_service import MarQedBrownPaperSession
         from datetime import timezone
 
-        mock_session = BMADBrownPaperSession(
+        mock_session = MarQedBrownPaperSession(
             id=sample_session_id,
             project_name="Test Project",
             project_path="/test/project",
@@ -179,7 +179,7 @@ class TestBMADSessionResume:
 
         with patch.object(service, '_load_session_from_db', return_value=mock_session):
             with patch.object(service, '_log_event', return_value=None):
-                result = await service.resume_session_async(sample_session_id, user_id="test_user")
+                result = await service.resume_session(sample_session_id, user_id="test_user")
 
         assert result is not None
         assert result.id == sample_session_id
@@ -187,10 +187,10 @@ class TestBMADSessionResume:
     @pytest.mark.asyncio
     async def test_resume_completed_session(self, service, sample_session_id):
         """Test that completed sessions cannot be resumed."""
-        from app.services.brown_paper_service import BMADBrownPaperSession
+        from app.services.brown_paper_service import MarQedBrownPaperSession
         from datetime import timezone
 
-        mock_session = BMADBrownPaperSession(
+        mock_session = MarQedBrownPaperSession(
             id=sample_session_id,
             project_name="Test Project",
             project_path="/test/project",
@@ -205,7 +205,7 @@ class TestBMADSessionResume:
         )
 
         with patch.object(service, '_load_session_from_db', return_value=mock_session):
-            result = await service.resume_session_async(sample_session_id)
+            result = await service.resume_session(sample_session_id)
 
         # Completed sessions cannot be resumed
         assert result is None
@@ -227,7 +227,7 @@ class TestBMADSessionStatus:
     @pytest.mark.asyncio
     async def test_get_session_status_not_found(self, service, sample_session_id):
         """Test getting status for non-existent session."""
-        with patch.object(service, 'get_session_async', return_value=None):
+        with patch.object(service, 'get_session', return_value=None):
             result = await service.get_session_status(sample_session_id)
 
         assert result is None
@@ -252,7 +252,7 @@ class TestBMADSessionStatus:
         mock_session.updated_at = datetime.now(timezone.utc)
         mock_session.error_message = None
 
-        with patch.object(service, 'get_session_async', return_value=mock_session):
+        with patch.object(service, 'get_session', return_value=mock_session):
             result = await service.get_session_status(sample_session_id)
 
         assert result is not None
@@ -282,7 +282,7 @@ class TestBMADSessionStatus:
         mock_session.updated_at = datetime.now(timezone.utc)
         mock_session.error_message = None
 
-        with patch.object(service, 'get_session_async', return_value=mock_session):
+        with patch.object(service, 'get_session', return_value=mock_session):
             result = await service.get_session_status(sample_session_id)
 
         assert result is not None
@@ -307,8 +307,8 @@ class TestBMADSessionCancel:
     @pytest.mark.asyncio
     async def test_cancel_session_not_found(self, service, sample_session_id):
         """Test canceling a non-existent session."""
-        with patch.object(service, 'get_session_async', return_value=None):
-            result = await service.cancel_session_async(sample_session_id)
+        with patch.object(service, 'get_session', return_value=None):
+            result = await service.cancel_session(sample_session_id)
 
         assert result is False
 
@@ -319,10 +319,10 @@ class TestBMADSessionCancel:
         mock_session.session_id = sample_session_id
         mock_session.status = "in_progress"
 
-        with patch.object(service, 'get_session_async', return_value=mock_session):
+        with patch.object(service, 'get_session', return_value=mock_session):
             with patch.object(service, '_persist_session_to_db', return_value=None):
                 with patch.object(service, '_log_event', return_value=None):
-                    result = await service.cancel_session_async(
+                    result = await service.cancel_session(
                         sample_session_id,
                         reason="User requested cancellation",
                         user_id="test_user"
@@ -338,12 +338,12 @@ class TestBMADSessionCancel:
         mock_session.session_id = sample_session_id
         mock_session.status = "completed"
 
-        with patch.object(service, 'get_session_async', return_value=mock_session):
+        with patch.object(service, 'get_session', return_value=mock_session):
             # Depending on implementation, this might raise or return False
             # Adjust test based on actual behavior
             with patch.object(service, '_persist_session_to_db', return_value=None):
                 with patch.object(service, '_log_event', return_value=None):
-                    result = await service.cancel_session_async(sample_session_id)
+                    result = await service.cancel_session(sample_session_id)
 
         # Session was "cancelled" but was already completed
         assert mock_session.status == "cancelled"

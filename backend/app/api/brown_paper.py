@@ -280,7 +280,7 @@ async def list_sessions(application_id: Optional[int] = None):
     try:
         service = get_brown_paper_service()
         # Use async method to load from database
-        sessions = await service.list_sessions_async(application_id)
+        sessions = await service.list_sessions(application_id)
 
         return [
             SessionSummaryResponse(
@@ -315,7 +315,7 @@ async def get_session(session_id: str):
     try:
         service = get_brown_paper_service()
         # Use async method to load from database
-        session = await service.get_session_async(session_id)
+        session = await service.get_session(session_id)
 
         if not session:
             raise HTTPException(
@@ -687,7 +687,7 @@ async def sessions_enhanced_analysis(
         service = get_brown_paper_service()
 
         # Verify session exists
-        session = await service.get_session_async(session_id)
+        session = await service.get_session(session_id)
         if not session:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -759,7 +759,7 @@ async def sessions_dependency_graph(session_id: str):
     """
     try:
         service = get_brown_paper_service()
-        session = await service.get_session_async(session_id)
+        session = await service.get_session(session_id)
 
         if not session:
             raise HTTPException(
@@ -806,7 +806,7 @@ async def sessions_hierarchy(session_id: str):
     """
     try:
         service = get_brown_paper_service()
-        session = await service.get_session_async(session_id)
+        session = await service.get_session(session_id)
 
         if not session:
             raise HTTPException(
@@ -860,7 +860,7 @@ async def sessions_metrics(session_id: str):
     """
     try:
         service = get_brown_paper_service()
-        session = await service.get_session_async(session_id)
+        session = await service.get_session(session_id)
 
         if not session:
             raise HTTPException(
@@ -1112,7 +1112,7 @@ async def marqed_start_session(request: MarQedStartRequest):
     try:
         workflow = get_marqed_brown_paper_workflow()
         # Use async version for database persistence (required for restart functionality)
-        session = await workflow.start_session_async(
+        session = await workflow.start_session(
             project_name=request.project_name,
             project_path=request.project_path,
             customer_id=getattr(request, 'customer_id', None)
@@ -1156,7 +1156,7 @@ async def marqed_get_question(session_id: str):
 
     try:
         workflow = get_marqed_brown_paper_workflow()
-        question = await workflow.get_current_question_async(session_id)
+        question = await workflow.get_current_question(session_id)
 
         if not question:
             raise HTTPException(
@@ -1214,7 +1214,7 @@ async def marqed_get_question_with_context(session_id: str):
 
     try:
         workflow = get_marqed_brown_paper_workflow()
-        question = await workflow.get_current_question_with_context_async(session_id)
+        question = await workflow.get_current_question_with_context(session_id)
 
         if not question:
             raise HTTPException(
@@ -1265,7 +1265,7 @@ async def marqed_get_vector_context(session_id: str):
 
         if context is None:
             # Check if session exists (use async for database fallback)
-            session = await workflow.get_session_async(session_id)
+            session = await workflow.get_session(session_id)
             if not session:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -1308,7 +1308,7 @@ async def marqed_submit_answer(session_id: str, request: MarQedAnswerRequest):
     try:
         workflow = get_marqed_brown_paper_workflow()
         # Use async version for database persistence (required for restart functionality)
-        result = await workflow.submit_answer_async(session_id, request.answer)
+        result = await workflow.submit_answer(session_id, request.answer)
 
         # Handle error responses from service
         if "error" in result:
@@ -1366,7 +1366,7 @@ async def marqed_get_status(session_id: str):
     try:
         workflow = get_marqed_brown_paper_workflow()
         # Use async version for database fallback when not in cache
-        session = await workflow.get_session_async(session_id)
+        session = await workflow.get_session(session_id)
 
         if not session:
             raise HTTPException(
@@ -1744,7 +1744,7 @@ async def get_dependency_graph(session_id: str):
     """
     try:
         service = get_brown_paper_service()
-        session = await service.get_session_async(session_id)
+        session = await service.get_session(session_id)
 
         if not session:
             raise HTTPException(
@@ -1809,12 +1809,12 @@ async def get_foundation(session_id: str):
         # Try regular BrownPaper session first
         service = get_brown_paper_service()
         # Use async version for database fallback
-        session = await service.get_session_async(session_id)
+        session = await service.get_session(session_id)
 
         # If not found, try MarQed workflow session
         if not session:
             workflow = get_marqed_brown_paper_workflow()
-            session = await workflow.get_session_async(session_id)
+            session = await workflow.get_session(session_id)
 
         if not session:
             raise HTTPException(
@@ -1869,7 +1869,7 @@ async def get_hierarchy(session_id: str):
     """
     try:
         service = get_brown_paper_service()
-        session = await service.get_session_async(session_id)
+        session = await service.get_session(session_id)
 
         if not session:
             raise HTTPException(
@@ -1917,7 +1917,7 @@ async def get_conflicts(session_id: str):
     """
     try:
         service = get_brown_paper_service()
-        session = await service.get_session_async(session_id)
+        session = await service.get_session(session_id)
 
         if not session:
             raise HTTPException(
@@ -1966,7 +1966,7 @@ async def get_metrics(session_id: str):
     """
     try:
         service = get_brown_paper_service()
-        session = await service.get_session_async(session_id)
+        session = await service.get_session(session_id)
 
         if not session:
             raise HTTPException(
