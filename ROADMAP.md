@@ -28,7 +28,7 @@ WEEK 144-158: CRITICAL FOUNDATION + ORCHESTRATOR + SECURITY ✅ COMPLETE
 └── Fase 24-A1: Legacy Quickscan ✅ COMPLETE (Week 157)
 
 WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
-├── Fase 24: Quick Wins & Foundation (15 items) 🔄 12/15 DONE (A1+K3+D1+D2+K1+K2+A4+E1+J1+K4+A2+A3) ← OPEN: D4,B5,B6
+├── Fase 24: Quick Wins & Foundation (15 items) 🔄 13/15 DONE (A1+K3+D1+D2+K1+K2+A4+E1+J1+K4+A2+A3+D4) ← OPEN: B5,B6
 ├── Fase 25: Core Platform Enhancement (18 items)
 ├── Fase 26: AI & Automation (12 items)
 ├── Fase 27: Testing Excellence (8 items)
@@ -154,6 +154,7 @@ def start_session_sync(self, ...) -> Session:
 
 | Area | Status | Details |
 |------|--------|---------|
+| **Fase 24 GAP D4** | ✅ COMPLETE | Database Migration Pattern Catalog with 8 patterns, recommendations, risk assessment |
 | **Fase 24.7 Async Refactoring** | ✅ COMPLETE | BrownPaperService + MarQedBrownPaperWorkflow async-first |
 | **Fase 24.6 Restartable Workflows** | ✅ COMPLETE | Checkpoint/resume system for all workflow types |
 | **Fase 31 CWE Security Scanner** | ✅ COMPLETE | Multi-scanner suite, 288+ findings on HCI-CRS |
@@ -163,7 +164,7 @@ def start_session_sync(self, ...) -> Session:
 | **Fase 23.5 Confucius Orchestrator** | ✅ COMPLETE | 4 workflow orchestrators, PIV loop |
 | **Fase 23 Context Engineering** | ✅ COMPLETE | 60-80% token reduction |
 | **Test Suite** | ✅ COMPLETE | 2,700+ tests, 97.8% pass rate |
-| **Fase 24 GAP Items** | 🔄 12/15 | Open: D4 (DB Migration Patterns), B5 (ASP.NET Core), B6 (PHP) |
+| **Fase 24 GAP Items** | 🔄 13/15 | Open: B5 (ASP.NET Core), B6 (PHP) |
 
 See: [phases-current.md](docs/roadmap/phases-current.md)
 
@@ -311,16 +312,16 @@ See: [docs/architecture/confucius-orchestrator-integration-plan.md](docs/archite
 | K4 | Compliance Mapping (Security Debt) | 5.0 | 157 |
 | A2 | Fixed-Price Templates | 4.5 | 157 |
 | A3 | Architecture Assessment Matrix | 4.5 | 157 |
+| D4 | Database Migration Patterns | 5.0 | 159 |
 
-### 🔴 Open (3 items)
+### 🔴 Open (2 items)
 
 | Item | Beschrijving | ROI | Effort | Priority |
 |------|-------------|-----|--------|----------|
-| **D4** | Database Migration Patterns | 5.0 | 4 weken | HIGH |
-| **B5** | ASP.NET Core Analyzer | 4.8 | 4 weken | MEDIUM |
+| **B5** | ASP.NET Core Analyzer | 4.8 | 4 weken | HIGH |
 | **B6** | PHP Analyzer | 4.8 | 4 weken | MEDIUM |
 
-**Next Priority:** D4 (Database Migration Patterns) - Highest ROI of remaining items
+**Next Priority:** B5 (ASP.NET Core Analyzer) - Highest ROI of remaining items
 
 ---
 
@@ -330,7 +331,7 @@ See: [docs/architecture/confucius-orchestrator-integration-plan.md](docs/archite
 
 | Fase | Focus | Items | Weken | Key Deliverables |
 |------|-------|-------|-------|------------------|
-| **24** | Quick Wins | 15 (12✅/3🔴) | 12 | Legacy Quickscan, Secret Detection, Migration Patterns |
+| **24** | Quick Wins | 15 (13✅/2🔴) | 12 | Legacy Quickscan, Secret Detection, Migration Patterns |
 | **25** | Core Enhancement | 18 | 16 | COBOL Analyzer, UI Wrapper, Knowledge Graph |
 | **26** | AI & Automation | 12 | 14 | LLM Collaboration, Natural Language Query |
 | **27** | Testing | 8 | 10 | Characterization Tests, Mutation Testing |
