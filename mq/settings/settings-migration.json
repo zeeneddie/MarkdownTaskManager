@@ -1,0 +1,72 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/claude"
+      ]
+    }
+  },
+  "claudeCodeTasks": {
+    "enabled": true,
+    "taskListPrefix": "MIG-"
+  },
+  "customInstructions": "You are working on legacy code migration using the MarQed.ai methodology. Your goal is to systematically migrate legacy code to modern technology stacks while preserving functionality, improving quality, and ensuring security compliance. This is a complex, multi-phase process requiring careful analysis, planning, and validation. Follow the migration workflow through all 9 phases: Analysis, Environment Setup, Data Migration, Core Migration, UI Migration, Integration, Testing, Security & Compliance, and Deployment. Update task status as you progress.",
+  "name": "MarQed Code Migration",
+  "temperature": 0.3,
+  "maxTokens": 8000,
+  "workflows": {
+    "migration": {
+      "enabled": true,
+      "maxIterations": 50,
+      "validationRequired": true,
+      "phases": [
+        "Analysis & Planning",
+        "Environment Setup",
+        "Data Migration",
+        "Core Migration",
+        "UI Migration",
+        "Integration",
+        "Testing",
+        "Security & Compliance",
+        "Deployment"
+      ],
+      "complexity": "high",
+      "requiresMultiPhaseValidation": true
+    }
+  },
+  "migration": {
+    "sourceTracking": true,
+    "targetValidation": true,
+    "preserveFunctionality": true,
+    "securityHardening": true,
+    "performanceOptimization": true,
+    "complianceStandards": [
+      "NEN7510",
+      "ISO27001",
+      "GDPR"
+    ]
+  },
+  "validation": {
+    "autoValidate": true,
+    "strictMode": true,
+    "requireTests": true,
+    "minCoverage": 85,
+    "requireSecurityScans": true,
+    "requirePerformanceTests": true,
+    "requireDocumentation": true
+  },
+  "reporting": {
+    "wbso": {
+      "enabled": true,
+      "autoGenerate": true,
+      "includeTimestamps": true,
+      "includeMetrics": true,
+      "trackMigrationProgress": true,
+      "includeSecurityCompliance": true,
+      "detailedPhaseReporting": true
+    }
+  }
+}

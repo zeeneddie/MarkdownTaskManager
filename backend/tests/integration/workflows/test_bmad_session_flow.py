@@ -1,16 +1,17 @@
 """
-Integration tests for BMAD Session Flow
+Integration tests for MarQed Session Flow
 
 Week 143 - Fase 28: Data Architecture Enhancement
-Tests the complete BMAD session lifecycle using in-memory workflow.
+Week 158 - Renamed from BMAD to MarQed
+Tests the complete MarQed session lifecycle using in-memory workflow.
 """
 
 import pytest
 from datetime import datetime, timezone
 
 from app.services.brown_paper_service import (
-    BMADBrownPaperWorkflow,
-    BMADBrownPaperSession,
+    MarQedBrownPaperWorkflow,
+    MarQedBrownPaperSession,
 )
 
 
@@ -19,8 +20,8 @@ class TestBMADSessionLifecycleInMemory:
 
     @pytest.fixture
     def workflow(self):
-        """Create BMADBrownPaperWorkflow instance."""
-        return BMADBrownPaperWorkflow()
+        """Create MarQedBrownPaperWorkflow instance."""
+        return MarQedBrownPaperWorkflow()
 
     def test_create_session_sync(self, workflow):
         """Test creating a new BMAD session (sync version)."""
@@ -166,8 +167,8 @@ class TestBMADSessionEdgeCases:
 
     @pytest.fixture
     def workflow(self):
-        """Create BMADBrownPaperWorkflow instance."""
-        return BMADBrownPaperWorkflow()
+        """Create MarQedBrownPaperWorkflow instance."""
+        return MarQedBrownPaperWorkflow()
 
     def test_get_nonexistent_session(self, workflow):
         """Test getting session that doesn't exist."""
@@ -210,8 +211,8 @@ class TestBMADSessionProgressTracking:
 
     @pytest.fixture
     def workflow(self):
-        """Create BMADBrownPaperWorkflow instance."""
-        return BMADBrownPaperWorkflow()
+        """Create MarQedBrownPaperWorkflow instance."""
+        return MarQedBrownPaperWorkflow()
 
     def test_progress_increases_with_answers(self, workflow):
         """Test that progress increases as answers are submitted."""
@@ -251,8 +252,8 @@ class TestBMADSessionApprovalRejection:
 
     @pytest.fixture
     def workflow(self):
-        """Create BMADBrownPaperWorkflow instance."""
-        return BMADBrownPaperWorkflow()
+        """Create MarQedBrownPaperWorkflow instance."""
+        return MarQedBrownPaperWorkflow()
 
     def test_cannot_approve_non_review_session(self, workflow):
         """Test that sessions not in 'review' status cannot be approved."""

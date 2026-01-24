@@ -1,7 +1,8 @@
 """
-Unit tests for BMAD Session Service enhancements
+Unit tests for MarQed Session Service enhancements
 
 Week 143 - Fase 28: Data Architecture Enhancement
+Week 158 - Renamed from BMAD to MarQed
 Tests for session persistence, answer versioning, resume functionality.
 """
 
@@ -10,7 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from app.services.brown_paper_service import BMADBrownPaperWorkflow
+from app.services.brown_paper_service import MarQedBrownPaperWorkflow
 
 
 class TestBMADAnswerVersioning:
@@ -18,8 +19,8 @@ class TestBMADAnswerVersioning:
 
     @pytest.fixture
     def service(self):
-        """Create BMADBrownPaperWorkflow instance."""
-        return BMADBrownPaperWorkflow()
+        """Create MarQedBrownPaperWorkflow instance."""
+        return MarQedBrownPaperWorkflow()
 
     @pytest.fixture
     def sample_session_id(self):
@@ -139,8 +140,8 @@ class TestBMADSessionResume:
 
     @pytest.fixture
     def service(self):
-        """Create BMADBrownPaperWorkflow instance."""
-        return BMADBrownPaperWorkflow()
+        """Create MarQedBrownPaperWorkflow instance."""
+        return MarQedBrownPaperWorkflow()
 
     @pytest.fixture
     def sample_session_id(self):
@@ -215,8 +216,8 @@ class TestBMADSessionStatus:
 
     @pytest.fixture
     def service(self):
-        """Create BMADBrownPaperWorkflow instance."""
-        return BMADBrownPaperWorkflow()
+        """Create MarQedBrownPaperWorkflow instance."""
+        return MarQedBrownPaperWorkflow()
 
     @pytest.fixture
     def sample_session_id(self):
@@ -295,8 +296,8 @@ class TestBMADSessionCancel:
 
     @pytest.fixture
     def service(self):
-        """Create BMADBrownPaperWorkflow instance."""
-        return BMADBrownPaperWorkflow()
+        """Create MarQedBrownPaperWorkflow instance."""
+        return MarQedBrownPaperWorkflow()
 
     @pytest.fixture
     def sample_session_id(self):
@@ -353,8 +354,8 @@ class TestBMADSessionPersistence:
 
     @pytest.fixture
     def service(self):
-        """Create BMADBrownPaperWorkflow instance."""
-        return BMADBrownPaperWorkflow()
+        """Create MarQedBrownPaperWorkflow instance."""
+        return MarQedBrownPaperWorkflow()
 
     @pytest.fixture
     def sample_session_id(self):
@@ -431,8 +432,8 @@ class TestBMADEventLogging:
 
     @pytest.fixture
     def service(self):
-        """Create BMADBrownPaperWorkflow instance."""
-        return BMADBrownPaperWorkflow()
+        """Create MarQedBrownPaperWorkflow instance."""
+        return MarQedBrownPaperWorkflow()
 
     @pytest.fixture
     def sample_session_id(self):

@@ -1,0 +1,58 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/claude"
+      ]
+    }
+  },
+  "claudeCodeTasks": {
+    "enabled": true,
+    "taskListPrefix": "CHANGE-"
+  },
+  "customInstructions": "You are working on feature changes using the MarQed.ai methodology. Your goal is to implement new features and enhancements with high quality, comprehensive testing, and proper documentation. Coordinate with parallel sessions when tasks are marked as parallelizable. Follow the changes workflow: design, implement, test, integrate, document. Update task status as you progress.",
+  "name": "MarQed Feature Changes",
+  "temperature": 0.3,
+  "maxTokens": 8000,
+  "workflows": {
+    "changes": {
+      "enabled": true,
+      "maxIterations": 30,
+      "parallelExecutionSupported": true,
+      "validationRequired": true,
+      "phases": [
+        "Design & Architecture",
+        "Feature Implementation",
+        "Unit Testing",
+        "Integration Testing",
+        "End-to-End Testing",
+        "Documentation & Review"
+      ]
+    }
+  },
+  "parallelExecution": {
+    "enabled": true,
+    "maxSessions": 5,
+    "coordinationMode": "shared-task-list",
+    "conflictResolution": "first-claim"
+  },
+  "validation": {
+    "autoValidate": true,
+    "strictMode": true,
+    "requireTests": true,
+    "minCoverage": 80,
+    "requireDocumentation": true
+  },
+  "reporting": {
+    "wbso": {
+      "enabled": true,
+      "autoGenerate": true,
+      "includeTimestamps": true,
+      "includeMetrics": true,
+      "trackParallelExecution": true
+    }
+  }
+}

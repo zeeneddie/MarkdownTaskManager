@@ -1,0 +1,50 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/claude"
+      ]
+    }
+  },
+  "claudeCodeTasks": {
+    "enabled": true,
+    "taskListPrefix": "BUG-"
+  },
+  "customInstructions": "You are working on bug fixes using the MarQed.ai methodology. Your goal is to identify root causes, implement safe fixes, create comprehensive tests, and ensure no regressions. Follow the bug fix workflow strictly: investigate, fix, test, validate. Update task status as you progress through each phase.",
+  "name": "MarQed Bug Fix",
+  "temperature": 0.3,
+  "maxTokens": 8000,
+  "workflows": {
+    "bugfix": {
+      "enabled": true,
+      "maxIterations": 20,
+      "validationRequired": true,
+      "phases": [
+        "Root Cause Verification",
+        "Fix Implementation",
+        "Unit Testing",
+        "Integration Testing",
+        "Regression Testing",
+        "Code Review & Documentation",
+        "Deployment Preparation"
+      ]
+    }
+  },
+  "validation": {
+    "autoValidate": true,
+    "strictMode": true,
+    "requireTests": true,
+    "minCoverage": 80
+  },
+  "reporting": {
+    "wbso": {
+      "enabled": true,
+      "autoGenerate": true,
+      "includeTimestamps": true,
+      "includeMetrics": true
+    }
+  }
+}

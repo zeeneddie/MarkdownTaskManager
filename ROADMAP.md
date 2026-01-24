@@ -1,8 +1,8 @@
 # MarQed Platform Roadmap
 
 **Project:** MarQed AI Agent Software Platform
-**Last Updated:** Week 158 (2026-01-19)
-**Total Phases:** 35+ | **Timeline:** Week 144-250
+**Last Updated:** Week 158 (2026-01-21)
+**Total Phases:** 50 | **Timeline:** Week 144-250
 
 ---
 
@@ -21,7 +21,8 @@ WEEK 144-158: CRITICAL FOUNDATION + ORCHESTRATOR + SECURITY ✅ COMPLETE
 ├── Fase 23.5: Confucius Orchestrator ✅ COMPLETE (Week 149-154)
 ├── Fase 23.6: Stage Council Review ✅ COMPLETE (Week 157)
 ├── Fase 24.6: Restartable Workflows ✅ COMPLETE (Week 158)
-├── Fase 24.7: Async Database Persistence 🔄 NEXT (Week 158-159)
+├── Fase 24.8: Epic Generation Fix ✅ COMPLETE (Week 158)
+├── Fase 24.7: Async Database Persistence 🔄 NEXT (Week 159-160) ← CONTINUE HERE
 ├── Fase 29: Quality-Functionality Impact Mapping ✅ COMPLETE (Week 156-157)
 ├── Fase 31: CWE Security Scanner Suite ✅ COMPLETE (Week 157)
 └── Fase 24-A1: Legacy Quickscan ✅ COMPLETE (Week 157)
@@ -38,12 +39,57 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 ├── Fase 43: Zero-Complaints Green Paper & Maintenance (Week 177-184) 🆕
 ├── Fase 44: AI Code Complaints Strategy (Week 185-192) 🆕
 ├── Fase 45: Reverse Traceability Service (Week 193-200) 🆕
-└── Fase 46: User Workflow Documentation (Week 201-208) 🆕
+├── Fase 46: User Workflow Documentation (Week 201-208) 🆕
+├── Fase 47: LRM Integration Foundation (Week 209-216) 🆕
+├── Fase 48: LRM Software Intake Enhancement (Week 217-224) 🆕
+├── Fase 49: LRM Advanced Workflows (Week 225-232) 🆕
+└── Fase 50: LRM Autonomous Operations (Week 233-240) 🆕
 ```
 
 ---
 
-## Current Focus (Week 158)
+## Current Focus (Week 158-159)
+
+### ✅ COMPLETED: Epic Generation Fix - Journey-Based Epic Detection
+
+**Priority:** HIGH (Blocking for accurate backlog generation)
+**Status:** ✅ COMPLETE (Week 158)
+**Effort:** ~8 uur
+**Documentation:**
+- [`backend/docs/EPIC_GENERATION_FIX.md`](backend/docs/EPIC_GENERATION_FIX.md)
+- [`backend/docs/plans/FASE-24.8-EPIC-GENERATION-FIX-COMPLETED.md`](backend/docs/plans/FASE-24.8-EPIC-GENERATION-FIX-COMPLETED.md)
+
+**Oplossing Geïmplementeerd:**
+- Created `CombinedEpicSearcher` - combines journey-based + folder-based detection
+- Created `JourneyBasedEpicSearcher` - scans screens, navigation, buttons, messages
+- Created `GenericEpicSearcher` - folder-based fallback for infrastructure
+- Modified `IntakeToBacklogService` to use CombinedEpicSearcher
+- Modified `BrownPaperService` with optional enhancement method
+
+**Nieuwe Module:** `backend/app/services/epic_searchers/`
+```
+epic_searchers/
+├── __init__.py
+├── models.py              # DetectedScreen, DetectedJourney, DetectedEpic
+├── journey_epic_searcher.py    # Journey-based detection
+├── generic_epic_searcher.py    # Folder-based detection
+└── combined_epic_searcher.py   # Combined approach
+```
+
+**Output Voorbeeld:**
+```
+BUSINESS EPICS (from User Journeys):
+├── Dossier (12 screens, 8 journeys) - Actions: [Zoeken, Opslaan, Verwijderen]
+├── Afspraken (8 screens, 5 journeys) - Actions: [Inplannen, Annuleren]
+└── Beheer (15 screens, 6 journeys)
+
+INFRASTRUCTURE EPICS (from Folder Structure):
+├── CRS Libraries
+├── API Layer
+└── Database
+```
+
+---
 
 ### CRITICAL: Async Database Persistence Refactoring
 
@@ -494,6 +540,102 @@ See: [docs/roadmap/phases/fase-46-user-workflow-documentation.md](docs/roadmap/p
 
 ---
 
+## Fase 47-50: LRM (Large Reasoning Model) Integration (Week 209-240)
+
+**Status:** PLANNED
+**Priority:** HIGH (ROI 9.0)
+**Total Effort:** 480 uur (~12 weken)
+**Documentation:** [backend/docs/plans/LRM-INTEGRATION-IMPLEMENTATION-PLAN.md](backend/docs/plans/LRM-INTEGRATION-IMPLEMENTATION-PLAN.md)
+
+Integratie van het LRM (Large Reasoning Model) framework - een three-tier Claude-gebaseerd reasoning systeem voor complexe analyse taken.
+
+### LRM Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  TIER 1: ROOT MODEL (Claude Opus 4.5)                           │
+│  • Orchestration & synthesis, high-level reasoning              │
+├─────────────────────────────────────────────────────────────────┤
+│  TIER 2: SUB-LLM (Claude Haiku)                                 │
+│  • Chunk-level analysis, pattern detection, fast processing     │
+├─────────────────────────────────────────────────────────────────┤
+│  TIER 3: PERSISTENT STATE (Python REPL + Redis/PostgreSQL)      │
+│  • Context management, state persistence, memory compression    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Fase 47: LRM Integration Foundation (Week 209-216)
+
+**Effort:** 120 uur (~4 weken)
+
+| Component | Description |
+|-----------|-------------|
+| **LRMService** | Core three-tier orchestration service |
+| **LRMStateManager** | State persistence via Redis + PostgreSQL |
+| **LRMChunkingService** | Smart content chunking with overlap |
+| **LRMCostTracker** | Token usage tracking, budget alerts |
+| **LRMPromptTemplates** | Versioned prompt templates per use case |
+| **API Endpoints** | `/api/lrm/*` REST + SSE streaming (8 endpoints) |
+
+### Fase 48: LRM Software Intake Enhancement (Week 217-224)
+
+**Effort:** 140 uur (~4-5 weken)
+
+| Component | Description |
+|-----------|-------------|
+| **LRMIntakeValidator** | Validate and correlate scan findings |
+| **LRMSecurityAnalyzer** | Deep security analysis with cross-reference |
+| **LRMTechDebtEvaluator** | Multi-level tech debt assessment |
+| **LRMRecommendationEngine** | Prioritized remediation suggestions |
+| **False Positive Reduction** | 60-80% reduction via LRM correlation |
+
+### Fase 49: LRM Advanced Workflows (Week 225-232)
+
+**Effort:** 120 uur (~4 weken)
+
+| Component | Description |
+|-----------|-------------|
+| **LRMMaintenancePlanner** | Multi-level maintenance prioritization |
+| **LRMBugAnalyzer** | Root cause analysis for bugs |
+| **LRMRequirementsGenerator** | Code-to-requirements reverse engineering |
+| **LRMCodeReviewer** | Deep code review with cross-file context |
+| **LRMDocumentationGenerator** | Context-aware documentation generation |
+
+### Fase 50: LRM Autonomous Operations (Week 233-240)
+
+**Effort:** 100 uur (~3 weken)
+
+| Component | Description |
+|-----------|-------------|
+| **LRMAutonomousScheduler** | Schedule overnight LRM analyses |
+| **LRMBatchProcessor** | Process multiple projects in batch |
+| **LRMQualityGate** | Automated go/no-go decisions |
+| **LRMAlertingService** | Smart alerts on significant findings |
+| **Ralph Wiggum Integration** | LRM as reasoning engine for Ralph |
+
+### LRM Success Metrics
+
+| Metric | Target |
+|--------|--------|
+| False Positive Reduction | >= 60% |
+| Finding Correlation Accuracy | >= 85% |
+| Human Acceptance of Recommendations | >= 80% |
+| Processing Time per 100K LOC | < 15 minutes |
+| Cost per 100K LOC Analysis | < $10 |
+| Overnight Success Rate | >= 95% |
+
+### LRM Cost Optimization Strategy
+
+```
+TIER 1 (Free/Cheap): Static analysis + Ollama pre-screening → Filter 60-70%
+TIER 2 (Low Cost): Haiku chunk analysis → Handle 80-90% remaining
+TIER 3 (High Value): Opus synthesis → Only 10-20% of processing
+
+RESULT: 80-90% cost reduction vs. Opus-only approach
+```
+
+---
+
 ## Design Principles
 
 1. **Small, Specialized Analyzers** - COBOL items (B2, B3, B4) blijven apart: kwaliteit boven snelheid
@@ -519,6 +661,7 @@ See: [docs/roadmap/phases/fase-46-user-workflow-documentation.md](docs/roadmap/p
 | [fase-44-ai-code-complaints-strategy.md](docs/roadmap/phases/fase-44-ai-code-complaints-strategy.md) | 🆕 Fase 44: AI Code Complaints Strategy |
 | [fase-45-reverse-traceability-service.md](docs/roadmap/phases/fase-45-reverse-traceability-service.md) | 🆕 Fase 45: Reverse Traceability Service |
 | [fase-46-user-workflow-documentation.md](docs/roadmap/phases/fase-46-user-workflow-documentation.md) | 🆕 Fase 46: User Workflow Documentation |
+| [LRM-INTEGRATION-IMPLEMENTATION-PLAN.md](backend/docs/plans/LRM-INTEGRATION-IMPLEMENTATION-PLAN.md) | 🆕 Fase 47-50: LRM Integration Master Plan |
 
 ---
 
@@ -547,10 +690,14 @@ See: [docs/roadmap/phases/fase-46-user-workflow-documentation.md](docs/roadmap/p
 | **AI Code Complaints Strategy (Fase 44)** | 185-192 | 3x improvement over industry AI code metrics |
 | **Reverse Traceability Service (Fase 45)** | 193-200 | Code→Requirements pipeline, DB opslag, requirements docs, >=80% coverage |
 | **User Workflow Documentation (Fase 46)** | 201-208 | ASCII schermen, user workflows, persona detection, >=85% accuracy |
+| **LRM Foundation (Fase 47)** | 209-216 | Three-tier LRM service, state management, API endpoints |
+| **LRM Intake Enhancement (Fase 48)** | 217-224 | 60% false positive reduction, scan correlation, recommendations |
+| **LRM Advanced Workflows (Fase 49)** | 225-232 | Maintenance planner, bug analyzer, requirements generator |
+| **LRM Autonomous Operations (Fase 50)** | 233-240 | Overnight batch processing, Ralph integration, quality gates |
 | **COBOL Support** | 185 | B1 Analyzer complete |
 | **LLM Collaboration** | 195 | B12 Framework active |
-| **Full Platform** | 250 | All 75+ items complete |
+| **Full Platform** | 250 | All 85+ items complete |
 
 ---
 
-*Generated: Week 158 (2026-01-19)*
+*Generated: Week 158 (2026-01-21)*

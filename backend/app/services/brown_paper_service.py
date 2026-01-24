@@ -98,6 +98,13 @@ from app.models.brown_paper_enhanced import (
     TIER_PROVIDERS,
 )
 
+# Week 158: Epic Searchers for journey-based and folder-based epic detection
+from app.services.epic_searchers import (
+    CombinedEpicSearcher,
+    CombinedSearchConfig,
+    DetectedEpic,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -1910,6 +1917,146 @@ class BrownPaperService:
     # ========================================================================
     # EPIC GENERATION
     # ========================================================================
+
+    def enhance_domains_with_epic_searcher(
+        self,
+        session_id: str,
+        project_path: Optional[str] = None
+    ) -> List[BusinessDomain]:
+        """
+        Optionally enhance domain detection using CombinedEpicSearcher.
+
+        Uses journey-based and folder-based detection to find meaningful
+        business domains instead of relying solely on code pattern analysis.
+
+        Args:
+            session_id: The Brown Paper session ID
+            project_path: Path to the project source code (optional)
+
+        Returns:
+            List of enhanced BusinessDomain objects
+        """
+        session = self.get_session(session_id)
+        if not session or not session.analysis:
+            logger.warning(f"Cannot enhance domains: session {session_id} not found")
+            return []
+
+        # If no project_path provided, try to get from session
+        if not project_path and session.analysis.project_path:
+            project_path = session.analysis.project_path
+
+        if not project_path:
+            logger.info("No project_path available, skipping epic searcher enhancement")
+            return session.analysis.domains
+
+        try:
+            # Configure the combined searcher
+            config = CombinedSearchConfig(
+                project_path=project_path,
+                max_journey_depth=6,
+                min_screens_per_journey=2,
+                include_infrastructure=True,
+                include_uncovered_folders=True,
+            )
+
+            # Run the combined search
+            searcher = CombinedEpicSearcher(config)
+            detected_epics: List[DetectedEpic] = searcher.search()
+
+            if not detected_epics:
+                logger.info("CombinedEpicSearcher found no epics, keeping existing domains")
+                return session.analysis.domains
+
+            # Convert detected epics to BusinessDomain objects
+            enhanced_domains: List[BusinessDomain] = []
+
+            for epic in detected_epics:
+                domain = BusinessDomain(
+                    name=epic.name,
+                    description=epic.description,
+                    modules=epic.source_folders,
+                    entities=[],  # Will be enriched from existing analysis
+                    use_cases=[],  # Will be enriched from existing analysis
+                    priority="high" if epic.category == "business" else "medium",
+                    complexity="medium",
+                )
+
+                # Add journey metadata if available
+                if epic.metadata:
+                    journey_count = epic.metadata.get("journey_count", 0)
+                    actions = epic.metadata.get("actions", [])
+
+                    # Convert actions to use cases
+                    for action in actions[:10]:
+                        domain.use_cases.append(action)
+
+                    # Update description with journey info
+                    if journey_count > 0:
+                        domain.description = f"{epic.description} ({journey_count} user journeys)"
+
+                enhanced_domains.append(domain)
+
+            # Merge with existing domains to preserve entities and other metadata
+            enhanced_domains = self._merge_domains(
+                existing_domains=session.analysis.domains,
+                new_domains=enhanced_domains
+            )
+
+            # Update session with enhanced domains
+            session.analysis.domains = enhanced_domains
+            session.updated_at = datetime.now(timezone.utc)
+
+            logger.info(f"Enhanced domains with CombinedEpicSearcher: {len(enhanced_domains)} domains")
+            return enhanced_domains
+
+        except Exception as e:
+            logger.warning(f"CombinedEpicSearcher enhancement failed: {e}")
+            return session.analysis.domains
+
+    def _merge_domains(
+        self,
+        existing_domains: List[BusinessDomain],
+        new_domains: List[BusinessDomain]
+    ) -> List[BusinessDomain]:
+        """
+        Merge existing domains with newly detected domains.
+
+        Preserves entities and use_cases from existing domains when
+        domains have matching names.
+        """
+        # Create lookup for existing domains
+        existing_by_name: Dict[str, BusinessDomain] = {
+            d.name.lower(): d for d in existing_domains
+        }
+
+        merged: List[BusinessDomain] = []
+
+        for new_domain in new_domains:
+            name_lower = new_domain.name.lower()
+
+            # Check if there's a matching existing domain
+            if name_lower in existing_by_name:
+                existing = existing_by_name[name_lower]
+                # Merge: keep new domain but enrich with existing data
+                new_domain.entities = list(set(
+                    new_domain.entities + existing.entities
+                ))
+                new_domain.use_cases = list(set(
+                    new_domain.use_cases + existing.use_cases
+                ))
+                # Use more specific description if available
+                if len(existing.description) > len(new_domain.description):
+                    new_domain.description = existing.description
+
+            merged.append(new_domain)
+
+        # Add any existing domains that weren't in the new set
+        existing_names_lower = {d.name.lower() for d in new_domains}
+        for existing in existing_domains:
+            if existing.name.lower() not in existing_names_lower:
+                merged.append(existing)
+
+        return merged
 
     async def generate_epics(self, session_id: str) -> List[Dict[str, Any]]:
         """

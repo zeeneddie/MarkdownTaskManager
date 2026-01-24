@@ -1,0 +1,176 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/claude"
+      ]
+    }
+  },
+  "claudeCodeTasks": {
+    "enabled": true,
+    "taskListPrefix": "ANALYZE-"
+  },
+  "customInstructions": "You are working on comprehensive code analysis using the MarQed.ai methodology. Your goal is to systematically analyze codebases for quality, security, architecture, technical debt, and compliance. Follow the analysis workflow through all 6 phases: Discovery, Automated Analysis, Deep Analysis, Security & Compliance, Prioritization, and Reporting. This is an expert-level analysis requiring thoroughness over speed. Update task status as you progress through each phase.",
+  "name": "MarQed Code Analysis",
+  "temperature": 0.3,
+  "maxTokens": 8000,
+  "workflows": {
+    "analyze": {
+      "enabled": true,
+      "modes": {
+        "quick": {
+          "description": "Basic metrics and high-level overview",
+          "estimatedTime": "2-4h",
+          "maxIterations": 10
+        },
+        "standard": {
+          "description": "Comprehensive analysis of all areas",
+          "estimatedTime": "8-12h",
+          "maxIterations": 20
+        },
+        "deep": {
+          "description": "Everything + manual review + expert analysis",
+          "estimatedTime": "20-30h",
+          "maxIterations": 30
+        },
+        "incremental": {
+          "description": "Only analyze changes since last run",
+          "estimatedTime": "varies",
+          "maxIterations": 15
+        }
+      },
+      "supportedStacks": [
+        "asp-classic",
+        "dotnet",
+        "java",
+        "python",
+        "nodejs",
+        "php",
+        "auto"
+      ],
+      "phases": [
+        "Discovery & Detection",
+        "Automated Analysis",
+        "Deep Analysis",
+        "Security & Compliance Deep Dive",
+        "Prioritization & Roadmap",
+        "Reporting & Deliverables"
+      ],
+      "parallelizable": true,
+      "phaseParallelization": {
+        "phase2": true,
+        "phase3": true,
+        "phase4": true
+      }
+    }
+  },
+  "analysis": {
+    "autoDetectStack": true,
+    "runAllApplicableTools": true,
+    "collectComprehensiveMetrics": true,
+    "includeArchitectureAnalysis": true,
+    "calculateTechnicalDebt": true,
+    "performSecurityAudit": true,
+    "checkCompliance": {
+      "nen7510": true,
+      "iso27001": true,
+      "gdpr": true
+    },
+    "qualityThresholds": {
+      "minQualityScore": 70,
+      "maxComplexity": 10,
+      "minTestCoverage": 80,
+      "maxTechnicalDebtHours": 200
+    }
+  },
+  "security": {
+    "owaspTop10Check": true,
+    "dependencyVulnerabilityScan": true,
+    "codeVulnerabilityScan": true,
+    "complianceVerification": true,
+    "riskBasedPrioritization": true,
+    "remediationGuidance": true
+  },
+  "validation": {
+    "autoValidate": true,
+    "strictMode": true,
+    "requireComprehensiveResults": true,
+    "validateToolExecution": true,
+    "checkResultCompleteness": true
+  },
+  "reporting": {
+    "formats": {
+      "markdown": {
+        "enabled": true,
+        "alwaysGenerate": true
+      },
+      "json": {
+        "enabled": true,
+        "optional": true
+      },
+      "html": {
+        "enabled": true,
+        "optional": true,
+        "includeDashboard": true
+      },
+      "excel": {
+        "enabled": true,
+        "optional": true,
+        "requiresPython": true
+      },
+      "pdf": {
+        "enabled": true,
+        "optional": true,
+        "requiresTools": true
+      }
+    },
+    "wbso": {
+      "enabled": true,
+      "autoGenerate": true,
+      "includeTimestamps": true,
+      "includeMetrics": true,
+      "includeInnovation": true,
+      "dutchLanguage": true,
+      "type": "verantwoordingsrapportage"
+    },
+    "followUpPRDs": {
+      "generateMigrationPRD": false,
+      "createBacklogPRDs": false,
+      "targetStack": null
+    }
+  },
+  "export": {
+    "resultsDirectory": "${HOME}/.marqed/results/${ANALYSIS_ID}",
+    "logsDirectory": "${HOME}/.marqed/logs/${ANALYSIS_ID}",
+    "cacheDirectory": "${HOME}/.marqed/cache/${ANALYSIS_ID}",
+    "createGitHubIssues": false
+  },
+  "performance": {
+    "parallelToolExecution": true,
+    "cacheResults": true,
+    "cacheDuration": "24h",
+    "incrementalAnalysisSupport": true
+  },
+  "integrationPoints": {
+    "externalPlatform": {
+      "enabled": false,
+      "note": "TODO: Implement external tool platform integration",
+      "endpoints": {
+        "fetchCodebase": null,
+        "retrievePreviousAnalysis": null,
+        "loadCustomRules": null,
+        "storeResults": null,
+        "pushFindings": null,
+        "updateDashboard": null,
+        "notifyStakeholders": null
+      },
+      "database": {
+        "storeResults": false,
+        "schema": "See ANALYZE-TEMPLATE-v2.md for schema placeholder"
+      }
+    }
+  }
+}

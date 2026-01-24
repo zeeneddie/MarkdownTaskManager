@@ -54,6 +54,7 @@ class RiskLevel(str, Enum):
     MEDIUM = "medium"       # EOL within 12 months
     LOW = "low"             # EOL within 24 months
     SAFE = "safe"           # Fully supported, EOL > 24 months
+    UNKNOWN = "unknown"     # Version not in EOL database
 
 
 @dataclass
