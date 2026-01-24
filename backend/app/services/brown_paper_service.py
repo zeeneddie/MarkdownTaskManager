@@ -2630,7 +2630,7 @@ class BrownPaperService:
             result.errors.append(f"SIGMetrics: {e}")
 
         result.duration_ms = int((time.time() - start_time) * 1000)
-        result.success = len(result.errors) == 0 or result.dependency_graph or result.code_analysis
+        result.success = len(result.errors) == 0 or result.dependency_graph is not None or result.code_analysis is not None
 
         return result
 

@@ -444,7 +444,7 @@ class TestBMADEventLogging:
     @patch('app.services.brown_paper_service.AsyncSessionLocal')
     async def test_log_event_success(self, mock_session_local, service, sample_session_id):
         """Test logging an event."""
-        from app.services.brown_paper_service import BMADEventType
+        from app.models.marqed_session import MarQedEventType
 
         mock_db = AsyncMock()
         mock_db.add = MagicMock()  # add() is sync in SQLAlchemy
@@ -453,7 +453,7 @@ class TestBMADEventLogging:
         # Execute
         await service._log_event(
             session_id=sample_session_id,
-            event_type=BMADEventType.ANSWER_SUBMITTED,
+            event_type=MarQedEventType.ANSWER_SUBMITTED,
             event_data={"question_number": 1, "answer_length": 100},
             created_by="test_user"
         )
@@ -466,7 +466,7 @@ class TestBMADEventLogging:
     @patch('app.services.brown_paper_service.AsyncSessionLocal')
     async def test_log_event_without_user(self, mock_session_local, service, sample_session_id):
         """Test logging an event without user ID."""
-        from app.services.brown_paper_service import BMADEventType
+        from app.models.marqed_session import MarQedEventType
 
         mock_db = AsyncMock()
         mock_db.add = MagicMock()  # add() is sync in SQLAlchemy
@@ -475,7 +475,7 @@ class TestBMADEventLogging:
         # Execute
         await service._log_event(
             session_id=sample_session_id,
-            event_type=BMADEventType.SESSION_STARTED,
+            event_type=MarQedEventType.SESSION_STARTED,
             event_data={"project_path": "/test/project"}
         )
 

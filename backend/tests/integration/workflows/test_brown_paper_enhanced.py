@@ -208,18 +208,18 @@ class TestBrownPaperServiceEnhanced:
              patch('app.services.brown_paper_service.DeepExtractionService') as deep_mock, \
              patch('app.services.brown_paper_service.get_brown_paper_estimation_service') as est_mock:
 
-            # Configure dependency graph mock
+            # Configure dependency graph mock (uses sync analyze_directory method)
             dep_instance = MagicMock()
-            dep_instance.analyze_dependencies = AsyncMock(return_value=MagicMock(
-                to_dict=lambda: {"nodes": [], "edges": [], "metrics": {}}
-            ))
+            dep_result_mock = MagicMock()
+            dep_result_mock.to_dict = MagicMock(return_value={"nodes": [], "edges": [], "metrics": {}})
+            dep_instance.analyze_directory = MagicMock(return_value=dep_result_mock)
             dep_mock.return_value = dep_instance
 
-            # Configure code analysis mock
+            # Configure code analysis mock (uses async analyze() method)
             code_instance = MagicMock()
-            code_instance.aggregate_analysis = AsyncMock(return_value=MagicMock(
-                to_dict=lambda: {"complexity_profile": {"low": 50, "medium": 30, "high": 15, "very_high": 5}}
-            ))
+            code_result_mock = MagicMock()
+            code_result_mock.to_dict = MagicMock(return_value={"complexity_profile": {"low": 50, "medium": 30, "high": 15, "very_high": 5}})
+            code_instance.analyze = AsyncMock(return_value=code_result_mock)
             code_mock.return_value = code_instance
 
             # Configure layered analysis mock
@@ -279,7 +279,7 @@ class TestBrownPaperServiceEnhanced:
         service = BrownPaperService()
         options = EnhancedAnalysisOptions()
 
-        result = await service._phase1_code_understanding("/test/path", options)
+        result = await service._phase1_code_understanding("/test/path", options, mock_db_session)
 
         assert result.success is True
         assert result.dependency_graph is not None
@@ -294,7 +294,7 @@ class TestBrownPaperServiceEnhanced:
         service = BrownPaperService()
         options = EnhancedAnalysisOptions(skip_vbscript=True)
 
-        result = await service._phase1_code_understanding("/test/path", options)
+        result = await service._phase1_code_understanding("/test/path", options, mock_db_session)
 
         # LayeredAnalysis should not be called
         assert result.layered_analysis is None
