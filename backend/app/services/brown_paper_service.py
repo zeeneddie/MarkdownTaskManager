@@ -4606,7 +4606,7 @@ Timeline: {timeline}
 
         logger.info(f"Tasks generated for session {session_id}: {len(epics)} epics, {len(stories)} stories, {total_fp} FP")
 
-        return tasks
+        return {"success": True, "tasks": tasks}
 
     # ========================================================================
     # APPROVAL / EXPORT

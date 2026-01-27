@@ -705,6 +705,25 @@ class SWOTGeneratorService:
 
         self.matrix.modernization_readiness = max(0, min(100, readiness))
 
+    async def generate_swot(
+        self,
+        vbscript_analysis: Optional[Dict[str, Any]] = None,
+        sp_analysis: Optional[Dict[str, Any]] = None,
+        code_analysis: Optional[Dict[str, Any]] = None,
+        security_analysis: Optional[Dict[str, Any]] = None,
+    ) -> SWOTMatrix:
+        """
+        Alias for generate() - maintains backward compatibility.
+
+        Week 159: Added alias to fix method name mismatch in layered_analysis_service.
+        """
+        return await self.generate(
+            vbscript_analysis=vbscript_analysis,
+            sp_analysis=sp_analysis,
+            code_analysis=code_analysis,
+            security_analysis=security_analysis,
+        )
+
     def _generate_recommendations(self) -> None:
         """Generate top recommendations."""
         recommendations = []

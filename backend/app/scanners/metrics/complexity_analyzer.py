@@ -75,7 +75,8 @@ class ComplexityAnalyzer(BaseScanner):
         complexity_path = QUALITY_TOOLS_PATH / "03-unit-complexity-analyzer"
 
         if not complexity_path.exists():
-            raise ImportError(f"Complexity analyzer not found at {complexity_path}")
+            logger.info(f"External complexity analyzer not found at {complexity_path}, using built-in fallback")
+            return None, None
 
         # Add quality tools to path
         if str(QUALITY_TOOLS_PATH) not in sys.path:

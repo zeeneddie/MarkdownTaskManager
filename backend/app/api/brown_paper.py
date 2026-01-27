@@ -996,7 +996,13 @@ async def list_module_types():
 class MarQedStartRequest(BaseModel):
     """Request to start a MarQed Brown-Paper session."""
     project_name: str = Field(..., description="Name of the migration project")
-    project_path: Optional[str] = Field(None, description="Path to the project (optional)")
+    project_path: Optional[str] = Field(
+        None,
+        description="Path to the project source code (optional)",
+        alias="source_path"
+    )
+
+    model_config = {"populate_by_name": True}  # Allow both project_path and source_path
 
 
 class MarQedStartResponse(BaseModel):
@@ -1066,9 +1072,9 @@ class MarQedSpecificationResponse(BaseModel):
     mission: str
     vision: str
     scope: Dict[str, Any]
-    requirements: List[Dict[str, Any]]
-    constraints: List[Dict[str, Any]]
-    success_criteria: List[Dict[str, Any]]
+    requirements: Dict[str, Any]  # {"functional": [...], "non_functional": [...]}
+    constraints: List[str]  # List of constraint strings
+    success_criteria: List[str]  # List of success criteria strings
 
 
 class MarQedTasksResponse(BaseModel):
