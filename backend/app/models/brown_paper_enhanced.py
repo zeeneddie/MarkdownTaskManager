@@ -43,6 +43,8 @@ class EnhancedAnalysisOptions:
     generate_tests: bool = True
     include_swot: bool = True
     max_files_per_phase: int = 500
+    # Week 159: Business Logic Extraction - PVA Implementation
+    use_business_logic_extraction: bool = True  # Use enhanced domain extraction & story generation
 
 
 @dataclass

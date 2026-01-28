@@ -109,6 +109,19 @@ from app.services.epic_searchers import (
     DetectedEpic,
 )
 
+# Week 159: Business Logic Extraction - PVA Implementation
+from app.services.business_domain_extractor_service import (
+    BusinessDomainExtractorService,
+    BusinessDomainCandidate,
+    BusinessDomainExtractionResult,
+    get_business_domain_extractor,
+)
+from app.services.business_driven_story_generator_service import (
+    BusinessDrivenStoryGeneratorService,
+    StoryGenerationResult,
+    get_business_driven_story_generator,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -2275,20 +2288,82 @@ class BrownPaperService:
                     response.errors.extend(phase1.errors)
 
             # Phase 2: Domain Extraction
+            # Week 159: Use enhanced business domain extraction if enabled
+            use_business_logic_extraction = getattr(request.options, 'use_business_logic_extraction', True)
+
             if 2 in phases_to_run and response.phase1_result:
-                phase2 = await self._phase2_domain_extraction(
-                    project_path, response.phase1_result, request.options, db
-                )
+                if use_business_logic_extraction:
+                    # New: Enhanced domain extraction with BusinessDomainExtractor
+                    try:
+                        domain_result = await self._enhanced_domain_extraction(
+                            project_path, response.phase1_result, request.options
+                        )
+                        # Convert to Phase2Result format for compatibility
+                        phase2 = Phase2Result()
+                        phase2.domains = [
+                            {
+                                'name': d.name,
+                                'module_count': len(d.modules),
+                                'use_cases': d.use_cases,
+                                'entities': [e.name for e in d.entities],
+                                'confidence': d.confidence,
+                                'source_files': d.source_files,
+                            }
+                            for d in domain_result.domains
+                        ]
+                        phase2.business_rules_count = sum(len(d.use_cases) for d in domain_result.domains)
+                        phase2.success = True
+                        phase2.duration_ms = domain_result.extraction_time_ms
+                        # Store domain_result for Phase 3
+                        response.business_domain_result = domain_result
+                        logger.info(f"Enhanced domain extraction: {len(domain_result.domains)} domains found")
+                    except Exception as e:
+                        logger.warning(f"Enhanced domain extraction failed, falling back: {e}")
+                        phase2 = await self._phase2_domain_extraction(
+                            project_path, response.phase1_result, request.options, db
+                        )
+                else:
+                    # Original domain extraction
+                    phase2 = await self._phase2_domain_extraction(
+                        project_path, response.phase1_result, request.options, db
+                    )
+
                 response.phase2_result = phase2
                 response.phases_completed.append(2)
                 if not phase2.success:
                     response.errors.extend(phase2.errors)
 
-            # Phase 3: Hierarchical Extraction
+            # Phase 3: Hierarchical Extraction (or Business-Driven Story Generation)
             if 3 in phases_to_run and response.phase2_result:
-                phase3 = await self._phase3_hierarchical_extraction(
-                    project_path, response.phase2_result, request.options, db
-                )
+                if use_business_logic_extraction and hasattr(response, 'business_domain_result'):
+                    # New: Business-driven story generation
+                    try:
+                        story_result = await self._generate_business_driven_stories(
+                            domain_result=response.business_domain_result,
+                            phase1=response.phase1_result,
+                        )
+                        # Convert to Phase3Result format for compatibility
+                        phase3 = Phase3Result()
+                        phase3.epics = self._convert_story_result_to_epics(story_result)
+                        phase3.total_stories = story_result.total_stories
+                        phase3.total_story_points = story_result.total_story_points
+                        phase3.success = True
+                        phase3.duration_ms = story_result.generation_time_ms
+                        logger.info(
+                            f"Business-driven story generation: {len(phase3.epics)} epics, "
+                            f"{story_result.total_stories} stories"
+                        )
+                    except Exception as e:
+                        logger.warning(f"Business-driven story generation failed, falling back: {e}")
+                        phase3 = await self._phase3_hierarchical_extraction(
+                            project_path, response.phase2_result, request.options, db
+                        )
+                else:
+                    # Original hierarchical extraction
+                    phase3 = await self._phase3_hierarchical_extraction(
+                        project_path, response.phase2_result, request.options, db
+                    )
+
                 response.phase3_result = phase3
                 response.phases_completed.append(3)
                 if not phase3.success:
@@ -2346,6 +2421,16 @@ class BrownPaperService:
             }
             session.updated_at = datetime.now(timezone.utc)
             logger.info(f"Enhanced analysis stored for session {session_id}")
+
+            # Persist enhanced analysis to database
+            # Use MarQed workflow for MarQed sessions
+            if isinstance(session, MarQedBrownPaperSession):
+                marqed_workflow = get_marqed_brown_paper_workflow()
+                await marqed_workflow._persist_session_to_db(session)
+            else:
+                # For regular BrownPaper sessions, store in session object
+                # (already stored in memory, will be persisted on next access)
+                pass
 
         return response
 
@@ -2726,6 +2811,251 @@ class BrownPaperService:
 
         result.duration_ms = int((time.time() - start_time) * 1000)
         return result
+
+    # =========================================================================
+    # WEEK 159: BUSINESS LOGIC EXTRACTION - PVA IMPLEMENTATION
+    # =========================================================================
+
+    async def _enhanced_domain_extraction(
+        self,
+        project_path: str,
+        phase1: Phase1Result,
+        options: EnhancedAnalysisOptions,
+    ) -> BusinessDomainExtractionResult:
+        """
+        Enhanced domain extraction using BusinessDomainExtractor.
+
+        Week 159 PVA: Improves upon basic Phase 2 extraction with:
+        - Module clustering based on dependencies
+        - Healthcare/FysioOne specific domain patterns
+        - Entity extraction from classes, tables, forms
+        - Source file references for traceability
+
+        Args:
+            project_path: Path to project being analyzed
+            phase1: Phase 1 code analysis results
+
+        Returns:
+            BusinessDomainExtractionResult with detailed domains
+        """
+        logger.info(f"Starting enhanced domain extraction for {project_path}")
+
+        # Create extractor with healthcare patterns (FysioOne)
+        extractor = get_business_domain_extractor(
+            use_healthcare_patterns=True
+        )
+
+        # Prepare modules from Phase 1
+        modules = []
+        if phase1.dependency_graph:
+            dep_graph = phase1.dependency_graph
+            modules_data = dep_graph.get('modules', {}) if isinstance(dep_graph, dict) else {}
+
+            # Normalize to list of module dicts
+            if isinstance(modules_data, dict):
+                for mod_name, mod_info in modules_data.items():
+                    if isinstance(mod_info, dict):
+                        mod_info['name'] = mod_name
+                        modules.append(mod_info)
+                    else:
+                        modules.append({'name': mod_name, 'path': mod_name})
+            elif isinstance(modules_data, list):
+                for item in modules_data:
+                    if isinstance(item, dict):
+                        modules.append(item)
+                    else:
+                        modules.append({'name': str(item), 'path': str(item)})
+
+        # Prepare dependencies from Phase 1
+        dependencies = []
+        if phase1.dependency_graph:
+            dep_graph = phase1.dependency_graph
+            edges = dep_graph.get('edges', []) if isinstance(dep_graph, dict) else []
+            for edge in edges:
+                if isinstance(edge, dict):
+                    dependencies.append(edge)
+                elif isinstance(edge, (list, tuple)) and len(edge) >= 2:
+                    dependencies.append({'source': edge[0], 'target': edge[1]})
+
+        # Extract domains
+        result = await extractor.extract_domains(
+            modules=modules,
+            dependencies=dependencies,
+            scan_path=project_path,
+        )
+
+        logger.info(
+            f"Enhanced extraction found {len(result.domains)} domains "
+            f"from {len(modules)} modules in {result.extraction_time_ms}ms"
+        )
+
+        return result
+
+    async def _generate_business_driven_stories(
+        self,
+        domain_result: BusinessDomainExtractionResult,
+        phase1: Optional[Phase1Result] = None,
+        specification_id: Optional[str] = None,
+        project_id: Optional[str] = None,
+    ) -> StoryGenerationResult:
+        """
+        Generate stories using BusinessDrivenStoryGenerator.
+
+        Week 159 PVA: Creates meaningful epics/stories based on:
+        - Business domains (not generic phases)
+        - Source file references
+        - Acceptance criteria from code analysis
+        - Story points based on complexity
+
+        Args:
+            domain_result: Result from enhanced domain extraction
+            phase1: Optional Phase 1 code analysis for enrichment
+            specification_id: Optional spec ID for linking
+            project_id: Optional project ID for linking
+
+        Returns:
+            StoryGenerationResult with epics, features, stories
+        """
+        logger.info(f"Generating business-driven stories for {len(domain_result.domains)} domains")
+
+        # Create generator
+        generator = get_business_driven_story_generator(velocity=20)
+
+        # Generate stories
+        code_analysis = None
+        if phase1 and phase1.code_analysis:
+            code_analysis = phase1.code_analysis
+
+        result = await generator.generate_stories(
+            domain_result=domain_result,
+            code_analysis=code_analysis,
+        )
+
+        logger.info(
+            f"Generated {result.total_stories} stories in {len(result.epics)} epics "
+            f"({result.total_story_points} story points)"
+        )
+
+        return result
+
+    def _convert_story_result_to_epics(
+        self,
+        story_result: StoryGenerationResult,
+    ) -> List[Dict[str, Any]]:
+        """
+        Convert StoryGenerationResult to Brown Paper epic format.
+
+        Maintains compatibility with existing epic persistence.
+        """
+        epics = []
+
+        for epic in story_result.epics:
+            epic_dict = {
+                "id": epic.id,
+                "name": epic.title,
+                "domain": epic.domain_name,
+                "description": epic.description,
+                "priority": len(story_result.epics) - story_result.epics.index(epic),
+                "complexity": epic.complexity,
+                "source": "business_driven_story_generator",
+                "features": [],
+                "metadata": {
+                    "modules": epic.source_modules,
+                    "domain_name": epic.domain_name,
+                    "estimated_story_points": epic.estimated_story_points,
+                    "estimated_weeks": epic.estimated_weeks,
+                    "generated_at": datetime.now(timezone.utc).isoformat(),
+                    **epic.metadata,
+                }
+            }
+
+            for feature in epic.features:
+                feature_dict = {
+                    "id": feature.id,
+                    "name": feature.title,
+                    "description": feature.description,
+                    "use_cases": [s.title for s in feature.stories],
+                    "stories": [],
+                }
+
+                for story in feature.stories:
+                    story_dict = {
+                        "id": story.id,
+                        "title": story.title,
+                        "description": story.description,
+                        "points": story.story_points,
+                        "acceptance_criteria": [
+                            {"id": ac.id, "description": ac.description}
+                            for ac in story.acceptance_criteria
+                        ],
+                        "source_references": [
+                            {
+                                "file_path": sr.file_path,
+                                "line_start": sr.line_start,
+                                "element_type": sr.element_type,
+                            }
+                            for sr in story.source_references
+                        ],
+                        "story_type": story.story_type,
+                        "complexity": story.complexity,
+                    }
+                    feature_dict["stories"].append(story_dict)
+
+                epic_dict["features"].append(feature_dict)
+
+            epics.append(epic_dict)
+
+        return epics
+
+    async def run_business_logic_extraction(
+        self,
+        session_id: str,
+        phase1: Phase1Result,
+        project_path: str,
+    ) -> Tuple[List[Dict[str, Any]], BusinessDomainExtractionResult]:
+        """
+        Run complete business logic extraction workflow.
+
+        Week 159 PVA: Main entry point for improved epic/story generation.
+
+        Steps:
+        1. Enhanced domain extraction (using BusinessDomainExtractor)
+        2. Business-driven story generation
+        3. Convert to Brown Paper format
+
+        Args:
+            session_id: Brown Paper session ID
+            phase1: Phase 1 code analysis results
+            project_path: Path to project
+
+        Returns:
+            Tuple of (epics list, domain extraction result)
+        """
+        logger.info(f"Running business logic extraction for session {session_id}")
+
+        # Step 1: Enhanced domain extraction
+        domain_result = await self._enhanced_domain_extraction(
+            project_path=project_path,
+            phase1=phase1,
+            options=EnhancedAnalysisOptions(),
+        )
+
+        # Step 2: Generate business-driven stories
+        story_result = await self._generate_business_driven_stories(
+            domain_result=domain_result,
+            phase1=phase1,
+        )
+
+        # Step 3: Convert to Brown Paper format
+        epics = self._convert_story_result_to_epics(story_result)
+
+        logger.info(
+            f"Business logic extraction complete: {len(epics)} epics, "
+            f"{story_result.total_stories} stories, "
+            f"{story_result.total_story_points} story points"
+        )
+
+        return epics, domain_result
 
     async def _phase3_hierarchical_extraction(
         self,
