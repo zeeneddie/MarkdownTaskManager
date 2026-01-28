@@ -243,6 +243,8 @@ class LayeredAnalysisService:
         result = swot.to_dict()
 
         # Store in database
+        prioritization = result.get("prioritization", {})
+        migration_readiness = result.get("migration_readiness", {})
         db_swot = SWOTAnalysis(
             id=uuid4(),
             session_id=session_id,
@@ -250,9 +252,11 @@ class LayeredAnalysisService:
             weaknesses=result.get("matrix", {}).get("weaknesses", []),
             opportunities=result.get("matrix", {}).get("opportunities", []),
             threats=result.get("matrix", {}).get("threats", []),
-            prioritization=result.get("prioritization", {}),
-            migration_readiness=result.get("migration_readiness", {}),
-            created_at=datetime.now(timezone.utc)
+            prioritized_weaknesses=prioritization.get("prioritized_weaknesses", []),
+            quick_wins=prioritization.get("quick_wins", []),
+            strategic_items=prioritization.get("strategic_items", []),
+            modernization_readiness=migration_readiness.get("score") if isinstance(migration_readiness, dict) else None
+            # created_at has server_default=func.now() in model
         )
         self.db.add(db_swot)
         await self.db.commit()

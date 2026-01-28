@@ -353,6 +353,205 @@
             color: #666;
         }
 
+        .epic-toggle {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            margin-right: 0.75rem;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .epic-toggle:hover {
+            background: #cbd5e1;
+        }
+
+        .epic-toggle.expanded {
+            background: #8B4513;
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        .epic-children {
+            display: none;
+            margin-left: 2.5rem;
+            padding-top: 0.5rem;
+        }
+
+        .epic-children.visible {
+            display: block;
+        }
+
+        /* Unified Onboarding: Confidence & Reconciliation Badges */
+        .confidence-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        .confidence-high {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .confidence-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .confidence-low {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .recon-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 0.25rem;
+        }
+        .recon-blind-spot {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .recon-phantom {
+            background: #f3e8ff;
+            color: #6b21a8;
+        }
+        .recon-sources {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-left: 0.25rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background: #fff;
+            border-radius: 6px;
+            border-left: 3px solid #d69e2e;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .feature-item:hover {
+            background: #fffff0;
+            transform: translateX(3px);
+        }
+
+        .feature-toggle {
+            width: 22px;
+            height: 22px;
+            border: none;
+            background: #fefcbf;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            margin-right: 0.6rem;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .feature-toggle:hover {
+            background: #fbd38d;
+        }
+
+        .feature-toggle.expanded {
+            background: #d69e2e;
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        .feature-info {
+            flex: 1;
+        }
+
+        .feature-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .feature-meta {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .feature-sp {
+            font-weight: 600;
+            color: #d69e2e;
+            font-size: 0.95rem;
+        }
+
+        .feature-children {
+            display: none;
+            margin-left: 2rem;
+            padding-top: 0.35rem;
+        }
+
+        .feature-children.visible {
+            display: block;
+        }
+
+        .story-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 0.6rem 0.8rem;
+            background: #f0fdf4;
+            border-radius: 5px;
+            border-left: 3px solid #48bb78;
+            margin-bottom: 0.4rem;
+            font-size: 0.85rem;
+        }
+
+        .story-type-badge {
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            background: #c6f6d5;
+            color: #276749;
+            margin-right: 0.5rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .story-info {
+            flex: 1;
+        }
+
+        .story-title {
+            font-weight: 500;
+            margin-bottom: 0.15rem;
+        }
+
+        .story-ac {
+            font-size: 0.75rem;
+            color: #718096;
+        }
+
+        .story-sp {
+            font-weight: 600;
+            color: #48bb78;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+            margin-left: 0.5rem;
+        }
+
         /* Dependency Graph */
         .graph-container {
             background: white;
@@ -1063,24 +1262,58 @@
                 `).join('') || '<p style="color: #666;">Geen domains gedetecteerd</p>';
             }
 
-            // Phase 3/4 results - Backlog
+            // Phase 3/4 results - Backlog with drill-down
             const epics = result.phase3_result?.epics || result.phase4_result?.epics || [];
+            const allFeatures = result.phase3_result?.features || result.phase4_result?.features || [];
+            const allStories = result.phase3_result?.stories || result.phase4_result?.stories || [];
             if (epics.length > 0) {
                 document.getElementById('backlogPreview').style.display = 'block';
                 const epicList = document.getElementById('epicList');
-                epicList.innerHTML = epics.map((epic, i) => `
-                    <div class="epic-item" onclick="openEpicInKanban('${epic.id}')">
-                        <div class="epic-priority">${i + 1}</div>
-                        <div class="epic-info">
-                            <div class="epic-name">${epic.name || epic.title}</div>
-                            <div class="epic-meta">${epic.features?.length || 0} features, ${epic.stories?.length || 0} stories</div>
+                epicList.innerHTML = epics.map((epic, i) => {
+                    const epicId = epic.id || `EPIC-${String(i+1).padStart(3,'0')}`;
+                    // Find features for this epic (from JSONB features on epic, or from flat list)
+                    const epicFeatures = epic.features || allFeatures.filter(f => f.epic_id === epicId);
+                    const epicStories = allStories.filter(s => s.epic_id === epicId);
+                    const featureCount = epicFeatures.length;
+                    const storyCount = epic.stories?.length || epicStories.length || 0;
+
+                    // Reconciliation badges (Unified Onboarding)
+                    const recon = epic.reconciliation_data || {};
+                    const confidence = recon.confidence;
+                    let confidenceBadge = '';
+                    if (confidence !== undefined && confidence !== null) {
+                        const cls = confidence >= 0.9 ? 'confidence-high' : confidence >= 0.6 ? 'confidence-medium' : 'confidence-low';
+                        const pct = Math.round(confidence * 100);
+                        confidenceBadge = `<span class="confidence-badge ${cls}">${pct}%</span>`;
+                    }
+                    let reconBadge = '';
+                    if (recon.is_blind_spot) {
+                        reconBadge = '<span class="recon-badge recon-blind-spot">Blind Spot</span>';
+                    } else if (recon.is_phantom) {
+                        reconBadge = '<span class="recon-badge recon-phantom">Phantom</span>';
+                    }
+                    const sourceOrigin = (recon.source_origin || []).join(', ');
+                    const sourcesLabel = sourceOrigin ? `<span class="recon-sources">[${sourceOrigin}]</span>` : '';
+
+                    return `
+                    <div class="epic-wrapper">
+                        <div class="epic-item" onclick="toggleEpic('${epicId}', event)">
+                            <button class="epic-toggle" id="toggle-${epicId}" onclick="toggleEpic('${epicId}', event)">&#9654;</button>
+                            <div class="epic-priority">${i + 1}</div>
+                            <div class="epic-info">
+                                <div class="epic-name">${epic.name || epic.title}${confidenceBadge}${reconBadge}</div>
+                                <div class="epic-meta">${featureCount} features, ${storyCount} stories${epic.source_domain ? ' &middot; ' + epic.source_domain : ''}${sourcesLabel}</div>
+                            </div>
+                            <div class="epic-stats">
+                                <div class="epic-sp">${epic.estimated_sp || epic.story_points || '-'} SP</div>
+                                <div class="epic-weeks">${epic.estimated_weeks || epic.estimated_fp ? (epic.estimated_fp + ' FP') : '-'}</div>
+                            </div>
                         </div>
-                        <div class="epic-stats">
-                            <div class="epic-sp">${epic.estimated_sp || epic.story_points || '-'} SP</div>
-                            <div class="epic-weeks">${epic.estimated_weeks || '-'} weeks</div>
+                        <div class="epic-children" id="children-${epicId}">
+                            ${renderFeatures(epicFeatures, epicStories, allStories)}
                         </div>
-                    </div>
-                `).join('');
+                    </div>`;
+                }).join('');
             }
 
             // Phase 5 results - Estimation
@@ -1236,6 +1469,84 @@
             } else {
                 window.location.href = 'quality-dashboard.html';
             }
+        }
+
+        // ================================================================
+        // DRILL-DOWN: Epic -> Features -> Stories
+        // ================================================================
+
+        function toggleEpic(epicId, event) {
+            event.stopPropagation();
+            const children = document.getElementById(`children-${epicId}`);
+            const toggle = document.getElementById(`toggle-${epicId}`);
+            if (!children || !toggle) return;
+
+            const isVisible = children.classList.contains('visible');
+            children.classList.toggle('visible', !isVisible);
+            toggle.classList.toggle('expanded', !isVisible);
+        }
+
+        function toggleFeature(featId, event) {
+            event.stopPropagation();
+            const children = document.getElementById(`feat-children-${featId}`);
+            const toggle = document.getElementById(`feat-toggle-${featId}`);
+            if (!children || !toggle) return;
+
+            const isVisible = children.classList.contains('visible');
+            children.classList.toggle('visible', !isVisible);
+            toggle.classList.toggle('expanded', !isVisible);
+        }
+
+        function renderFeatures(features, epicStories, allStories) {
+            if (!features || features.length === 0) {
+                return '<div style="padding: 0.5rem; color: #999; font-size: 0.85rem;">Geen features gevonden</div>';
+            }
+
+            return features.map((feat, j) => {
+                const featId = feat.id || `FEAT-${String(j+1).padStart(3,'0')}`;
+                // Stories from feature.stories (JSONB) or from flat list
+                const featStories = feat.stories || allStories.filter(s => s.feature_id === featId);
+                const storyCount = featStories.length;
+                const sp = feat.estimated_sp || feat.story_points || 0;
+
+                return `
+                <div class="feature-wrapper">
+                    <div class="feature-item" onclick="toggleFeature('${featId}', event)">
+                        <button class="feature-toggle" id="feat-toggle-${featId}" onclick="toggleFeature('${featId}', event)">&#9654;</button>
+                        <div class="feature-info">
+                            <div class="feature-name">${feat.title || feat.name}</div>
+                            <div class="feature-meta">${storyCount} stories${feat.complexity ? ' &middot; ' + feat.complexity : ''}</div>
+                        </div>
+                        <div class="feature-sp">${sp} SP</div>
+                    </div>
+                    <div class="feature-children" id="feat-children-${featId}">
+                        ${renderStories(featStories)}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderStories(stories) {
+            if (!stories || stories.length === 0) {
+                return '<div style="padding: 0.4rem; color: #aaa; font-size: 0.8rem;">Geen stories</div>';
+            }
+
+            return stories.map(story => {
+                const sp = story.estimated_sp || story.story_points || 0;
+                const storyType = story.story_type || story.type || '';
+                const acCount = (story.acceptance_criteria || []).length;
+                const acText = acCount > 0 ? `${acCount} acceptance criteria` : '';
+
+                return `
+                <div class="story-item">
+                    ${storyType ? `<span class="story-type-badge">${storyType}</span>` : ''}
+                    <div class="story-info">
+                        <div class="story-title">${story.title || story.name}</div>
+                        ${acText ? `<div class="story-ac">${acText}</div>` : ''}
+                    </div>
+                    <div class="story-sp">${sp} SP</div>
+                </div>`;
+            }).join('');
         }
 
         function openEpicInKanban(epicId) {

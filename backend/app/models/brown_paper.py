@@ -178,6 +178,10 @@ class BrownPaperEpic(Base):
     source_modules = Column(JSONB, nullable=True)  # Module paths that map to this epic
     source_entities = Column(JSONB, nullable=True)  # Entity/class names
 
+    # Estimation
+    function_points = Column(Integer, default=0)  # Estimated FP for this epic
+    story_points = Column(Integer, default=0)  # Total SP across features/stories
+
     # Features (stored as JSON, can be expanded to separate table if needed)
     features = Column(JSONB, nullable=False, default=[])
 
@@ -186,6 +190,10 @@ class BrownPaperEpic(Base):
 
     # Status
     status = Column(String(20), default="draft")  # draft, approved, linked
+
+    # Reconciliation metadata (Unified Onboarding Workflow)
+    # Contains: confidence, source_origin, fp_delta, is_blind_spot, is_phantom, unified_session_id
+    reconciliation_data = Column(JSONB, nullable=True)
 
     # Timestamps
     created_at = Column(DateTime, default=lambda: datetime.utcnow())

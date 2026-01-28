@@ -1051,6 +1051,7 @@ class MarQedStatusResponse(BaseModel):
     migration_analysis: Optional[Dict[str, Any]] = None
     specification: Optional[Dict[str, Any]] = None
     tasks: Optional[Dict[str, Any]] = None
+    enhanced_analysis: Optional[Dict[str, Any]] = None  # Week 129: 6-phase analysis results
     created_at: str
     updated_at: str
 
@@ -1408,6 +1409,7 @@ async def marqed_get_status(session_id: str):
             migration_analysis=migration_analysis_dict,
             specification=session.specification,
             tasks=session.tasks,
+            enhanced_analysis=session.enhanced_analysis,
             created_at=session.created_at.isoformat(),
             updated_at=session.updated_at.isoformat(),
         )
@@ -2049,4 +2051,244 @@ async def get_metrics(session_id: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get metrics: {str(e)}",
+        )
+
+
+# ============================================================================
+# DATABASE-BACKED EPIC/FEATURE/STORY ENDPOINTS (Fase 24.10)
+# ============================================================================
+
+@router.get("/db/sessions")
+async def list_db_sessions():
+    """
+    List all Brown Paper sessions from the database.
+
+    Returns sessions with their epic counts for the dashboard.
+    """
+    from app.database import AsyncSessionLocal
+    from app.models.brown_paper import BrownPaperSession as BrownPaperSessionDB
+    from app.models.brown_paper import BrownPaperConstitution as BrownPaperConstitutionDB
+    from app.models.brown_paper import BrownPaperEpic as BrownPaperEpicDB
+    from sqlalchemy import select, func
+
+    try:
+        async with AsyncSessionLocal() as db:
+            # Get sessions with epic counts
+            result = await db.execute(
+                select(
+                    BrownPaperSessionDB,
+                    func.count(BrownPaperEpicDB.id).label("epic_count"),
+                )
+                .outerjoin(BrownPaperConstitutionDB, BrownPaperConstitutionDB.session_id == BrownPaperSessionDB.id)
+                .outerjoin(BrownPaperEpicDB, BrownPaperEpicDB.constitution_id == BrownPaperConstitutionDB.id)
+                .group_by(BrownPaperSessionDB.id)
+                .order_by(BrownPaperSessionDB.created_at.desc())
+            )
+            rows = result.all()
+
+            return {
+                "sessions": [
+                    {
+                        "id": str(row[0].id),
+                        "application_name": row[0].application_name,
+                        "root_path": row[0].root_path,
+                        "status": row[0].status,
+                        "modules_count": row[0].modules_count or 0,
+                        "domains_count": row[0].domains_count or 0,
+                        "epic_count": row[1],
+                        "generation_metadata": row[0].generation_metadata or {},
+                        "created_at": row[0].created_at.isoformat() if row[0].created_at else None,
+                    }
+                    for row in rows
+                ],
+                "total": len(rows),
+            }
+
+    except Exception as e:
+        logger.error(f"List DB sessions failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list sessions: {str(e)}",
+        )
+
+
+@router.get("/db/sessions/{session_id}/epics")
+async def get_db_epics(session_id: str):
+    """
+    Get all epics for a Brown Paper session from the database.
+
+    Returns the full epic hierarchy: epics -> features -> stories (from JSONB).
+    """
+    from app.database import AsyncSessionLocal
+    from app.models.brown_paper import BrownPaperConstitution as BrownPaperConstitutionDB
+    from app.models.brown_paper import BrownPaperEpic as BrownPaperEpicDB
+    from sqlalchemy import select
+
+    try:
+        async with AsyncSessionLocal() as db:
+            # Find constitution for this session
+            const_result = await db.execute(
+                select(BrownPaperConstitutionDB).where(BrownPaperConstitutionDB.session_id == session_id)
+            )
+            constitution = const_result.scalar_one_or_none()
+
+            if not constitution:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"No constitution found for session {session_id}",
+                )
+
+            # Get all epics for this constitution
+            epic_result = await db.execute(
+                select(BrownPaperEpicDB)
+                .where(BrownPaperEpicDB.constitution_id == constitution.id)
+                .order_by(BrownPaperEpicDB.priority)
+            )
+            epics = epic_result.scalars().all()
+
+            # Build response with hierarchy
+            total_features = 0
+            total_stories = 0
+            total_fp = 0
+            total_sp = 0
+
+            epics_data = []
+            for epic in epics:
+                features = epic.features or []
+                feature_count = len(features)
+                story_count = sum(len(f.get("stories", [])) for f in features)
+                total_features += feature_count
+                total_stories += story_count
+                total_fp += epic.function_points or 0
+                total_sp += epic.story_points or 0
+
+                epics_data.append({
+                    "id": str(epic.id),
+                    "epic_number": epic.epic_number,
+                    "name": epic.name,
+                    "description": epic.description or "",
+                    "priority": epic.priority,
+                    "complexity": epic.complexity,
+                    "source_domain": epic.source_domain or "",
+                    "source_modules": epic.source_modules or [],
+                    "function_points": epic.function_points or 0,
+                    "story_points": epic.story_points or 0,
+                    "status": epic.status,
+                    "feature_count": feature_count,
+                    "story_count": story_count,
+                    "features": [
+                        {
+                            "id": f.get("id", ""),
+                            "title": f.get("title", ""),
+                            "description": f.get("description", ""),
+                            "estimated_sp": f.get("estimated_sp", 0),
+                            "story_count": len(f.get("stories", [])),
+                            "stories": f.get("stories", []),
+                        }
+                        for f in features
+                    ],
+                    "created_at": epic.created_at.isoformat() if epic.created_at else None,
+                })
+
+            return {
+                "session_id": session_id,
+                "constitution_id": str(constitution.id),
+                "constitution_status": constitution.status,
+                "epics": epics_data,
+                "summary": {
+                    "total_epics": len(epics),
+                    "total_features": total_features,
+                    "total_stories": total_stories,
+                    "total_function_points": total_fp,
+                    "total_story_points": total_sp,
+                },
+            }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get DB epics failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get epics: {str(e)}",
+        )
+
+
+@router.post("/marqed/{session_id}/deliverables")
+async def generate_deliverables(session_id: str, output_dir: Optional[str] = None):
+    """
+    Generate markdown deliverables for a MarQed session.
+
+    Writes a complete docs structure to the project's docs/marqed-deliverables/ folder.
+    Optionally specify a custom output_dir.
+
+    **Generated Documents:**
+    - README.md (index)
+    - project-summary.md
+    - epics/ (full hierarchy with drill-down)
+    - user-journeys/
+    - workflows/
+    - non-functional-requirements/
+    - architecture/
+    - risks/
+    - estimation/
+    - migration-strategy/
+    """
+    from pathlib import Path
+    from app.services.brown_paper_deliverable_service import BrownPaperDeliverableService
+
+    try:
+        workflow = get_marqed_brown_paper_workflow()
+        session = await workflow.get_session(session_id)
+
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Session not found: {session_id}",
+            )
+
+        tasks = getattr(session, 'tasks', None)
+        if not tasks:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Session has no generated tasks. Run /tasks first.",
+            )
+
+        # Determine output directory
+        if output_dir:
+            target = Path(output_dir)
+        elif getattr(session, 'project_path', None):
+            target = Path(session.project_path) / "docs" / "marqed-deliverables"
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No output_dir specified and session has no project_path",
+            )
+
+        service = BrownPaperDeliverableService(target)
+        enhanced = getattr(session, 'enhanced_analysis', None)
+
+        result = await service.generate_deliverables(
+            session=session,
+            tasks=tasks,
+            enhanced_analysis=enhanced,
+        )
+
+        return {
+            "session_id": session_id,
+            "output_dir": result["output_dir"],
+            "files_created": result["files_created"],
+            "file_paths": result["file_paths"],
+            "epics": result["epics"],
+            "features": result["features"],
+            "stories": result["stories"],
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Generate deliverables failed: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate deliverables: {str(e)}",
         )

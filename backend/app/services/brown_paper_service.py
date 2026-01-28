@@ -4927,7 +4927,40 @@ Timeline: {timeline}
         except Exception as e:
             logger.warning(f"Failed to sync to brown_paper tables: {e}")
 
+        # Week 159: Generate deliverable docs to project folder
+        try:
+            await self._generate_deliverables(session, tasks)
+        except Exception as e:
+            logger.warning(f"Failed to generate deliverables: {e}")
+
         return {"success": True, "tasks": tasks}
+
+    async def _generate_deliverables(
+        self,
+        session: "MarQedBrownPaperSession",
+        tasks: Dict[str, Any],
+    ) -> None:
+        """Generate markdown deliverables to the project's docs/ folder."""
+        from pathlib import Path
+        from app.services.brown_paper_deliverable_service import BrownPaperDeliverableService
+
+        project_path = getattr(session, 'project_path', None)
+        if not project_path:
+            logger.warning("No project_path set, skipping deliverable generation")
+            return
+
+        output_dir = Path(project_path) / "docs" / "marqed-deliverables"
+        service = BrownPaperDeliverableService(output_dir)
+
+        enhanced = getattr(session, 'enhanced_analysis', None)
+        result = await service.generate_deliverables(
+            session=session,
+            tasks=tasks,
+            enhanced_analysis=enhanced,
+        )
+        logger.info(
+            f"Generated {result['files_created']} deliverable files to {result['output_dir']}"
+        )
 
     def _convert_business_stories_to_tasks(
         self,

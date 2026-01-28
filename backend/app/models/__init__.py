@@ -518,6 +518,7 @@ from app.models.stability import (
     StabilityMetric,
     StabilityCategorySummary,
 )
+from app.models.unified_onboarding import UnifiedOnboardingSession
 
 __all__ = [
     # User
@@ -712,4 +713,6 @@ __all__ = [
     "IntakeEventType", "PREDEFINED_FEATURES",
     # Stability Analysis (Fase 21 - Week 143-146)
     "StabilityScan", "StabilityFinding", "StabilityMetric", "StabilityCategorySummary",
+    # Unified Onboarding (4e Brown Paper Workflow)
+    "UnifiedOnboardingSession",
 ]
