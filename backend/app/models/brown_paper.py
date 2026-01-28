@@ -54,8 +54,8 @@ class BrownPaperSession(Base):
     patterns_detected = Column(JSONB, nullable=True)  # List of architecture patterns
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
     completed_at = Column(DateTime, nullable=True)
 
     # Error tracking
@@ -97,8 +97,8 @@ class BrownPaperAnalysis(Base):
     analysis_time_ms = Column(Integer, default=0)
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
 
     # Relationships
     session = relationship("BrownPaperSession", back_populates="analysis")
@@ -140,8 +140,8 @@ class BrownPaperConstitution(Base):
     human_refinements = Column(JSONB, nullable=True)  # Track what human changed
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
 
     # Metadata
     generation_metadata = Column(JSONB, nullable=True)
@@ -188,8 +188,8 @@ class BrownPaperEpic(Base):
     status = Column(String(20), default="draft")  # draft, approved, linked
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
 
     # Relationships
     constitution = relationship("BrownPaperConstitution", back_populates="epics")
@@ -224,7 +224,7 @@ class BrownPaperCodeModule(Base):
     business_domain = Column(String(100), nullable=True)  # Assigned domain
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.utcnow())
 
     def __repr__(self):
         return f"<BrownPaperCodeModule(name='{self.name}', type='{self.module_type}')>"
@@ -258,8 +258,8 @@ class BrownPaperDomain(Base):
     human_priority = Column(Integer, nullable=True)  # Human-adjusted priority
 
     # Timestamps
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
 
     def __repr__(self):
         return f"<BrownPaperDomain(name='{self.name}', priority={self.priority})>"

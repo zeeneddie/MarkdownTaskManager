@@ -63,6 +63,7 @@ from app.models.brown_paper import (
     BrownPaperEpic as BrownPaperEpicDB,
     BrownPaperSessionStatus as DBSessionStatus,
 )
+from app.models.application import Application as ApplicationDB
 from app.services.brown_paper_estimation_service import (
     get_brown_paper_estimation_service,
     BrownPaperEstimationService,
@@ -4782,6 +4783,10 @@ Timeline: {timeline}
         """
         Generate Epic/Feature/Story hierarchy from specification.
 
+        Week 159: Now uses BusinessDomainExtractor and BusinessDrivenStoryGenerator
+        for business-driven epic/feature/story generation based on actual code analysis.
+        Falls back to phase-based generation if business extraction fails.
+
         Includes IFPUG Function Point estimation if project_path is available.
         """
         session = await self.get_session(session_id)
@@ -4796,109 +4801,83 @@ Timeline: {timeline}
         features = []
         stories = []
 
-        epic_num = 1
-        feat_num = 1
-        story_num = 1
-
         # Calculate FP estimation if project path is available
         fp_analysis = None
         total_fp = 0
         fp_confidence = 0.0
         fp_breakdown = {}
+        use_business_extraction = False
 
         if session.project_path:
+            project_path = Path(session.project_path)
+
+            # Try FP estimation first
             try:
                 estimation_service = get_brown_paper_estimation_service()
-                project_path = Path(session.project_path)
-
                 if project_path.exists():
                     fp_result = estimation_service.analyze_directory(project_path)
                     total_fp = fp_result.total_afp
                     fp_confidence = fp_result.confidence_score
                     fp_breakdown = fp_result.to_dict()
-
                     logger.info(f"FP analysis complete: {total_fp} FP, confidence: {fp_confidence:.1%}")
             except Exception as e:
                 logger.warning(f"FP analysis failed for {session.project_path}: {e}")
-                # Continue without FP analysis
 
-        for phase in phases:
-            # Create Epic for each phase
-            epic_id = f"EPIC-{epic_num:03d}"
+            # Week 159: Try business-driven extraction
+            if project_path.exists():
+                try:
+                    logger.info(f"Starting business domain extraction for {session.project_path}")
 
-            # Calculate FP for this epic based on module count
-            # Distribute total FP across phases proportionally to weeks
-            phase_fp = 0
-            if total_fp > 0:
-                total_weeks = sum(p["weeks"] for p in phases)
-                phase_fp = round(total_fp * (phase["weeks"] / total_weeks))
+                    # Step 1: Quick scan to get modules and dependencies
+                    modules, dependencies = await self._quick_code_scan(str(project_path))
 
-            epic = {
-                "id": epic_id,
-                "title": f"Phase {phase['phase']}: {phase['name']}",
-                "description": phase["description"],
-                "estimated_weeks": phase["weeks"],
-                "estimated_fp": phase_fp,
-                "modules": phase["modules"],
-                "priority": phase["phase"],
-            }
-            epics.append(epic)
+                    if modules:
+                        logger.info(f"Quick scan found {len(modules)} modules, {len(dependencies)} dependencies")
 
-            # Create Features for each module
-            module_count = len(phase["modules"])
-            for module in phase["modules"]:
-                feat_id = f"FEAT-{feat_num:03d}"
+                        # Step 2: Extract business domains using BusinessDomainExtractorService
+                        domain_extractor = get_business_domain_extractor(use_healthcare_patterns=True)
+                        domain_result = await domain_extractor.extract_domains(
+                            modules=modules,
+                            dependencies=dependencies,
+                            scan_path=str(project_path),
+                        )
 
-                # Distribute epic FP across features
-                feature_fp = round(phase_fp / module_count) if module_count > 0 and phase_fp > 0 else 0
-                # Convert FP to SP using 0.19 ratio (from BrownPaperEstimationService)
-                feature_sp = round(feature_fp * 0.19) if feature_fp > 0 else 21
+                        if domain_result and domain_result.domains:
+                            logger.info(f"Extracted {len(domain_result.domains)} business domains")
 
-                feature = {
-                    "id": feat_id,
-                    "epic_id": epic_id,
-                    "title": f"{module} Implementation",
-                    "description": f"Complete implementation of {module} functionality",
-                    "estimated_fp": feature_fp,
-                    "estimated_sp": feature_sp,
-                }
-                features.append(feature)
+                            # Step 3: Generate stories using BusinessDrivenStoryGeneratorService
+                            story_generator = get_business_driven_story_generator()
+                            story_result = await story_generator.generate_stories(domain_result)
 
-                # Create default stories for each feature
-                default_stories = [
-                    f"Setup {module} infrastructure",
-                    f"Implement {module} core logic",
-                    f"Create {module} API endpoints",
-                    f"Write unit tests for {module}",
-                    f"Write integration tests for {module}",
-                    f"Document {module}",
-                ]
+                            if story_result and story_result.epics:
+                                logger.info(f"Generated {len(story_result.epics)} business-driven epics")
 
-                # Distribute feature SP across stories
-                story_sp = round(feature_sp / len(default_stories)) if feature_sp > 0 else 3
+                                # Convert to task format
+                                epics, features, stories = self._convert_business_stories_to_tasks(
+                                    story_result, total_fp
+                                )
+                                use_business_extraction = True
+                                logger.info(
+                                    f"Business extraction successful: {len(epics)} epics, "
+                                    f"{len(features)} features, {len(stories)} stories"
+                                )
+                            else:
+                                logger.warning("Story generation returned no epics, falling back to phase-based")
+                        else:
+                            logger.warning("Domain extraction returned no domains, falling back to phase-based")
+                    else:
+                        logger.warning("Quick scan found no modules, falling back to phase-based")
 
-                for story_title in default_stories:
-                    story_id = f"STORY-{story_num:03d}"
-                    story = {
-                        "id": story_id,
-                        "feature_id": feat_id,
-                        "epic_id": epic_id,
-                        "title": story_title,
-                        "estimated_sp": max(1, story_sp),  # Minimum 1 SP
-                        "acceptance_criteria": [
-                            f"{story_title} is complete",
-                            "Code reviewed and approved",
-                            "Tests pass with >80% coverage",
-                        ],
-                    }
-                    stories.append(story)
-                    story_num += 1
+                except Exception as e:
+                    logger.warning(f"Business extraction failed, falling back to phase-based: {e}")
 
-                feat_num += 1
-            epic_num += 1
+        # Fallback: Phase-based generation (original logic)
+        if not use_business_extraction:
+            logger.info("Using phase-based task generation (fallback)")
+            epics, features, stories = self._generate_phase_based_tasks(phases, total_fp)
 
         # Calculate totals
-        total_sp = sum(s["estimated_sp"] for s in stories)
+        total_sp = sum(s.get("estimated_sp", 0) for s in stories)
         total_epic_fp = sum(e.get("estimated_fp", 0) for e in epics)
 
         tasks = {
@@ -4912,7 +4891,8 @@ Timeline: {timeline}
                 "total_story_points": total_sp,
                 "estimated_fp": total_fp if total_fp > 0 else total_epic_fp,
                 "fp_confidence": round(fp_confidence * 100, 1),
-                "estimated_weeks": session.migration_analysis.recommended_phases[-1]["weeks"] if phases else 0,
+                "estimated_weeks": phases[-1]["weeks"] if phases else 0,
+                "extraction_method": "business_driven" if use_business_extraction else "phase_based",
             },
             "fp_analysis": fp_breakdown if fp_breakdown else None,
         }
@@ -4931,12 +4911,441 @@ Timeline: {timeline}
                 "total_features": len(features),
                 "total_stories": len(stories),
                 "total_fp": total_fp,
+                "extraction_method": "business_driven" if use_business_extraction else "phase_based",
             },
         )
 
-        logger.info(f"Tasks generated for session {session_id}: {len(epics)} epics, {len(stories)} stories, {total_fp} FP")
+        logger.info(
+            f"Tasks generated for session {session_id}: {len(epics)} epics, "
+            f"{len(stories)} stories, {total_fp} FP (method: {'business' if use_business_extraction else 'phase'})"
+        )
+
+        # Week 159: Sync to brown_paper_* tables for dashboard compatibility
+        try:
+            await self._sync_to_brown_paper_tables(session, tasks)
+            logger.info(f"Synced {len(epics)} epics to brown_paper_epics table")
+        except Exception as e:
+            logger.warning(f"Failed to sync to brown_paper tables: {e}")
 
         return {"success": True, "tasks": tasks}
+
+    def _convert_business_stories_to_tasks(
+        self,
+        story_result: "StoryGenerationResult",
+        total_fp: int = 0
+    ) -> Tuple[List[Dict], List[Dict], List[Dict]]:
+        """
+        Convert BusinessDrivenStoryGenerator output to MarQed task format.
+
+        Week 159: Bridges business-driven generation with MarQed workflow.
+        """
+        epics = []
+        features = []
+        stories = []
+
+        epic_num = 1
+        feat_num = 1
+        story_num = 1
+
+        # Distribute FP across epics proportionally
+        total_epic_stories = sum(
+            sum(len(f.stories) for f in e.features)
+            for e in story_result.epics
+        ) or 1
+
+        for gen_epic in story_result.epics:
+            epic_id = f"EPIC-{epic_num:03d}"
+
+            # Calculate FP for this epic based on story count
+            epic_story_count = sum(len(f.stories) for f in gen_epic.features)
+            epic_fp = round(total_fp * (epic_story_count / total_epic_stories)) if total_fp > 0 else 0
+
+            epic = {
+                "id": epic_id,
+                "title": gen_epic.title,
+                "description": gen_epic.description,
+                "domain": gen_epic.domain_name,  # Fixed: domain_name not domain
+                "estimated_fp": epic_fp,
+                "estimated_weeks": gen_epic.estimated_weeks,
+                "complexity": gen_epic.complexity,
+                "source_modules": gen_epic.source_modules[:5],  # Fixed: source_modules not source_references
+            }
+            epics.append(epic)
+
+            for gen_feature in gen_epic.features:
+                feat_id = f"FEAT-{feat_num:03d}"
+
+                # Distribute epic FP across features
+                feature_count = len(gen_epic.features) or 1
+                feature_fp = round(epic_fp / feature_count) if epic_fp > 0 else 0
+                feature_sp = round(feature_fp * 0.19) if feature_fp > 0 else gen_feature.estimated_story_points
+
+                feature = {
+                    "id": feat_id,
+                    "epic_id": epic_id,
+                    "title": gen_feature.title,
+                    "description": gen_feature.description,
+                    "source_modules": gen_feature.source_modules[:5],  # Fixed: use source_modules
+                    "estimated_fp": feature_fp,
+                    "estimated_sp": feature_sp,
+                    "complexity": gen_feature.complexity,
+                }
+                features.append(feature)
+
+                # Distribute feature SP across stories
+                story_count = len(gen_feature.stories) or 1
+                base_story_sp = max(1, round(feature_sp / story_count))
+
+                for gen_story in gen_feature.stories:
+                    story_id = f"STORY-{story_num:03d}"
+
+                    # Convert acceptance criteria to strings
+                    ac_list = [
+                        ac.criterion if hasattr(ac, 'criterion') else str(ac)
+                        for ac in (gen_story.acceptance_criteria or [])
+                    ] or [
+                        f"{gen_story.title} is complete",
+                        "Code reviewed and approved",
+                        "Tests pass with >80% coverage",
+                    ]
+
+                    story = {
+                        "id": story_id,
+                        "feature_id": feat_id,
+                        "epic_id": epic_id,
+                        "title": gen_story.title,
+                        "description": gen_story.description,
+                        "story_type": gen_story.story_type,
+                        "estimated_sp": gen_story.story_points or base_story_sp,
+                        "acceptance_criteria": ac_list[:5],
+                        "complexity": gen_story.complexity,
+                        "source_files": [ref.file_path for ref in gen_story.source_references[:3]],
+                    }
+                    stories.append(story)
+                    story_num += 1
+
+                feat_num += 1
+            epic_num += 1
+
+        return epics, features, stories
+
+    def _generate_phase_based_tasks(
+        self,
+        phases: List[Dict],
+        total_fp: int = 0
+    ) -> Tuple[List[Dict], List[Dict], List[Dict]]:
+        """
+        Original phase-based task generation (fallback).
+
+        Generates epics from migration phases (Foundation, Core Modules, etc.)
+        """
+        epics = []
+        features = []
+        stories = []
+
+        epic_num = 1
+        feat_num = 1
+        story_num = 1
+
+        for phase in phases:
+            epic_id = f"EPIC-{epic_num:03d}"
+
+            # Calculate FP for this epic based on weeks
+            phase_fp = 0
+            if total_fp > 0:
+                total_weeks = sum(p["weeks"] for p in phases)
+                phase_fp = round(total_fp * (phase["weeks"] / total_weeks))
+
+            epic = {
+                "id": epic_id,
+                "title": f"Phase {phase['phase']}: {phase['name']}",
+                "description": phase["description"],
+                "estimated_weeks": phase["weeks"],
+                "estimated_fp": phase_fp,
+                "modules": phase["modules"],
+                "priority": phase["phase"],
+            }
+            epics.append(epic)
+
+            module_count = len(phase["modules"])
+            for module in phase["modules"]:
+                feat_id = f"FEAT-{feat_num:03d}"
+
+                feature_fp = round(phase_fp / module_count) if module_count > 0 and phase_fp > 0 else 0
+                feature_sp = round(feature_fp * 0.19) if feature_fp > 0 else 21
+
+                feature = {
+                    "id": feat_id,
+                    "epic_id": epic_id,
+                    "title": f"{module} Implementation",
+                    "description": f"Complete implementation of {module} functionality",
+                    "estimated_fp": feature_fp,
+                    "estimated_sp": feature_sp,
+                }
+                features.append(feature)
+
+                default_stories = [
+                    f"Setup {module} infrastructure",
+                    f"Implement {module} core logic",
+                    f"Create {module} API endpoints",
+                    f"Write unit tests for {module}",
+                    f"Write integration tests for {module}",
+                    f"Document {module}",
+                ]
+
+                story_sp = round(feature_sp / len(default_stories)) if feature_sp > 0 else 3
+
+                for story_title in default_stories:
+                    story_id = f"STORY-{story_num:03d}"
+                    story = {
+                        "id": story_id,
+                        "feature_id": feat_id,
+                        "epic_id": epic_id,
+                        "title": story_title,
+                        "estimated_sp": max(1, story_sp),
+                        "acceptance_criteria": [
+                            f"{story_title} is complete",
+                            "Code reviewed and approved",
+                            "Tests pass with >80% coverage",
+                        ],
+                    }
+                    stories.append(story)
+                    story_num += 1
+
+                feat_num += 1
+            epic_num += 1
+
+        return epics, features, stories
+
+    async def _quick_code_scan(
+        self,
+        project_path: str
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        """
+        Quick code scan to get modules and dependencies for business extraction.
+
+        Week 159: Lightweight alternative to full Phase 1 analysis.
+        Uses DependencyGraphService for fast module/dependency discovery.
+
+        Returns:
+            Tuple of (modules list, dependencies list)
+        """
+        from app.services.dependency_graph_service import DependencyGraphService
+
+        modules = []
+        dependencies = []
+
+        try:
+            # Use DependencyGraphService for quick scan
+            dep_service = DependencyGraphService()
+            result = dep_service.analyze_directory(project_path)
+
+            if result:
+                # Extract modules from DependencyGraphResult.modules (Dict[str, ModuleNode])
+                for mod_name, mod_node in result.modules.items():
+                    modules.append({
+                        'name': mod_name,
+                        'path': mod_node.file_path,
+                        'type': mod_node.language.value if mod_node.language else 'unknown',
+                        'lines_of_code': mod_node.lines_of_code,
+                        'imports': list(mod_node.imports)[:10],  # Limit for performance
+                    })
+
+                # Extract dependencies from edges (List[DependencyEdge])
+                for edge in result.edges:
+                    dependencies.append({
+                        'source': edge.source,
+                        'target': edge.target,
+                        'type': edge.import_type,  # Fixed: import_type not dependency_type
+                    })
+
+                logger.info(f"Quick scan: {len(modules)} modules, {len(dependencies)} dependencies")
+
+        except Exception as e:
+            logger.warning(f"Quick scan via DependencyGraphService failed: {e}")
+
+            # Fallback: Simple file scan
+            try:
+                from pathlib import Path
+                project = Path(project_path)
+
+                # Find code files
+                code_extensions = {'.py', '.cs', '.vb', '.aspx', '.ascx', '.js', '.ts', '.java'}
+                for ext in code_extensions:
+                    for file_path in project.rglob(f'*{ext}'):
+                        if '.git' not in str(file_path) and 'node_modules' not in str(file_path):
+                            rel_path = str(file_path.relative_to(project))
+                            modules.append({
+                                'name': file_path.stem,
+                                'path': rel_path,
+                                'type': 'file',
+                                'extension': ext,
+                            })
+
+                logger.info(f"Fallback scan found {len(modules)} files")
+
+            except Exception as e2:
+                logger.error(f"Fallback file scan also failed: {e2}")
+
+        return modules, dependencies
+
+    async def _sync_to_brown_paper_tables(
+        self,
+        session: "MarQedBrownPaperSession",
+        tasks: Dict[str, Any]
+    ) -> None:
+        """
+        Sync MarQed session data to brown_paper_* tables for dashboard compatibility.
+
+        Week 159: Bridges MarQed workflow with existing brown_paper dashboard.
+        Creates/updates: applications, brown_paper_sessions, brown_paper_constitutions, brown_paper_epics
+
+        Args:
+            session: MarQed session with tasks
+            tasks: Generated tasks dict with epics, features, stories
+        """
+        import uuid
+
+        async with AsyncSessionLocal() as db:
+            try:
+                # Step 1: Find or create Application (using ApplicationDB database model)
+                app_result = await db.execute(
+                    select(ApplicationDB).where(ApplicationDB.name == session.project_name)
+                )
+                application = app_result.scalar_one_or_none()
+
+                if not application:
+                    application = ApplicationDB(
+                        name=session.project_name,
+                        root_path=session.project_path or "",
+                        description=f"Auto-created from MarQed session {session.id}",
+                        application_type="legacy",
+                        is_active=True,
+                        # Let model defaults handle created_at/updated_at
+                    )
+                    db.add(application)
+                    await db.flush()
+                    logger.info(f"Created application: {application.name} (id={application.id})")
+
+                # Step 2: Create BrownPaperSession (using BrownPaperSessionDB alias)
+                bp_session_id = uuid.uuid4()
+                bp_session = BrownPaperSessionDB(
+                    id=bp_session_id,
+                    application_id=application.id,
+                    application_name=session.project_name,
+                    root_path=session.project_path or "",
+                    status="completed",
+                    modules_count=tasks["summary"].get("total_features", 0),
+                    domains_count=tasks["summary"].get("total_epics", 0),
+                    # Store FP/SP in generation_metadata since model doesn't have dedicated columns
+                    generation_metadata={
+                        "total_function_points": tasks["summary"].get("estimated_fp", 0),
+                        "total_story_points": tasks["summary"].get("total_story_points", 0),
+                        "extraction_method": tasks["summary"].get("extraction_method", "unknown"),
+                    },
+                )
+                db.add(bp_session)
+                await db.flush()
+                logger.info(f"Created brown_paper_session: {bp_session_id}")
+
+                # Step 3: Create BrownPaperConstitution (using BrownPaperConstitutionDB alias)
+                constitution_id = uuid.uuid4()
+
+                # Serialize answers to dict format (MarQedAnswer objects are not JSON serializable)
+                answers_dict = {}
+                if hasattr(session, 'answers') and session.answers:
+                    for k, v in session.answers.items():
+                        if hasattr(v, 'to_dict'):
+                            answers_dict[k] = v.to_dict()
+                        elif hasattr(v, '__dict__'):
+                            answers_dict[k] = {key: str(val) for key, val in v.__dict__.items() if not key.startswith('_')}
+                        else:
+                            answers_dict[k] = str(v)
+
+                constitution = BrownPaperConstitutionDB(
+                    id=constitution_id,
+                    session_id=bp_session_id,
+                    status="approved",
+                    content_json={
+                        "marqed_session_id": session.id,
+                        "extraction_method": tasks["summary"].get("extraction_method", "unknown"),
+                        "answers": answers_dict,
+                        "specification": session.specification.to_dict() if hasattr(session.specification, 'to_dict') else {},
+                    },
+                    generated_by="MarQedBrownPaperWorkflow",
+                    # Let model defaults handle created_at
+                )
+                db.add(constitution)
+                await db.flush()
+                logger.info(f"Created brown_paper_constitution: {constitution_id}")
+
+                # Step 4: Create BrownPaperEpics (limit to top 100 for performance)
+                epics_to_save = tasks.get("epics", [])[:100]
+                features_by_epic = {}
+                for feature in tasks.get("features", []):
+                    epic_id = feature.get("epic_id")
+                    if epic_id not in features_by_epic:
+                        features_by_epic[epic_id] = []
+                    features_by_epic[epic_id].append(feature)
+
+                for i, epic_data in enumerate(epics_to_save):
+                    epic_id = epic_data.get("id", f"EPIC-{i+1:03d}")
+                    epic_features = features_by_epic.get(epic_id, [])
+
+                    # Build features JSON with stories
+                    features_json = []
+                    for feat in epic_features[:20]:  # Limit features per epic
+                        feat_stories = [
+                            s for s in tasks.get("stories", [])
+                            if s.get("feature_id") == feat.get("id")
+                        ][:10]  # Limit stories per feature
+
+                        features_json.append({
+                            "id": feat.get("id"),
+                            "title": feat.get("title"),
+                            "description": feat.get("description", ""),
+                            "estimated_sp": feat.get("estimated_sp", 0),
+                            "stories": [
+                                {
+                                    "id": s.get("id"),
+                                    "title": s.get("title"),
+                                    "story_type": s.get("story_type", ""),
+                                    "estimated_sp": s.get("estimated_sp", 0),
+                                    "acceptance_criteria": s.get("acceptance_criteria", []),
+                                }
+                                for s in feat_stories
+                            ]
+                        })
+
+                    # Using BrownPaperEpicDB alias
+                    bp_epic = BrownPaperEpicDB(
+                        id=uuid.uuid4(),
+                        constitution_id=constitution_id,
+                        epic_number=epic_id,
+                        name=epic_data.get("title", f"Epic {i+1}"),
+                        description=epic_data.get("description", ""),
+                        priority=i + 1,
+                        complexity=epic_data.get("complexity", "medium"),
+                        source_domain=epic_data.get("domain", ""),
+                        source_modules=epic_data.get("source_modules", []),
+                        features=features_json,
+                        status="draft",
+                        function_points=epic_data.get("estimated_fp", 0),
+                        story_points=sum(f.get("estimated_sp", 0) for f in epic_features),
+                        created_at=datetime.now(timezone.utc),
+                    )
+                    db.add(bp_epic)
+
+                await db.commit()
+                logger.info(
+                    f"Synced to brown_paper tables: app={application.id}, "
+                    f"session={bp_session_id}, epics={len(epics_to_save)}"
+                )
+
+            except Exception as e:
+                await db.rollback()
+                logger.error(f"Failed to sync to brown_paper tables: {e}", exc_info=True)
+                raise
 
     # ========================================================================
     # APPROVAL / EXPORT
@@ -5208,3 +5617,28 @@ def get_marqed_brown_paper_workflow() -> MarQedBrownPaperWorkflow:
     if _marqed_workflow is None:
         _marqed_workflow = MarQedBrownPaperWorkflow()
     return _marqed_workflow
+
+
+# Week 159: Business Logic Extraction singletons
+_business_domain_extractor: Optional[BusinessDomainExtractorService] = None
+_business_story_generator: Optional[BusinessDrivenStoryGeneratorService] = None
+
+
+def get_business_domain_extractor(
+    use_healthcare_patterns: bool = True
+) -> BusinessDomainExtractorService:
+    """Get or create the BusinessDomainExtractor service singleton."""
+    global _business_domain_extractor
+    if _business_domain_extractor is None:
+        _business_domain_extractor = BusinessDomainExtractorService(
+            use_healthcare_patterns=use_healthcare_patterns
+        )
+    return _business_domain_extractor
+
+
+def get_business_driven_story_generator() -> BusinessDrivenStoryGeneratorService:
+    """Get or create the BusinessDrivenStoryGenerator service singleton."""
+    global _business_story_generator
+    if _business_story_generator is None:
+        _business_story_generator = BusinessDrivenStoryGeneratorService()
+    return _business_story_generator

@@ -36,9 +36,9 @@ class Application(Base):
     # Detected stacks (stored as JSON array)
     primary_stacks = Column(JSON, default=list)
 
-    # Metadata
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    # Metadata - use naive UTC datetimes for TIMESTAMP WITHOUT TIME ZONE columns
+    created_at = Column(DateTime, default=lambda: datetime.utcnow())
+    updated_at = Column(DateTime, default=lambda: datetime.utcnow(), onupdate=lambda: datetime.utcnow())
     last_scan_at = Column(DateTime, nullable=True)
 
     # Configuration

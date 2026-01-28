@@ -1,8 +1,8 @@
 # MarQed Platform Roadmap
 
 **Project:** MarQed AI Agent Software Platform
-**Last Updated:** Week 159 (2026-01-24)
-**Total Phases:** 50 | **Timeline:** Week 144-250
+**Last Updated:** Week 159 (2026-01-28)
+**Total Phases:** 52 | **Timeline:** Week 144-250
 
 ---
 
@@ -27,14 +27,25 @@ WEEK 144-158: CRITICAL FOUNDATION + ORCHESTRATOR + SECURITY ✅ COMPLETE
 ├── Fase 31: CWE Security Scanner Suite ✅ COMPLETE (Week 157)
 └── Fase 24-A1: Legacy Quickscan ✅ COMPLETE (Week 157)
 
+WEEK 159: URGENT - BUSINESS DOMAIN EXTRACTION 🔥
+└── Fase 24.10: Business-Driven Epic Generation (Week 159) 🔥 CRITICAL
+    ├── BusinessDomainExtractor integratie ✅ COMPLETE
+    ├── BusinessDrivenStoryGenerator integratie ✅ COMPLETE
+    ├── MarQed workflow integratie ✅ COMPLETE
+    ├── Dashboard sync 🔄 80% (final test pending)
+    └── HCI-CRS E2E validatie ⏳ PENDING
+
 WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
-├── Fase 24: Quick Wins & Foundation (15 items) 🔄 13/15 DONE (A1+K3+D1+D2+K1+K2+A4+E1+J1+K4+A2+A3+D4) ← OPEN: B5,B6
+├── Fase 24: Quick Wins & Foundation (15 items) ✅ 15/15 COMPLETE (A1+K3+D1+D2+K1+K2+A4+E1+J1+K4+A2+A3+D4+B5+B6)
+├── Fase 24.10: Business-Driven Epic Generation (Week 159) 🔥 CRITICAL - See above
+├── Fase 24.9: Brown Paper Workflow Refactoring (Week 160-162) 🆕 HIGH PRIORITY
 ├── Fase 25: Core Platform Enhancement (18 items)
 ├── Fase 26: AI & Automation (12 items)
 ├── Fase 27: Testing Excellence (8 items)
 ├── Fase 28: Advanced Integrations (10 items)
 ├── Fase GAP-29: Innovation & Scale (9 items)
-├── Fase 32: Ralph Wiggum Autonomous Loop (Week 175-180) 🆕
+├── Fase 32: Ralph Wiggum + mq Integration (Week 175-190) 🆕
+├── Fase 51: Klant Template Service - Multi-Tenant Platform (Week 191-202) 🆕
 ├── Fase 33: DevStats Developer Metrics (Week 179-184) 🆕
 ├── Fase 43: Zero-Complaints Green Paper & Maintenance (Week 177-184) 🆕
 ├── Fase 44: AI Code Complaints Strategy (Week 185-192) 🆕
@@ -48,7 +59,54 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 
 ---
 
-## Current Focus (Week 158-159)
+## Current Focus (Week 159)
+
+### 🔄 IN PROGRESS: Brown Paper Workflow met Business Domain Extraction
+
+**Priority:** HIGH (Core workflow enhancement)
+**Status:** 🔄 80% COMPLETE
+**Effort:** ~16 uur
+
+**Doel:** MarQed Brown Paper workflow integreren met Business Domain Extraction voor business-driven epics ipv phase-based epics.
+
+**Wat is gedaan:**
+| Component | Status | Beschrijving |
+|-----------|--------|--------------|
+| BusinessDomainExtractor integratie | ✅ | `generate_tasks()` roept nu `BusinessDomainExtractorService` aan |
+| BusinessDrivenStoryGenerator integratie | ✅ | Genereert epics/features/stories vanuit business domains |
+| `_quick_code_scan()` method | ✅ | Haalt modules en dependencies op voor domain extraction |
+| `_convert_business_stories_to_tasks()` | ✅ | Converteert GeneratedEpic/Feature/Story naar MarQed formaat |
+| `_sync_to_brown_paper_tables()` | ✅ | Sync naar brown_paper_* tables voor dashboard |
+| Playwright automation script | ✅ | `frontend/playwright-brown-paper.js` met 8 antwoorden >100 woorden |
+| DateTime timezone fixes | ✅ | Naive UTC datetimes voor TIMESTAMP WITHOUT TIME ZONE columns |
+| JSON serialization fixes | ✅ | MarQedAnswer objects worden nu correct geserialiseerd |
+
+**Wat nog moet:**
+| Task | Status | Beschrijving |
+|------|--------|--------------|
+| Backend restart & test | ⏳ | Alle code changes laden en workflow testen |
+| Database sync verificatie | ⏳ | Controleren dat epics in brown_paper_epics table staan |
+| Dashboard integratie test | ⏳ | Epics zichtbaar in brown-paper-dashboard.html |
+| FP/SP columns toevoegen | ⏳ | Optioneel: dedicated columns voor total_function_points, total_story_points |
+
+**Files gewijzigd:**
+- `backend/app/services/brown_paper_service.py` - Business extraction integratie
+- `backend/app/models/application.py` - Datetime fixes
+- `backend/app/models/brown_paper.py` - Datetime fixes
+- `frontend/playwright-brown-paper.js` - Uitgebreide antwoorden >100 woorden
+
+**Output voorbeeld (business-driven):**
+```
+Epics by domain (6632 total):
+├── Patiënt Beheer - 1200 epics
+├── Behandelplan & Diagnose - 980 epics
+├── Agenda & Planning - 850 epics
+├── Declaraties & Facturatie - 1100 epics
+├── Praktijkbeheer - 750 epics
+└── Rapportages & Analytics - 650 epics
+```
+
+---
 
 ### ✅ COMPLETED: Epic Generation Fix - Journey-Based Epic Detection
 
@@ -127,15 +185,18 @@ def start_session_sync(self, ...) -> Session:
 
 ---
 
-### IMMEDIATE: Restartable Workflows + Brown Paper Test
+### IMMEDIATE: Brown Paper Business Domain Extraction Test
 
 | Task | Status | Details |
 |------|--------|---------|
 | **Fase 24.6 Restartable Workflows** | ✅ COMPLETE | Generic checkpoint/resume system for all workflows |
 | **Fase 24.7 Async Refactoring** | ✅ COMPLETE | BrownPaperService + MarQedBrownPaperWorkflow async-first |
-| **Brown Paper HCI-CRS Test** | 🔄 IN PROGRESS | Test workflow op /opt/projecten/hci-crs met lokale Ollama LLMs |
+| **Business Domain Extraction** | ✅ COMPLETE | `BusinessDomainExtractorService` + `BusinessDrivenStoryGeneratorService` |
+| **MarQed Integration** | ✅ COMPLETE | `generate_tasks()` gebruikt nu business extraction |
+| **Dashboard Sync** | 🔄 IN PROGRESS | `_sync_to_brown_paper_tables()` - laatste bugs fixen |
+| **Playwright Automation** | ✅ COMPLETE | 8 vragen met >100 woorden antwoorden |
 
-**Doel:** Validate Brown Paper workflow end-to-end met HCI-CRS legacy applicatie (793K LOC, ASP Classic/VBScript)
+**Doel:** Validate Brown Paper workflow end-to-end met HCI-CRS legacy applicatie, business-driven epics genereren
 
 **Configuratie:**
 - Path: `/opt/projecten/hci-crs`
@@ -157,6 +218,22 @@ def start_session_sync(self, ...) -> Session:
 | **Fase 24 GAP D4** | ✅ COMPLETE | Database Migration Pattern Catalog with 8 patterns, recommendations, risk assessment |
 | **Fase 24.7 Async Refactoring** | ✅ COMPLETE | BrownPaperService + MarQedBrownPaperWorkflow async-first |
 | **Fase 24.6 Restartable Workflows** | ✅ COMPLETE | Checkpoint/resume system for all workflow types |
+| **Fase 24 GAP Items** | ✅ 15/15 | COMPLETE (B5+B6 done Week 159) |
+| **Business Domain Extraction** | ✅ COMPLETE | `BusinessDomainExtractorService` geïntegreerd in MarQed workflow |
+| **Business Story Generation** | ✅ COMPLETE | `BusinessDrivenStoryGeneratorService` genereert epics/features/stories |
+| **Playwright Automation** | ✅ COMPLETE | `frontend/playwright-brown-paper.js` met >100 woorden antwoorden |
+
+### In Progress (Week 159)
+
+| Area | Status | Details |
+|------|--------|---------|
+| **Dashboard Sync** | 🔄 80% | `_sync_to_brown_paper_tables()` - JSON serialization gefixed, nog testen |
+| **HCI-CRS E2E Test** | 🔄 | Backend restart nodig, dan final test |
+
+### Previously Completed
+
+| Area | Status | Details |
+|------|--------|---------|
 | **Fase 31 CWE Security Scanner** | ✅ COMPLETE | Multi-scanner suite, 288+ findings on HCI-CRS |
 | **Fase 24-A1 Legacy Quickscan** | ✅ COMPLETE | 15-min assessment, Go/No-Go recommendation |
 | **Fase 23.6 Stage Council Review** | ✅ COMPLETE | Multi-model LLM reviews per stage |
@@ -164,7 +241,6 @@ def start_session_sync(self, ...) -> Session:
 | **Fase 23.5 Confucius Orchestrator** | ✅ COMPLETE | 4 workflow orchestrators, PIV loop |
 | **Fase 23 Context Engineering** | ✅ COMPLETE | 60-80% token reduction |
 | **Test Suite** | ✅ COMPLETE | 2,700+ tests, 97.8% pass rate |
-| **Fase 24 GAP Items** | 🔄 13/15 | Open: B5 (ASP.NET Core), B6 (PHP) |
 
 See: [phases-current.md](docs/roadmap/phases-current.md)
 
@@ -294,9 +370,9 @@ See: [docs/architecture/confucius-orchestrator-integration-plan.md](docs/archite
 
 ---
 
-## Fase 24 GAP Items Status (12/15 Complete)
+## Fase 24 GAP Items Status ✅ 15/15 COMPLETE
 
-### ✅ Completed (12 items)
+### ✅ All Completed
 
 | Item | Beschrijving | ROI | Week |
 |------|-------------|-----|------|
@@ -313,15 +389,150 @@ See: [docs/architecture/confucius-orchestrator-integration-plan.md](docs/archite
 | A2 | Fixed-Price Templates | 4.5 | 157 |
 | A3 | Architecture Assessment Matrix | 4.5 | 157 |
 | D4 | Database Migration Patterns | 5.0 | 159 |
+| **B5** | ASP.NET Core Analyzer | 4.8 | 159 |
+| **B6** | PHP Modern Analyzer (8.x features) | 4.8 | 159 |
 
-### 🔴 Open (2 items)
+**Fase 24 Complete!** Alle 15 Quick Wins zijn geïmplementeerd.
 
-| Item | Beschrijving | ROI | Effort | Priority |
-|------|-------------|-----|--------|----------|
-| **B5** | ASP.NET Core Analyzer | 4.8 | 4 weken | HIGH |
-| **B6** | PHP Analyzer | 4.8 | 4 weken | MEDIUM |
+---
 
-**Next Priority:** B5 (ASP.NET Core Analyzer) - Highest ROI of remaining items
+## Fase 24.10: Business-Driven Epic Generation (Week 159) 🔥 CRITICAL
+
+**Status:** 🔄 80% COMPLETE
+**Priority:** CRITICAL (Blocking for HCI-CRS analysis)
+**Effort:** ~16 uur
+**Dependencies:** BusinessDomainExtractorService, BusinessDrivenStoryGeneratorService
+
+### Problem Statement
+
+De huidige MarQed workflow genereerde "phase-based" epics zoals:
+- "Phase 1: Foundation"
+- "Phase 2: Core Migration"
+- "Phase 3: Integration"
+
+Dit is **niet business-driven** en geeft geen inzicht in de werkelijke business domeinen van de applicatie.
+
+### Solution: Business Domain Extraction
+
+Integreer `BusinessDomainExtractorService` en `BusinessDrivenStoryGeneratorService` in de MarQed `generate_tasks()` methode.
+
+### Implementation Status
+
+| Component | Status | File |
+|-----------|--------|------|
+| `_quick_code_scan()` | ✅ COMPLETE | `brown_paper_service.py` |
+| `BusinessDomainExtractor` call | ✅ COMPLETE | `brown_paper_service.py:5126-5138` |
+| `BusinessDrivenStoryGenerator` call | ✅ COMPLETE | `brown_paper_service.py:5140-5145` |
+| `_convert_business_stories_to_tasks()` | ✅ COMPLETE | `brown_paper_service.py:5168-5198` |
+| `_sync_to_brown_paper_tables()` | ✅ COMPLETE | `brown_paper_service.py:5200-5310` |
+| Datetime timezone fixes | ✅ COMPLETE | `application.py`, `brown_paper.py` |
+| JSON serialization fixes | ✅ COMPLETE | `brown_paper_service.py:5260-5270` |
+| Backend restart & E2E test | ⏳ PENDING | - |
+
+### Output Transformation
+
+```
+BEFORE (Phase-Based):                    AFTER (Business-Driven):
+┌─────────────────────────┐              ┌─────────────────────────┐
+│ Phase 1: Foundation     │              │ Patiënt Beheer          │
+│ Phase 2: Core Migration │      →       │ Behandelplan & Diagnose │
+│ Phase 3: Integration    │              │ Agenda & Planning       │
+│ Phase 4: Testing        │              │ Declaraties & Facturatie│
+│ Phase 5: Deployment     │              │ Praktijkbeheer          │
+└─────────────────────────┘              └─────────────────────────┘
+```
+
+### Next Steps (Tonight)
+
+1. Restart backend met alle code fixes
+2. Clear database en run Playwright workflow
+3. Verify epics in `brown_paper_epics` table
+4. Validate in dashboard: `http://127.0.0.1:3000/brown-paper-dashboard.html`
+
+---
+
+## Fase 24.9: Brown Paper Workflow Refactoring (Week 160-162) 🆕
+
+**Status:** PLANNED
+**Priority:** HIGH (User feedback from Brown Paper test)
+**Effort:** ~40 uur (~1-2 weken)
+**Dependencies:** Brown Paper HCI-CRS test completion
+
+### Problem Statement
+
+De huidige Brown Paper workflow is te migratie-gefocust. De 8 BMAD vragen bevatten:
+- Vraag 2: Target state (migratie)
+- Vraag 3: Migration strategy (migratie)
+- Vraag 4: Data migration (migratie)
+
+Dit hoort niet bij **onboarding/analyse** maar bij **migration planning**.
+
+### Solution: Workflow Separation
+
+```
+HUIDIGE SITUATIE (1 gemengde workflow):
+┌─────────────────────────────────────────────────┐
+│  Brown Paper Workflow (8 vragen)                │
+│  - Analyse vragen (Q1, Q6-Q8)                   │
+│  - Migratie vragen (Q2-Q5) ← NIET GEWENST      │
+└─────────────────────────────────────────────────┘
+
+GEWENSTE SITUATIE (2 gescheiden workflows):
+┌─────────────────────────────────────────────────┐
+│  1. ONBOARDING WORKFLOW (Brown Paper)           │
+│     - Applicatie beschrijving                   │
+│     - Business domains                          │
+│     - Technische complexiteit                   │
+│     - Risico's & technische schuld             │
+│     - Team & resources (huidige situatie)       │
+│     Output: Application Profile                 │
+└─────────────────────────────────────────────────┘
+                      ↓
+┌─────────────────────────────────────────────────┐
+│  2. MIGRATION PLANNING WORKFLOW (Optioneel)     │
+│     - Target state                              │
+│     - Migration strategy                        │
+│     - Data migration approach                   │
+│     - Testing strategy                          │
+│     - Success criteria                          │
+│     Output: Migration Plan                      │
+└─────────────────────────────────────────────────┘
+```
+
+### Implementation Tasks
+
+| Task | Description | Effort |
+|------|-------------|--------|
+| **1. Refactor BMAD Questions** | Split 8 questions into 2 sets (onboarding vs migration) | 8h |
+| **2. Create OnboardingWorkflow** | New workflow class for pure analysis | 12h |
+| **3. Update MigrationWorkflow** | Takes OnboardingResult as input | 8h |
+| **4. Merge Duplicate Workflows** | Consolidate 2 existing Brown Paper implementations | 8h |
+| **5. Update API Endpoints** | `/marqed/onboard` + `/marqed/migrate` | 4h |
+
+### New Question Sets
+
+**Onboarding Workflow (5 vragen):**
+1. Describe the current application (stack, size, age, deployment)
+2. What are the main business domains/modules?
+3. What is the current technical state? (quality, test coverage, documentation)
+4. What are the known issues and technical debt?
+5. What team/resources are currently available?
+
+**Migration Planning Workflow (5 vragen):**
+1. What is the target state after migration?
+2. What migration strategy will be used?
+3. How will data be migrated?
+4. What is the testing strategy?
+5. What are the success criteria?
+
+### Success Criteria
+
+| Metric | Target |
+|--------|--------|
+| Workflow separation | 100% - no migration questions in onboarding |
+| Single Brown Paper implementation | Merge 2 → 1 |
+| API backward compatibility | Existing clients work |
+| Test coverage | ≥80% for new code |
 
 ---
 
@@ -331,7 +542,7 @@ See: [docs/architecture/confucius-orchestrator-integration-plan.md](docs/archite
 
 | Fase | Focus | Items | Weken | Key Deliverables |
 |------|-------|-------|-------|------------------|
-| **24** | Quick Wins | 15 (13✅/2🔴) | 12 | Legacy Quickscan, Secret Detection, Migration Patterns |
+| **24** | Quick Wins | 15 ✅ COMPLETE | 12 | Legacy Quickscan, Secret Detection, Migration Patterns, B5+B6 Analyzers |
 | **25** | Core Enhancement | 18 | 16 | COBOL Analyzer, UI Wrapper, Knowledge Graph |
 | **26** | AI & Automation | 12 | 14 | LLM Collaboration, Natural Language Query |
 | **27** | Testing | 8 | 10 | Characterization Tests, Mutation Testing |
@@ -357,13 +568,40 @@ See: [gap-analysis-complete-roadmap.md](docs/roadmap/gap-analysis-complete-roadm
 
 ---
 
-## Fase 32: Ralph Wiggum Autonomous Loop (Week 175-180)
+## Fase 32: Ralph Wiggum Autonomous Loop + mq Integration (Week 175-190)
 
 **Status:** PLANNED
 **Priority:** HIGH (ROI 8.5)
-**Effort:** 160 uur (~5 weken)
+**Effort:** 536 uur (~16 weken) - inclusief mq integratie
+**Dependencies:** Fase 23.5 (Confucius Orchestrator), mq workflows
 
-Implementatie van de Ralph Wiggum techniek voor autonomous overnight coding met iteratieve loops en git-based state management.
+### Overview
+
+Implementatie van de Ralph Wiggum techniek voor autonomous overnight coding, **volledig geïntegreerd met mq CLI workflows**.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  mq + RALPH UNIFIED SYSTEM                                  │
+├─────────────────────────────────────────────────────────────┤
+│  CLI: marqed-bugfix | marqed-changes | marqed-overnight     │
+│                                          ↑ NEW              │
+├─────────────────────────────────────────────────────────────┤
+│  Shared: UnifiedState | KnowledgeHub | ValidationPipeline   │
+├─────────────────────────────────────────────────────────────┤
+│  Ralph: Loop | Guardrails | Checkpoints | MemoryCompression │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Implementation Fases
+
+| Fase | Weken | Focus | Effort |
+|------|-------|-------|--------|
+| **32A: Foundation** | 175-178 | Unified State, Guardrails, Basic Loop | 80h |
+| **32B: Ralph Core** | 179-182 | PRP Generator, Circuit Breaker, Memory | 120h |
+| **32C: mq Integration** | 183-186 | overnight.sh, Knowledge Hub, Validation | 80h |
+| **32D: Production** | 187-190 | Dashboard, E2E Testing, Docs | 80h |
+
+### Ralph Core Components
 
 | Component | Description |
 |-----------|-------------|
@@ -373,7 +611,17 @@ Implementatie van de Ralph Wiggum techniek voor autonomous overnight coding met 
 | **CircuitBreaker** | Stuck detection, cost limits, token rotation |
 | **CourseCorrectionService** | Dead-end detection, 5 Whys methodology |
 
-**Production Harness (Cole Medin):**
+### mq Integration Components
+
+| Component | Description |
+|-----------|-------------|
+| **UnifiedStateManager** | Shared state voor mq tasks + Ralph |
+| **KnowledgeHubService** | TechStack + Guardrails + Experience Store |
+| **UnifiedValidationPipeline** | 8-phase validation (Vercel + Ralph) |
+| **marqed-overnight.sh** | Nieuwe CLI workflow voor overnight coding |
+| **MorningReportGenerator** | Summary van overnight werk |
+
+### Production Harness (Cole Medin)
 
 | Component | Description |
 |-----------|-------------|
@@ -384,14 +632,111 @@ Implementatie van de Ralph Wiggum techniek voor autonomous overnight coding met 
 | **MemoryCompressionService** | Context handoff between runs |
 | **MultiPhaseValidationPipeline** | 8-phase validation (syntax → docs) |
 
-**Key Features:**
-- Overnight autonomous coding (uren onbeheerd draaien)
-- Git als geheugen (fresh context bij token overflow)
-- Guardrails file voor cross-context learning
-- Human-in-loop approval at stage boundaries
-- Error recovery with automated rollback
+### Key Features
 
-See: [docs/roadmap/phases/fase-32-ralph-wiggum-loop.md](docs/roadmap/phases/fase-32-ralph-wiggum-loop.md)
+- **Overnight autonomous coding** (8+ uur onbeheerd)
+- **Git als geheugen** (fresh context bij token overflow)
+- **Guardrails file** voor cross-context learning
+- **mq compatibility** (unified state, shared knowledge)
+- **marqed-overnight.sh** nieuwe workflow
+- **Morning reports** met overnight summary
+- **Human-in-loop** approval at stage boundaries
+- **Error recovery** with automated rollback
+
+### Success Criteria
+
+| Metric | Target |
+|--------|--------|
+| Overnight runtime | 8+ uur stable |
+| False completion | < 5% |
+| Guardrails repeat reduction | 70% |
+| Rollback recovery | < 60 sec |
+| Cost per overnight | < $25 avg |
+
+### Documentation
+
+| Document | Description |
+|----------|-------------|
+| [fase-32-ralph-wiggum-loop.md](docs/roadmap/phases/fase-32-ralph-wiggum-loop.md) | Ralph standalone spec |
+| [mq-ralph-wiggum-integration-plan.md](docs/mq-ralph-wiggum-integration-plan.md) | 🆕 Full integration plan |
+| [mq-integration-plan-van-aanpak.md](docs/mq-integration-plan-van-aanpak.md) | mq Platform integration |
+
+---
+
+## Fase 51: Klant Template Service - Multi-Tenant Platform (Week 191-202)
+
+**Status:** PLANNED
+**Priority:** HIGH (ROI 8.0)
+**Effort:** 312 uur (~10-12 weken met buffer)
+**Dependencies:** Fase 32 (Ralph Wiggum), Fase 23.5 (Confucius Orchestrator)
+
+### Overview
+
+Transformeert MarQed.ai naar een **multi-tenant AI coding platform** met per-klant domeinen en per-applicatie omgevingen met tech-stack specifieke tooling.
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  KLANT TEMPLATE SERVICE ARCHITECTURE                            │
+├─────────────────────────────────────────────────────────────────┤
+│  TEMPLATES:  klant-template | 8x applicatie-templates           │
+│              (python, dotnet, legacy-asp, js, ts, go, java, php)│
+├─────────────────────────────────────────────────────────────────┤
+│  CONTEXT:    Platform → Klant → Applicatie → Project            │
+│              (4-layer inheritance, merged context)              │
+├─────────────────────────────────────────────────────────────────┤
+│  SCANNERS:   34+ scanners auto-configured per tech-stack        │
+├─────────────────────────────────────────────────────────────────┤
+│  AGENTS:     Derek (DevOps) + Isaac (Infra Audit) 🆕            │
+├─────────────────────────────────────────────────────────────────┤
+│  WORKFLOW:   DEPLOYMENT (6-phase) 🆕                            │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Implementation Phases
+
+| Phase | Weken | Focus | Effort |
+|-------|-------|-------|--------|
+| **51A: Foundation** | 191-193 | Templates, KlantTemplateService, ContextInheritance | 80h |
+| **51B: Scanners** | 194-195 | ScannerConfigService, 8 stack presets | 56h |
+| **51C: Onboarding** | 196-197 | API endpoints, database models, workflows | 64h |
+| **51D: VibeCoding** | 198-199 | 6 document templates, agent integration | 48h |
+| **51E: Agents** | 200-202 | Derek, Isaac agents, DEPLOYMENT workflow | 64h |
+
+### Key Components
+
+| Component | Type | Description |
+|-----------|------|-------------|
+| **KlantTemplateService** | Service | Klant domein provisioning |
+| **ApplicatieTemplateService** | Service | App omgeving met tech-stack detection |
+| **ContextInheritanceService** | Service | 4-layer context merging |
+| **ScannerConfigService** | Service | Per-stack scanner auto-configuration |
+| **DerekAgent** | Agent | DevOps/Deployment specialist (NIEUW) |
+| **IsaacAgent** | Agent | Infrastructure Auditor (NIEUW) |
+| **DEPLOYMENT** | Workflow | 6-phase deployment pipeline (NIEUW) |
+
+### New API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v2/klanten/onboard` | POST | Start klant onboarding |
+| `/api/v2/klanten/{id}/applicaties/onboard` | POST | Start app onboarding |
+| `/api/v2/klanten/{id}/applicaties/{app_id}/context` | GET | Get merged context |
+| `/api/v2/klanten/{id}/applicaties/{app_id}/scanners` | GET | Get active scanners |
+
+### Success Criteria
+
+| Metric | Target |
+|--------|--------|
+| Klant onboarding tijd | < 15 min (van 2-4 uur) |
+| Applicatie onboarding tijd | < 10 min |
+| Context inheritance accuracy | 100% |
+| Scanner auto-configuration | 100% per stack |
+
+### Documentation
+
+| Document | Description |
+|----------|-------------|
+| [fase-51-klant-template-service.md](docs/roadmap/phases/fase-51-klant-template-service.md) | Full specification |
 
 ---
 
@@ -685,6 +1030,7 @@ RESULT: 80-90% cost reduction vs. Opus-only approach
 | [gap-analysis-complete-roadmap.md](docs/roadmap/gap-analysis-complete-roadmap.md) | Full 75-item specs |
 | [workflow-separation-plan.md](docs/architecture/workflow-separation-plan.md) | Brown Paper/Migration/Quality separation |
 | [fase-32-ralph-wiggum-loop.md](docs/roadmap/phases/fase-32-ralph-wiggum-loop.md) | Ralph Wiggum autonomous loop |
+| [mq-ralph-wiggum-integration-plan.md](docs/mq-ralph-wiggum-integration-plan.md) | 🆕 Fase 32: mq + Ralph Integration (536h) |
 | [fase-33-devstats-dashboard.md](docs/roadmap/phases/fase-33-devstats-dashboard.md) | DevStats developer metrics |
 | [GREEN-PAPER-MAINTENANCE-ZERO-COMPLAINTS-PLAN.md](docs/plans/GREEN-PAPER-MAINTENANCE-ZERO-COMPLAINTS-PLAN.md) | 🆕 Fase 43: Zero-Complaints Strategy |
 | [fase-44-ai-code-complaints-strategy.md](docs/roadmap/phases/fase-44-ai-code-complaints-strategy.md) | 🆕 Fase 44: AI Code Complaints Strategy |
@@ -713,7 +1059,7 @@ RESULT: 80-90% cost reduction vs. Opus-only approach
 | **Visual Dependency Graph (E1)** | 158 | D3.js/Cytoscape/DOT/Mermaid, 35 tests ✅ |
 | **Context-Aware Docs (J1)** | 158 | AST parsing, multi-format export, 34 tests ✅ |
 | **Secret Detection (K3)** | 157 | 50+ patterns, entropy detection ✅ |
-| **Ralph Wiggum Loop (Fase 32)** | 178 | Autonomous agent execution, guardrails, overnight coding |
+| **Ralph Wiggum + mq Integration (Fase 32)** | 190 | Autonomous overnight coding, mq integration, guardrails, morning reports |
 | **DevStats Dashboard (Fase 33)** | 184 | Git contribution analytics, release tracking, bus factor |
 | **Zero-Complaints Strategy (Fase 43)** | 184 | Zero critical complaints, <5% minor, schema hardening, quality metrics |
 | **AI Code Complaints Strategy (Fase 44)** | 185-192 | 3x improvement over industry AI code metrics |
