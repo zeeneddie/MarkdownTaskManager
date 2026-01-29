@@ -184,7 +184,7 @@ class UnifiedOnboardingService:
         # Timeout per step: steps 5-7 use LLM and may hang
         step_timeout = {
             1: 300, 2: 30, 3: 300, 4: 300,
-            5: 600, 6: 600, 7: 600, 8: 120,
+            5: 600, 6: 600, 7: 1200, 8: 120,
         }.get(step, 300)
 
         try:
@@ -319,6 +319,23 @@ class UnifiedOnboardingService:
             if app.name == session.project_name or app.root_path == project_path:
                 application_id = app.id
                 break
+        if application_id is None and project_path:
+            logger.info(f"Auto-registering '{session.project_name}' at {project_path}")
+            try:
+                scan_result = await asyncio.to_thread(
+                    registry.scan_application,
+                    name=session.project_name,
+                    root_path=project_path,
+                    description="Auto-registered by Unified Onboarding",
+                )
+                if scan_result.success and scan_result.application:
+                    application_id = scan_result.application.id
+                    logger.info(f"Auto-registered id={application_id}, stacks={scan_result.total_stacks}")
+                else:
+                    logger.warning(f"Auto-scan failed: {scan_result.errors}")
+            except Exception as e:
+                logger.error(f"Auto-registration failed: {e}", exc_info=True)
+
         if application_id is None:
             return {
                 "status": "skipped",
@@ -508,7 +525,7 @@ class UnifiedOnboardingService:
         }
 
     async def _step_7_enhanced_analysis(self, session: UnifiedOnboardingSession) -> Dict:
-        """Step 7: Run enhanced 6-phase analysis.
+        """Step 7: Run enhanced 6-phase analysis with per-phase progress.
 
         Uses a separate DB session to isolate failures (e.g. timezone bugs
         in downstream services) from the main orchestration session.
@@ -516,6 +533,9 @@ class UnifiedOnboardingService:
         Uses asyncio.create_task + asyncio.wait with timeout because the
         underlying LLM provider uses sync HTTP calls that asyncio.wait_for
         cannot cancel mid-call.
+
+        Progress is written to step_7_result in the DB after each phase
+        transition so the status endpoint can show per-phase progress.
         """
         tier_map = {
             "ENTERPRISE": EnhancedAnalysisTier.PREMIUM,
@@ -529,8 +549,54 @@ class UnifiedOnboardingService:
 
         request = EnhancedAnalysisRequest(tier=tier)
 
-        # Timeout for enhanced analysis (LLM-heavy, can hang on large files)
-        ENHANCED_TIMEOUT = 300  # 5 minutes max
+        ENHANCED_TIMEOUT = 900  # 15 minutes max
+
+        PHASE_NAMES = {
+            1: "Code Understanding",
+            2: "Domain Extraction",
+            3: "Hierarchical Extraction",
+            4: "Deep Extraction",
+            5: "Estimation",
+            6: "Output Consolidation",
+        }
+
+        phases_progress = [
+            {"phase": i, "name": PHASE_NAMES[i], "status": "pending"}
+            for i in range(1, 7)
+        ]
+
+        unified_id = str(session.id)
+
+        async def _progress_callback(phase: int, name: str, status: str, details: Dict = None):
+            """Update per-phase progress and persist to DB."""
+            idx = phase - 1
+            phases_progress[idx]["status"] = status
+            if status == "started":
+                phases_progress[idx]["started_at"] = datetime.utcnow().isoformat()
+            elif status == "completed" and details:
+                phases_progress[idx].update(details)
+
+            current_phase = phase if status == "started" else (phase + 1 if phase < 6 else phase)
+            phases_completed = sum(1 for p in phases_progress if p["status"] == "completed")
+
+            progress_snapshot = {
+                "status": "running",
+                "current_phase": current_phase,
+                "phases_completed": phases_completed,
+                "total_phases": 6,
+                "phases": [dict(p) for p in phases_progress],
+            }
+
+            try:
+                async with AsyncSessionLocal() as progress_db:
+                    await progress_db.execute(
+                        update(UnifiedOnboardingSession)
+                        .where(UnifiedOnboardingSession.id == unified_id)
+                        .values(step_7_result=progress_snapshot)
+                    )
+                    await progress_db.commit()
+            except Exception as db_err:
+                logger.warning(f"Failed to persist phase progress: {db_err}")
 
         async def _run_enhanced():
             async with AsyncSessionLocal() as isolated_db:
@@ -539,6 +605,7 @@ class UnifiedOnboardingService:
                         session_id=session.marqed_session_id,
                         request=request,
                         db=isolated_db,
+                        progress_callback=_progress_callback,
                     )
                     await isolated_db.commit()
                     return result
@@ -551,14 +618,17 @@ class UnifiedOnboardingService:
             done, pending = await asyncio.wait({task}, timeout=ENHANCED_TIMEOUT)
 
             if pending:
-                # Task didn't finish in time - cancel and abandon it
                 logger.warning(f"Enhanced analysis timed out after {ENHANCED_TIMEOUT}s, abandoning")
                 task.cancel()
-                # Don't await the cancelled task - let it clean up in background
+                # Mark remaining phases as timed_out
+                for p in phases_progress:
+                    if p["status"] in ("pending", "started"):
+                        p["status"] = "timed_out"
                 return {
                     "status": "partial",
                     "error": f"Enhanced analysis timed out after {ENHANCED_TIMEOUT}s",
                     "epics": [],
+                    "phases": [dict(p) for p in phases_progress],
                 }
 
             # Task completed (possibly with exception)
@@ -576,15 +646,20 @@ class UnifiedOnboardingService:
             )
             result_dict["epics"] = epics
             result_dict["status"] = "completed"
+            result_dict["phases"] = [dict(p) for p in phases_progress]
 
             return result_dict
 
         except Exception as e:
             logger.warning(f"Enhanced analysis failed (non-fatal): {e}")
+            for p in phases_progress:
+                if p["status"] in ("pending", "started"):
+                    p["status"] = "failed"
             return {
                 "status": "partial",
                 "error": str(e),
                 "epics": [],
+                "phases": [dict(p) for p in phases_progress],
             }
 
     async def _step_8_reconciliation(self, session: UnifiedOnboardingSession) -> Dict:

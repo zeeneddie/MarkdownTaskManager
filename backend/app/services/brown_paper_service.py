@@ -25,7 +25,7 @@ import logging
 import re
 from pathlib import Path
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Callable, Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 import uuid
@@ -2222,7 +2222,8 @@ class BrownPaperService:
         self,
         session_id: str,
         request: EnhancedAnalysisRequest,
-        db: AsyncSession
+        db: AsyncSession,
+        progress_callback: Optional[Callable] = None,
     ) -> EnhancedAnalysisResponse:
         """
         Orchestrate 6-phase enhanced analysis using existing services.
@@ -2282,17 +2283,24 @@ class BrownPaperService:
 
             # Phase 1: Code Understanding
             if 1 in phases_to_run:
+                if progress_callback:
+                    await progress_callback(1, "Code Understanding", "started")
                 phase1 = await self._phase1_code_understanding(project_path, request.options, db)
                 response.phase1_result = phase1
                 response.phases_completed.append(1)
                 if not phase1.success:
                     response.errors.extend(phase1.errors)
+                if progress_callback:
+                    await progress_callback(1, "Code Understanding", "completed",
+                        {"success": phase1.success, "duration_ms": getattr(phase1, 'duration_ms', 0)})
 
             # Phase 2: Domain Extraction
             # Week 159: Use enhanced business domain extraction if enabled
             use_business_logic_extraction = getattr(request.options, 'use_business_logic_extraction', True)
 
             if 2 in phases_to_run and response.phase1_result:
+                if progress_callback:
+                    await progress_callback(2, "Domain Extraction", "started")
                 if use_business_logic_extraction:
                     # New: Enhanced domain extraction with BusinessDomainExtractor
                     try:
@@ -2333,9 +2341,14 @@ class BrownPaperService:
                 response.phases_completed.append(2)
                 if not phase2.success:
                     response.errors.extend(phase2.errors)
+                if progress_callback:
+                    await progress_callback(2, "Domain Extraction", "completed",
+                        {"success": phase2.success, "duration_ms": getattr(phase2, 'duration_ms', 0)})
 
             # Phase 3: Hierarchical Extraction (or Business-Driven Story Generation)
             if 3 in phases_to_run and response.phase2_result:
+                if progress_callback:
+                    await progress_callback(3, "Hierarchical Extraction", "started")
                 if use_business_logic_extraction and hasattr(response, 'business_domain_result'):
                     # New: Business-driven story generation
                     try:
@@ -2369,9 +2382,14 @@ class BrownPaperService:
                 response.phases_completed.append(3)
                 if not phase3.success:
                     response.errors.extend(phase3.errors)
+                if progress_callback:
+                    await progress_callback(3, "Hierarchical Extraction", "completed",
+                        {"success": phase3.success, "duration_ms": getattr(phase3, 'duration_ms', 0)})
 
             # Phase 4: Deep Extraction
             if 4 in phases_to_run and response.phase3_result:
+                if progress_callback:
+                    await progress_callback(4, "Deep Extraction", "started")
                 phase4 = await self._phase4_deep_extraction(
                     project_path, response.phase3_result, request.tier, db
                 )
@@ -2379,9 +2397,14 @@ class BrownPaperService:
                 response.phases_completed.append(4)
                 if not phase4.success:
                     response.errors.extend(phase4.errors)
+                if progress_callback:
+                    await progress_callback(4, "Deep Extraction", "completed",
+                        {"success": phase4.success, "duration_ms": getattr(phase4, 'duration_ms', 0)})
 
             # Phase 5: Estimation
             if 5 in phases_to_run:
+                if progress_callback:
+                    await progress_callback(5, "Estimation", "started")
                 phase5 = await self._phase5_estimation(
                     session_id, response, request.options
                 )
@@ -2389,11 +2412,19 @@ class BrownPaperService:
                 response.phases_completed.append(5)
                 if not phase5.success:
                     response.errors.extend(phase5.errors)
+                if progress_callback:
+                    await progress_callback(5, "Estimation", "completed",
+                        {"success": phase5.success, "duration_ms": getattr(phase5, 'duration_ms', 0)})
 
             # Phase 6: Output consolidation
             if 6 in phases_to_run:
+                if progress_callback:
+                    await progress_callback(6, "Output Consolidation", "started")
                 response = await self._phase6_output(session_id, response)
                 response.phases_completed.append(6)
+                if progress_callback:
+                    await progress_callback(6, "Output Consolidation", "completed",
+                        {"success": True, "duration_ms": 0})
 
             # Calculate overall confidence
             response.confidence = self._calculate_confidence(response, target_confidence)
