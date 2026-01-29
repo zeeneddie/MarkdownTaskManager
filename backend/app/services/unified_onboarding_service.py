@@ -15,6 +15,7 @@ Steps:
 8. RECONCILIATION    - ReconciliationService.reconcile()
 """
 
+import asyncio
 import logging
 import time
 import uuid
@@ -120,7 +121,9 @@ class UnifiedOnboardingService:
         steps = []
         for step_num in range(1, 9):
             step_key = f"step_{step_num}_ms"
-            if step_num < session.current_step:
+            if session.status == "completed":
+                step_status = "completed"
+            elif step_num < session.current_step:
                 step_status = "completed"
             elif step_num == session.current_step and session.status.endswith("_running"):
                 step_status = "running"
@@ -175,13 +178,25 @@ class UnifiedOnboardingService:
         start_time = time.time()
 
         await self._update_status(session, f"step_{step}_running", step)
+        # Refresh session after commit (commit expires ORM objects)
+        session = await self.get_session(unified_id)
+
+        # Timeout per step: steps 5-7 use LLM and may hang
+        step_timeout = {
+            1: 300, 2: 30, 3: 300, 4: 300,
+            5: 600, 6: 600, 7: 600, 8: 120,
+        }.get(step, 300)
 
         try:
-            result = await method(session)
+            result = await asyncio.wait_for(method(session), timeout=step_timeout)
             duration_ms = int((time.time() - start_time) * 1000)
 
+            # Refresh session before saving (in case step modified other tables)
+            session = await self.get_session(unified_id)
             await self._save_step_result(session, step, result)
+            session = await self.get_session(unified_id)
             await self._save_step_timing(session, step, duration_ms)
+            session = await self.get_session(unified_id)
             await self._update_status(session, f"step_{step}_done", step)
 
             return {
@@ -192,11 +207,31 @@ class UnifiedOnboardingService:
                 "result_summary": self._summarize_result(step, result),
             }
 
+        except asyncio.TimeoutError:
+            duration_ms = int((time.time() - start_time) * 1000)
+            logger.error(f"Step {step} timed out after {step_timeout}s for session {unified_id}")
+            try:
+                await self.db.rollback()
+                session = await self.get_session(unified_id)
+                if session:
+                    session.error_message = f"Step {step} timed out after {step_timeout}s"
+                    session.status = "failed"
+                    await self.db.commit()
+            except Exception as save_err:
+                logger.error(f"Failed to save timeout state: {save_err}")
+            raise
+
         except Exception as e:
             logger.error(f"Step {step} failed for session {unified_id}: {e}", exc_info=True)
-            session.error_message = f"Step {step} failed: {str(e)}"
-            session.status = "failed"
-            await self.db.flush()
+            try:
+                await self.db.rollback()
+                session = await self.get_session(unified_id)
+                if session:
+                    session.error_message = f"Step {step} failed: {str(e)}"
+                    session.status = "failed"
+                    await self.db.commit()
+            except Exception as rollback_err:
+                logger.error(f"Failed to save error state: {rollback_err}")
             raise
 
     async def execute_all(
@@ -221,10 +256,11 @@ class UnifiedOnboardingService:
                 session = await self.get_session(unified_id)
 
             total_duration_ms = int((time.time() - total_start) * 1000)
+            session = await self.get_session(unified_id)
             session.total_duration_ms = total_duration_ms
             session.status = "completed"
             session.completed_at = datetime.utcnow()
-            await self.db.flush()
+            await self.db.commit()
 
             # Get reconciliation summary
             recon_summary = {}
@@ -249,8 +285,14 @@ class UnifiedOnboardingService:
 
         except Exception as e:
             total_duration_ms = int((time.time() - total_start) * 1000)
-            session.total_duration_ms = total_duration_ms
-            await self.db.flush()
+            try:
+                await self.db.rollback()
+                session = await self.get_session(unified_id)
+                if session:
+                    session.total_duration_ms = total_duration_ms
+                    await self.db.commit()
+            except Exception as rollback_err:
+                logger.error(f"Failed to save timing after error: {rollback_err}")
             raise
 
     # ========================================================================
@@ -269,9 +311,26 @@ class UnifiedOnboardingService:
                 "patterns": [],
             }
 
+        # Find the application ID by matching project name or root_path
+        from app.services.application_registry_service import get_application_registry_service
+        registry = get_application_registry_service()
+        application_id = None
+        for app in registry.list_applications():
+            if app.name == session.project_name or app.root_path == project_path:
+                application_id = app.id
+                break
+        if application_id is None:
+            return {
+                "status": "skipped",
+                "reason": f"No application found for project '{session.project_name}' or path '{project_path}'",
+                "modules": [],
+                "domains": [],
+                "patterns": [],
+            }
+
         # Start a BrownPaper session for code analysis
         bp_session = await self._brown_paper_service.start_session(
-            application_id=1000  # Default application ID for unified onboarding
+            application_id=application_id
         )
         session.brown_paper_session_id = bp_session.id
 
@@ -428,24 +487,36 @@ class UnifiedOnboardingService:
         if not marqed_session:
             raise ValueError(f"MarQed session not found: {session.marqed_session_id}")
 
-        tasks_result = await self._marqed_workflow.generate_tasks(session.marqed_session_id)
+        result = await self._marqed_workflow.generate_tasks(session.marqed_session_id)
+
+        # generate_tasks returns {"success": True, "tasks": {"epics": [...], ...}}
+        tasks_result = result.get("tasks", result)
 
         # Extract epics from tasks result
         epics = tasks_result.get("epics", [])
+        summary = tasks_result.get("summary", {})
 
         return {
             "status": "completed",
             "extraction_method": "marqed_top_down",
             "epics": epics,
             "total_epics": len(epics),
-            "total_features": tasks_result.get("total_features", 0),
-            "total_stories": tasks_result.get("total_stories", 0),
-            "total_story_points": tasks_result.get("total_story_points", 0),
-            "summary": tasks_result.get("summary", {}),
+            "total_features": summary.get("total_features", len(tasks_result.get("features", []))),
+            "total_stories": summary.get("total_stories", len(tasks_result.get("stories", []))),
+            "total_story_points": summary.get("total_story_points", 0),
+            "summary": summary,
         }
 
     async def _step_7_enhanced_analysis(self, session: UnifiedOnboardingSession) -> Dict:
-        """Step 7: Run enhanced 6-phase analysis."""
+        """Step 7: Run enhanced 6-phase analysis.
+
+        Uses a separate DB session to isolate failures (e.g. timezone bugs
+        in downstream services) from the main orchestration session.
+
+        Uses asyncio.create_task + asyncio.wait with timeout because the
+        underlying LLM provider uses sync HTTP calls that asyncio.wait_for
+        cannot cancel mid-call.
+        """
         tier_map = {
             "ENTERPRISE": EnhancedAnalysisTier.PREMIUM,
             "PREMIUM": EnhancedAnalysisTier.PREMIUM,
@@ -458,12 +529,40 @@ class UnifiedOnboardingService:
 
         request = EnhancedAnalysisRequest(tier=tier)
 
+        # Timeout for enhanced analysis (LLM-heavy, can hang on large files)
+        ENHANCED_TIMEOUT = 300  # 5 minutes max
+
+        async def _run_enhanced():
+            async with AsyncSessionLocal() as isolated_db:
+                try:
+                    result = await self._brown_paper_service.run_enhanced_analysis(
+                        session_id=session.marqed_session_id,
+                        request=request,
+                        db=isolated_db,
+                    )
+                    await isolated_db.commit()
+                    return result
+                except Exception:
+                    await isolated_db.rollback()
+                    raise
+
         try:
-            enhanced_result = await self._brown_paper_service.run_enhanced_analysis(
-                session_id=session.marqed_session_id,
-                request=request,
-                db=self.db,
-            )
+            task = asyncio.create_task(_run_enhanced())
+            done, pending = await asyncio.wait({task}, timeout=ENHANCED_TIMEOUT)
+
+            if pending:
+                # Task didn't finish in time - cancel and abandon it
+                logger.warning(f"Enhanced analysis timed out after {ENHANCED_TIMEOUT}s, abandoning")
+                task.cancel()
+                # Don't await the cancelled task - let it clean up in background
+                return {
+                    "status": "partial",
+                    "error": f"Enhanced analysis timed out after {ENHANCED_TIMEOUT}s",
+                    "epics": [],
+                }
+
+            # Task completed (possibly with exception)
+            enhanced_result = task.result()
 
             # Extract epics from enhanced result
             epics = []
@@ -530,10 +629,30 @@ class UnifiedOnboardingService:
             domains_business=domains_business,
         )
 
+        # Ensure we have a brown_paper_session_id for FK constraints
+        bp_session_id = session.brown_paper_session_id
+        if not bp_session_id:
+            # Create a minimal BrownPaperSession for FK linkage
+            bp_session = BrownPaperSessionDB(
+                id=uuid.uuid4(),
+                application_id=0,
+                application_name=session.project_name or "unified-onboarding",
+                root_path=session.project_path or "/unknown",
+                status="completed",
+            )
+            self.db.add(bp_session)
+            await self.db.commit()
+            bp_session_id = bp_session.id
+            # Update unified session with the new BP session id
+            session = await self.get_session(session.id)
+            session.brown_paper_session_id = bp_session_id
+            await self.db.commit()
+            session = await self.get_session(session.id)
+
         # Create a constitution for the unified epics
         constitution = BrownPaperConstitutionDB(
             id=uuid.uuid4(),
-            session_id=session.brown_paper_session_id or uuid.uuid4(),
+            session_id=bp_session_id,
             status="approved",
             content_json={
                 "source": "UnifiedOnboardingWorkflow",
@@ -543,7 +662,7 @@ class UnifiedOnboardingService:
             generated_by="UnifiedOnboardingWorkflow",
         )
         self.db.add(constitution)
-        await self.db.flush()
+        await self.db.commit()
 
         # Save unified epics to brown_paper_epics
         saved_epics = await recon_service.save_unified_epics_to_db(
@@ -571,14 +690,14 @@ class UnifiedOnboardingService:
         """Save step result to the appropriate step_N_result column."""
         col_name = f"step_{step}_result"
         setattr(session, col_name, result)
-        await self.db.flush()
+        await self.db.commit()
 
     async def _save_step_timing(self, session: UnifiedOnboardingSession, step: int, duration_ms: int):
         """Save step timing."""
         timings = dict(session.step_timings or {})
         timings[f"step_{step}_ms"] = duration_ms
         session.step_timings = timings
-        await self.db.flush()
+        await self.db.commit()
 
     async def _update_status(self, session: UnifiedOnboardingSession, status: str, step: int = None):
         """Update status and current_step."""
@@ -586,7 +705,7 @@ class UnifiedOnboardingService:
         if step is not None:
             session.current_step = step
         session.updated_at = datetime.utcnow()
-        await self.db.flush()
+        await self.db.commit()
 
     def _summarize_result(self, step: int, result: Dict) -> Dict:
         """Create a brief summary of a step result for the API response."""
