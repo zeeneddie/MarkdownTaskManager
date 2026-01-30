@@ -2390,6 +2390,126 @@ Delphi/Object Pascal code analyse.
 
 ---
 
+## C9: Uniface/Proc Support
+**Categorie**: Taal Support | **ROI**: 4.5 | **Bron**: NL Enterprise Legacy Landscape
+
+### Beschrijving
+Compuware/Rocket Software Uniface 4GL platform analyse met Proc-script parsing en business rule extractie. Uniface is een veelgebruikt legacy platform in Nederlandse enterprise omgevingen (banken, verzekeraars, overheid, zorg) met een significante installbase die actief migratie-kandidaat is.
+
+### Functionele Requirements
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| C9.1 | Uniface Proc-script parser (triggers, operations, entries) | Must |
+| C9.2 | Component Model analyse (forms, services, reports, session services) | Must |
+| C9.3 | Entity/Field model extractie (Uniface data model → ERD) | Must |
+| C9.4 | Business rule extractie uit Proc-triggers (CRUD, validation, workflow) | Must |
+| C9.5 | Component dependency graph (include procs, call chains) | Must |
+| C9.6 | ProcScript → Python/C# mapping suggestions | Should |
+| C9.7 | Uniface-specific anti-pattern detectie (global proc misuse, PUTMESS chains) | Should |
+| C9.8 | Migration complexity scoring per component | Should |
+
+### Uniface Specifieke Analyse
+```
+UNIFACE COMPONENT MODEL:
+├── Forms (UI + triggers)
+│   ├── EXEC triggers (form-level)
+│   ├── Entity triggers (CRUD operations)
+│   └── Field triggers (validation, derivation)
+├── Services (business logic, no UI)
+│   ├── Operation triggers
+│   └── Entry/Exit points
+├── Reports (print/export)
+├── Session Services (workflow orchestration)
+└── Include Procs (shared code libraries)
+
+PROC-SCRIPT PATTERNS TO DETECT:
+├── CRUD triggers: read, store, delete, find
+├── Validation: if/else, $status checks, PUTMESS
+├── Data access: RETRIEVE/e, STORE/e, DELETE/e
+├── Navigation: ACTIVATE, CALL, PERFORM
+├── Database: SQL embedded in Proc
+└── Glue code: putitem/getitem, $concat, params
+```
+
+### Technische Specificatie
+```python
+class UnifaceProcParser:
+    """
+    Parses Uniface Proc-script (triggers, operations, entries).
+    Supports Uniface 9.x and 10.x syntax.
+    """
+
+    # Proc trigger types
+    TRIGGER_TYPES = {
+        "form": ["exec", "init", "leave", "detail", "format"],
+        "entity": ["read", "store", "delete", "clear", "create",
+                    "modify", "erase", "find"],
+        "field": ["value_change", "syntax_check", "validation",
+                  "derivation", "format", "display"],
+        "service": ["operation", "entry", "exit"],
+    }
+
+    def parse_component(self, proc_source: str) -> UnifaceComponent:
+        """Parse complete Uniface component from Proc source."""
+        return UnifaceComponent(
+            triggers=self._extract_triggers(proc_source),
+            entities=self._extract_entities(proc_source),
+            fields=self._extract_fields(proc_source),
+            includes=self._extract_includes(proc_source),
+            sql_statements=self._extract_embedded_sql(proc_source),
+            external_calls=self._extract_activations(proc_source)
+        )
+
+    def extract_business_rules(self,
+                                component: UnifaceComponent) -> List[BusinessRule]:
+        """
+        Extract business rules from Proc triggers.
+        Focus on: validation triggers, store triggers, if/else chains.
+        """
+        rules = []
+        for trigger in component.triggers:
+            if trigger.type in ["store", "validation", "value_change"]:
+                rules.extend(self._analyze_trigger_rules(trigger))
+        return rules
+```
+
+### Migration Complexity Factors
+| Factor | Weight | Description |
+|--------|--------|-------------|
+| Component count | 20% | Totaal forms + services + reports |
+| Proc complexity | 25% | Lines of Proc, nesting depth, cyclomatic |
+| Entity model size | 15% | Aantal entities en relaties |
+| Include dependencies | 15% | Shared proc libraries, coupling |
+| Embedded SQL | 15% | Direct SQL in Proc (tight DB coupling) |
+| External integrations | 10% | ACTIVATE calls, middleware dependencies |
+
+### Deliverables
+- [ ] `app/services/static_analysis/extractors/uniface_proc_parser.py`
+- [ ] `app/services/static_analysis/extractors/uniface_component_analyzer.py`
+- [ ] `app/services/static_analysis/extractors/uniface_entity_extractor.py`
+- [ ] `app/services/static_analysis/extractors/uniface_migration_scorer.py`
+- [ ] Unit tests: 30+ (Proc parsing, entity extraction, rule detection)
+- [ ] Integration met ExtractorFactory (auto-detect `.proc`, `.frm`, `.svc` files)
+
+### Acceptance Criteria
+- [ ] Parse 95%+ van standaard Uniface Proc-script syntax
+- [ ] Detecteer triggers en classificeer naar type (form/entity/field/service)
+- [ ] Extraheer business rules uit validation en store triggers
+- [ ] Genereer component dependency graph
+- [ ] Migration complexity score per component (0-100)
+
+### Effort Estimate
+| Task | Tijd |
+|------|------|
+| Proc-script parser | 2 weken |
+| Component model analyzer | 1.5 weken |
+| Entity/field extractor | 1 week |
+| Business rule extraction | 1.5 weken |
+| Migration scoring + tests | 1 week |
+| **Totaal** | **7 weken** |
+
+---
+
 ## I6: Containerization Wizard
 **Categorie**: Cloud & Infra | **ROI**: 4.0 | **Bron**: XTi
 
@@ -2430,12 +2550,13 @@ Security test scripts voor legacy en nieuwe systemen.
 | C2 | RPG/AS400 | 5 | - |
 | C5 | PowerBuilder | 4 | - |
 | C6 | Delphi | 3 | - |
+| **C9** | **Uniface/Proc** | **7** | - |
 | I6 | Container Wizard | 3 | - |
 | G4 | Event Sourcing | 4 | G5 |
 | K5 | Pentest Templates | 3 | K1 |
-| **TOTAAL** | | **37 weken werk** | |
+| **TOTAAL** | | **44 weken werk** | |
 
-> **Note**: Met parallel development (3 teams) is Fase 6 in 16 weken te realiseren.
+> **Note**: Met parallel development (3 teams) is Fase 6 in 18 weken te realiseren.
 
 ---
 
@@ -2480,19 +2601,19 @@ De volgende items zijn **niet** opgenomen in de roadmap:
 | 3 | 45 | 3 | 14 | Week 29 | Week 42 |
 | 4 | 21 | 2 | 10 | Week 43 | Week 52 |
 | 5 | 33 | 3 | 12 | Week 53 | Week 64 |
-| 6 | 37 | 3 | 16 | Week 65 | Week 80 |
-| **Totaal** | **214** | | **80 weken** | | |
+| 6 | 44 | 3 | 18 | Week 65 | Week 82 |
+| **Totaal** | **221** | | **82 weken** | | |
 
 ## Investment Summary
 
 | Metric | Value |
 |--------|-------|
-| Total Development Weeks | 224 (+10 nieuwe items) |
+| Total Development Weeks | 231 (+11 nieuwe items) |
 | Parallel Teams Needed | 2-3 |
-| Calendar Duration | 82 weken (~19 maanden) |
-| Items Delivered | 75 |
+| Calendar Duration | 84 weken (~19 maanden) |
+| Items Delivered | 76 |
 | Excluded Items | 6 |
-| Nieuwe Items | 3 (B12, A7, H8) |
+| Nieuwe Items | 4 (B12, A7, H8, C9) |
 
 ## Priority Distribution
 
@@ -2509,7 +2630,7 @@ De volgende items zijn **niet** opgenomen in de roadmap:
 |----------|-------|-------|
 | A: Assessment & Sales | 6 | 17 |
 | B: AI & Automatisering | 11 | 41 |
-| C: Taal Support | 4 | 18 |
+| C: Taal Support | 5 | 25 |
 | D: Target Platforms | 8 | 27 |
 | E: Architecture | 6 | 19 |
 | F: Testing | 8 | 19 |
@@ -2537,6 +2658,14 @@ De volgende items zijn **niet** opgenomen in de roadmap:
 - Alert bij budget overschrijding
 - Optimization suggestions
 - **ROI**: 4.0 | **Effort**: 3 weken | **Fase**: 2
+
+### 4. **Uniface/Proc Support** (Nieuw - C9)
+- Uniface 4GL Proc-script parser (triggers, operations, entries)
+- Component Model analyse (forms, services, reports, session services)
+- Entity/Field model extractie naar ERD
+- Business rule extractie uit Proc-triggers
+- Significante Nederlandse enterprise installbase (banken, verzekeraars, overheid)
+- **ROI**: 4.5 | **Effort**: 7 weken | **Fase**: 6
 
 ### 3. **Project Export Suite** (Nieuw - H8)
 - CSV export voor spreadsheets
