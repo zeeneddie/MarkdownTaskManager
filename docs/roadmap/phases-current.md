@@ -1,9 +1,9 @@
-# Current Phase: Week 158 - Fase 24 Complete + Fase 41 All Test Tiers
+# Current Phase: Week 158 - Fase 24 Complete + Fase 41 COMPLETE
 
 **Project:** MarQed AI Agent Software Platform
 **Period:** Week 158 (2026-01-31)
-**Status:** FASE 24 QUICK WINS 15/15 COMPLETE ✅ | FASE 41 ALL TEST TIERS COMPLETE (274 tests)
-**Focus:** KB1/KB5 Knowledge Base, M1a CSV/Excel Export, Fase 41 Injection Detector Tests (all tiers)
+**Status:** FASE 24 QUICK WINS 15/15 COMPLETE ✅ | FASE 41 COMPLETE ✅ (484 tests, 108 rules)
+**Focus:** KB1/KB5 Knowledge Base, M1a CSV/Excel Export, Fase 41 Complete (Injection + Auth + FN Hunting + Integration)
 
 ---
 
@@ -37,6 +37,11 @@
 | **Fase 41 T2B** | `test_injection_detector.py` | ✅ | 34 | NoSQL, SSTI, CSRF extended tests |
 | **Fase 41 T2C** | `test_injection_detector.py` | ✅ | 14 | File Upload extended tests |
 | **Fase 41 T3** | `test_injection_detector.py` | ✅ | 16 | All Rules Metadata validation (79 rules, 13 categories) |
+| **Fase 41 T3A/3B** | `test_auth_logic_detector.py` | ✅ | 123 | AuthLogicDetector extended (6 CWEs, 29 rules, per-rule detection, FP, context-aware) |
+| **Fase 41B** | `test_false_negative_hunting.py` | ✅ | 57 | FN hunting suite (43 pass, 14 xfail — known scanner limitations) |
+| **Fase 41 Integration** | `test_scanner_integration.py` | ✅ | 30 | Orchestrator, multi-scanner, real-world code samples |
+
+**Fase 41 COMPLETE: 484 tests total (470 passed, 14 xfailed, 0 failures)**
 
 **New Files Created:**
 
@@ -49,6 +54,8 @@
 | `app/api/knowledge_base.py` | ~200 | REST API (load/status/query/clear/statistics) |
 | `app/services/session_exporters/csv_exporter.py` | ~120 | Multi-section CSV export |
 | `app/services/session_exporters/excel_exporter.py` | ~200 | Multi-sheet Excel workbook |
+| `tests/unit/security_scanner/test_false_negative_hunting.py` | ~1200 | FN hunting suite (57 tests, 14 xfail) |
+| `tests/integration/security/test_scanner_integration.py` | ~700 | Integration tests (30 tests) |
 
 **Modified Files:**
 
@@ -60,6 +67,7 @@
 | `app/services/green_paper/green_paper_service.py` | KB context voor Peter |
 | `requirements.txt` | `openpyxl>=3.1.0` toegevoegd |
 | `tests/unit/security_scanner/test_injection_detector.py` | 274 tests (T1A+T1B+T2A+T2B+T2C+T3 complete) |
+| `tests/unit/security_scanner/test_auth_logic_detector.py` | Extended from 33 → 123 tests (T3A+T3B complete) |
 | `tests/unit/security_scanner/test_boolean_logic_detector.py` | Version 1.0.0→1.1.0, rules 12→20 |
 | `tests/unit/security_scanner/test_control_flow_logic_detector.py` | Version 1.0.0→1.1.0, rules 12→19 |
 

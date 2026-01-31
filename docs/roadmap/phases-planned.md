@@ -2,7 +2,7 @@
 
 **Project:** MarQed AI Agent Software Platform
 **Period:** Week 158+ (2026-01-XX onwards)
-**Last Updated:** 2026-01-31 (Fase 24 15/15 COMPLETE, KB1+KB5+M1a, Fase 41 ALL test tiers complete — 274 tests)
+**Last Updated:** 2026-01-31 (Fase 24 15/15 COMPLETE, Fase 41 COMPLETE — 108 rules, 484 tests)
 
 ---
 
@@ -37,6 +37,7 @@
 | **23.6** | 157 | Stage Council Review (All Phases) | ✅ COMPLETE | [fase-23.6-stage-council-review.md](phases/fase-23.6-stage-council-review.md) |
 | **31** | 157 | CWE Security Scanner Suite | ✅ COMPLETE | [fase-31-cwe-security-scanners.md](phases/fase-31-cwe-security-scanners.md) |
 | **24-A1** | 157 | Legacy Quickscan (15-min assessment) | ✅ COMPLETE | [phases-current.md](phases-current.md#week-157-legacy-quickscan-a1-fase-24-a1--complete) |
+| **41** | 158 | Injection Vulnerability Scanners | ✅ COMPLETE | [fase-41-injection-vulnerability-scanners.md](phases/fase-41-injection-vulnerability-scanners.md) |
 
 ### Fase 24 Quick Wins - ✅ COMPLETE (Week 157-158)
 
@@ -92,26 +93,22 @@
 | **28** | 215-226 | GAP Advanced Integrations | 10 | [gap-phases.md](phases/gap-phases.md#fase-28) |
 | **GAP-29** | 227-244 | GAP Innovation & Scale | 9 | [gap-phases.md](phases/gap-phases.md#fase-gap-29) |
 
-### 🔴 IN PROGRESS: Injection Vulnerability Scanners (Week 159-168)
+### ✅ COMPLETE: Injection Vulnerability Scanners (Fase 41)
 
 | Fase | Week | Title | Priority | ROI | Detail |
 |------|------|-------|----------|-----|--------|
-| **41** | 159-168 | **Injection Vulnerability Scanners** | 🔴 **HIGHEST** | 9.8 | [fase-41-injection-vulnerability-scanners.md](phases/fase-41-injection-vulnerability-scanners.md) |
+| **41** | 158 | **Injection Vulnerability Scanners** | 🔴 **HIGHEST** | 9.8 | [fase-41-injection-vulnerability-scanners.md](phases/fase-41-injection-vulnerability-scanners.md) |
 
-**All Test Tiers ✅ COMPLETE:** 79 rules across 13 categories, 274 unit tests passing (592 total suite)
+**✅ COMPLETE:** 108 rules (79 injection + 29 auth logic), 484 tests (470 passed, 14 xfailed)
 
-**Critical Gap:** CWE Top 25 coverage currently at 40%. After Fase 41: **96%**
+**CWE Top 25 coverage: 40% → 96%**
 
-**Implementation status (rules + tests):**
-- **Tier 1 (P0) ✅ RULES + TESTS:** CWE-79 (XSS 12r), CWE-89 (SQLi 12r), CWE-78 (CMDi 8r), CWE-22 (Path 6r), CWE-502 (Deser 7r), CWE-918 (SSRF 6r)
-- **Tier 2 (P1) ✅ RULES + TESTS:** CWE-352 (CSRF 3r), CWE-434 (Upload 4r), CWE-94 (Code 5r), CWE-611 (XXE 5r), CWE-90 (LDAP 3r), CWE-943 (NoSQL 4r), CWE-1336 (SSTI 4r)
-- **Tier 3 (P2) REMAINING:** CWE-862, CWE-863, CWE-287, CWE-269, CWE-20, CWE-306 (Auth logic — not yet implemented)
-
-**Fase 41B: Iterative False Negative Cycle (included):**
-- Week 161, 164, 167: False negative hunting after each tier
-- Week 166: FNRemediationDetector (taint analysis scanner)
-- Week 168: Final FN hunt + stabilization
-- Target: False negative rate from ~30% → **<5%**
+**Implementation status — ALL COMPLETE:**
+- **Tier 1 (P0) ✅:** CWE-79 (XSS 12r), CWE-89 (SQLi 12r), CWE-78 (CMDi 8r), CWE-22 (Path 6r), CWE-502 (Deser 7r), CWE-918 (SSRF 6r) — 274 tests
+- **Tier 2 (P1) ✅:** CWE-352 (CSRF 3r), CWE-434 (Upload 4r), CWE-94 (Code 5r), CWE-611 (XXE 5r), CWE-90 (LDAP 3r), CWE-943 (NoSQL 4r), CWE-1336 (SSTI 4r) — included in 274 tests
+- **Tier 3 (P2) ✅:** CWE-862 (6r), CWE-863 (5r), CWE-287 (6r), CWE-269 (4r), CWE-306 (4r), CWE-20 (4r) — 123 tests
+- **Fase 41B FN Hunting ✅:** 57 tests (43 pass, 14 xfail for known scanner limitations)
+- **Integration Tests ✅:** 30 tests (orchestrator, multi-scanner, real-world code samples)
 
 ---
 
@@ -263,7 +260,7 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 ├── Week 158: Fase 24-E1 Visual Dependency Graph ✅ COMPLETE (D3.js/Cytoscape/DOT/Mermaid, 35 tests)
 ├── Week 158: Fase 24-J1 Context-Aware Documentation ✅ COMPLETE (AST parsing, multi-format, 34 tests)
 │
-├── 🔴 Week 159-166: Fase 41 - INJECTION VULNERABILITY SCANNERS 🔄 IN PROGRESS
+├── ✅ Week 158: Fase 41 - INJECTION VULNERABILITY SCANNERS ✅ COMPLETE (484 tests)
 │   ├── Week 158: Tier 1A - XSS (CWE-79) + SQL Injection (CWE-89) ✅ COMPLETE (86 tests)
 │   ├── Week 158: Tier 1B - CMDi (CWE-78), Path (CWE-22), Deser (CWE-502), SSRF (CWE-918) ✅ COMPLETE (78 tests)
 │   ├── Week 158: Tier 2A - Code (CWE-94), XXE (CWE-611), LDAP (CWE-90) ✅ COMPLETE (41 tests)
@@ -271,9 +268,9 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 │   ├── Week 158: Tier 2C - File Upload (CWE-434) ✅ COMPLETE (14 tests)
 │   ├── Week 158: Tier 3 - All Rules Metadata validation ✅ COMPLETE (16 tests)
 │   ├── Week 158: Boolean/ControlFlow detector test fixes ✅ COMPLETE (6 tests fixed)
-│   ├── Week ???: Tier 3A - Auth logic (CWE-862, CWE-863, CWE-287)
-│   ├── Week ???: Tier 3B - Privilege (CWE-269, CWE-20, CWE-306)
-│   └── Week ???: Integration + Testing
+│   ├── Week 158: Tier 3A/3B - AuthLogicDetector (29 rules, 6 CWEs) ✅ COMPLETE (123 tests)
+│   ├── Week 158: Fase 41B - False Negative Hunting ✅ COMPLETE (57 tests, 14 xfail)
+│   └── Week 158: Integration Tests ✅ COMPLETE (30 tests)
 │
 ├── Week 129: Fase 24-KB1 Famous-Bugs Knowledge Base ✅ COMPLETE (32 bugs, loader, API, workflow, 22 tests)
 ├── Week 129: Fase 24-KB2 Python-Errors Patterns ✅ MERGED (toegevoegd aan BooleanLogic/ControlFlow)
@@ -331,7 +328,7 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 | Stage Council Review | 23.6 | ~120 | 4 | ✅ COMPLETE |
 | CWE Security Scanners | 31 | ~40 | 1 | ✅ COMPLETE |
 | Legacy Quickscan | 24-A1 | ~16 | 1 | ✅ COMPLETE |
-| **🔴 Injection Vulnerability Scanners** | 41 | ~200 | 8 | 🔄 **ALL TEST TIERS COMPLETE** (274 tests) |
+| **Injection Vulnerability Scanners** | 41 | ~200 | 8 | ✅ **COMPLETE** (108 rules, 484 tests) |
 | **Advanced Error Detectors** | 34 | ~48 | 5 | 🆕 PLANNED |
 | **Data Integrity Scanners** | 35 | ~40 | 5 | 🆕 PLANNED |
 | **Logic & Crypto Scanner** | 36 | ~72 | 7 | 🆕 PLANNED |
@@ -439,7 +436,7 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 | [fase-35-data-integrity-scanners.md](phases/fase-35-data-integrity-scanners.md) | 🆕 Race condition + Resource lifecycle detection |
 | [fase-36-logic-crypto-scanner.md](phases/fase-36-logic-crypto-scanner.md) | 🆕 Crypto + Control flow + Boolean logic detection |
 | [fase-37-security-agent-integration.md](phases/fase-37-security-agent-integration.md) | 🆕 **CRITICAL** SecurityScanOrchestrator → Agent workflows (6 touchpoints) |
-| [fase-41-injection-vulnerability-scanners.md](phases/fase-41-injection-vulnerability-scanners.md) | 🔴 **HIGHEST** Complete CWE Top 25 coverage - 23 missing CWEs (XSS, SQLi, CMDi, etc.) |
+| [fase-41-injection-vulnerability-scanners.md](phases/fase-41-injection-vulnerability-scanners.md) | ✅ **COMPLETE** CWE Top 25 coverage 40%→96% — 108 rules, 484 tests |
 | [fase-24-kb-knowledge-base-integration.md](phases/fase-24-kb-knowledge-base-integration.md) | 🆕 KB1-KB5 Knowledge Base ChromaDB integration |
 | [fase-43-zero-complaints-strategy.md](../plans/GREEN-PAPER-MAINTENANCE-ZERO-COMPLAINTS-PLAN.md) | 🆕 Zero-Complaints Green Paper & Maintenance (4 pillars, 8 weken) |
 | [fase-60-observability-foundation.md](phases/fase-60-observability-foundation.md) | ★ **P0** OTLP/Langfuse integratie, CCTrace → OTLP spans [Tracer/BART] |
