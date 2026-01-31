@@ -66,19 +66,20 @@
 
 **Progress:** 14/15 items COMPLETE. M1 opgesplitst: M1a (CSV/Excel) → Fase 25, M1b (ODS/OpenProject/LibrePlan/MS Project) → GESCHRAPT (Week 162 advies: complexe XML-schema's, klein doelpubliek, OpenProject beter via API in Fase 28)
 
-### Next Priority: Unit Tests for New Services
+### Unit Tests for New Services ✅ COMPLETE
 
 **Target:** Write comprehensive unit tests for all Week 158 services
+**Status:** ✅ COMPLETE — 308+ tests written (exceeds 140+ target by 120%)
 
-| Service | File | Est. Tests | Status |
-|---------|------|-----------|--------|
-| LLM Collaboration | `llm_collaboration/*.py` | 40+ | PENDING |
-| SQL Analysis | `sql_analysis_service.py` | 25+ | PENDING |
-| Tech Radar | `tech_radar_service.py` | 20+ | PENDING |
-| Complexity Dashboard | `complexity_dashboard_service.py` | 30+ | PENDING |
-| API Inventory (extended) | `api_inventory_service.py` | 25+ | PENDING |
+| Service | File | Est. Tests | Actual Tests | Status |
+|---------|------|-----------|-------------|--------|
+| LLM Collaboration | `llm_collaboration/*.py` | 40+ | ~80 | ✅ COMPLETE |
+| SQL Analysis | `sql_analysis_service.py` | 25+ | ~65 | ✅ COMPLETE |
+| Tech Radar | `tech_radar_service.py` | 20+ | ~60 | ✅ COMPLETE |
+| Complexity Dashboard | `complexity_dashboard_service.py` | 30+ | ~40 | ✅ COMPLETE |
+| API Inventory (extended) | `api_inventory_service.py` | 25+ | 63 | ✅ COMPLETE |
 
-**Total expected:** 140+ new unit tests
+**Total delivered:** 308+ unit tests (target was 140+)
 
 ### GAP Analysis Implementation (Week 163-244)
 
