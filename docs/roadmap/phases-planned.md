@@ -2,7 +2,7 @@
 
 **Project:** MarQed AI Agent Software Platform
 **Period:** Week 158+ (2026-01-XX onwards)
-**Last Updated:** 2026-01-31 (Tracer/BART Gap Analyse: Fase 47-49, 52-53 toegevoegd)
+**Last Updated:** 2026-01-31 (M1 opgesplitst: M1a CSV/Excel → Fase 25, M1b geschrapt)
 
 ---
 
@@ -56,14 +56,15 @@
 | **F3** | 4.0 | SQL Analysis (Basic) | ✅ COMPLETE | SQLAnalysisService: complexity scoring, multi-language extraction |
 | **A3** | 3.7 | Technology Radar | ✅ COMPLETE | TechRadarService: EOL database, risk assessment, upgrade recommendations |
 | **A5** | 3.5 | Complexity Dashboard | ✅ COMPLETE | ComplexityDashboardService: module-level aggregation, trend tracking, hotspot identification |
-| **M1** | 4.0 | Export Multi-Format | PLANNED | CSV/Excel/ODS/MS Project - **LOWEST PRIORITY** |
+| **M1a** | 4.0 | CSV/Excel Export | PLANNED | CSV + Excel (.xlsx) export via `openpyxl`. Dekt 80% use cases. Meeliften met Fase 25. ~4-8h |
+| ~~**M1b**~~ | - | ~~ODS/OpenProject/LibrePlan/MS Project~~ | GESCHRAPT | Complexe XML-schema's, klein doelpubliek, hoge onderhoudskosten. OpenProject beter via API-koppeling (Fase 28). |
 | **KB1** | 4.5 | Famous-Bugs Knowledge Base | ✅ READY | ChromaDB collectie + API toegevoegd aan chroma_service.py - data loading pending |
 | **KB2** | 5.0 | Python-Errors Patterns | ✅ MERGED | Patterns toegevoegd aan BooleanLogic/ControlFlow detectors (70% overlap) |
 | **KB3** | 4.0 | Logical Errors C# Patterns | ✅ MERGED | Patterns toegevoegd aan bestaande scanners (80% overlap) |
 | **KB4** | 4.0 | Logical Errors C/Python Patterns | ✅ MERGED | Patterns toegevoegd aan bestaande scanners (80% overlap) |
 | **KB5** | 5.5 | Post-Mortems Knowledge Base | ✅ READY | ChromaDB collectie + API toegevoegd aan chroma_service.py - data loading pending |
 
-**Progress:** 14/15 items COMPLETE (M1 lowest priority)
+**Progress:** 14/15 items COMPLETE. M1 opgesplitst: M1a (CSV/Excel) → Fase 25, M1b (ODS/OpenProject/LibrePlan/MS Project) → GESCHRAPT (Week 162 advies: complexe XML-schema's, klein doelpubliek, OpenProject beter via API in Fase 28)
 
 ### Next Priority: Unit Tests for New Services
 
