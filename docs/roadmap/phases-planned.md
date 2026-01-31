@@ -2,7 +2,7 @@
 
 **Project:** MarQed AI Agent Software Platform
 **Period:** Week 158+ (2026-01-XX onwards)
-**Last Updated:** 2026-01-17 (Fase 50 ML Novel Vulnerability Detection toegevoegd)
+**Last Updated:** 2026-01-31 (Tracer/BART Gap Analyse: Fase 47-49, 52-53 toegevoegd)
 
 ---
 
@@ -15,8 +15,9 @@
 | [phases-current.md](phases-current.md) | Current work (Week 144) |
 | **This file** | Planned work overview (Fase 22+) |
 | [gap-analysis-complete-roadmap.md](gap-analysis-complete-roadmap.md) | Complete GAP analysis (75 items) |
-| [gap-analysis-agent-security.md](../research/gap-analysis-agent-security.md) | **NEW** Agent↔Security service gap analysis (Fase 37) |
-| [migration-pattern-catalog.md](migration-pattern-catalog.md) | **NEW** 25 migration patterns reference |
+| [tracer-bart-gap-analysis.md](tracer-bart-gap-analysis.md) | **NEW** Tracer/BART Gap Analyse (5 nieuwe fases) |
+| [gap-analysis-agent-security.md](../research/gap-analysis-agent-security.md) | Agent↔Security service gap analysis (Fase 37) |
+| [migration-pattern-catalog.md](migration-pattern-catalog.md) | 25 migration patterns reference |
 
 ---
 
@@ -177,10 +178,22 @@
 | **34** | 177-181 | Advanced Error Detectors | HIGH | 8.0 | [fase-34-advanced-error-detectors.md](phases/fase-34-advanced-error-detectors.md) |
 | **35** | 181-185 | Data Integrity Scanners | HIGH | 7.5 | [fase-35-data-integrity-scanners.md](phases/fase-35-data-integrity-scanners.md) |
 | **43** | 177-184 | **Zero-Complaints Strategy** | 🟢 HIGH | 8.0 | [GREEN-PAPER-MAINTENANCE-ZERO-COMPLAINTS-PLAN.md](../plans/GREEN-PAPER-MAINTENANCE-ZERO-COMPLAINTS-PLAN.md) |
+| **60** | 179-182 | **Observability Foundation (OTLP/Langfuse)** | 🔴 **P0** | 9.0 | [fase-60-observability-foundation.md](phases/fase-60-observability-foundation.md) |
+| **61** | 183-188 | **Progress Dashboard & Per-Ticket Cost** | **P1** | 8.0 | [fase-61-progress-dashboard.md](phases/fase-61-progress-dashboard.md) |
 | **36** | 186-192 | Logic & Crypto Scanner | HIGH | 8.5 | [fase-36-logic-crypto-scanner.md](phases/fase-36-logic-crypto-scanner.md) |
 | **37** | 195-202 | Security Agent Integration | **CRITICAL** | 9.5 | [fase-37-security-agent-integration.md](phases/fase-37-security-agent-integration.md) |
-| **32** | 193-198 | Ralph Wiggum Autonomous Loop | HIGH | 8.5 | [fase-32-ralph-wiggum-loop.md](phases/fase-32-ralph-wiggum-loop.md) |
+| **32** | 183-188 | Ralph Wiggum Autonomous Loop | HIGH | 8.5 | [fase-32-ralph-wiggum-loop.md](phases/fase-32-ralph-wiggum-loop.md) |
 | **33** | 189-194 | DevStats Developer Metrics | MEDIUM-HIGH | 7.0 | [fase-33-devstats-dashboard.md](phases/fase-33-devstats-dashboard.md) |
+| **62** | 193-198 | **Conversational Intake (Tracer Epic Mode)** | **P1** | 7.5 | [fase-62-conversational-intake.md](phases/fase-62-conversational-intake.md) |
+
+### Tracer/BART Gap Analyse - Planned (Week 207-234) 🆕
+
+| Fase | Week | Title | Priority | ROI | Detail |
+|------|------|-------|----------|-----|--------|
+| **63** | 207-212 | **Statistical Drift Detection** | P2 | 7.0 | [fase-63-statistical-drift-detection.md](phases/fase-63-statistical-drift-detection.md) |
+| **64** | 229-234 | **Self-Evolution Activation** | P3 | 7.5 | [fase-64-self-evolution-activation.md](phases/fase-64-self-evolution-activation.md) |
+
+**Source:** [Tracer/BART Gap Analyse](tracer-bart-gap-analysis.md) - 5 nieuwe fases uit OpenClaw video analyse
 
 ### 🧠 ML-Based Detection (Week 203-218)
 
@@ -205,10 +218,11 @@
 
 ---
 
-### Future Enhancements (Week 233+)
+### Future Enhancements (Week 229+)
 
 | Fase | Week | Title | Status | Detail |
 |------|------|-------|--------|--------|
+| **64** | 229-234 | **Self-Evolution Activation** | PLANNED | [fase-64-self-evolution-activation.md](phases/fase-64-self-evolution-activation.md) |
 | **30** | 233-235 | LLM Council Improvements | PLANNED | [fase-30-llm-council-improvements.md](phases/fase-30-llm-council-improvements.md) |
 | **55** | 236+ | LLM-Explained Findings | FUTURE | GPT/Claude explains ML findings |
 | **56** | 240+ | Real-time ML Inference | FUTURE | Lightweight model for in-flow scanning |
@@ -268,13 +282,32 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 ├── Week 171-175: Fase 35 - Data Integrity Scanners (Race + Resource) 🆕 PLANNED
 ├── Week 176-182: Fase 36 - Logic & Crypto Scanner (Crypto + Control Flow + Boolean) 🆕 PLANNED
 ├── Week 177-184: Fase 43 - Zero-Complaints Green Paper & Maintenance 🆕 PLANNED
+│
+├── ★ Week 179-182: Fase 60 - Observability Foundation (OTLP/Langfuse) 🆕 P0 [Tracer/BART]
+│     └── Fundament voor Fase 32, 33, 48
+│
 ├── Week 183-188: Fase 32 - Ralph Wiggum Autonomous Loop 🆕 PLANNED
+├── ★ Week 183-188: Fase 61 - Progress Dashboard & Per-Ticket Cost 🆕 P1 [Tracer/BART]
+│     └── Real-time voortgang per ticket, synergy met Ralph (32)
+│
 ├── Week 185-192: Fase 37 - Security Agent Integration 🆕 CRITICAL (6 touchpoints, 130 tests)
 ├── Week 187-192: Fase 33 - DevStats Developer Metrics 🆕 PLANNED
 ├── Week 185-200: Fase 25 - Core Platform Enhancement (18 items)
+│
+├── ★ Week 193-198: Fase 62 - Conversational Intake (Tracer Epic Mode) 🆕 P1 [Tracer/BART]
+│     └── Chat-based requirements → auto-ticket generatie
+│
 ├── Week 201-214: Fase 26 - AI & Automation (12 items)
+│
+├── ★ Week 207-212: Fase 63 - Statistical Drift Detection 🆕 P2 [Tracer/BART]
+│     └── Embedding-based drift naast keyword-based
+│
 ├── Week 215-224: Fase 27 - Testing Excellence (8 items)
 ├── Week 225-236: Fase 28 - Advanced Integrations (10 items)
+│
+├── ★ Week 229-234: Fase 64 - Self-Evolution Activation 🆕 P3 [Tracer/BART]
+│     └── AgentEvolutionService activeren + Council Reviews
+│
 └── Week 237-254: Fase GAP-29 - Innovation & Scale (9 items)
 ```
 
@@ -299,9 +332,14 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 | **Security Agent Integration** | 37 | ~100 | 8 | 🆕 **CRITICAL** |
 | **Ralph Wiggum Loop** | 32 | ~160 | 5 | 🆕 PLANNED |
 | **DevStats Dashboard** | 33 | ~152 | 5 | 🆕 PLANNED |
+| **★ Observability Foundation** | 47 | ~48 | 4 | 🆕 P0 [Tracer/BART] |
+| **★ Progress Dashboard** | 48 | ~64 | 5 | 🆕 P1 [Tracer/BART] |
+| **★ Conversational Intake** | 49 | ~80 | 5 | 🆕 P1 [Tracer/BART] |
+| **★ Statistical Drift Detection** | 52 | ~72 | 5 | 🆕 P2 [Tracer/BART] |
+| **★ Self-Evolution Activation** | 53 | ~80 | 5 | 🆕 P3 [Tracer/BART] |
 | GAP Analysis (Rest) | 24-29 | ~1484 | 80 | 🔄 IN PROGRESS |
 | Future | 30 | 72 | 2 | PLANNED |
-| **Total** | **18 phases** | **~2392** | **~118** | |
+| **Total** | **23 phases** | **~2736** | **~142** | |
 
 ---
 
@@ -398,5 +436,11 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 | [fase-41-injection-vulnerability-scanners.md](phases/fase-41-injection-vulnerability-scanners.md) | 🔴 **HIGHEST** Complete CWE Top 25 coverage - 23 missing CWEs (XSS, SQLi, CMDi, etc.) |
 | [fase-24-kb-knowledge-base-integration.md](phases/fase-24-kb-knowledge-base-integration.md) | 🆕 KB1-KB5 Knowledge Base ChromaDB integration |
 | [fase-43-zero-complaints-strategy.md](../plans/GREEN-PAPER-MAINTENANCE-ZERO-COMPLAINTS-PLAN.md) | 🆕 Zero-Complaints Green Paper & Maintenance (4 pillars, 8 weken) |
+| [fase-60-observability-foundation.md](phases/fase-60-observability-foundation.md) | ★ **P0** OTLP/Langfuse integratie, CCTrace → OTLP spans [Tracer/BART] |
+| [fase-61-progress-dashboard.md](phases/fase-61-progress-dashboard.md) | ★ **P1** Real-time per-ticket voortgangsdashboard [Tracer/BART] |
+| [fase-62-conversational-intake.md](phases/fase-62-conversational-intake.md) | ★ **P1** Chat-based requirements → auto-ticket generatie (Tracer Epic Mode) [Tracer/BART] |
+| [fase-63-statistical-drift-detection.md](phases/fase-63-statistical-drift-detection.md) | ★ **P2** Embedding-based drift detectie (Arize Phoenix) [Tracer/BART] |
+| [fase-64-self-evolution-activation.md](phases/fase-64-self-evolution-activation.md) | ★ **P3** AgentEvolutionService activeren + Stage Council Reviews [Tracer/BART] |
+| [tracer-bart-gap-analysis.md](tracer-bart-gap-analysis.md) | ★ Tracer/BART vs MarQed Gap Analyse & Verbeterplan (master doc) |
 | [gap-phases.md](phases/gap-phases.md) | GAP Analysis Fasen 24-29 |
 | [technical-debt-backlog.md](phases/technical-debt-backlog.md) | Tech debt & Falcon H1R |

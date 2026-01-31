@@ -1,8 +1,8 @@
 # MarQed Platform Roadmap
 
 **Project:** MarQed AI Agent Software Platform
-**Last Updated:** Week 159 (2026-01-28)
-**Total Phases:** 52 | **Timeline:** Week 144-250
+**Last Updated:** Week 162 (2026-01-31)
+**Total Phases:** 57 | **Timeline:** Week 144-254
 
 ---
 
@@ -54,12 +54,17 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 ├── Fase 47: LRM Integration Foundation (Week 209-216) 🆕
 ├── Fase 48: LRM Software Intake Enhancement (Week 217-224) 🆕
 ├── Fase 49: LRM Advanced Workflows (Week 225-232) 🆕
-└── Fase 50: LRM Autonomous Operations (Week 233-240) 🆕
+├── Fase 50: LRM Autonomous Operations (Week 233-240) 🆕
+├── ★ Fase 60: Observability Foundation - OTLP/Langfuse (Week 179-182) 🆕 P0
+├── ★ Fase 61: Progress Dashboard & Per-Ticket Cost (Week 183-188) 🆕 P1
+├── ★ Fase 62: Conversational Intake - Epic Mode (Week 193-198) 🆕 P1
+├── ★ Fase 63: Statistical Drift Detection (Week 207-212) 🆕 P2
+└── ★ Fase 64: Self-Evolution Activation (Week 229-234) 🆕 P3
 ```
 
 ---
 
-## Current Focus (Week 159)
+## Current Focus (Week 162)
 
 ### 🔄 IN PROGRESS: Brown Paper Workflow met Business Domain Extraction
 
@@ -1010,6 +1015,79 @@ RESULT: 80-90% cost reduction vs. Opus-only approach
 
 ---
 
+## Fase 60-64: Tracer/BART Gap Analysis Implementation (Week 179-234)
+
+**Status:** PLANNED
+**Priority:** P0-P3 (gefaseerd)
+**Total Effort:** 344 uur (~24 weken)
+**Source:** [Tracer/BART Gap Analyse](docs/roadmap/tracer-bart-gap-analysis.md)
+
+Gap analyse van OpenClaw Tracer (Epic Mode) en BART Simpson concepten vs MarQed. MarQed heeft ~80% van Tracer en overtreft BART op backend-niveau. De 5 nieuwe fases adresseren presentatie-gaps.
+
+### Fase 60: Observability Foundation - OTLP/Langfuse (Week 179-182) ★ P0
+
+**Effort:** ~48 uur | **Dependencies:** Fase 23.5 ✅, CCTraceService ✅
+
+| Component | Description |
+|-----------|-------------|
+| **OTelExporterService** | CCTrace spans → OTLP format adapter |
+| **Confucius Span Instrumentation** | State transitions als OTLP spans |
+| **Langfuse Deployment** | Self-hosted via Docker Compose |
+| **Workflow Stage Instrumentation** | Per-stage traces met token/cost data |
+
+### Fase 61: Progress Dashboard & Per-Ticket Cost (Week 183-188) ★ P1
+
+**Effort:** ~64 uur | **Dependencies:** Fase 60, SSE Streaming ✅
+
+| Component | Description |
+|-----------|-------------|
+| **ProgressDashboardService** | SSE events aggregeren naar per-ticket state |
+| **Per-ticket Cost Tagging** | CCTrace met ticket-level cost tracking |
+| **WebSocket Dashboard API** | Real-time workflow voortgang endpoint |
+| **Agent Timeline API** | Gantt-achtige execution timeline data |
+
+### Fase 62: Conversational Intake - Epic Mode (Week 193-198) ★ P1
+
+**Effort:** ~80 uur | **Dependencies:** SpecShapingService ✅, IntakeToBacklogService ✅
+
+| Component | Description |
+|-----------|-------------|
+| **ConversationalIntakeService** | Chat state machine (8 states) |
+| **Domain Follow-up Templates** | Per-domein vraag templates (Web, API, Migration, Mobile) |
+| **WebSocket Chat API** | Real-time chat endpoint met sessie management |
+| **Context Memory** | HierarchicalMemoryManager extensie voor chat |
+
+### Fase 63: Statistical Drift Detection (Week 207-212) ★ P2
+
+**Effort:** ~72 uur | **Dependencies:** Fase 60, ThinkingPatternStore ✅, CheckAlignmentService ✅
+
+| Component | Description |
+|-----------|-------------|
+| **Arize Phoenix Integration** | Embedding drift analyse met lokale evaluator |
+| **StatisticalDriftDetector** | Cosine distance + KL divergence + centroid drift |
+| **Confucius Drift Hooks** | Automatische PIV trigger bij embedding drift |
+
+### Fase 64: Self-Evolution Activation (Week 229-234) ★ P3
+
+**Effort:** ~80 uur | **Dependencies:** Fase 60+61, LLMCouncilService ✅, AgentEvolutionService ✅
+
+| Component | Description |
+|-----------|-------------|
+| **AgentEvolutionService Activatie** | Hook in Confucius `on_stage_complete` lifecycle |
+| **Constitution Council Review** | Multi-model council bij Constitution stage |
+| **Specification Council Review** | Council review bij Specification + Task Generation |
+
+### Tracer/BART Strategic Conclusions
+
+1. **MarQed overtreft BART Simpson** - Confucius + PIV + 5 strategies + 9 anti-patterns > BART
+2. **Grootste gap is presentatie** - OTLP export, dashboard, chat interface ontbreken
+3. **Langfuse = hoogste ROI** - gratis dashboards via OTLP export
+4. **Niet LangGraph/CrewAI adopteren** - Confucius is al superieur
+
+See: [tracer-bart-gap-analysis.md](docs/roadmap/tracer-bart-gap-analysis.md)
+
+---
+
 ## Design Principles
 
 1. **Small, Specialized Analyzers** - COBOL items (B2, B3, B4) blijven apart: kwaliteit boven snelheid
@@ -1037,6 +1115,12 @@ RESULT: 80-90% cost reduction vs. Opus-only approach
 | [fase-45-reverse-traceability-service.md](docs/roadmap/phases/fase-45-reverse-traceability-service.md) | 🆕 Fase 45: Reverse Traceability Service |
 | [fase-46-user-workflow-documentation.md](docs/roadmap/phases/fase-46-user-workflow-documentation.md) | 🆕 Fase 46: User Workflow Documentation |
 | [LRM-INTEGRATION-IMPLEMENTATION-PLAN.md](backend/docs/plans/LRM-INTEGRATION-IMPLEMENTATION-PLAN.md) | 🆕 Fase 47-50: LRM Integration Master Plan |
+| [tracer-bart-gap-analysis.md](docs/roadmap/tracer-bart-gap-analysis.md) | ★ Fase 60-64: Tracer/BART Gap Analyse & Verbeterplan |
+| [fase-60-observability-foundation.md](docs/roadmap/phases/fase-60-observability-foundation.md) | ★ Fase 60: OTLP/Langfuse Observability Foundation |
+| [fase-61-progress-dashboard.md](docs/roadmap/phases/fase-61-progress-dashboard.md) | ★ Fase 61: Progress Dashboard & Per-Ticket Cost |
+| [fase-62-conversational-intake.md](docs/roadmap/phases/fase-62-conversational-intake.md) | ★ Fase 62: Conversational Intake (Epic Mode) |
+| [fase-63-statistical-drift-detection.md](docs/roadmap/phases/fase-63-statistical-drift-detection.md) | ★ Fase 63: Statistical Drift Detection |
+| [fase-64-self-evolution-activation.md](docs/roadmap/phases/fase-64-self-evolution-activation.md) | ★ Fase 64: Self-Evolution Activation |
 
 ---
 
@@ -1069,10 +1153,15 @@ RESULT: 80-90% cost reduction vs. Opus-only approach
 | **LRM Intake Enhancement (Fase 48)** | 217-224 | 60% false positive reduction, scan correlation, recommendations |
 | **LRM Advanced Workflows (Fase 49)** | 225-232 | Maintenance planner, bug analyzer, requirements generator |
 | **LRM Autonomous Operations (Fase 50)** | 233-240 | Overnight batch processing, Ralph integration, quality gates |
+| **★ Observability Foundation (Fase 60)** | 179-182 | OTLP/Langfuse traces, cost tracking, span instrumentation |
+| **★ Progress Dashboard (Fase 61)** | 183-188 | Real-time per-ticket voortgang, cost tagging, agent timeline |
+| **★ Conversational Intake (Fase 62)** | 193-198 | Chat-based requirements, domain templates, auto-ticket generatie |
+| **★ Statistical Drift Detection (Fase 63)** | 207-212 | Embedding drift, cosine/KL/centroid, PIV auto-trigger |
+| **★ Self-Evolution Activation (Fase 64)** | 229-234 | AgentEvolution activatie, council reviews, pattern learning |
 | **COBOL Support** | 185 | B1 Analyzer complete |
 | **LLM Collaboration** | 195 | B12 Framework active |
 | **Full Platform** | 250 | All 85+ items complete |
 
 ---
 
-*Generated: Week 159 (2026-01-24)*
+*Updated: Week 162 (2026-01-31) - Added Tracer/BART Fase 60-64*
