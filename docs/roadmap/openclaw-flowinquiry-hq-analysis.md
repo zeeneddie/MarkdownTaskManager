@@ -154,7 +154,58 @@ Het model is **logisch en haalbaar**:
 
 ---
 
-## 9. Bronnen
+## 9. Addendum: MoltBot / OpenClaw / Clawdbot — Overlap-analyse
+
+**Toegevoegd:** Week 162 (2026-01-31)
+
+### 9.1 Naamgeving
+
+MoltBot, OpenClaw en Clawdbot zijn **hetzelfde project** onder meerdere hernamingen:
+
+| Naam | Periode | Context |
+|------|---------|---------|
+| **Clawdbot** | Oorspronkelijk | Eerste release als AI-agent framework |
+| **MoltBot** | Tussenperiode | Rebrand na security-incidenten |
+| **OpenClaw** | Huidig | Open-source rebrand, actieve community |
+
+Zie ook: [Vectra AI: "Clawdbot to MoltBot to OpenClaw"](https://www.vectra.ai/blog/clawdbot-to-moltbot-to-openclaw-when-automation-becomes-a-digital-backdoor).
+
+### 9.2 MoltBot als output-validator is dubbelop
+
+Er is gesuggereerd om MoltBot/OpenClaw in te zetten als **output-validator** voor MarQed.ai-resultaten. Dit is **overbodig en onwenselijk** omdat MarQed.ai al een uitgebreid kwaliteitssysteem heeft:
+
+| MarQed.ai Capability | Detail |
+|----------------------|--------|
+| **42+ validatieregels** | Quality gates bij elke lane-transitie in het 9-lane kanban systeem |
+| **PIV-loop** | Plan → Implement → Validate cyclus (max 3 iteraties per item) |
+| **7 quality dimensions** | Completeness, correctness, consistency, clarity, feasibility, testability, traceability |
+| **Escalation** | Automatische escalatie naar Human Needed na 3 failed retries |
+| **Compliance checks** | GDPR, HIPAA, SOX compliance validatie ingebouwd in quality gates |
+| **LLM Council** | Felix + Quinn + Marcus draaien deep extraction review (multi-agent consensus) |
+
+Een extra validatielaag via MoltBot voegt **geen waarde toe** en introduceert onnodige complexiteit en een extra aanvalsoppervlak.
+
+### 9.3 Security risico
+
+MoltBot/OpenClaw heeft **bewezen kwetsbaarheden** (zie Sectie 3):
+
+- **Prompt injection via email** (Vectra AI research)
+- **Plaintext credential storage** (DarkReading)
+- **Ongecontroleerde shell execution** in custom skills
+
+Het inzetten als validator betekent dat elk MarQed.ai-resultaat door een component met bekende kwetsbaarheden zou worden gerouteerd — een onacceptabel risico.
+
+### 9.4 Aanbeveling
+
+In plaats van MoltBot als apart validatieproduct:
+
+> **Exporteer MarQed.ai quality scores naar FlowInquiry** via de bestaande REST API integratie (zie Sectie 4, stap 6). FlowInquiry kan dan de quality metrics tonen in het SLA-dashboard zonder dat er een extra component nodig is.
+
+Dit sluit aan bij de architectuur uit Sectie 2: MarQed.ai doet de executie, FlowInquiry doet de administratie, OpenClaw synchroniseert.
+
+---
+
+## 10. Bronnen
 
 - [OpenClaw GitHub](https://github.com/openclaw/openclaw)
 - [OpenClaw Skills](https://github.com/VoltAgent/awesome-openclaw-skills)
