@@ -797,6 +797,25 @@ Before returning the constitution, verify:
 
 Generate the PROJECT CONSTITUTION now. Return ONLY valid JSON, no additional commentary.
 """
+        # Enrich prompt with KB context (KB1/KB5) if available
+        try:
+            from app.services.knowledge_base.kb_context_provider import KBContextProvider
+            from app.services.chroma_service import ChromaService
+            kb_provider = KBContextProvider(ChromaService())
+            problem_desc = answer_map.get(1, "")
+            kb_ctx = kb_provider.get_agent_context("quinn", f"New project: {problem_desc}")
+            if kb_ctx.get("context_available"):
+                kb_section = "\n\n## Knowledge Base Context (for risk analysis)\n"
+                for bug in kb_ctx.get("famous_bugs", [])[:2]:
+                    meta = bug.get("metadata", {})
+                    kb_section += f"- **{meta.get('title', 'N/A')}**: {meta.get('category', '')} - lessons relevant to this project\n"
+                for pm in kb_ctx.get("post_mortems", [])[:2]:
+                    meta = pm.get("metadata", {})
+                    kb_section += f"- **{meta.get('title', 'N/A')}** ({meta.get('company', '')}): {meta.get('root_cause_category', '')} incident\n"
+                prompt += kb_section
+        except Exception:
+            pass  # KB enrichment is optional
+
         return prompt
 
     # ========== Constitution Review ==========

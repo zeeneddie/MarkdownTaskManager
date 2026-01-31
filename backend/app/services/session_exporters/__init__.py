@@ -8,6 +8,8 @@ Supports:
 - JSON: Structured data for analysis
 - XML: Interop with external tools
 - JSONL: Line-delimited JSON for streaming/ML
+- CSV: Tabular data for spreadsheet analysis
+- Excel: Multi-sheet workbook for analysis
 """
 
 from app.services.session_exporters.base import BaseSessionExporter, SessionData
@@ -15,6 +17,8 @@ from app.services.session_exporters.markdown_exporter import MarkdownSessionExpo
 from app.services.session_exporters.json_exporter import JSONSessionExporter
 from app.services.session_exporters.xml_exporter import XMLSessionExporter
 from app.services.session_exporters.jsonl_exporter import JSONLSessionExporter
+from app.services.session_exporters.csv_exporter import CSVSessionExporter
+from app.services.session_exporters.excel_exporter import ExcelSessionExporter
 
 __all__ = [
     "BaseSessionExporter",
@@ -23,6 +27,8 @@ __all__ = [
     "JSONSessionExporter",
     "XMLSessionExporter",
     "JSONLSessionExporter",
+    "CSVSessionExporter",
+    "ExcelSessionExporter",
 ]
 
 
@@ -31,7 +37,7 @@ def get_exporter(format: str) -> BaseSessionExporter:
     Get exporter instance for format.
 
     Args:
-        format: Export format (md, json, xml, jsonl)
+        format: Export format (md, json, xml, jsonl, csv, xlsx, excel)
 
     Returns:
         Exporter instance
@@ -45,6 +51,9 @@ def get_exporter(format: str) -> BaseSessionExporter:
         "json": JSONSessionExporter,
         "xml": XMLSessionExporter,
         "jsonl": JSONLSessionExporter,
+        "csv": CSVSessionExporter,
+        "xlsx": ExcelSessionExporter,
+        "excel": ExcelSessionExporter,
     }
 
     format_lower = format.lower()

@@ -1,9 +1,9 @@
-# Current Phase: Week 157 - Fase 24 Quick Wins
+# Current Phase: Week 158 - Fase 24 Complete + Fase 41 T1A
 
 **Project:** MarQed AI Agent Software Platform
-**Period:** Week 157 (2026-01-19)
-**Status:** FASE 24 QUICK WINS COMPLETE (8/8 gap items)
-**Focus:** GAP Analysis Quick Wins Implementation (15 items, ROI-prioritized)
+**Period:** Week 158 (2026-01-31)
+**Status:** FASE 24 QUICK WINS 15/15 COMPLETE ✅ | FASE 41 T1A COMPLETE
+**Focus:** KB1/KB5 Knowledge Base, M1a CSV/Excel Export, Fase 41 Injection Detector Tests
 
 ---
 
@@ -20,6 +20,45 @@
 ---
 
 ## Recently Completed
+
+### Week 158: KB1 + KB5 + M1a + Fase 41 T1A ✅ COMPLETE
+
+**Goal:** Implement final Fase 24 items (KB1, KB5, M1a) + start Fase 41 test coverage
+**Status:** ✅ COMPLETE (173 new tests, all passing)
+
+| Item | Service | Status | Tests | Description |
+|------|---------|--------|-------|-------------|
+| **KB1** | `famous_bugs_loader.py` | ✅ | 22 | 32 bugs, FamousBugsLoader, KBContextProvider, workflow integratie |
+| **KB5** | `post_mortems_loader.py` | ✅ | 24 | 52 post-mortems, PostMortemsLoader, API endpoints |
+| **M1a** | `csv_exporter.py` + `excel_exporter.py` | ✅ | 41 | CSV + Excel (.xlsx) session export via openpyxl |
+| **Fase 41 T1A** | `test_injection_detector.py` | ✅ | 86 | Extended XSS + SQLi tests, false positive tests, multi-language |
+
+**New Files Created:**
+
+| File | Lines | Description |
+|------|-------|-------------|
+| `app/services/knowledge_base/__init__.py` | - | Package init |
+| `app/services/knowledge_base/famous_bugs_loader.py` | ~800 | 32 beroemde bugs + loader |
+| `app/services/knowledge_base/post_mortems_loader.py` | ~1200 | 52 post-mortems + loader |
+| `app/services/knowledge_base/kb_context_provider.py` | ~150 | Agent-specifieke KB context |
+| `app/api/knowledge_base.py` | ~200 | REST API (load/status/query/clear/statistics) |
+| `app/services/session_exporters/csv_exporter.py` | ~120 | Multi-section CSV export |
+| `app/services/session_exporters/excel_exporter.py` | ~200 | Multi-sheet Excel workbook |
+
+**Modified Files:**
+
+| File | Change |
+|------|--------|
+| `app/main.py` | Knowledge base router geregistreerd |
+| `app/services/session_exporters/__init__.py` | CSV/Excel exporters in factory |
+| `app/services/brown_paper_service.py` | KB context enrichment (Phase 6) |
+| `app/services/green_paper/green_paper_service.py` | KB context voor Peter |
+| `requirements.txt` | `openpyxl>=3.1.0` toegevoegd |
+| `tests/unit/security_scanner/test_injection_detector.py` | 86 tests (was ~30, nu extended) |
+
+**Fase 24 Quick Wins: 15/15 COMPLETE ✅**
+
+---
 
 ### Week 157: Fase 24 Quick Wins Gap Implementation ✅ COMPLETE
 

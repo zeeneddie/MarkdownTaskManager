@@ -203,6 +203,9 @@ class BrownPaperAnalysis:
     # Stability Analysis (Week 145-146)
     stability_analysis: Optional[Dict[str, Any]] = None
 
+    # Knowledge Base Context (KB1/KB5)
+    kb_context: Optional[Dict[str, Any]] = None
+
     # Metadata
     analysis_time_ms: int = 0
     status: BrownPaperStatus = BrownPaperStatus.SCANNING
@@ -900,6 +903,22 @@ class BrownPaperService:
             except Exception as e:
                 logger.warning(f"Stability analysis skipped: {e}")
 
+            # Phase 6: Knowledge Base Context Enrichment (KB1/KB5)
+            kb_context = None
+            try:
+                from app.services.knowledge_base.kb_context_provider import KBContextProvider
+                kb_chroma = ChromaService()
+                kb_provider = KBContextProvider(kb_chroma)
+                task_desc = f"Analyzing {app.name}: {len(modules)} modules, patterns: {', '.join(patterns)}"
+                kb_context = {
+                    "betty": kb_provider.get_agent_context("betty", task_desc),
+                    "diana": kb_provider.get_agent_context("diana", task_desc),
+                    "marcus": kb_provider.get_agent_context("marcus", task_desc),
+                }
+                logger.info(f"KB context enrichment complete for {app.name}")
+            except Exception as e:
+                logger.warning(f"KB context enrichment skipped: {e}")
+
             # Build analysis result
             analysis = BrownPaperAnalysis(
                 application_id=app.id,
@@ -913,6 +932,7 @@ class BrownPaperService:
                 readme_summary=readme_summary,
                 domains=domains,
                 stability_analysis=stability_result.to_dict() if stability_result else None,
+                kb_context=kb_context,
                 analysis_time_ms=int((time.time() - start_time) * 1000),
                 status=BrownPaperStatus.ANALYZING,
             )

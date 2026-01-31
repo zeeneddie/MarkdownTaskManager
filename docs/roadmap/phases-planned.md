@@ -2,7 +2,7 @@
 
 **Project:** MarQed AI Agent Software Platform
 **Period:** Week 158+ (2026-01-XX onwards)
-**Last Updated:** 2026-01-31 (M1 opgesplitst: M1a CSV/Excel → Fase 25, M1b geschrapt)
+**Last Updated:** 2026-01-31 (Fase 24 15/15 COMPLETE, KB1+KB5+M1a geïmplementeerd, Fase 41 T1A tests complete)
 
 ---
 
@@ -38,7 +38,7 @@
 | **31** | 157 | CWE Security Scanner Suite | ✅ COMPLETE | [fase-31-cwe-security-scanners.md](phases/fase-31-cwe-security-scanners.md) |
 | **24-A1** | 157 | Legacy Quickscan (15-min assessment) | ✅ COMPLETE | [phases-current.md](phases-current.md#week-157-legacy-quickscan-a1-fase-24-a1--complete) |
 
-### Fase 24 Quick Wins - In Progress (Week 157-174)
+### Fase 24 Quick Wins - ✅ COMPLETE (Week 157-158)
 
 | Item | ROI | Title | Status | Description |
 |------|-----|-------|--------|-------------|
@@ -56,15 +56,15 @@
 | **F3** | 4.0 | SQL Analysis (Basic) | ✅ COMPLETE | SQLAnalysisService: complexity scoring, multi-language extraction |
 | **A3** | 3.7 | Technology Radar | ✅ COMPLETE | TechRadarService: EOL database, risk assessment, upgrade recommendations |
 | **A5** | 3.5 | Complexity Dashboard | ✅ COMPLETE | ComplexityDashboardService: module-level aggregation, trend tracking, hotspot identification |
-| **M1a** | 4.0 | CSV/Excel Export | PLANNED | CSV + Excel (.xlsx) export via `openpyxl`. Dekt 80% use cases. Meeliften met Fase 25. ~4-8h |
+| **M1a** | 4.0 | CSV/Excel Export | ✅ COMPLETE | CSV + Excel (.xlsx) export via `openpyxl` (41 tests) |
 | ~~**M1b**~~ | - | ~~ODS/OpenProject/LibrePlan/MS Project~~ | GESCHRAPT | Complexe XML-schema's, klein doelpubliek, hoge onderhoudskosten. OpenProject beter via API-koppeling (Fase 28). |
-| **KB1** | 4.5 | Famous-Bugs Knowledge Base | ✅ READY | ChromaDB collectie + API toegevoegd aan chroma_service.py - data loading pending |
+| **KB1** | 4.5 | Famous-Bugs Knowledge Base | ✅ COMPLETE | 32 bugs, FamousBugsLoader, KBContextProvider, API endpoints, workflow integratie (22 tests) |
 | **KB2** | 5.0 | Python-Errors Patterns | ✅ MERGED | Patterns toegevoegd aan BooleanLogic/ControlFlow detectors (70% overlap) |
 | **KB3** | 4.0 | Logical Errors C# Patterns | ✅ MERGED | Patterns toegevoegd aan bestaande scanners (80% overlap) |
 | **KB4** | 4.0 | Logical Errors C/Python Patterns | ✅ MERGED | Patterns toegevoegd aan bestaande scanners (80% overlap) |
-| **KB5** | 5.5 | Post-Mortems Knowledge Base | ✅ READY | ChromaDB collectie + API toegevoegd aan chroma_service.py - data loading pending |
+| **KB5** | 5.5 | Post-Mortems Knowledge Base | ✅ COMPLETE | 52 post-mortems, PostMortemsLoader, API endpoints, workflow integratie (24 tests) |
 
-**Progress:** 14/15 items COMPLETE. M1 opgesplitst: M1a (CSV/Excel) → Fase 25, M1b (ODS/OpenProject/LibrePlan/MS Project) → GESCHRAPT (Week 162 advies: complexe XML-schema's, klein doelpubliek, OpenProject beter via API in Fase 28)
+**Progress:** 15/15 items COMPLETE ✅. Alle Fase 24 Quick Wins afgerond. M1b (ODS/OpenProject/LibrePlan/MS Project) → GESCHRAPT (Week 162 advies: complexe XML-schema's, klein doelpubliek, OpenProject beter via API in Fase 28)
 
 ### Unit Tests for New Services ✅ COMPLETE
 
@@ -92,11 +92,13 @@
 | **28** | 215-226 | GAP Advanced Integrations | 10 | [gap-phases.md](phases/gap-phases.md#fase-28) |
 | **GAP-29** | 227-244 | GAP Innovation & Scale | 9 | [gap-phases.md](phases/gap-phases.md#fase-gap-29) |
 
-### 🔴 NEXT: Injection Vulnerability Scanners (Week 159-168)
+### 🔴 IN PROGRESS: Injection Vulnerability Scanners (Week 159-168)
 
 | Fase | Week | Title | Priority | ROI | Detail |
 |------|------|-------|----------|-----|--------|
 | **41** | 159-168 | **Injection Vulnerability Scanners** | 🔴 **HIGHEST** | 9.8 | [fase-41-injection-vulnerability-scanners.md](phases/fase-41-injection-vulnerability-scanners.md) |
+
+**Tier 1A (XSS + SQLi) ✅ COMPLETE:** InjectionDetector met 12 XSS + 12 SQLi regels, 86 unit tests passing
 
 **Critical Gap:** CWE Top 25 coverage currently at 40%. After Fase 41: **96%**
 
@@ -261,8 +263,8 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 ├── Week 158: Fase 24-E1 Visual Dependency Graph ✅ COMPLETE (D3.js/Cytoscape/DOT/Mermaid, 35 tests)
 ├── Week 158: Fase 24-J1 Context-Aware Documentation ✅ COMPLETE (AST parsing, multi-format, 34 tests)
 │
-├── 🔴 Week 159-166: Fase 41 - INJECTION VULNERABILITY SCANNERS 🆕 HIGHEST PRIORITY
-│   ├── Week 159: Tier 1A - XSS (CWE-79) + SQL Injection (CWE-89)
+├── 🔴 Week 159-166: Fase 41 - INJECTION VULNERABILITY SCANNERS 🔄 IN PROGRESS
+│   ├── Week 159: Tier 1A - XSS (CWE-79) + SQL Injection (CWE-89) ✅ COMPLETE (86 tests)
 │   ├── Week 160: Tier 1B - CMDi (CWE-78), Path (CWE-22), Deser (CWE-502), SSRF (CWE-918)
 │   ├── Week 161: Tier 2A - Code (CWE-94), XXE (CWE-611), LDAP (CWE-90)
 │   ├── Week 162: Tier 2B - NoSQL (CWE-943), SSTI (CWE-1336), CSRF (CWE-352)
@@ -271,15 +273,15 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 │   ├── Week 165: Tier 3B - Privilege (CWE-269, CWE-20, CWE-306)
 │   └── Week 166: Integration + Testing
 │
-├── Week 129: Fase 24-KB1 Famous-Bugs Knowledge Base ✅ READY (collectie + API in chroma_service.py)
+├── Week 129: Fase 24-KB1 Famous-Bugs Knowledge Base ✅ COMPLETE (32 bugs, loader, API, workflow, 22 tests)
 ├── Week 129: Fase 24-KB2 Python-Errors Patterns ✅ MERGED (toegevoegd aan BooleanLogic/ControlFlow)
 ├── Week 129: Fase 24-KB3 Logical Errors C# Patterns ✅ MERGED (toegevoegd aan bestaande scanners)
 ├── Week 129: Fase 24-KB4 Logical Errors C/Python Patterns ✅ MERGED (toegevoegd aan bestaande scanners)
-├── Week 129: Fase 24-KB5 Post-Mortems Knowledge Base ✅ READY (collectie + API in chroma_service.py)
+├── Week 129: Fase 24-KB5 Post-Mortems Knowledge Base ✅ COMPLETE (52 post-mortems, loader, API, workflow, 24 tests)
 ├── Week 129: Fase 24-B12 LLM Agent Collaboration ✅ COMPLETE (agent_router, context_sharing, result_aggregator)
 ├── Week 129: Fase 24-I1 API Endpoint Discovery ✅ COMPLETE (SOAP/GraphQL/gRPC toegevoegd aan api_inventory_service)
 ├── Week 129: Fase 24-F3 SQL Analysis ✅ COMPLETE (SQLAnalysisService: complexity scoring, multi-language)
-├── Week 157-174: Fase 24 - Quick Wins & Foundation (20 items) 🔄 IN PROGRESS (12/20 done)
+├── Week 157-174: Fase 24 - Quick Wins & Foundation (20 items) ✅ COMPLETE (15/15 done)
 ├── Week 167-171: Fase 34 - Advanced Error Detectors (Deadlock + Performance) 🆕 PLANNED
 ├── Week 171-175: Fase 35 - Data Integrity Scanners (Race + Resource) 🆕 PLANNED
 ├── Week 176-182: Fase 36 - Logic & Crypto Scanner (Crypto + Control Flow + Boolean) 🆕 PLANNED
@@ -327,7 +329,7 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 | Stage Council Review | 23.6 | ~120 | 4 | ✅ COMPLETE |
 | CWE Security Scanners | 31 | ~40 | 1 | ✅ COMPLETE |
 | Legacy Quickscan | 24-A1 | ~16 | 1 | ✅ COMPLETE |
-| **🔴 Injection Vulnerability Scanners** | 41 | ~200 | 8 | 🔴 **NEXT** |
+| **🔴 Injection Vulnerability Scanners** | 41 | ~200 | 8 | 🔄 **T1A COMPLETE** |
 | **Advanced Error Detectors** | 34 | ~48 | 5 | 🆕 PLANNED |
 | **Data Integrity Scanners** | 35 | ~40 | 5 | 🆕 PLANNED |
 | **Logic & Crypto Scanner** | 36 | ~72 | 7 | 🆕 PLANNED |
