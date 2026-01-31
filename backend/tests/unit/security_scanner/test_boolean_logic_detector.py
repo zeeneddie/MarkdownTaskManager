@@ -45,11 +45,11 @@ class TestBooleanLogicDetectorBasics:
     def test_scanner_version(self):
         """Should return version string."""
         scanner = BooleanLogicDetector()
-        assert scanner.get_scanner_version() == "1.0.0"
+        assert scanner.get_scanner_version() == "1.1.0"
 
-    def test_has_12_rules(self):
-        """Should have 12 boolean logic detection rules."""
-        assert len(BOOLEAN_LOGIC_RULES) == 12
+    def test_has_20_rules(self):
+        """Should have 20 boolean logic detection rules."""
+        assert len(BOOLEAN_LOGIC_RULES) == 20
 
     def test_supported_languages(self):
         """Should support multiple languages."""
@@ -440,8 +440,8 @@ class TestRulesSummary:
         scanner = BooleanLogicDetector()
         summary = scanner.get_rules_summary()
 
-        assert summary["total_rules"] == 12
-        assert len(summary["rules"]) == 12
+        assert summary["total_rules"] == 20
+        assert len(summary["rules"]) == 20
         assert "supported_languages" in summary
 
         # Verify rule structure

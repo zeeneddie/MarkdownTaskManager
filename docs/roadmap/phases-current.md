@@ -1,9 +1,9 @@
-# Current Phase: Week 158 - Fase 24 Complete + Fase 41 T1A
+# Current Phase: Week 158 - Fase 24 Complete + Fase 41 All Test Tiers
 
 **Project:** MarQed AI Agent Software Platform
 **Period:** Week 158 (2026-01-31)
-**Status:** FASE 24 QUICK WINS 15/15 COMPLETE ✅ | FASE 41 T1A COMPLETE
-**Focus:** KB1/KB5 Knowledge Base, M1a CSV/Excel Export, Fase 41 Injection Detector Tests
+**Status:** FASE 24 QUICK WINS 15/15 COMPLETE ✅ | FASE 41 ALL TEST TIERS COMPLETE (274 tests)
+**Focus:** KB1/KB5 Knowledge Base, M1a CSV/Excel Export, Fase 41 Injection Detector Tests (all tiers)
 
 ---
 
@@ -21,10 +21,10 @@
 
 ## Recently Completed
 
-### Week 158: KB1 + KB5 + M1a + Fase 41 T1A ✅ COMPLETE
+### Week 158: KB1 + KB5 + M1a + Fase 41 ALL Test Tiers ✅ COMPLETE
 
-**Goal:** Implement final Fase 24 items (KB1, KB5, M1a) + start Fase 41 test coverage
-**Status:** ✅ COMPLETE (173 new tests, all passing)
+**Goal:** Implement final Fase 24 items (KB1, KB5, M1a) + complete Fase 41 test coverage (all tiers)
+**Status:** ✅ COMPLETE (592 tests across all suites, 0 failures)
 
 | Item | Service | Status | Tests | Description |
 |------|---------|--------|-------|-------------|
@@ -32,6 +32,11 @@
 | **KB5** | `post_mortems_loader.py` | ✅ | 24 | 52 post-mortems, PostMortemsLoader, API endpoints |
 | **M1a** | `csv_exporter.py` + `excel_exporter.py` | ✅ | 41 | CSV + Excel (.xlsx) session export via openpyxl |
 | **Fase 41 T1A** | `test_injection_detector.py` | ✅ | 86 | Extended XSS + SQLi tests, false positive tests, multi-language |
+| **Fase 41 T1B** | `test_injection_detector.py` | ✅ | 78 | CMDi, Path Traversal, Deserialization, SSRF extended tests |
+| **Fase 41 T2A** | `test_injection_detector.py` | ✅ | 41 | Code Injection, XXE, LDAP Injection extended tests |
+| **Fase 41 T2B** | `test_injection_detector.py` | ✅ | 34 | NoSQL, SSTI, CSRF extended tests |
+| **Fase 41 T2C** | `test_injection_detector.py` | ✅ | 14 | File Upload extended tests |
+| **Fase 41 T3** | `test_injection_detector.py` | ✅ | 16 | All Rules Metadata validation (79 rules, 13 categories) |
 
 **New Files Created:**
 
@@ -54,7 +59,9 @@
 | `app/services/brown_paper_service.py` | KB context enrichment (Phase 6) |
 | `app/services/green_paper/green_paper_service.py` | KB context voor Peter |
 | `requirements.txt` | `openpyxl>=3.1.0` toegevoegd |
-| `tests/unit/security_scanner/test_injection_detector.py` | 86 tests (was ~30, nu extended) |
+| `tests/unit/security_scanner/test_injection_detector.py` | 274 tests (T1A+T1B+T2A+T2B+T2C+T3 complete) |
+| `tests/unit/security_scanner/test_boolean_logic_detector.py` | Version 1.0.0→1.1.0, rules 12→20 |
+| `tests/unit/security_scanner/test_control_flow_logic_detector.py` | Version 1.0.0→1.1.0, rules 12→19 |
 
 **Fase 24 Quick Wins: 15/15 COMPLETE ✅**
 

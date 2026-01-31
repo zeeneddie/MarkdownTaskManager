@@ -44,11 +44,11 @@ class TestControlFlowLogicDetectorBasics:
     def test_scanner_version(self):
         """Should return version string."""
         scanner = ControlFlowLogicDetector()
-        assert scanner.get_scanner_version() == "1.0.0"
+        assert scanner.get_scanner_version() == "1.1.0"
 
-    def test_has_12_rules(self):
-        """Should have 12 control flow detection rules."""
-        assert len(CONTROL_FLOW_RULES) == 12
+    def test_has_19_rules(self):
+        """Should have 19 control flow detection rules."""
+        assert len(CONTROL_FLOW_RULES) == 19
 
     def test_supported_languages(self):
         """Should support multiple languages."""
@@ -461,8 +461,8 @@ class TestRulesSummary:
         scanner = ControlFlowLogicDetector()
         summary = scanner.get_rules_summary()
 
-        assert summary["total_rules"] == 12
-        assert len(summary["rules"]) == 12
+        assert summary["total_rules"] == 19
+        assert len(summary["rules"]) == 19
         assert "supported_languages" in summary
 
         # Verify rule structure
