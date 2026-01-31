@@ -56,6 +56,11 @@ class ScannerType(str, Enum):
     PATH_SECURITY = "path_security"  # Fase 39: Path security (CWE-427, 428, 1333)
     INJECTION = "injection"  # Fase 41: Injection vulnerabilities (XSS, SQLi, CMDi, etc.)
     AUTH_LOGIC = "auth_logic"  # Fase 41: Authorization logic (CWE-862, 863, 287, etc.)
+    # Fase 42: Advanced False Negative Detection
+    AST_TAINT = "ast_taint"  # Cross-function taint tracking (CWE-89, 79, 78, 22, etc.)
+    DYNAMIC_FEATURE = "dynamic_feature"  # Dynamic language feature detection (CWE-94, 470)
+    FRAMEWORK_SECURITY = "framework_security"  # Framework-specific security patterns
+    OBFUSCATION = "obfuscation"  # Obfuscation/deobfuscation detection
 
 
 # CWE Top 25 (2023) mapping for quick reference

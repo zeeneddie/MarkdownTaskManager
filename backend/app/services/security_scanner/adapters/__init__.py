@@ -152,6 +152,35 @@ from .auth_logic_detector import (
     create_auth_logic_detector,
 )
 
+# Fase 42: Advanced False Negative Detection
+from .obfuscation_detector import (
+    ObfuscationDetector,
+    ObfuscationRule,
+    ALL_OBFUSCATION_RULES,
+    create_obfuscation_detector,
+)
+
+from .dynamic_feature_detector import (
+    DynamicFeatureDetector,
+    DynamicFeatureRule,
+    ALL_DYNAMIC_FEATURE_RULES,
+    create_dynamic_feature_detector,
+)
+
+from .framework_security_plugin import (
+    FrameworkSecurityPlugin,
+    FrameworkSecurityRule,
+    ALL_FRAMEWORK_SECURITY_RULES,
+    create_framework_security_plugin,
+)
+
+from .ast_taint_tracker import (
+    ASTTaintTracker,
+    TaintRule,
+    ALL_TAINT_RULES,
+    create_ast_taint_tracker,
+)
+
 
 __all__ = [
     # Base classes
@@ -256,4 +285,24 @@ __all__ = [
     "AuthLogicRule",
     "ALL_AUTH_LOGIC_RULES",
     "create_auth_logic_detector",
+    # Fase 42: Obfuscation Detector
+    "ObfuscationDetector",
+    "ObfuscationRule",
+    "ALL_OBFUSCATION_RULES",
+    "create_obfuscation_detector",
+    # Fase 42: Dynamic Feature Detector
+    "DynamicFeatureDetector",
+    "DynamicFeatureRule",
+    "ALL_DYNAMIC_FEATURE_RULES",
+    "create_dynamic_feature_detector",
+    # Fase 42: Framework Security Plugin
+    "FrameworkSecurityPlugin",
+    "FrameworkSecurityRule",
+    "ALL_FRAMEWORK_SECURITY_RULES",
+    "create_framework_security_plugin",
+    # Fase 42: AST Taint Tracker
+    "ASTTaintTracker",
+    "TaintRule",
+    "ALL_TAINT_RULES",
+    "create_ast_taint_tracker",
 ]

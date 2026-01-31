@@ -1,10 +1,10 @@
-# Current Phase: KW5 [w158] — Fase 24 Complete + Fase 41 COMPLETE
+# Current Phase: KW5 [w158] — Fase 41 + Fase 42 COMPLETE
 
 **Project:** MarQed AI Agent Software Platform
 **Period:** KW5 [w158] (2026-01-31)
-**Status:** FASE 24 QUICK WINS 15/15 COMPLETE ✅ | FASE 41 COMPLETE ✅ (484 tests, 108 rules)
-**Focus:** KB1/KB5 Knowledge Base, M1a CSV/Excel Export, Fase 41 Complete (Injection + Auth + FN Hunting + Integration)
-**Next:** Q1 2026 Planning → KW6 [w159] start Fase 42 + Fase 34
+**Status:** FASE 41 COMPLETE ✅ | FASE 42 COMPLETE ✅ (1092 tests, 28 xfailed, 4 new scanners, ~272 rules)
+**Focus:** Advanced False Negative Detection: ObfuscationDetector, DynamicFeatureDetector, FrameworkSecurityPlugin, ASTTaintTracker
+**Next:** Q1 2026 Planning → KW6 [w159] start Fase 34
 
 ---
 

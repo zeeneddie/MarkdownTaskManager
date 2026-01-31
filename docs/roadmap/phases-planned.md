@@ -39,7 +39,7 @@
 ### Dependency Chain
 
 ```
-Fase 41 ✅ ──► Fase 42 (KW6-7)
+Fase 41 ✅ ──► Fase 42 ✅ (KW5 early!)
 Fase 31 ✅ ──► Fase 34 (KW6-7) ──► Fase 35 (KW8-9) ──► Fase 36 (KW10-14)
 Fase 23.5 ✅ ──► Fase 60 (KW8-9) ──► Fase 32 (KW15+, doorloop Q2)
 Fase 23.5 ✅ ──► Fase 43 (KW10-11)
@@ -143,7 +143,7 @@ Fase 31 ✅ ──► Fase 37 (KW12-18) [34-36 nice-to-have]
 
 | Fase | Week | Title | Priority | ROI | Detail |
 |------|------|-------|----------|-----|--------|
-| **42** | KW6-KW7 [w159-160] | **Advanced FN Detection** | 🟡 **HIGH** | 8.5 | [fase-42-advanced-fn-detection.md](phases/fase-42-advanced-fn-detection.md) |
+| **42** | KW5 [w158] | **Advanced FN Detection** | ✅ **COMPLETE** | 8.5 | [fase-42-advanced-fn-detection.md](phases/fase-42-advanced-fn-detection.md) |
 
 **Goal:** Reduce FN rate from **<5%** to **<2%**
 
@@ -316,7 +316,7 @@ KW4-5 [w157-158]: FASE 24 + FASE 41 ✅ COMPLETE
 └── KW4-5 [w157-158]: Fase 24 - Quick Wins & Foundation (20 items) ✅ COMPLETE (15/15 done)
 
 Q1 2026: KW6-KW18 [w159-171] — PLANNED
-├── KW6-KW7 [w159-160]: Fase 42 - Advanced FN Detection 🆕 PLANNED
+├── KW5 [w158]: Fase 42 - Advanced FN Detection ✅ COMPLETE
 ├── KW6-KW7 [w159-160]: Fase 34 - Advanced Error Detectors (Deadlock + Performance) 🆕 PLANNED
 │
 ├── ★ KW8-KW9 [w161-162]: Fase 60 - Observability Foundation (OTLP/Langfuse) 🆕 P0 [Tracer/BART]
