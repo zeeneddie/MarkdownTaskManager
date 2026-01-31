@@ -2,8 +2,8 @@
 
 **Status:** PLANNED
 **Priority:** HIGH
-**Week:** 169-176 (after Fase 41 stabilization)
-**Dependencies:** Fase 41 (Injection Scanners + FN Remediation)
+**Week:** KW6-KW7 [w159-160] (Q1 2026, na Fase 41 ✅)
+**Dependencies:** Fase 41 (Injection Scanners + FN Remediation) ✅ COMPLETE
 **ROI:** 8.5 (pushes detection from 95% → 98%+)
 
 ---
@@ -779,14 +779,11 @@ This 0.25% will always remain as a fundamental limit of pattern-based detection.
 ## Complete Implementation Timeline
 
 ```
-Week 169: AST Taint Tracker (Python)
-Week 170: AST Taint Tracker (JS/TS) + Dynamic Patterns (JS)
-Week 171: AST Taint Tracker (Java) + Dynamic Patterns (Python)
-Week 172: Call Graph Analysis + Dynamic Patterns (Java)
-Week 173: Django + Flask Framework Plugins
-Week 174: Express + Spring Framework Plugins
-Week 175: Rails + Laravel + ASP.NET + Obfuscation (basic)
-Week 176: Obfuscation (advanced) + Framework Auto-Detection + Integration
+KW6 [w159]: AST Taint Tracker (Python) + AST Taint Tracker (JS/TS)
+            Dynamic Patterns (JS) + Dynamic Patterns (Python)
+KW7 [w160]: AST Taint Tracker (Java) + Call Graph Analysis + Dynamic Patterns (Java)
+            Framework Plugins (Django, Flask, Express, Spring)
+            Rails + Laravel + ASP.NET + Obfuscation + Integration
 ```
 
 ---

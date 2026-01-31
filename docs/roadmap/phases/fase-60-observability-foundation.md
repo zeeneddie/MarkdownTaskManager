@@ -2,8 +2,8 @@
 
 **Status:** PLANNED
 **Priority:** P0 (Highest ROI)
-**Timeline:** Week 179-182
-**Effort:** ~48 uur (~4 weken)
+**Timeline:** KW8-KW9 [w161-162] (Q1 2026)
+**Effort:** ~48 uur (~2 weken)
 **Dependencies:** Fase 23.5 (Confucius Orchestrator) ✅, CCTraceService ✅
 **Source:** [Tracer/BART Gap Analyse](../tracer-bart-gap-analysis.md)
 

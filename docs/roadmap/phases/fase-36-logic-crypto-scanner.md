@@ -1,10 +1,11 @@
-# Fase 36: Logic & Crypto Error Scanner (Week 176-182)
+# Fase 36: Logic & Crypto Error Scanner (KW10-KW14 [w163-167])
 
 **Goal:** Detectie van cryptografische fouten, control flow logic errors, en boolean operator mistakes
 **Status:** PLANNED
 **Priority:** HIGH (security + correctness)
 **Effort:** ~72 uur
-**Dependencies:** Fase 31 (CWE Scanner), Fase 34-35 (Advanced Detectors)
+**Week:** KW10-KW14 [w163-167] (Q1 2026)
+**Dependencies:** Fase 31 (CWE Scanner) ✅, Fase 34-35 (Advanced Detectors) — KW6-9
 
 ---
 
@@ -409,7 +410,7 @@ if (isValid == true) {  // Redundant
 
 ## Implementation Plan
 
-### Phase 36.1: CryptoErrorDetector (Week 176-177)
+### Phase 36.1: CryptoErrorDetector (KW10-11 [w163-164])
 
 | Task | Description | Effort |
 |------|-------------|--------|
@@ -419,7 +420,7 @@ if (isValid == true) {  // Redundant
 | 36.1.4 | Certificate validation checker | 4h |
 | 36.1.5 | Unit tests | 6h |
 
-### Phase 36.2: ControlFlowLogicDetector (Week 178-179)
+### Phase 36.2: ControlFlowLogicDetector (KW12-13 [w165-166])
 
 | Task | Description | Effort |
 |------|-------------|--------|
@@ -429,7 +430,7 @@ if (isValid == true) {  // Redundant
 | 36.2.4 | Exception handler analyzer | 4h |
 | 36.2.5 | Unit tests | 6h |
 
-### Phase 36.3: BooleanLogicDetector (Week 180-181)
+### Phase 36.3: BooleanLogicDetector (KW13-14 [w166-167])
 
 | Task | Description | Effort |
 |------|-------------|--------|
@@ -440,7 +441,7 @@ if (isValid == true) {  // Redundant
 | 36.3.5 | Tautology/contradiction detector | 4h |
 | 36.3.6 | Unit tests | 4h |
 
-### Phase 36.4: Integration (Week 182)
+### Phase 36.4: Integration (KW14 [w167])
 
 | Task | Description | Effort |
 |------|-------------|--------|

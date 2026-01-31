@@ -1,10 +1,11 @@
-# Fase 35: Data Integrity Scanners (Week 171-175)
+# Fase 35: Data Integrity Scanners (KW8-KW9 [w161-162])
 
 **Goal:** Implementatie van scanners voor race conditions en resource lifecycle issues
 **Status:** PLANNED
 **Priority:** HIGH (data integriteit)
 **Effort:** ~40 uur
-**Dependencies:** Fase 31 (CWE Scanner), Fase 34 (Advanced Error Detectors)
+**Week:** KW8-KW9 [w161-162] (Q1 2026)
+**Dependencies:** Fase 31 (CWE Scanner) ✅, Fase 34 (Advanced Error Detectors) — KW6-7
 
 ---
 
@@ -292,7 +293,7 @@ def bad_cleanup():
 
 ## Implementation Plan
 
-### Phase 35.1: DataIntegrityDetector Foundation (Week 171-172)
+### Phase 35.1: DataIntegrityDetector Foundation (KW8 [w161])
 
 | Task | Description | Effort |
 |------|-------------|--------|
@@ -302,7 +303,7 @@ def bad_cleanup():
 | 35.1.4 | Race condition pattern matching | 4h |
 | 35.1.5 | Unit tests | 4h |
 
-### Phase 35.2: DataIntegrityDetector Advanced (Week 173)
+### Phase 35.2: DataIntegrityDetector Advanced (KW9 [w162])
 
 | Task | Description | Effort |
 |------|-------------|--------|
@@ -311,7 +312,7 @@ def bad_cleanup():
 | 35.2.3 | Double-checked locking detector | 2h |
 | 35.2.4 | Integration tests | 2h |
 
-### Phase 35.3: ResourceLifecycleDetector (Week 174-175)
+### Phase 35.3: ResourceLifecycleDetector (KW9 [w162])
 
 | Task | Description | Effort |
 |------|-------------|--------|

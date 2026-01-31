@@ -1,10 +1,11 @@
-# Fase 34: Advanced Error Detectors (Week 166-170)
+# Fase 34: Advanced Error Detectors (KW6-KW7 [w159-160])
 
 **Goal:** Implementatie van geavanceerde detectoren voor deadlocks en performance problemen
 **Status:** PLANNED
 **Priority:** HIGH (productie-stabiliteit)
 **Effort:** ~48 uur
-**Dependencies:** Fase 31 (CWE Scanner), Fase 24-KB (Knowledge Base)
+**Week:** KW6-KW7 [w159-160] (Q1 2026)
+**Dependencies:** Fase 31 (CWE Scanner) ✅, Fase 24-KB (Knowledge Base) ✅
 
 ---
 
@@ -246,7 +247,7 @@ re.match(pattern, "aaaaaaaaaaaaaaaaaaaaaaaaaaaa!")  # Hangs!
 
 ## Implementation Plan
 
-### Phase 34.1: DeadlockDetector Foundation (Week 166)
+### Phase 34.1: DeadlockDetector Foundation (KW6 [w159])
 
 | Task | Description | Effort |
 |------|-------------|--------|
@@ -256,7 +257,7 @@ re.match(pattern, "aaaaaaaaaaaaaaaaaaaaaaaaaaaa!")  # Hangs!
 | 34.1.4 | Implement cycle detection algorithm | 4h |
 | 34.1.5 | Unit tests | 4h |
 
-### Phase 34.2: DeadlockDetector Advanced (Week 167)
+### Phase 34.2: DeadlockDetector Advanced (KW6 [w159])
 
 | Task | Description | Effort |
 |------|-------------|--------|
@@ -266,7 +267,7 @@ re.match(pattern, "aaaaaaaaaaaaaaaaaaaaaaaaaaaa!")  # Hangs!
 | 34.2.4 | Integration with SecurityOrchestrator | 2h |
 | 34.2.5 | Integration tests | 4h |
 
-### Phase 34.3: PerformancePatternDetector Foundation (Week 168)
+### Phase 34.3: PerformancePatternDetector Foundation (KW7 [w160])
 
 | Task | Description | Effort |
 |------|-------------|--------|
@@ -275,7 +276,7 @@ re.match(pattern, "aaaaaaaaaaaaaaaaaaaaaaaaaaaa!")  # Hangs!
 | 34.3.3 | Loop-query pattern matching | 4h |
 | 34.3.4 | Unit tests | 4h |
 
-### Phase 34.4: PerformancePatternDetector Advanced (Week 169-170)
+### Phase 34.4: PerformancePatternDetector Advanced (KW7 [w160])
 
 | Task | Description | Effort |
 |------|-------------|--------|

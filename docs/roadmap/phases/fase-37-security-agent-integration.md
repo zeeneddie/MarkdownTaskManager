@@ -1,7 +1,7 @@
 # Fase 37: Security Scanner Agent Integration
 
 **Project:** MarQed AI Agent Software Platform
-**Week:** 185-192 (geschat 8 weken)
+**Week:** KW12-KW18 [w165-171] (Q1 2026, geschat 7 weken)
 **Priority:** CRITICAL
 **Status:** PLANNED
 **ROI Score:** 9.5 (hoogste prioriteit - security gap)
@@ -660,22 +660,22 @@ async def _security_analysis(
 
 ## Implementation Phases
 
-### Phase 1: Core Integration (Week 185-186)
+### Phase 1: Core Integration (KW12-13 [w165-166])
 - [ ] Touchpoint 1: QuinnExtension integratie
 - [ ] Unit tests voor Quinn + SecurityScanOrchestrator
 - [ ] Integration tests
 
-### Phase 2: Workflow Integration (Week 187-188)
+### Phase 2: Workflow Integration (KW14-15 [w167-168])
 - [ ] Touchpoint 2: ProjectAssessmentOrchestrator
 - [ ] Touchpoint 6: Migration Workflow
 - [ ] Tests en documentatie
 
-### Phase 3: Quality Gate Integration (Week 189-190)
+### Phase 3: Quality Gate Integration (KW16-17 [w169-170])
 - [ ] Touchpoint 3: KanbanQualityGateService
 - [ ] Touchpoint 5: Maintenance Workflow
 - [ ] E2E tests voor lane transitions
 
-### Phase 4: New Project Integration (Week 191-192)
+### Phase 4: New Project Integration (KW18 [w171])
 - [ ] Touchpoint 4: Green Paper Workflow
 - [ ] Documentatie update
 - [ ] Performance testing
