@@ -2,7 +2,7 @@
 
 **Project:** MarQed AI Agent Software Platform
 **Last Updated:** Week 162 (2026-01-31)
-**Total Phases:** 57 | **Timeline:** Week 144-254
+**Total Phases:** 68 | **Timeline:** Week 144-254
 
 ---
 
@@ -20,12 +20,16 @@ WEEK 144-158: CRITICAL FOUNDATION + ORCHESTRATOR + SECURITY ✅ COMPLETE
 ├── Fase 23: Context Engineering ✅ COMPLETE (Week 155)
 ├── Fase 23.5: Confucius Orchestrator ✅ COMPLETE (Week 149-154)
 ├── Fase 23.6: Stage Council Review ✅ COMPLETE (Week 157)
+├── Fase 24.5: LLM Resilience & Streaming ✅ COMPLETE (Week 155)
 ├── Fase 24.6: Restartable Workflows ✅ COMPLETE (Week 158)
-├── Fase 24.8: Epic Generation Fix ✅ COMPLETE (Week 158)
 ├── Fase 24.7: Async Database Persistence ✅ COMPLETE (Week 159)
+├── Fase 24.8: Epic Generation Fix ✅ COMPLETE (Week 158)
+├── Fase 24-A1: Legacy Quickscan ✅ COMPLETE (Week 157)
+├── Fase 24-KB: Knowledge Base Integration ✅ COMPLETE (Week 158) (KB1+KB5 done, KB2-KB4 merged)
 ├── Fase 29: Quality-Functionality Impact Mapping ✅ COMPLETE (Week 156-157)
 ├── Fase 31: CWE Security Scanner Suite ✅ COMPLETE (Week 157)
-└── Fase 24-A1: Legacy Quickscan ✅ COMPLETE (Week 157)
+├── Fase 41: Injection Vulnerability Scanners ✅ COMPLETE (Week 158) (484 tests, 108 rules)
+└── Fase 42: Advanced False Negative Detection ✅ COMPLETE (Week 158) (468 tests, 4 scanners)
 
 WEEK 159: URGENT - BUSINESS DOMAIN EXTRACTION 🔥
 └── Fase 24.10: Business-Driven Epic Generation (Week 159) 🔥 CRITICAL
@@ -37,16 +41,23 @@ WEEK 159: URGENT - BUSINESS DOMAIN EXTRACTION 🔥
 
 WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 ├── Fase 24: Quick Wins & Foundation (15 items) ✅ 15/15 COMPLETE (A1+K3+D1+D2+K1+K2+A4+E1+J1+K4+A2+A3+D4+B5+B6)
-├── Fase 24.10: Business-Driven Epic Generation (Week 159) 🔥 CRITICAL - See above
 ├── Fase 24.9: Brown Paper Workflow Refactoring (Week 160-162) 🆕 HIGH PRIORITY
+├── Fase 24.10: Business-Driven Epic Generation (Week 159) 🔥 CRITICAL - See above
 ├── Fase 25: Core Platform Enhancement (18 items)
 ├── Fase 26: AI & Automation (12 items)
 ├── Fase 27: Testing Excellence (8 items)
 ├── Fase 28: Advanced Integrations (10 items)
 ├── Fase GAP-29: Innovation & Scale (9 items)
+├── Fase 30: LLM Council Improvements (Week 233-235) 🆕
 ├── Fase 32: Ralph Wiggum + mq Integration (Week 175-190) 🆕
-├── Fase 51: Klant Template Service - Multi-Tenant Platform (Week 191-202) 🆕
 ├── Fase 33: DevStats Developer Metrics (Week 179-184) 🆕
+├── Fase 34: Advanced Error Detectors (KW6-7 [w159-160]) 🆕
+├── Fase 35: Data Integrity Scanners (KW8-9 [w161-162]) 🆕
+├── Fase 36: Logic & Crypto Scanner (KW10-14 [w163-167]) 🆕
+├── Fase 37: Security Scanner Agent Integration (KW12-18 [w165-171]) 🆕
+├── Fase 38: Memory Safety Scanner (after Fase 37) 🆕
+├── Fase 39: ML-Based Novel Vulnerability Detection (after Fase 42) 🆕
+├── Fase 40: Hybrid False Positive Reduction (after Fase 39) 🆕
 ├── Fase 43: Zero-Complaints Green Paper & Maintenance (Week 177-184) 🆕
 ├── Fase 44: AI Code Complaints Strategy (Week 185-192) 🆕
 ├── Fase 45: Reverse Traceability Service (Week 193-200) 🆕
@@ -55,6 +66,7 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 ├── Fase 48: LRM Software Intake Enhancement (Week 217-224) 🆕
 ├── Fase 49: LRM Advanced Workflows (Week 225-232) 🆕
 ├── Fase 50: LRM Autonomous Operations (Week 233-240) 🆕
+├── Fase 51: Klant Template Service - Multi-Tenant Platform (Week 191-202) 🆕
 ├── ★ Fase 60: Observability Foundation - OTLP/Langfuse (Week 179-182) 🆕 P0
 ├── ★ Fase 61: Progress Dashboard & Per-Ticket Cost (Week 183-188) 🆕 P1
 ├── ★ Fase 62: Conversational Intake - Epic Mode (Week 193-198) 🆕 P1
@@ -239,7 +251,10 @@ def start_session_sync(self, ...) -> Session:
 
 | Area | Status | Details |
 |------|--------|---------|
+| **Fase 42 Advanced FN Detection** | ✅ COMPLETE | 4 scanners, 468 tests, ~272 rules |
+| **Fase 41 Injection Scanners** | ✅ COMPLETE | 484 tests, 108 rules, 13 categories |
 | **Fase 31 CWE Security Scanner** | ✅ COMPLETE | Multi-scanner suite, 288+ findings on HCI-CRS |
+| **Fase 24-KB Knowledge Base** | ✅ COMPLETE | KB1+KB5 done, KB2-KB4 merged into scanners |
 | **Fase 24-A1 Legacy Quickscan** | ✅ COMPLETE | 15-min assessment, Go/No-Go recommendation |
 | **Fase 23.6 Stage Council Review** | ✅ COMPLETE | Multi-model LLM reviews per stage |
 | **Fase 29 Quality Impact Mapping** | ✅ COMPLETE | Quality-to-functionality linking |
@@ -335,6 +350,39 @@ See: [docs/architecture/confucius-orchestrator-integration-plan.md](docs/archite
 
 **Goal:** Link quality issues to Epic/Feature/Story level
 **Benefit:** Business impact visibility for all findings
+
+### Fase 41: Injection Vulnerability Scanners ✅ COMPLETE
+
+**Status:** ✅ COMPLETE (Week 158)
+**Solution:** Complete CWE Top 25 injection coverage with 108 rules across 13 categories
+
+| Component | Status | Description |
+|-----------|--------|-------------|
+| InjectionDetector | ✅ | XSS, SQLi, CMDi, Path Traversal, Deserialization, SSRF |
+| AuthLogicDetector | ✅ | 6 CWEs, 29 rules, context-aware detection |
+| Extended Tests (T1-T3) | ✅ | 274 injection tests + 123 auth logic tests |
+| FN Hunting Suite | ✅ | 57 tests (43 pass, 14 xfail known limitations) |
+| Integration Tests | ✅ | 30 multi-scanner orchestrator tests |
+
+**Total:** 484 tests (470 passed, 14 xfailed, 0 failures)
+
+See: [docs/roadmap/phases/fase-41-injection-vulnerability-scanners.md](docs/roadmap/phases/fase-41-injection-vulnerability-scanners.md)
+
+### Fase 42: Advanced False Negative Detection ✅ COMPLETE
+
+**Status:** ✅ COMPLETE (Week 158)
+**Solution:** 4 advanced scanners targeting remaining false negatives with ~272 rules
+
+| Component | Status | Description |
+|-----------|--------|-------------|
+| ASTTaintTracker | ✅ | AST-based taint tracking for complex data flows (40% FN) |
+| DynamicFeatureDetector | ✅ | Heuristic detection for dynamic language features (25% FN) |
+| FrameworkSecurityPlugin | ✅ | Framework-specific security patterns (20% FN) |
+| ObfuscationDetector | ✅ | Deobfuscation + entropy analysis (10% FN) |
+
+**Total:** 468 tests, 28 xfailed, 4 new scanners
+
+See: [docs/roadmap/phases/fase-42-advanced-fn-detection.md](docs/roadmap/phases/fase-42-advanced-fn-detection.md)
 
 ---
 
@@ -745,6 +793,19 @@ Transformeert MarQed.ai naar een **multi-tenant AI coding platform** met per-kla
 
 ---
 
+## Fase 30: LLM Council Improvements (Week 233-235)
+
+**Status:** PLANNED
+**Priority:** MEDIUM
+**Effort:** 72 uur (~2 weken)
+**Dependencies:** Fase 23.5 ✅ (Confucius Orchestrator)
+
+Verbeteringen aan het multi-model LLM Council systeem voor betere consensus en kwaliteitsreviews.
+
+See: [docs/roadmap/phases/fase-30-llm-council-improvements.md](docs/roadmap/phases/fase-30-llm-council-improvements.md)
+
+---
+
 ## Fase 33: DevStats Developer Metrics (Week 179-184)
 
 **Status:** PLANNED
@@ -769,6 +830,90 @@ Developer contribution analytics dashboard gebaseerd op CNCF DevStats en Grimoir
 - Code churn (lines added/removed ratio)
 
 See: [docs/roadmap/phases/fase-33-devstats-dashboard.md](docs/roadmap/phases/fase-33-devstats-dashboard.md)
+
+---
+
+## Security Scanner Pipeline (Fase 34-40)
+
+De security scanner pipeline bouwt voort op Fase 31 (CWE Scanner Suite), Fase 41 (Injection Scanners) en Fase 42 (Advanced FN Detection). Chronologische implementatie volgens Q1 2026 sprint calendar.
+
+### Fase 34: Advanced Error Detectors (KW6-7 [w159-160])
+
+**Status:** PLANNED
+**Priority:** HIGH
+**Dependencies:** Fase 31 ✅
+
+See: [docs/roadmap/phases/fase-34-advanced-error-detectors.md](docs/roadmap/phases/fase-34-advanced-error-detectors.md)
+
+### Fase 35: Data Integrity Scanners (KW8-9 [w161-162])
+
+**Status:** PLANNED
+**Priority:** HIGH
+**Dependencies:** Fase 34
+
+See: [docs/roadmap/phases/fase-35-data-integrity-scanners.md](docs/roadmap/phases/fase-35-data-integrity-scanners.md)
+
+### Fase 36: Logic & Crypto Scanner (KW10-14 [w163-167])
+
+**Status:** PLANNED
+**Priority:** HIGH
+**Effort:** ~72 uur
+**Dependencies:** Fase 35
+
+| Module | Effort | Description |
+|--------|--------|-------------|
+| CryptoErrorDetector | 24h | Hardcoded secrets, weak algorithms, timing attacks, cert validation |
+| ControlFlowLogicDetector | 24h | Loop errors, if/else analysis, switch/case, exception handling |
+| BooleanLogicDetector | 24h | Operator confusion, precedence, tautology/contradiction detection |
+
+See: [docs/roadmap/phases/fase-36-logic-crypto-scanner.md](docs/roadmap/phases/fase-36-logic-crypto-scanner.md)
+
+### Fase 37: Security Scanner Agent Integration (KW12-18 [w165-171])
+
+**Status:** PLANNED
+**Priority:** HIGH
+**Dependencies:** Fase 31 ✅ (Fase 34-36 nice-to-have)
+
+See: [docs/roadmap/phases/fase-37-security-agent-integration.md](docs/roadmap/phases/fase-37-security-agent-integration.md)
+
+### Fase 38: Memory Safety Scanner
+
+**Status:** PLANNED
+**Dependencies:** Fase 37
+
+| Scanner | Rules | Description |
+|---------|-------|-------------|
+| MemorySafetyDetector | 16 | Buffer overflow, use-after-free, double-free, null deref |
+| ConcurrencyErrorDetector | 8 | Race conditions, deadlocks, thread safety |
+
+See: [docs/roadmap/phases/fase-38-memory-safety-scanner.md](docs/roadmap/phases/fase-38-memory-safety-scanner.md)
+
+### Fase 39: ML-Based Novel Vulnerability Detection
+
+**Status:** PLANNED
+**Dependencies:** Fase 42 ✅
+**Note:** Hernummerd van origineel Fase 50 (ML-Novel) om conflict met Fase 50 (LRM Autonomous Operations) op te lossen.
+
+| Component | Description |
+|-----------|-------------|
+| GitHub Vulnerability Crawler | Continuous learning from real vulnerabilities |
+| CVE/NVD Monitor | Real-time vulnerability feed |
+| Model Training Pipeline | Pre-computed embeddings, batch ML analysis |
+
+See: [docs/roadmap/phases/fase-50-ml-novel-vulnerability-detection.md](docs/roadmap/phases/fase-50-ml-novel-vulnerability-detection.md) *(wordt hernoemd naar fase-39)*
+
+### Fase 40: Hybrid False Positive Reduction
+
+**Status:** PLANNED
+**Dependencies:** Fase 39
+
+| Component | Description |
+|-----------|-------------|
+| HeuristicFilter | Rule-based pre-filtering of findings |
+| ML Confidence Scoring | Statistical model for finding validation |
+| Hybrid Pipeline | Combined heuristic + ML reduction |
+
+See: [docs/roadmap/phases/fase-40-hybrid-false-positive-reduction.md](docs/roadmap/phases/fase-40-hybrid-false-positive-reduction.md)
 
 ---
 
@@ -1102,19 +1247,29 @@ See: [tracer-bart-gap-analysis.md](docs/roadmap/tracer-bart-gap-analysis.md)
 
 | Document | Description |
 |----------|-------------|
-| [phases-current.md](docs/roadmap/phases-current.md) | Week 144 status |
-| [phases-planned.md](docs/roadmap/phases-planned.md) | Fase 22-33 details |
+| [phases-current.md](docs/roadmap/phases-current.md) | KW5 [w158] status |
+| [phases-planned.md](docs/roadmap/phases-planned.md) | Fase 22+ details & Q1 2026 sprint calendar |
 | [phases-completed.md](docs/roadmap/phases-completed.md) | Fase 1-21 archive |
 | [gap-analysis-complete-roadmap.md](docs/roadmap/gap-analysis-complete-roadmap.md) | Full 75-item specs |
 | [workflow-separation-plan.md](docs/architecture/workflow-separation-plan.md) | Brown Paper/Migration/Quality separation |
+| [fase-30-llm-council-improvements.md](docs/roadmap/phases/fase-30-llm-council-improvements.md) | Fase 30: LLM Council Improvements |
 | [fase-32-ralph-wiggum-loop.md](docs/roadmap/phases/fase-32-ralph-wiggum-loop.md) | Ralph Wiggum autonomous loop |
-| [mq-ralph-wiggum-integration-plan.md](docs/mq-ralph-wiggum-integration-plan.md) | 🆕 Fase 32: mq + Ralph Integration (536h) |
+| [mq-ralph-wiggum-integration-plan.md](docs/mq-ralph-wiggum-integration-plan.md) | Fase 32: mq + Ralph Integration (536h) |
 | [fase-33-devstats-dashboard.md](docs/roadmap/phases/fase-33-devstats-dashboard.md) | DevStats developer metrics |
-| [GREEN-PAPER-MAINTENANCE-ZERO-COMPLAINTS-PLAN.md](docs/plans/GREEN-PAPER-MAINTENANCE-ZERO-COMPLAINTS-PLAN.md) | 🆕 Fase 43: Zero-Complaints Strategy |
-| [fase-44-ai-code-complaints-strategy.md](docs/roadmap/phases/fase-44-ai-code-complaints-strategy.md) | 🆕 Fase 44: AI Code Complaints Strategy |
-| [fase-45-reverse-traceability-service.md](docs/roadmap/phases/fase-45-reverse-traceability-service.md) | 🆕 Fase 45: Reverse Traceability Service |
-| [fase-46-user-workflow-documentation.md](docs/roadmap/phases/fase-46-user-workflow-documentation.md) | 🆕 Fase 46: User Workflow Documentation |
-| [LRM-INTEGRATION-IMPLEMENTATION-PLAN.md](backend/docs/plans/LRM-INTEGRATION-IMPLEMENTATION-PLAN.md) | 🆕 Fase 47-50: LRM Integration Master Plan |
+| [fase-34-advanced-error-detectors.md](docs/roadmap/phases/fase-34-advanced-error-detectors.md) | Fase 34: Advanced Error Detectors |
+| [fase-35-data-integrity-scanners.md](docs/roadmap/phases/fase-35-data-integrity-scanners.md) | Fase 35: Data Integrity Scanners |
+| [fase-36-logic-crypto-scanner.md](docs/roadmap/phases/fase-36-logic-crypto-scanner.md) | Fase 36: Logic & Crypto Scanner |
+| [fase-37-security-agent-integration.md](docs/roadmap/phases/fase-37-security-agent-integration.md) | Fase 37: Security Scanner Agent Integration |
+| [fase-38-memory-safety-scanner.md](docs/roadmap/phases/fase-38-memory-safety-scanner.md) | Fase 38: Memory Safety Scanner |
+| [fase-40-hybrid-false-positive-reduction.md](docs/roadmap/phases/fase-40-hybrid-false-positive-reduction.md) | Fase 40: Hybrid False Positive Reduction |
+| [fase-41-injection-vulnerability-scanners.md](docs/roadmap/phases/fase-41-injection-vulnerability-scanners.md) | Fase 41: Injection Vulnerability Scanners ✅ |
+| [fase-42-advanced-fn-detection.md](docs/roadmap/phases/fase-42-advanced-fn-detection.md) | Fase 42: Advanced False Negative Detection ✅ |
+| [GREEN-PAPER-MAINTENANCE-ZERO-COMPLAINTS-PLAN.md](docs/plans/GREEN-PAPER-MAINTENANCE-ZERO-COMPLAINTS-PLAN.md) | Fase 43: Zero-Complaints Strategy |
+| [fase-44-ai-code-complaints-strategy.md](docs/roadmap/phases/fase-44-ai-code-complaints-strategy.md) | Fase 44: AI Code Complaints Strategy |
+| [fase-45-reverse-traceability-service.md](docs/roadmap/phases/fase-45-reverse-traceability-service.md) | Fase 45: Reverse Traceability Service |
+| [fase-46-user-workflow-documentation.md](docs/roadmap/phases/fase-46-user-workflow-documentation.md) | Fase 46: User Workflow Documentation |
+| [LRM-INTEGRATION-IMPLEMENTATION-PLAN.md](backend/docs/plans/LRM-INTEGRATION-IMPLEMENTATION-PLAN.md) | Fase 47-50: LRM Integration Master Plan |
+| [fase-50-ml-novel-vulnerability-detection.md](docs/roadmap/phases/fase-50-ml-novel-vulnerability-detection.md) | Fase 39 (hernummerd): ML-Based Novel Vulnerability Detection |
 | [tracer-bart-gap-analysis.md](docs/roadmap/tracer-bart-gap-analysis.md) | ★ Fase 60-64: Tracer/BART Gap Analyse & Verbeterplan |
 | [fase-60-observability-foundation.md](docs/roadmap/phases/fase-60-observability-foundation.md) | ★ Fase 60: OTLP/Langfuse Observability Foundation |
 | [fase-61-progress-dashboard.md](docs/roadmap/phases/fase-61-progress-dashboard.md) | ★ Fase 61: Progress Dashboard & Per-Ticket Cost |
@@ -1143,9 +1298,19 @@ See: [tracer-bart-gap-analysis.md](docs/roadmap/tracer-bart-gap-analysis.md)
 | **Visual Dependency Graph (E1)** | 158 | D3.js/Cytoscape/DOT/Mermaid, 35 tests ✅ |
 | **Context-Aware Docs (J1)** | 158 | AST parsing, multi-format export, 34 tests ✅ |
 | **Secret Detection (K3)** | 157 | 50+ patterns, entropy detection ✅ |
-| **Ralph Wiggum + mq Integration (Fase 32)** | 190 | Autonomous overnight coding, mq integration, guardrails, morning reports |
-| **DevStats Dashboard (Fase 33)** | 184 | Git contribution analytics, release tracking, bus factor |
-| **Zero-Complaints Strategy (Fase 43)** | 184 | Zero critical complaints, <5% minor, schema hardening, quality metrics |
+| **Injection Vulnerability Scanners (Fase 41)** | 158 | 484 tests, 108 rules, 13 categories ✅ |
+| **Advanced FN Detection (Fase 42)** | 158 | 4 scanners, 468 tests, ~272 rules ✅ |
+| **Knowledge Base Integration (Fase 24-KB)** | 158 | KB1+KB5 done, KB2-KB4 merged ✅ |
+| **Advanced Error Detectors (Fase 34)** | 159-160 | KW6-7, error detection pipeline |
+| **Data Integrity Scanners (Fase 35)** | 161-162 | KW8-9, data integrity validation |
+| **Logic & Crypto Scanner (Fase 36)** | 163-167 | KW10-14, crypto + logic error detection |
+| **Security Agent Integration (Fase 37)** | 165-171 | KW12-18, agent ↔ scanner integration |
+| **Memory Safety Scanner (Fase 38)** | post-37 | Buffer overflow, concurrency errors |
+| **ML Novel Vulnerability (Fase 39)** | post-42 | ML-based novel pattern detection |
+| **Hybrid FP Reduction (Fase 40)** | post-39 | Heuristic + ML false positive reduction |
+| **Ralph Wiggum + mq Integration (Fase 32)** | 175-190 | Autonomous overnight coding, mq integration, guardrails, morning reports |
+| **DevStats Dashboard (Fase 33)** | 179-184 | Git contribution analytics, release tracking, bus factor |
+| **Zero-Complaints Strategy (Fase 43)** | 177-184 | Zero critical complaints, <5% minor, schema hardening, quality metrics |
 | **AI Code Complaints Strategy (Fase 44)** | 185-192 | 3x improvement over industry AI code metrics |
 | **Reverse Traceability Service (Fase 45)** | 193-200 | Code→Requirements pipeline, DB opslag, requirements docs, >=80% coverage |
 | **User Workflow Documentation (Fase 46)** | 201-208 | ASCII schermen, user workflows, persona detection, >=85% accuracy |
@@ -1158,10 +1323,11 @@ See: [tracer-bart-gap-analysis.md](docs/roadmap/tracer-bart-gap-analysis.md)
 | **★ Conversational Intake (Fase 62)** | 193-198 | Chat-based requirements, domain templates, auto-ticket generatie |
 | **★ Statistical Drift Detection (Fase 63)** | 207-212 | Embedding drift, cosine/KL/centroid, PIV auto-trigger |
 | **★ Self-Evolution Activation (Fase 64)** | 229-234 | AgentEvolution activatie, council reviews, pattern learning |
+| **LLM Council Improvements (Fase 30)** | 233-235 | Multi-model consensus improvements |
 | **COBOL Support** | 185 | B1 Analyzer complete |
 | **LLM Collaboration** | 195 | B12 Framework active |
-| **Full Platform** | 250 | All 85+ items complete |
+| **Full Platform** | 254 | All 85+ items complete |
 
 ---
 
-*Updated: Week 162 (2026-01-31) - Added Tracer/BART Fase 60-64*
+*Updated: Week 162 (2026-01-31) - Synced 11 missing phases from fasenplan: Fase 24.5, 24-KB, 30, 34, 35, 36, 37, 38, 39 (was 50-ML), 40, 41 ✅, 42 ✅. Fase 50-ML hernummerd naar 39. Total Phases: 57→68.*
