@@ -50,6 +50,7 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 ├── Fase GAP-29: Innovation & Scale (9 items)
 ├── Fase 30: LLM Council Improvements (Week 233-235) 🆕
 ├── Fase 32: Ralph Wiggum + mq Integration (Week 175-190) 🆕
+├── Fase 32E: Quality Harness - PM/QA Gates (KW27-30 [w191-194]) 🆕
 ├── Fase 33: DevStats Developer Metrics (Week 179-184) 🆕
 ├── Fase 34: Advanced Error Detectors (KW6-7 [w159-160]) 🆕
 ├── Fase 35: Data Integrity Scanners (KW8-9 [w161-162]) 🆕
@@ -66,7 +67,7 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 ├── Fase 48: LRM Software Intake Enhancement (Week 217-224) 🆕
 ├── Fase 49: LRM Advanced Workflows (Week 225-232) 🆕
 ├── Fase 50: LRM Autonomous Operations (Week 233-240) 🆕
-├── Fase 51: Klant Template Service - Multi-Tenant Platform (Week 191-202) 🆕
+├── Fase 51: Klant Template Service - Multi-Tenant Platform (Week 195-206) 🆕
 ├── ★ Fase 60: Observability Foundation - OTLP/Langfuse (Week 179-182) 🆕 P0
 ├── ★ Fase 61: Progress Dashboard & Per-Ticket Cost (Week 183-188) 🆕 P1
 ├── ★ Fase 62: Conversational Intake - Epic Mode (Week 193-198) 🆕 P1
@@ -713,10 +714,74 @@ Implementatie van de Ralph Wiggum techniek voor autonomous overnight coding, **v
 | [fase-32-ralph-wiggum-loop.md](docs/roadmap/phases/fase-32-ralph-wiggum-loop.md) | Ralph standalone spec |
 | [mq-ralph-wiggum-integration-plan.md](docs/mq-ralph-wiggum-integration-plan.md) | 🆕 Full integration plan |
 | [mq-integration-plan-van-aanpak.md](docs/mq-integration-plan-van-aanpak.md) | mq Platform integration |
+| [fase-32e-quality-harness.md](docs/roadmap/phases/fase-32e-quality-harness.md) | 🆕 Quality Harness (PM/QA Gates) |
 
 ---
 
-## Fase 51: Klant Template Service - Multi-Tenant Platform (Week 191-202)
+## Fase 32E: Quality Harness - PM/QA Acceptance Gates (KW27-30 [w191-194])
+
+**Status:** PLANNED
+**Priority:** HIGH (ROI 9.0)
+**Effort:** 120 uur (~4 weken)
+**Dependencies:** Fase 32D (Ralph Production), mq workflows
+
+### Overview
+
+Quality assurance pipeline die elke micro-deliverable onafhankelijk valideert via PM Acceptance Gate + QA Gate + Progressive Regression, zodat overnight runs betrouwbaar en meetbaar worden.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  QUALITY HARNESS PIPELINE (per micro-deliverable)           │
+├─────────────────────────────────────────────────────────────┤
+│  1. PRD Decomposition → Micro-Deliverables                  │
+│  2. Build (bestaande Ralph loop)                            │
+│  3. PM Acceptance Gate (Claude Code review vs PRD criteria) │
+│  4. QA Gate (security, quality, coverage, performance)      │
+│  5. Progressive Regression (alle eerder geaccepteerde tests)│
+│  6. Accept → Registry of REJECT → terug naar Build          │
+├─────────────────────────────────────────────────────────────┤
+│  Sprint Completion: Full Regression + Coverage + Report     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Components
+
+| Component | Description |
+|-----------|-------------|
+| **micro-decompose.sh** | PRD → micro-deliverables met dependency graph |
+| **pm-acceptance-gate.sh** | Onafhankelijke PM review via Claude Code |
+| **qa-gate.sh** | 7-assige kwaliteitscontrole (code, security, tests, performance, contracts, dependencies, dead code) |
+| **regression-runner.sh** | Progressive + sprint-level regressie |
+| **Acceptance Registry** | SQLite DB voor tracking en traceability |
+
+### Quality Thresholds
+
+| Check | Hard Gate | Target |
+|-------|-----------|--------|
+| Test Coverage (line) | ≥ 80% | ≥ 95% |
+| Code Quality (pylint) | ≥ 7.0/10 | ≥ 8.5/10 |
+| Security (HIGH/CRITICAL) | 0 findings | 0 findings |
+| Performance Degradation | < 20% | < 5% |
+| PM Confidence | ≥ 0.8 | ≥ 0.95 |
+
+### Expected Impact
+
+| Metric | Before | After |
+|--------|--------|-------|
+| False completion rate | 15-20% | < 3% |
+| Overnight reliability | ~60% | > 90% |
+| Coverage tracking | none | per-deliverable |
+| PRD traceability | manual | automated |
+
+### Documentation
+
+| Document | Description |
+|----------|-------------|
+| [fase-32e-quality-harness.md](docs/roadmap/phases/fase-32e-quality-harness.md) | Full specification |
+
+---
+
+## Fase 51: Klant Template Service - Multi-Tenant Platform (Week 195-206)
 
 **Status:** PLANNED
 **Priority:** HIGH (ROI 8.0)
@@ -1254,6 +1319,7 @@ See: [tracer-bart-gap-analysis.md](docs/roadmap/tracer-bart-gap-analysis.md)
 | [workflow-separation-plan.md](docs/architecture/workflow-separation-plan.md) | Brown Paper/Migration/Quality separation |
 | [fase-30-llm-council-improvements.md](docs/roadmap/phases/fase-30-llm-council-improvements.md) | Fase 30: LLM Council Improvements |
 | [fase-32-ralph-wiggum-loop.md](docs/roadmap/phases/fase-32-ralph-wiggum-loop.md) | Ralph Wiggum autonomous loop |
+| [fase-32e-quality-harness.md](docs/roadmap/phases/fase-32e-quality-harness.md) | 🆕 Quality Harness PM/QA Gates |
 | [mq-ralph-wiggum-integration-plan.md](docs/mq-ralph-wiggum-integration-plan.md) | Fase 32: mq + Ralph Integration (536h) |
 | [fase-33-devstats-dashboard.md](docs/roadmap/phases/fase-33-devstats-dashboard.md) | DevStats developer metrics |
 | [fase-34-advanced-error-detectors.md](docs/roadmap/phases/fase-34-advanced-error-detectors.md) | Fase 34: Advanced Error Detectors |
@@ -1309,6 +1375,7 @@ See: [tracer-bart-gap-analysis.md](docs/roadmap/tracer-bart-gap-analysis.md)
 | **ML Novel Vulnerability (Fase 39)** | post-42 | ML-based novel pattern detection |
 | **Hybrid FP Reduction (Fase 40)** | post-39 | Heuristic + ML false positive reduction |
 | **Ralph Wiggum + mq Integration (Fase 32)** | 175-190 | Autonomous overnight coding, mq integration, guardrails, morning reports |
+| **Quality Harness PM/QA Gates (Fase 32E)** | 191-194 | PM Acceptance Gate, QA Gate, progressive regression, micro-deliverables |
 | **DevStats Dashboard (Fase 33)** | 179-184 | Git contribution analytics, release tracking, bus factor |
 | **Zero-Complaints Strategy (Fase 43)** | 177-184 | Zero critical complaints, <5% minor, schema hardening, quality metrics |
 | **AI Code Complaints Strategy (Fase 44)** | 185-192 | 3x improvement over industry AI code metrics |

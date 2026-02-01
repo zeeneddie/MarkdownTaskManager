@@ -34,7 +34,7 @@
 | **KW12-KW14** | w165-167 | 16 mrt - 3 apr | Fase 36 afronding + Fase 37 start (Security Integration) |
 | **KW15-KW18** | w168-171 | 6-24 apr | Fase 37 afronding + Fase 32 start (Ralph Wiggum, doorloop Q2) |
 
-**Backlog (Q2 2026+):** Fase 32 (doorloop), 33, 50, 61, 62, 63, 64, 25-28, GAP-29, 30
+**Backlog (Q2 2026+):** Fase 32 (doorloop), **32E (Quality Harness, KW27-30)**, 33, 50, 51, 61, 62, 63, 64, 25-28, GAP-29, 30
 
 ### Dependency Chain
 
@@ -42,6 +42,7 @@
 Fase 41 ✅ ──► Fase 42 ✅ (KW5 early!)
 Fase 31 ✅ ──► Fase 34 (KW6-7) ──► Fase 35 (KW8-9) ──► Fase 36 (KW10-14)
 Fase 23.5 ✅ ──► Fase 60 (KW8-9) ──► Fase 32 (KW15+, doorloop Q2)
+                                       └──► Fase 32E (KW27-30, Quality Harness)
 Fase 23.5 ✅ ──► Fase 43 (KW10-11)
 Fase 31 ✅ ──► Fase 37 (KW12-18) [34-36 nice-to-have]
 ```
@@ -216,6 +217,7 @@ Fase 31 ✅ ──► Fase 37 (KW12-18) [34-36 nice-to-have]
 | Fase | Week | Title | Priority | ROI | Detail |
 |------|------|-------|----------|-----|--------|
 | **32** | KW15+ [w168+] | Ralph Wiggum Autonomous Loop | HIGH | 8.5 | [fase-32-ralph-wiggum-loop.md](phases/fase-32-ralph-wiggum-loop.md) |
+| **32E** | KW27-30 [w191-194] | Quality Harness (PM/QA Gates) | HIGH | 9.0 | [fase-32e-quality-harness.md](phases/fase-32e-quality-harness.md) |
 | **61** | Q2 2026 | **Progress Dashboard & Per-Ticket Cost** | **P1** | 8.0 | [fase-61-progress-dashboard.md](phases/fase-61-progress-dashboard.md) |
 | **33** | Q2 2026 | DevStats Developer Metrics | MEDIUM-HIGH | 7.0 | [fase-33-devstats-dashboard.md](phases/fase-33-devstats-dashboard.md) |
 | **62** | Q2 2026 | **Conversational Intake (Tracer Epic Mode)** | **P1** | 7.5 | [fase-62-conversational-intake.md](phases/fase-62-conversational-intake.md) |
@@ -331,6 +333,7 @@ Q1 2026: KW6-KW18 [w159-171] — PLANNED
 
 Q2 2026+: BACKLOG
 ├── Fase 32 - Ralph Wiggum (doorloop uit Q1) 🆕 PLANNED
+│     └──► Fase 32E - Quality Harness PM/QA Gates (KW27-30) 🆕 PLANNED
 ├── ★ Fase 61 - Progress Dashboard & Per-Ticket Cost 🆕 P1 [Tracer/BART]
 │     └── Real-time voortgang per ticket, synergy met Ralph (32)
 ├── Fase 33 - DevStats Developer Metrics 🆕 PLANNED
@@ -474,6 +477,7 @@ Q2 2026+: BACKLOG
 | [fase-30-llm-council-improvements.md](phases/fase-30-llm-council-improvements.md) | Streaming, timeouts, tracking |
 | [fase-31-cwe-security-scanners.md](phases/fase-31-cwe-security-scanners.md) | CWE Top 25 security scanning |
 | [fase-32-ralph-wiggum-loop.md](phases/fase-32-ralph-wiggum-loop.md) | 🆕 Ralph Wiggum autonomous coding loop |
+| [fase-32e-quality-harness.md](phases/fase-32e-quality-harness.md) | 🆕 Quality Harness PM/QA Acceptance Gates |
 | [fase-33-devstats-dashboard.md](phases/fase-33-devstats-dashboard.md) | 🆕 DevStats developer metrics dashboard |
 | [fase-34-advanced-error-detectors.md](phases/fase-34-advanced-error-detectors.md) | 🆕 Deadlock + Performance pattern detection |
 | [fase-35-data-integrity-scanners.md](phases/fase-35-data-integrity-scanners.md) | 🆕 Race condition + Resource lifecycle detection |

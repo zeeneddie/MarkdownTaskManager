@@ -3375,6 +3375,21 @@ POST /api/ralph/prp/execute
 
 ---
 
+### Related: Fase 32E — Quality Harness
+
+Fase 32E ([fase-32e-quality-harness.md](fase-32e-quality-harness.md)) breidt het Dual PM Approval Gate patroon uit naar **micro-deliverable granulariteit** met:
+- PRD decomposition naar kleinste toetsbare eenheden
+- PM Acceptance Gate per micro-deliverable (onafhankelijke Claude Code review)
+- QA Gate (7 assen: code quality, security, tests+coverage, performance, contracts, dependencies, dead code)
+- Progressive regression (groeiende test suite per geaccepteerde deliverable)
+- Sprint completion gate met full regression + traceability matrix
+- Acceptance Registry (SQLite) voor tracking en rapportage
+
+**Planning:** KW27-30 [w191-194], 120 uur, na afronding Fase 32D.
+
+---
+
 *Created: Week 158 (2026-01-15)*
 *Updated: Week 160 (2026-01-31) — Workflow-specifieke configuraties (4 modi) + Dual PM Approval Gate patroon + Executie-Architectuur (stateful workflow, stateless executors, context assembly) toegevoegd*
+*Updated: Week 162 (2026-02-01) — Fase 32E Quality Harness referentie toegevoegd*
 *Author: Claude Code*
