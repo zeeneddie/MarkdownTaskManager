@@ -1,8 +1,8 @@
 # MarQed Platform Roadmap
 
 **Project:** MarQed AI Agent Software Platform
-**Last Updated:** Week 162 (2026-01-31)
-**Total Phases:** 68 | **Timeline:** Week 144-254
+**Last Updated:** Week 162 (2026-02-02)
+**Total Phases:** 69 | **Timeline:** Week 144-254
 
 ---
 
@@ -49,8 +49,8 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 ├── Fase 28: Advanced Integrations (10 items)
 ├── Fase GAP-29: Innovation & Scale (9 items)
 ├── Fase 30: LLM Council Improvements (Week 233-235) 🆕
-├── Fase 32: Ralph Wiggum + mq Integration (Week 175-190) 🆕
-├── Fase 32E: Quality Harness - PM/QA Gates (KW27-30 [w191-194]) 🆕
+├── Fase 32: Ralph Wiggum + mq Integration + Cole Medin (Week 175-190) 🆕 UPDATED
+├── Fase 32E: Quality Harness - PM/QA Gates + Visual Verification + Sec-Context (KW27-30 [w191-194]) 🆕 UPDATED
 ├── Fase 33: DevStats Developer Metrics (Week 179-184) 🆕
 ├── Fase 34: Advanced Error Detectors (KW6-7 [w159-160]) 🆕
 ├── Fase 35: Data Integrity Scanners (KW8-9 [w161-162]) 🆕
@@ -72,7 +72,8 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 ├── ★ Fase 61: Progress Dashboard & Per-Ticket Cost (Week 183-188) 🆕 P1
 ├── ★ Fase 62: Conversational Intake - Epic Mode (Week 193-198) 🆕 P1
 ├── ★ Fase 63: Statistical Drift Detection (Week 207-212) 🆕 P2
-└── ★ Fase 64: Self-Evolution Activation (Week 229-234) 🆕 P3
+├── ★ Fase 64: Self-Evolution Activation (Week 229-234) 🆕 P3
+└── ★ Fase 65: External Repo Intelligence - Drift/Kea/Octopus/Sec-Context (Week TBD) 🆕
 ```
 
 ---
@@ -626,12 +627,13 @@ See: [gap-analysis-complete-roadmap.md](docs/roadmap/gap-analysis-complete-roadm
 
 **Status:** PLANNED
 **Priority:** HIGH (ROI 8.5)
-**Effort:** 536 uur (~16 weken) - inclusief mq integratie
+**Effort:** 576 uur (~17 weken) - inclusief mq integratie + Cole Medin verbeteringen
 **Dependencies:** Fase 23.5 (Confucius Orchestrator), mq workflows
+**Benchmark:** [your-claude-engineer](https://github.com/zeeneddie/your-claude-engineer) (Cole Medin harness)
 
 ### Overview
 
-Implementatie van de Ralph Wiggum techniek voor autonomous overnight coding, **volledig geïntegreerd met mq CLI workflows**.
+Implementatie van de Ralph Wiggum techniek voor autonomous overnight coding, **volledig geïntegreerd met mq CLI workflows**. Verrijkt met inzichten uit Cole Medin's Claude Agent SDK harness (fresh-context-per-iteratie, security sandbox, visual verification).
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -643,15 +645,46 @@ Implementatie van de Ralph Wiggum techniek voor autonomous overnight coding, **v
 │  Shared: UnifiedState | KnowledgeHub | ValidationPipeline   │
 ├─────────────────────────────────────────────────────────────┤
 │  Ralph: Loop | Guardrails | Checkpoints | MemoryCompression │
+├─────────────────────────────────────────────────────────────┤
+│  Security: BashAllowlist | BlockedPatterns | SandboxHooks    │
+│  Prompts:  Markdown-driven agent prompts (externalized)     │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+### Vergelijking: Confucius vs Claude Agent SDK (Cole Medin)
+
+**Conclusie:** Confucius is superieur voor MarQed's use case. De Claude Agent SDK is niet geschikt als vervanging maar levert 3 concrete verbeteringen.
+
+| Aspect | Claude Agent SDK (Cole) | Confucius (MarQed) | Winnaar |
+|--------|------------------------|-------------------|---------|
+| **Routing** | LLM beslist (prompt-driven) | Code-driven (scored algorithm) | **Confucius** — deterministisch, voorspelbaar |
+| **Quality gates** | Geen (LLM beoordeelt zichzelf) | Domain-specifieke rules + thresholds | **Confucius** — onmisbaar voor overnight |
+| **Retry logic** | Geen built-in | PIV loop met feedback enrichment | **Confucius** — automatische kwaliteitsverbetering |
+| **Memory** | Geen (fresh per sessie) | 3-tier hierarchisch (session/entry/runnable) | **Confucius** — essentieel voor multi-week trajecten |
+| **Kosten** | LLM tokens voor routing | 0 tokens voor routing (code) | **Confucius** — goedkoper |
+| **Agent count** | Max 4-5 sub-agents | 12 agents met auto-selection | **Confucius** — schaalbaarder |
+| **Debugging** | Black box (LLM decisions) | Structured audit trail | **Confucius** — productie-waardig |
+| **Fresh context** | Elke iteratie nieuw | Niet expliciet | **Cole** — overnemen in Ralph loop |
+| **Security sandbox** | Bash allowlist + hooks | Niet geïmplementeerd | **Cole** — overnemen als security-hooks.sh |
+| **Prompt management** | Extern (markdown files) | Intern (Python code) | **Cole** — overnemen als prompt externalisatie |
+
+**Waarom NIET de Claude Agent SDK adopteren:**
+1. LLM-based routing is onbetrouwbaar voor overnight runs (verkeerde agent om 3 uur 's nachts = catastrofe)
+2. Geen quality gates = "false completion" probleem (15-20% bij Cole, <3% bij MarQed met Fase 32E)
+3. Geen persistent memory = ongeschikt voor multi-week HCI-CRS trajecten (1569 PM)
+4. MarQed's 12-agent ecosysteem past niet in SDK's simpele sub-agent model
+
+**Wat WEL overnemen (3 verbeteringen):**
+1. **Fresh context per micro-deliverable** — voorkomt context bloat in overnight runs
+2. **Security sandbox** — bash allowlist + blocked patterns voor agent veiligheid
+3. **Markdown-driven prompts** — externaliseer agent system prompts voor onderhoudbaarheid
 
 ### Implementation Fases
 
 | Fase | Weken | Focus | Effort |
 |------|-------|-------|--------|
-| **32A: Foundation** | 175-178 | Unified State, Guardrails, Basic Loop | 80h |
-| **32B: Ralph Core** | 179-182 | PRP Generator, Circuit Breaker, Memory | 120h |
+| **32A: Foundation** | 175-178 | Unified State, Guardrails, Basic Loop, **Security Sandbox**, **Prompt Externalisatie** | 96h (+16h) |
+| **32B: Ralph Core** | 179-182 | PRP Generator, Circuit Breaker, Memory, **Fresh Context Pattern** | 128h (+8h) |
 | **32C: mq Integration** | 183-186 | overnight.sh, Knowledge Hub, Validation | 80h |
 | **32D: Production** | 187-190 | Dashboard, E2E Testing, Docs | 80h |
 
@@ -675,20 +708,118 @@ Implementatie van de Ralph Wiggum techniek voor autonomous overnight coding, **v
 | **marqed-overnight.sh** | Nieuwe CLI workflow voor overnight coding |
 | **MorningReportGenerator** | Summary van overnight werk |
 
-### Production Harness (Cole Medin)
+### Production Harness (geïnspireerd door Cole Medin)
 
-| Component | Description |
-|-----------|-------------|
-| **InitializationAgent** | Context gathering before work starts |
-| **StructuredProgressTracker** | Rich metrics beyond "files changed" |
-| **StageApprovalWorkflow** | Human approval between stages |
-| **RollbackService** | Git reset, regression testing |
-| **MemoryCompressionService** | Context handoff between runs |
-| **MultiPhaseValidationPipeline** | 8-phase validation (syntax → docs) |
+| Component | Description | Bron |
+|-----------|-------------|------|
+| **InitializationAgent** | Context gathering before work starts | Cole |
+| **StructuredProgressTracker** | Rich metrics beyond "files changed" | Cole |
+| **StageApprovalWorkflow** | Human approval between stages | Cole |
+| **RollbackService** | Git reset, regression testing | Cole |
+| **MemoryCompressionService** | Context handoff between runs | Cole |
+| **MultiPhaseValidationPipeline** | 8-phase validation (syntax → docs) | Cole |
+
+### 🆕 Cole Medin Verbeteringen (3 items)
+
+#### Verbetering 1: Fresh Context per Micro-Deliverable (Fase 32B)
+
+Elke micro-deliverable krijgt een verse agent context. State leeft in PostgreSQL, niet in het context window. Voorkomt context bloat tijdens overnight runs.
+
+```
+Ralph Loop (Fresh Context Pattern):
+┌─────────────────────────────────────────┐
+│ WHILE not all deliverables done:        │
+│   1. CREATE fresh agent context         │
+│   2. READ state from PostgreSQL         │
+│   3. Regression test (bestaand werk)    │
+│   4. Pick next micro-deliverable        │
+│   5. Implement (1 deliverable only)     │
+│   6. PM Gate → QA Gate → Regression     │
+│   7. Commit + update state in DB        │
+│   8. DESTROY context                    │
+│   9. Sleep 3s → loop                    │
+└─────────────────────────────────────────┘
+```
+
+**Verschil met Cole:** Cole gebruikt lokale `.linear_project.json` + Linear API als state. MarQed gebruikt PostgreSQL + Confucius memory — robuuster en querybaar. Cole's pattern van "elke sessie = verse client" wordt overgenomen, maar MarQed's state backend is superieur.
+
+#### Verbetering 2: Security Sandbox voor Agent Bash (Fase 32A)
+
+Bash allowlist die gevaarlijke commando's blokkeert. Voorkomt destructieve acties door agents tijdens overnight runs.
+
+```
+mq/workflows/common/security-hooks.sh (NIEUW):
+┌─────────────────────────────────────────┐
+│ ALLOWED_COMMANDS:                       │
+│   python, pytest, alembic, pip          │
+│   npm, node, npx, git                   │
+│   ls, cat, grep, find, wc, head, tail   │
+│   mkdir, cp, mv, touch                  │
+│                                         │
+│ BLOCKED_PATTERNS:                       │
+│   rm -rf /*, DROP DATABASE,             │
+│   git push --force main,               │
+│   git reset --hard,                     │
+│   chmod 777, curl | bash,              │
+│   eval, exec (ongevalideerd)            │
+│                                         │
+│ EXTRA VALIDATION:                       │
+│   rm → alleen in project directory      │
+│   git push → alleen feature branches    │
+│   pip install → alleen requirements.txt │
+└─────────────────────────────────────────┘
+```
+
+#### Verbetering 3: Markdown-Driven Agent Prompts (Fase 32A)
+
+Externaliseer Confucius agent system prompts naar markdown files. Maakt het mogelijk om agent gedrag te tweaken zonder code deployment.
+
+```
+backend/app/confucius/prompts/ (NIEUW):
+├── felix_architect.md          # System prompt Felix
+├── quinn_quality.md            # System prompt Quinn
+├── peter_product.md            # System prompt Peter
+├── betty_business.md           # System prompt Betty
+├── diana_documentation.md      # System prompt Diana
+├── tessa_testing.md            # System prompt Tessa
+├── miguel_metrics.md           # System prompt Miguel
+├── marcus_maintenance.md       # System prompt Marcus
+├── vicky_design.md             # System prompt Vicky
+├── eliza_estimation.md         # System prompt Eliza
+├── paul_planning.md            # System prompt Paul
+├── ralph_orchestrator.md       # Ralph loop orchestrator
+├── ralph_continuation.md       # Continuation task per iteratie
+├── ralph_initializer.md        # Initializer task (eerste run)
+└── stage_review.md             # Stage council review prompt
+```
+
+**Voordelen:**
+- Agent gedrag tweaken zonder code deployment
+- Git diff op prompt changes (versioning)
+- PM/non-developer kan agent prompts reviewen
+- A/B testing van prompt varianten
+
+### Bestaande mq Capabilities (reeds geïmplementeerd)
+
+De volgende capabilities zijn **al gebouwd** in de mq workflow scripts en hoeven alleen geactiveerd te worden in de Ralph loop:
+
+| Capability | Implementatie | Status |
+|------------|--------------|--------|
+| **Auto-continue loop** | `loop-core.sh`: checkpoint-based resume, `--resume` flag | ✅ Gebouwd |
+| **One-deliverable-at-a-time** | `micro-decompose.sh`: dependency graph, sequential enforcement | ✅ Gebouwd |
+| **Progressive regression** | `regression-runner.sh`: accumulated test suite per deliverable | ✅ Gebouwd |
+| **Parallel sessions** | `spawn-parallel-sessions.sh`: N concurrent Claude Code sessions | ✅ Gebouwd |
+| **PM dual-gate** | `pm-acceptance-gate.sh`: AI + Human approval, async timeout | ✅ Gebouwd |
+| **QA 9-axis validation** | `qa-gate.sh`: code, security, tests, performance, contracts, deps, dead code, visual verification, AI anti-pattern pre-check | ✅ Gebouwd (7 assen) + 🆕 Planned (as 8-9) |
+| **Course correction** | `loop-core.sh`: stuck detection, 5 Whys, alternative approaches | ✅ Gebouwd |
+| **Progress monitoring** | `monitor-tasks.sh` + `progress-tracking.sh`: real-time ASCII charts | ✅ Gebouwd |
 
 ### Key Features
 
 - **Overnight autonomous coding** (8+ uur onbeheerd)
+- **Fresh context per micro-deliverable** (voorkomt context bloat) 🆕
+- **Security sandbox** (bash allowlist + blocked patterns) 🆕
+- **Markdown-driven agent prompts** (externalized, versionable) 🆕
 - **Git als geheugen** (fresh context bij token overflow)
 - **Guardrails file** voor cross-context learning
 - **mq compatibility** (unified state, shared knowledge)
@@ -706,6 +837,8 @@ Implementatie van de Ralph Wiggum techniek voor autonomous overnight coding, **v
 | Guardrails repeat reduction | 70% |
 | Rollback recovery | < 60 sec |
 | Cost per overnight | < $25 avg |
+| Security violations blocked | 100% |
+| Prompt change deploy time | 0 sec (no redeploy) |
 
 ### Documentation
 
@@ -715,6 +848,7 @@ Implementatie van de Ralph Wiggum techniek voor autonomous overnight coding, **v
 | [mq-ralph-wiggum-integration-plan.md](docs/mq-ralph-wiggum-integration-plan.md) | 🆕 Full integration plan |
 | [mq-integration-plan-van-aanpak.md](docs/mq-integration-plan-van-aanpak.md) | mq Platform integration |
 | [fase-32e-quality-harness.md](docs/roadmap/phases/fase-32e-quality-harness.md) | 🆕 Quality Harness (PM/QA Gates) |
+| [your-claude-engineer analysis](https://github.com/zeeneddie/your-claude-engineer) | 🆕 Cole Medin benchmark referentie |
 
 ---
 
@@ -722,21 +856,21 @@ Implementatie van de Ralph Wiggum techniek voor autonomous overnight coding, **v
 
 **Status:** PLANNED
 **Priority:** HIGH (ROI 9.0)
-**Effort:** 120 uur (~4 weken)
+**Effort:** 144 uur (~4.5 weken) - inclusief Visual Verification Gate
 **Dependencies:** Fase 32D (Ralph Production), mq workflows
 
 ### Overview
 
-Quality assurance pipeline die elke micro-deliverable onafhankelijk valideert via PM Acceptance Gate + QA Gate + Progressive Regression, zodat overnight runs betrouwbaar en meetbaar worden.
+Quality assurance pipeline die elke micro-deliverable onafhankelijk valideert via PM Acceptance Gate + QA Gate + **Visual Verification** + Progressive Regression, zodat overnight runs betrouwbaar en meetbaar worden.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  QUALITY HARNESS PIPELINE (per micro-deliverable)           │
 ├─────────────────────────────────────────────────────────────┤
 │  1. PRD Decomposition → Micro-Deliverables                  │
-│  2. Build (bestaande Ralph loop)                            │
+│  2. Build (bestaande Ralph loop, fresh context)             │
 │  3. PM Acceptance Gate (Claude Code review vs PRD criteria) │
-│  4. QA Gate (security, quality, coverage, performance)      │
+│  4. QA Gate (9-assig: +visual verification +sec-context) 🆕  │
 │  5. Progressive Regression (alle eerder geaccepteerde tests)│
 │  6. Accept → Registry of REJECT → terug naar Build          │
 ├─────────────────────────────────────────────────────────────┤
@@ -750,9 +884,58 @@ Quality assurance pipeline die elke micro-deliverable onafhankelijk valideert vi
 |-----------|-------------|
 | **micro-decompose.sh** | PRD → micro-deliverables met dependency graph |
 | **pm-acceptance-gate.sh** | Onafhankelijke PM review via Claude Code |
-| **qa-gate.sh** | 7-assige kwaliteitscontrole (code, security, tests, performance, contracts, dependencies, dead code) |
+| **qa-gate.sh** | **9-assige** kwaliteitscontrole (code, security, tests, performance, contracts, dependencies, dead code, **visual verification**, **AI security anti-pattern pre-check**) |
 | **regression-runner.sh** | Progressive + sprint-level regressie |
 | **Acceptance Registry** | SQLite DB voor tracking en traceability |
+| **security-hooks.sh** | 🆕 Bash allowlist + blocked patterns (Fase 32A) |
+
+### 🆕 Visual Verification Gate (8e as, geïnspireerd door Cole Medin) + AI Security Anti-Pattern Pre-Check (9e as, Fase 65M)
+
+Cole Medin's harness eist **screenshot evidence** via Playwright MCP voordat een issue "done" mag zijn. Dit wordt de 8e as van `qa-gate.sh`.
+
+```
+qa-gate.sh 9 assen:
+┌─────────────────────────────────────────────────────────────┐
+│  As 1: Code Quality (pylint/ruff)         ≥ 7.0/10         │
+│  As 2: Security (CWE scanners)            0 HIGH/CRITICAL   │
+│  As 3: Test Coverage (line)               ≥ 80%             │
+│  As 4: Performance Degradation            < 20%             │
+│  As 5: API Contract Compliance            100%              │
+│  As 6: Dependency Audit                   0 vulnerabilities  │
+│  As 7: Dead Code Detection                < 5% increase     │
+│  As 8: Visual Verification 🆕             (nieuw)           │
+│         ├── Playwright screenshot capture                    │
+│         ├── Visual diff vs baseline (pixel threshold < 5%)  │
+│         ├── Console error check (0 JS errors)               │
+│         ├── Accessibility audit (axe-core, WCAG 2.1 AA)    │
+│         └── Screenshot stored as evidence in Registry       │
+│  As 9: AI Security Anti-Pattern Pre-Check 🆕 (Fase 65M)    │
+│         ├── Top-10 AI anti-patterns regex scan (<1 sec)     │
+│         ├── Hardcoded secrets detection                      │
+│         ├── String concatenation SQL detection               │
+│         ├── Raw HTML output detection                        │
+│         └── CWE referenties per gevonden anti-pattern        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Implementatie:**
+- Playwright MCP server toevoegen aan Ralph agent configuratie
+- Per deliverable met UI-component: automatische screenshot
+- Vergelijking met baseline screenshot (visual regression)
+- Accessibility scan via axe-core
+- Evidence opslaan in Acceptance Registry SQLite DB
+- **Alleen voor deliverables met UI-component** (API-only deliverables overslaan)
+
+**Playwright MCP configuratie:**
+```json
+{
+  "playwright": {
+    "command": "npx",
+    "args": ["-y", "@playwright/mcp@latest"],
+    "tools": ["navigate", "snapshot", "click", "type", "screenshot"]
+  }
+}
+```
 
 ### Quality Thresholds
 
@@ -763,6 +946,10 @@ Quality assurance pipeline die elke micro-deliverable onafhankelijk valideert vi
 | Security (HIGH/CRITICAL) | 0 findings | 0 findings |
 | Performance Degradation | < 20% | < 5% |
 | PM Confidence | ≥ 0.8 | ≥ 0.95 |
+| Visual Diff (pixel) | < 10% | < 5% |
+| Console Errors | 0 | 0 |
+| Accessibility (axe-core) | 0 critical | WCAG 2.1 AA |
+| AI Anti-Pattern (sec-context) | 0 findings | 0 findings |
 
 ### Expected Impact
 
@@ -772,6 +959,8 @@ Quality assurance pipeline die elke micro-deliverable onafhankelijk valideert vi
 | Overnight reliability | ~60% | > 90% |
 | Coverage tracking | none | per-deliverable |
 | PRD traceability | manual | automated |
+| UI regression detection | none | automated (Playwright) |
+| Security violations | possible | blocked (sandbox) |
 
 ### Documentation
 
@@ -1298,6 +1487,197 @@ See: [tracer-bart-gap-analysis.md](docs/roadmap/tracer-bart-gap-analysis.md)
 
 ---
 
+## Fase 65: External Repo Intelligence — Drift/Kea/Octopus/Sec-Context (Week TBD)
+
+**Status:** PLANNED
+**Priority:** MEDIUM-HIGH
+**Effort:** 170 uur (~5 weken)
+**Dependencies:** Fase 23.5 ✅ (Confucius), Fase 30 (LLM Council), Fase 32E (Quality Harness)
+**Source:** Gap analyse van 4 externe repos: [Drift](https://github.com/drift), [Kea-Research](https://github.com/kea-research), [Claude-Octopus](https://github.com/claude-octopus), [Sec-Context](https://github.com/sec-context)
+
+### Overview
+
+Bundelt micro-improvements uit 4 externe repo's in één fase. Geen grote architectuurwijzigingen — elk sub-item is een zelfstandige toevoeging aan bestaande services.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  FASE 65: EXTERNAL REPO INTELLIGENCE                         │
+├─────────────────────────────────────────────────────────────┤
+│  DRIFT (65A-65F):  Convention detection, call graph,         │
+│                    confidence decay, corrections loop,       │
+│                    test topology, memory consolidation       │
+├─────────────────────────────────────────────────────────────┤
+│  KEA (65G-65I):    Atomic fact extraction, SP synthesizer,   │
+│                    MoA refinement step                       │
+├─────────────────────────────────────────────────────────────┤
+│  OCTOPUS (65J-65L): Workflow advisor, adversarial council,   │
+│                     PRD scoring rubric                       │
+├─────────────────────────────────────────────────────────────┤
+│  SEC-CONTEXT (65M): Security anti-pattern guard              │
+│                     (preventief + detectief + correctief)    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Sub-items
+
+| ID | Bron | Beschrijving | Effort | Integreert met |
+|----|------|-------------|--------|----------------|
+| **65A** | Drift | Convention Detector Service (4 categorieën: API, Auth, Data-access, Error-handling) | 16h | Brown Paper Service |
+| **65B** | Drift | Function-Level Call Graph (build + dead code + impact analysis) | 32h | dependency_graph_service + program_slicer |
+| **65C** | Drift | Confidence Decay op Knowledge Base patterns | 8h | kb_context_provider (ChromaDB) |
+| **65D** | Drift | Learning from Corrections (council feedback loop) | 12h | llm_council_service |
+| **65E** | Drift | Test Topology Mapping (test-to-code mapping, multi-language) | 24h | Brown Paper analysis + regression-runner.sh |
+| **65F** | Drift | Episodic-to-Semantic Memory Consolidation | 16h | HierarchicalMemoryManager |
+| **65G** | Kea | Atomic Fact Extraction + Cross-Model Fact Verification | 12h | llm_council_service |
+| **65H** | Kea | Surprisingly Popular Synthesizer Selection (dynamische chairman) | 8h | llm_council_service |
+| **65I** | Kea | Optionele MoA Refinement Step (configureerbaar) | 10h | llm_council_service |
+| **65J** | Octopus | Workflow Intent Advisor (adviserend, niet directief) | 8h | Confucius Orchestrator |
+| **65K** | Octopus | Adversarial Council Member Role (devil's advocate) | 8h | llm_council_service |
+| **65L** | Octopus | PRD Scoring Rubric (100-punt) voor PM Gate | 6h | Fase 32E pm-acceptance-gate.sh |
+| **65M** | Sec-Context | Security Anti-Pattern Guard voor code-genererende agents | 10h | Confucius agent prompts + qa-gate.sh |
+
+### 65A: Convention Detector Service (Drift) — 16h
+
+Detecteert CODE-level conventies in legacy codebases: API route structuur, auth middleware patterns, data-access patterns, error handling patterns. Nul overlap met antipattern_detector.py (die PROCES anti-patterns detecteert). Voedt betere migration planning bij Brown Paper onboarding.
+
+**Scope:** 4 categorieën, regex-based (geen AST/semantic), per-file output met confidence score.
+**File:** Nieuw: `backend/app/services/convention_detector_service.py`
+
+### 65B: Function-Level Call Graph (Drift) — 32h
+
+Vult de ontbrekende laag tussen module-level (dependency_graph_service) en variable-level (program_slicer): welke functies roepen welke functies aan? Dode functies? Blast radius bij wijziging?
+
+**Scope:** 3 capabilities: (1) call graph bouwen, (2) dode functie detectie, (3) change impact analysis.
+**File:** Nieuw: `backend/app/services/call_graph_service.py`
+
+### 65C: Confidence Decay op Knowledge Base — 8h
+
+Half-life model voor KB patterns zodat verouderde patronen automatisch minder gewicht krijgen.
+**File:** `backend/app/services/kb_context_provider.py` (wijzigen)
+
+### 65D: Learning from Corrections — 12h
+
+Council feedback loop: wanneer een council response gecorrigeerd wordt, leert het systeem van de correctie voor toekomstige sessies.
+**File:** `backend/app/services/llm_council_service.py` (wijzigen)
+
+### 65E: Test Topology Mapping — 24h
+
+Test-to-code mapping: welke tests dekken welke code? Multi-language support. Integreert met Brown Paper analyse en regression-runner.sh.
+**File:** Nieuw: `backend/app/services/test_topology_service.py`
+
+### 65F: Episodic-to-Semantic Memory Consolidation — 16h
+
+Automatische consolidatie van episodische herinneringen (individuele events) naar semantische kennis (patronen, regels).
+**File:** `backend/app/services/hierarchical_memory_manager.py` (wijzigen)
+
+### 65G: Atomic Fact Extraction + Fact Verification (Kea) — 12h
+
+Breekt LLM Council responses op in 3-10 atomaire feiten. Evaluatoren markeren per-feit consensus/dispute. De synthesizer weet exact welke claims consensus hebben en welke betwist worden — ipv verstopt in een overall score.
+
+**Implementatie:** Wijzig prompt format in Stage 1 (`atomic_facts[]`), Stage 2 peer review (`consensus_facts[]`, `flagged_facts[]`), Stage 3 synthesis (adresseer geflagde feiten).
+**File:** `backend/app/services/llm_council_service.py` (wijzigen, ~3 methods)
+
+### 65H: Surprisingly Popular Synthesizer Selection (Kea) — 8h
+
+Dynamische chairman selectie ipv vast deepseek-r1. Elke evaluator geeft `predicted_winner`. SP score = werkelijke stemmen − voorspelde stemmen. Model dat "verrassend populair" is wint. Borda count als tiebreaker.
+
+**File:** `backend/app/services/llm_council_service.py` (wijzigen, 1 nieuwe method `_select_synthesizer()`)
+
+### 65I: Optionele MoA Refinement Step (Kea) — 10h
+
+Extra stap tussen Response en Peer Review waar modellen elkaars antwoorden zien en hun eigen antwoord verbeteren. +6 LLM calls per sessie. Configureerbaar: default UIT voor snelle queries, AAN voor kritische architectuur-beslissingen.
+
+**File:** `backend/app/services/llm_council_service.py` (wijzigen, 1 nieuwe stage)
+
+### 65J: Workflow Intent Advisor (Octopus) — 8h
+
+ADVISERENDE checker die suggereert of een ander workflow type beter past. NIET directief — HQ MarQed-assistent maakt de uiteindelijke keuze. Uitschakelbaar via config (`enable_workflow_advisor: true/false`).
+
+```
+┌─────────────────────────────────────────┐
+│ HQ MarQed-Assistent (directief)         │
+│   → Kiest workflow type                 │
+│   → Kan 65J raadplegen (optioneel)      │
+│   → Kan 65J uitschakelen                │
+├─────────────────────────────────────────┤
+│ 65J Workflow Advisor (adviserend)        │
+│   → "Suggestie: Migration past beter"   │
+│   → Alleen actief als HQ het vraagt     │
+│   → Uitschakelbaar via config           │
+└─────────────────────────────────────────┘
+```
+
+**File:** Nieuw: `backend/app/confucius/workflow_advisor.py`
+
+### 65K: Adversarial Council Member (Octopus) — 8h
+
+Eén council member krijgt de "devil's advocate" rol: argumenteer TEGEN opkomende consensus. Voorkomt groupthink. Score weegt 0.5x (voorkomt dat contrarian altijd wint).
+
+**File:** `backend/app/services/llm_council_service.py` + `stage_council_config.py`
+
+### 65L: PRD Scoring Rubric (Octopus) — 6h
+
+100-punt scoring rubric met categorieën (completeness, testability, clarity, feasibility, security) voor de PM Acceptance Gate. Vervangt "PM Confidence >= 0.8" met rigoureuze, reproduceerbare scoring.
+
+**File:** `mq/workflows/common/pm-acceptance-gate.sh` (wijzigen)
+
+### 65M: Security Anti-Pattern Guard (Sec-Context) — 10h
+
+Preventieve laag tegen AI-specifieke security anti-patterns (25+, met CWE referenties). Drie integratiepunten:
+
+```
+Integratiepunten:
+┌─────────────────────────────────────────────────────────────┐
+│ PREVENTIEF (bij generatie):                                  │
+│   → Agent system prompts bevatten sec-context referentie    │
+│   → Ralph guardrails.md bevat top-10 anti-patterns          │
+├─────────────────────────────────────────────────────────────┤
+│ DETECTIEF (na generatie):                                    │
+│   → QA Gate as 9: snelle AI-antipattern pre-check           │
+│   → Bestaande 21+ CWE scanners (diepere analyse)           │
+├─────────────────────────────────────────────────────────────┤
+│ CORRECTIEF (bij council review):                             │
+│   → LLM Council peer review checkt tegen anti-patterns      │
+│   → Adversarial member (65K) zoekt specifiek naar deze      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Files:**
+- `backend/app/confucius/prompts/security_context.md` (nieuw, subset van BREADTH.md)
+- `mq/workflows/common/qa-gate.sh` (wijzigen, as 9 toevoegen)
+- `.marqed/guardrails.md` (wijzigen, top-10 regels)
+
+### Afgewezen items (met onderbouwing)
+
+| Item | Bron | Reden afwijzing |
+|------|------|-----------------|
+| Security Convention Detectors | Drift | 21+ CWE scanners + OWASP K1 + 65M dekken dit al. Conventie-detectie = framing verschil, niet inhoud. 16h voor marginale waarde. |
+| 9 Memory Types | Drift | Confucius 3-tier + 65C (decay) + 65F (consolidation) geeft kernvoordelen zonder 9-tier complexiteit. Te granulair voor MarQed use case. |
+| Double Diamond Workflow | Octopus | MarQed's 4 workflow types ZIJN domain-specifieke Diamond implementaties. 65J lost routing op. |
+| 29-Persona Pattern | Octopus | MarQed's 11 agents zijn architectureel superieur (quality gates, PIV, state). Nuttige concepten al geëxtraheerd als 65K. |
+| 75% Consensus Threshold | Octopus | MarQed's consensus is wiskundig geavanceerder (StdDev-normalized, outlier detectie, model weights). Flat 75% = downgrade. |
+| Staggered Provider Execution | Kea | MarQed gebruikt lokale Ollama. Geen rate limits. Fase 47 LRM plant staggering voor cloud providers. |
+| MCP als interface | Drift | Directe Python service calls zijn sneller, type-safe, testbaar. MCP voegt latency en foutgevoeligheid toe zonder voordeel. |
+
+### Success Criteria
+
+| Metric | Target |
+|--------|--------|
+| Convention detection accuracy (65A) | >= 80% per categorie |
+| Call graph completeness (65B) | >= 90% functions mapped |
+| Fact-level consensus visibility (65G) | Per-feit consensus/dispute zichtbaar |
+| SP synthesizer selection (65H) | Betere synthese dan vast chairman |
+| Security anti-pattern catch rate (65M) | >= 80% top-10 AI anti-patterns |
+| Total effort | 170h |
+
+### Documentation
+
+| Document | Description |
+|----------|-------------|
+| [fase-65-external-repo-intelligence.md](docs/roadmap/phases/fase-65-external-repo-intelligence.md) | Full specification |
+
+---
+
 ## Design Principles
 
 1. **Small, Specialized Analyzers** - COBOL items (B2, B3, B4) blijven apart: kwaliteit boven snelheid
@@ -1342,6 +1722,7 @@ See: [tracer-bart-gap-analysis.md](docs/roadmap/tracer-bart-gap-analysis.md)
 | [fase-62-conversational-intake.md](docs/roadmap/phases/fase-62-conversational-intake.md) | ★ Fase 62: Conversational Intake (Epic Mode) |
 | [fase-63-statistical-drift-detection.md](docs/roadmap/phases/fase-63-statistical-drift-detection.md) | ★ Fase 63: Statistical Drift Detection |
 | [fase-64-self-evolution-activation.md](docs/roadmap/phases/fase-64-self-evolution-activation.md) | ★ Fase 64: Self-Evolution Activation |
+| [fase-65-external-repo-intelligence.md](docs/roadmap/phases/fase-65-external-repo-intelligence.md) | ★ Fase 65: External Repo Intelligence (Drift/Kea/Octopus/Sec-Context) |
 
 ---
 
@@ -1374,8 +1755,8 @@ See: [tracer-bart-gap-analysis.md](docs/roadmap/tracer-bart-gap-analysis.md)
 | **Memory Safety Scanner (Fase 38)** | post-37 | Buffer overflow, concurrency errors |
 | **ML Novel Vulnerability (Fase 39)** | post-42 | ML-based novel pattern detection |
 | **Hybrid FP Reduction (Fase 40)** | post-39 | Heuristic + ML false positive reduction |
-| **Ralph Wiggum + mq Integration (Fase 32)** | 175-190 | Autonomous overnight coding, mq integration, guardrails, morning reports |
-| **Quality Harness PM/QA Gates (Fase 32E)** | 191-194 | PM Acceptance Gate, QA Gate, progressive regression, micro-deliverables |
+| **Ralph Wiggum + mq Integration + Cole Medin (Fase 32)** | 175-190 | Autonomous overnight coding, mq integration, guardrails, morning reports, **fresh context pattern, security sandbox, markdown prompts** |
+| **Quality Harness PM/QA Gates + Visual Verification (Fase 32E)** | 191-194 | PM Acceptance Gate, **9-axis QA Gate (+Playwright visual verification +AI anti-pattern pre-check)**, progressive regression, micro-deliverables |
 | **DevStats Dashboard (Fase 33)** | 179-184 | Git contribution analytics, release tracking, bus factor |
 | **Zero-Complaints Strategy (Fase 43)** | 177-184 | Zero critical complaints, <5% minor, schema hardening, quality metrics |
 | **AI Code Complaints Strategy (Fase 44)** | 185-192 | 3x improvement over industry AI code metrics |
@@ -1390,6 +1771,7 @@ See: [tracer-bart-gap-analysis.md](docs/roadmap/tracer-bart-gap-analysis.md)
 | **★ Conversational Intake (Fase 62)** | 193-198 | Chat-based requirements, domain templates, auto-ticket generatie |
 | **★ Statistical Drift Detection (Fase 63)** | 207-212 | Embedding drift, cosine/KL/centroid, PIV auto-trigger |
 | **★ Self-Evolution Activation (Fase 64)** | 229-234 | AgentEvolution activatie, council reviews, pattern learning |
+| **★ External Repo Intelligence (Fase 65)** | TBD | Convention detection, call graph, LLM Council upgrades (SP, atomic facts, adversarial), sec-context guard |
 | **LLM Council Improvements (Fase 30)** | 233-235 | Multi-model consensus improvements |
 | **COBOL Support** | 185 | B1 Analyzer complete |
 | **LLM Collaboration** | 195 | B12 Framework active |
@@ -1397,4 +1779,4 @@ See: [tracer-bart-gap-analysis.md](docs/roadmap/tracer-bart-gap-analysis.md)
 
 ---
 
-*Updated: Week 162 (2026-01-31) - Synced 11 missing phases from fasenplan: Fase 24.5, 24-KB, 30, 34, 35, 36, 37, 38, 39 (was 50-ML), 40, 41 ✅, 42 ✅. Fase 50-ML hernummerd naar 39. Total Phases: 57→68.*
+*Updated: Week 162 (2026-02-02) - Fase 65 toegevoegd: External Repo Intelligence (Drift/Kea/Octopus/Sec-Context) met 13 sub-items (65A-65M), 170h effort. QA Gate uitgebreid van 8→9 assen (as 9: AI security anti-pattern pre-check via sec-context). 7 items afgewezen met onderbouwing. Fase 32/32E verrijkt met Cole Medin your-claude-engineer benchmark analyse.*
