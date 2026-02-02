@@ -225,6 +225,9 @@ class BrownPaperSession:
     project_path: Optional[str] = None
     project_name: Optional[str] = None
     enhanced_analysis: Optional[Dict[str, Any]] = None
+    # Phase 24.10: Summary counts for dashboard
+    modules_count: int = 0
+    domains_count: int = 0
 
 
 # ============================================================================
@@ -5416,7 +5419,6 @@ Timeline: {timeline}
                         status="draft",
                         function_points=epic_data.get("estimated_fp", 0),
                         story_points=sum(f.get("estimated_sp", 0) for f in epic_features),
-                        created_at=datetime.now(timezone.utc),
                     )
                     db.add(bp_epic)
 
