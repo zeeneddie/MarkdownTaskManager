@@ -136,6 +136,7 @@ class BrownPaperStatus(Enum):
     ANALYZING = "analyzing"         # Extracting domains
     GENERATING = "generating"       # Creating constitution/epics
     REVIEW = "review"               # Awaiting human review
+    COMPLETED = "completed"         # Analysis & task generation done
     APPROVED = "approved"           # Ready for implementation
     REJECTED = "rejected"           # Needs rework
 
