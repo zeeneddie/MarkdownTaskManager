@@ -39,7 +39,7 @@ class LLMRequest:
     temperature: Optional[float] = None
     top_p: Optional[float] = None
     stop: Optional[List[str]] = None
-    timeout: int = 120  # seconds
+    timeout: int = 360  # seconds (tripled from 120 for Ollama CPU inference)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 

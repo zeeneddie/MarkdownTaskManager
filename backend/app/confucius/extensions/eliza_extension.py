@@ -267,7 +267,8 @@ class ElizaExtension(BaseAgentExtension):
         fp_service = self._get_fp_service()
         if fp_service and hasattr(fp_service, "classify_work_type"):
             try:
-                return await fp_service.classify_work_type(context)
+                # classify_work_type is sync, not async
+                return fp_service.classify_work_type(context)
             except Exception as e:
                 logger.warning(f"Work type classification failed: {e}")
 

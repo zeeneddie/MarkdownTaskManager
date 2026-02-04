@@ -26,8 +26,15 @@ from .work_type_classifier import (
     WorkTypeClassification,
     EstimationMethod,
 )
+from .fp_methodology_service import (
+    FPMethodologyService,
+    FPCalculationResult,
+)
 
 __all__ = [
+    # Unified Service
+    "FPMethodologyService",
+    "FPCalculationResult",
     # Validator
     "FPComponentValidator",
     "ValidationResult",
