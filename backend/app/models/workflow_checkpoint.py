@@ -65,8 +65,8 @@ class WorkflowCheckpoint(Base):
     # Timestamps (use func.now() for server-side defaults)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
-    started_at = Column(DateTime, nullable=False)
-    last_checkpoint_at = Column(DateTime, nullable=True)
+    started_at = Column(DateTime(timezone=True), nullable=False)
+    last_checkpoint_at = Column(DateTime(timezone=True), nullable=True)
 
     @property
     def can_resume(self) -> bool:

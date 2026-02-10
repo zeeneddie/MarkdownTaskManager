@@ -12,8 +12,11 @@ import tempfile
 import shutil
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Set
+from typing import Dict, Any, Optional, List, Set, Callable
 from datetime import datetime, timezone
+
+# Type for file progress callback: (current_file_index, total_files, file_path) -> None
+FileProgressCallback = Callable[[int, int, str], None]
 
 from ..models.findings import (
     SecurityFinding, ScanResult, Severity, ScannerType, Location, SuggestedFix,
@@ -31,6 +34,51 @@ class ScannerNotAvailableError(Exception):
 class ScannerExecutionError(Exception):
     """Raised when scanner execution fails."""
     pass
+
+
+class ScannerCancelledError(Exception):
+    """Raised when scanner is cancelled."""
+    pass
+
+
+class FileProgressMixin:
+    """
+    Mixin that provides file-by-file progress tracking and cancellation.
+
+    Add this to any scanner that processes files one-by-one to enable:
+    - Progress callbacks per file
+    - Cancellation between files
+    - Proper async timeout support via yield points
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._file_progress_callback: Optional[FileProgressCallback] = None
+        self._cancelled: bool = False
+
+    def set_file_progress_callback(self, callback: FileProgressCallback) -> None:
+        """Set callback for per-file progress updates."""
+        self._file_progress_callback = callback
+
+    def cancel(self) -> None:
+        """Request cancellation of the current scan."""
+        self._cancelled = True
+
+    def reset(self) -> None:
+        """Reset cancellation state for new scan."""
+        self._cancelled = False
+
+    def is_cancelled(self) -> bool:
+        """Check if cancellation was requested."""
+        return self._cancelled
+
+    def report_file_progress(self, current: int, total: int, file_path: str) -> None:
+        """Report progress on current file."""
+        if self._file_progress_callback:
+            try:
+                self._file_progress_callback(current, total, file_path)
+            except Exception:
+                pass  # Don't let callback errors break scanning
 
 
 class BaseScanner(ABC):
@@ -317,11 +365,30 @@ class CustomPatternScanner(BaseScanner):
 
     These are used for legacy languages not supported by external tools
     (Classic ASP, COBOL, etc.) and for custom security rules.
+
+    Supports:
+    - File-by-file progress reporting
+    - Cancellation between files
+    - Per-file timeout (future)
     """
 
     def __init__(self):
         super().__init__()
         self._rules: List[Dict[str, Any]] = []
+        self._file_progress_callback: Optional[FileProgressCallback] = None
+        self._cancelled: bool = False
+
+    def set_file_progress_callback(self, callback: FileProgressCallback) -> None:
+        """Set callback for per-file progress updates."""
+        self._file_progress_callback = callback
+
+    def cancel(self) -> None:
+        """Request cancellation of the current scan."""
+        self._cancelled = True
+
+    def reset(self) -> None:
+        """Reset cancellation state for new scan."""
+        self._cancelled = False
 
     @property
     @abstractmethod
@@ -349,13 +416,24 @@ class CustomPatternScanner(BaseScanner):
         target_path: Path,
         config: Optional[Dict[str, Any]] = None,
     ) -> ScanResult:
-        """Execute pattern-based scan."""
+        """
+        Execute pattern-based scan with file-by-file progress.
+
+        Features:
+        - Reports progress per file via callback
+        - Can be cancelled between files
+        - Yields control to event loop between files (allows timeout)
+        """
         import re
+
+        # Reset cancellation state
+        self.reset()
 
         started_at = datetime.now(timezone.utc)
         findings = []
         files_scanned = 0
         errors = []
+        skipped_cancelled = 0
 
         # Get files to scan
         if target_path.is_file():
@@ -365,7 +443,33 @@ class CustomPatternScanner(BaseScanner):
             for ext in self.supported_extensions:
                 files.extend(target_path.rglob(f"*{ext}"))
 
-        for file_path in files:
+        # Filter out minified/vendor files that cause regex backtracking
+        _SKIP_SUFFIXES = ('.min.js', '.min.css', '.min.map', '.bundle.js', '.chunk.js')
+        _MAX_FILE_SIZE = 500_000  # 500KB - skip very large generated files
+        files = [
+            f for f in files
+            if not any(str(f).endswith(s) for s in _SKIP_SUFFIXES)
+            and f.stat().st_size <= _MAX_FILE_SIZE
+        ]
+        total_files = len(files)
+
+        for idx, file_path in enumerate(files):
+            # Check cancellation BEFORE processing each file
+            if self._cancelled:
+                skipped_cancelled = total_files - idx
+                logger.info(f"Scanner {self.scanner_type.value} cancelled, skipping {skipped_cancelled} remaining files")
+                break
+
+            # Report progress
+            if self._file_progress_callback:
+                try:
+                    self._file_progress_callback(idx, total_files, str(file_path))
+                except Exception as e:
+                    logger.debug(f"Progress callback error: {e}")
+
+            # Yield control to event loop - allows timeout/cancellation to work
+            await asyncio.sleep(0)
+
             files_scanned += 1
             try:
                 content = file_path.read_text(encoding="utf-8", errors="replace")
@@ -412,8 +516,19 @@ class CustomPatternScanner(BaseScanner):
                 errors.append(f"Error scanning {file_path}: {e}")
                 logger.error(f"Error scanning {file_path}: {e}")
 
+        # Final progress report
+        if self._file_progress_callback and not self._cancelled:
+            try:
+                self._file_progress_callback(total_files, total_files, "complete")
+            except Exception:
+                pass
+
         completed_at = datetime.now(timezone.utc)
         duration_ms = int((completed_at - started_at).total_seconds() * 1000)
+
+        # Add cancellation info to errors if applicable
+        if skipped_cancelled > 0:
+            errors.append(f"Scan cancelled: {skipped_cancelled} files skipped")
 
         return ScanResult(
             scanner=self.scanner_type,

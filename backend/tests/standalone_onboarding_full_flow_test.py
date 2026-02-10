@@ -12,6 +12,7 @@ Usage:
 
 import sys
 import asyncio
+import logging
 from pathlib import Path
 from datetime import datetime, timezone
 import tempfile
@@ -19,36 +20,56 @@ import tempfile
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Configure logging to show scanner progress
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(message)s',  # Clean output, just the message
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+# Reduce noise from other loggers
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+logging.getLogger("asyncio").setLevel(logging.WARNING)
+
 
 def create_progress_callback():
     """Create a progress callback that prints to console."""
     last_stage = [None]  # Use list to allow modification in closure
+    last_item_type = [None]
 
     def progress_callback(event):
         """Print progress updates to console."""
         stage_changed = last_stage[0] != event.stage
+        item_type_changed = last_item_type[0] != event.item_type
         last_stage[0] = event.stage
+        last_item_type[0] = event.item_type
 
         # Print stage header if changed
         if stage_changed:
-            print(f"      [M{event.stage_index + 1}] {event.stage}: ", end="", flush=True)
+            print(f"\n      [M{event.stage_index + 1}] {event.stage}: ", end="", flush=True)
 
         # Print progress indicator
         bar_width = 20
         filled = int(bar_width * event.percentage / 100)
         bar = "█" * filled + "░" * (bar_width - filled)
 
-        # Include message (e.g., scanner name) if available
-        detail = f"({event.current}/{event.total} {event.item_type})"
-        if event.message:
-            # Extract scanner name from message like "Running secret_scanner..."
-            if event.message.startswith("Running "):
-                scanner = event.message.replace("Running ", "").rstrip("...")
-                detail = f"({event.current}/{event.total}) {scanner}"
-            elif "scanners" not in event.message.lower() and event.message != "complete":
-                detail = f"({event.current}/{event.total}) {event.message}"
-
-        print(f"\r      [M{event.stage_index + 1}] {event.stage}: [{bar}] {event.percentage:.0f}% {detail}", end="", flush=True)
+        # Include message (e.g., scanner name or file name) if available
+        if event.item_type == "files":
+            # File-level progress: show file name from message
+            file_info = event.message if event.message else ""
+            detail = f"({event.current}/{event.total} files) {file_info}"
+            # Print on new line for file progress
+            print(f"\r        [{bar}] {event.percentage:.0f}% {detail[:60]}", end="", flush=True)
+        else:
+            # Scanner or other progress
+            detail = f"({event.current}/{event.total} {event.item_type})"
+            if event.message:
+                if event.message.startswith("Running "):
+                    scanner = event.message.replace("Running ", "").rstrip("...")
+                    detail = f"({event.current}/{event.total}) {scanner}"
+                elif "scanners" not in event.message.lower() and event.message != "complete":
+                    detail = f"({event.current}/{event.total}) {event.message}"
+            print(f"\r      [M{event.stage_index + 1}] {event.stage}: [{bar}] {event.percentage:.0f}% {detail}", end="", flush=True)
 
         # Newline when complete
         if event.percentage >= 100:
@@ -57,15 +78,21 @@ def create_progress_callback():
     return progress_callback
 
 
-async def run_full_flow(project_path: str, answers: dict, show_progress: bool = True) -> dict:
-    """Run complete M1-M11 flow using actual orchestrator."""
+async def run_full_flow(project_path: str, answers: dict, show_progress: bool = True) -> tuple:
+    """Run complete M1-M11 flow using actual orchestrator.
+
+    Returns:
+        tuple: (results dict, shared_data dict with all extracted data)
+    """
+    import json
     from app.confucius.workflows.onboarding import OnboardingOrchestrator
     from app.confucius.workflows.base import WorkflowContext
 
     orchestrator = OnboardingOrchestrator()
+    session_id = f"full-flow-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
 
     context = WorkflowContext(
-        session_id=f"full-flow-{datetime.now().strftime('%H%M%S')}",
+        session_id=session_id,
         workflow_id="full-flow-test",
         workflow_type="onboarding",
         shared_data={
@@ -129,7 +156,26 @@ async def run_full_flow(project_path: str, answers: dict, show_progress: bool = 
     print(f"\n  Total duration: {total_duration:.1f}s", flush=True)
     print(f"  Stages completed: {len(results)}/{len(stages)}", flush=True)
 
-    return results
+    # Save results to JSON file for persistence
+    output_file = Path(project_path) / f".marqed-onboarding-{session_id}.json"
+    try:
+        output_data = {
+            "session_id": session_id,
+            "project_path": project_path,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "stages_completed": len(results),
+            "total_stages": len(stages),
+            "total_duration_seconds": total_duration,
+            "stage_results": results,
+            "shared_data": context.shared_data,
+        }
+        with open(output_file, "w") as f:
+            json.dump(output_data, f, indent=2, default=str)
+        print(f"\n  Results saved to: {output_file}", flush=True)
+    except Exception as e:
+        print(f"\n  Warning: Could not save results: {e}", flush=True)
+
+    return results, context.shared_data
 
 
 async def test_with_temp_project():
@@ -241,7 +287,7 @@ public class AuthService {
             "q5_pain_points": "Legacy codebase met technische schuld.",
         }
 
-        results = await run_full_flow(tmp, answers)
+        results, shared_data = await run_full_flow(tmp, answers)
 
         # Check all stages passed
         all_passed = all(r.get("passed", False) for r in results.values())
@@ -268,7 +314,7 @@ async def test_with_markdowntaskmanager():
         "q5_pain_points": "Complex legacy codebases met onbekende dependencies.",
     }
 
-    results = await run_full_flow(project_path, answers)
+    results, shared_data = await run_full_flow(project_path, answers)
 
     # Check all stages passed
     all_passed = all(r.get("passed", False) for r in results.values())
@@ -290,7 +336,7 @@ async def test_with_hci_crs():
     # Check if project exists
     if not Path(project_path).exists():
         print(f"  ERROR: Project path not found: {project_path}", flush=True)
-        return {}, False, 0
+        return {}, {}, False, 0
 
     answers = {
         "q1_primary_purpose": "HCI-CRS is een legacy healthcare registratiesysteem voor het beheren van clientgegevens, zorgtrajecten en declaraties in de geestelijke gezondheidszorg (GGZ). Het systeem ondersteunt het volledige zorgproces van intake tot declaratie.",
@@ -300,7 +346,7 @@ async def test_with_hci_crs():
         "q5_pain_points": "Verouderde ASP.NET WebForms technologie, monolithische architectuur, beperkte testbaarheid, tightly coupled componenten, onduidelijke scheiding van concerns, technische schuld door jaren van ad-hoc aanpassingen.",
     }
 
-    results = await run_full_flow(project_path, answers)
+    results, shared_data = await run_full_flow(project_path, answers)
 
     # Check all stages passed
     all_passed = all(r.get("passed", False) for r in results.values())
@@ -309,7 +355,106 @@ async def test_with_hci_crs():
     print(f"\n  Result: {'ALL PASSED' if all_passed and stages_run == 11 else 'INCOMPLETE'}", flush=True)
 
     # Return detailed results for analysis
-    return results, all_passed, stages_run
+    return results, shared_data, all_passed, stages_run
+
+
+def print_extracted_data(shared_data: dict):
+    """Print key extracted data for analysis."""
+    import json
+
+    # User Journey
+    user_journey = shared_data.get("user_journey", {})
+    if user_journey:
+        print("\n" + "=" * 70, flush=True)
+        print("USER JOURNEY EXTRACTION", flush=True)
+        print("=" * 70, flush=True)
+
+        journeys = user_journey.get("journeys", [])
+        print(f"\n  Journeys found: {len(journeys)}", flush=True)
+        for j in journeys[:5]:
+            name = j.get("name", j.get("journey_name", "Unknown"))
+            steps = j.get("steps", j.get("step_count", 0))
+            if isinstance(steps, list):
+                steps = len(steps)
+            print(f"    - {name} ({steps} steps)", flush=True)
+
+        personas = user_journey.get("personas", [])
+        print(f"\n  Personas found: {len(personas)}", flush=True)
+        for p in personas[:5]:
+            name = p.get("name", p.get("persona_name", "Unknown"))
+            role = p.get("role", p.get("description", ""))[:50]
+            print(f"    - {name}: {role}", flush=True)
+
+        flows = user_journey.get("user_flows", user_journey.get("flows", []))
+        print(f"\n  User flows found: {len(flows)}", flush=True)
+        for f in flows[:5]:
+            name = f.get("name", f.get("flow_name", "Unknown"))
+            screens = f.get("screens", f.get("screen_count", 0))
+            if isinstance(screens, list):
+                screens = len(screens)
+            print(f"    - {name} ({screens} screens)", flush=True)
+
+    # Security Scan
+    security_scan = shared_data.get("security_scan", {})
+    if security_scan:
+        print("\n" + "=" * 70, flush=True)
+        print("SECURITY SCAN RESULTS", flush=True)
+        print("=" * 70, flush=True)
+
+        findings = security_scan.get("findings", {})
+        print(f"\n  Scanners used: {security_scan.get('scanners_used', [])}", flush=True)
+        print(f"  Languages detected: {security_scan.get('languages_detected', [])}", flush=True)
+        print(f"\n  Findings:", flush=True)
+        print(f"    - Critical: {findings.get('critical', 0)}", flush=True)
+        print(f"    - High: {findings.get('high', 0)}", flush=True)
+        print(f"    - Medium: {findings.get('medium', 0)}", flush=True)
+        print(f"    - Low: {findings.get('low', 0)}", flush=True)
+        print(f"    - Total: {findings.get('total', 0)}", flush=True)
+
+        top_critical = security_scan.get("top_critical", [])
+        if top_critical:
+            print(f"\n  Top Critical Issues:", flush=True)
+            for issue in top_critical[:5]:
+                rule = issue.get("rule_id", "Unknown")
+                loc = issue.get("location", {}).get("file", "Unknown")
+                print(f"    - {rule}: {loc}", flush=True)
+
+    # Story Generation (if available)
+    story_gen = shared_data.get("story_generation", {})
+    if story_gen:
+        print("\n" + "=" * 70, flush=True)
+        print("STORY GENERATION", flush=True)
+        print("=" * 70, flush=True)
+
+        epics = story_gen.get("epics", [])
+        print(f"\n  Epics: {len(epics)}", flush=True)
+        for e in epics[:5]:
+            name = e.get("name", e.get("epic_name", "Unknown"))
+            stories = e.get("stories", e.get("story_count", 0))
+            if isinstance(stories, list):
+                stories = len(stories)
+            print(f"    - {name} ({stories} stories)", flush=True)
+
+        total_stories = story_gen.get("total_stories", 0)
+        total_sp = story_gen.get("total_story_points", 0)
+        print(f"\n  Total stories: {total_stories}", flush=True)
+        print(f"  Total story points: {total_sp}", flush=True)
+
+    # Domain Extraction
+    domain_ext = shared_data.get("domain_extraction", {})
+    if domain_ext:
+        print("\n" + "=" * 70, flush=True)
+        print("DOMAIN EXTRACTION", flush=True)
+        print("=" * 70, flush=True)
+
+        domains = domain_ext.get("domains", domain_ext.get("bounded_contexts", []))
+        print(f"\n  Domains/Bounded Contexts: {len(domains)}", flush=True)
+        for d in domains[:5]:
+            name = d.get("name", "Unknown")
+            entities = d.get("entities", d.get("entity_count", 0))
+            if isinstance(entities, list):
+                entities = len(entities)
+            print(f"    - {name} ({entities} entities)", flush=True)
 
 
 async def main():
@@ -325,7 +470,7 @@ async def main():
     if run_hci_crs:
         # Only run HCI-CRS test
         try:
-            hci_results, all_passed, stages_run = await test_with_hci_crs()
+            hci_results, shared_data, all_passed, stages_run = await test_with_hci_crs()
             results["hci_crs"] = all_passed and stages_run == 11
 
             # Print detailed analysis
@@ -346,6 +491,9 @@ async def main():
                 print(f"      Duration: {duration:.1f}s", flush=True)
                 if error:
                     print(f"      Error: {error}", flush=True)
+
+            # Print extracted data (user journeys, security, etc.)
+            print_extracted_data(shared_data)
 
         except Exception as e:
             import traceback

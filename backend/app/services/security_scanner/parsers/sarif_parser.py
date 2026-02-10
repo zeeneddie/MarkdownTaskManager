@@ -47,7 +47,11 @@ class SarifParser:
     def parse_file(self, file_path: Path) -> SarifLog:
         """Parse SARIF from file."""
         with open(file_path, "r", encoding="utf-8") as f:
-            return self.parse_json(json.load(f))
+            content = f.read().strip()
+            # Handle empty file (no findings)
+            if not content:
+                return SarifLog(version="2.1.0", schema="", runs=[])
+            return self.parse_json(json.loads(content))
 
     def parse_string(self, sarif_string: str) -> SarifLog:
         """Parse SARIF from string."""

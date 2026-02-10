@@ -39,6 +39,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import asyncio
 import logging
+import os
 
 from .base import (
     WorkflowOrchestrator,
@@ -1387,18 +1388,22 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
                 depends_on=["deep_extraction"],
             ),
             # M6: Security Scan (SecurityScanOrchestrator)
+            # NOTE: For onboarding, security gate is OFF (reports findings, doesn't block)
+            # For CI/CD workflows (checkins), security gate should be ON (quality_threshold=0.80)
             WorkflowStage(
                 name="security_scan",
                 description="Run multi-scanner security analysis (OpenGrep, Bandit, Trivy, OWASP, Injection, etc.)",
                 agents=["Quinn"],  # Quinn reviews security findings
-                required=True,  # Security is mandatory for migration projects
+                required=True,  # Always run security scan
                 parallel_agents=False,
-                quality_threshold=0.80,  # <3 critical, <20 high findings
+                quality_threshold=0.0,  # Onboarding: report only, don't block. CI/CD: use 0.80
                 max_iterations=1,
-                timeout_seconds=600,  # 10 minutes for large codebases
+                timeout_seconds=0,  # No timeout - process all files
                 depends_on=["user_journey"],
             ),
             # M7: Domain Extraction (W159 BusinessDomainExtractor)
+            # NOTE: Does NOT depend on security_scan - these are orthogonal concerns
+            # Security findings are incorporated into deliverables (M10), not blocking domain work
             WorkflowStage(
                 name="domain_extraction",
                 description="Extract business domains from code analysis using W159 BusinessDomainExtractor (Peter=validation, Betty=documentation)",
@@ -1408,7 +1413,7 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
                 quality_threshold=0.70,  # At least basic extraction required
                 max_iterations=1,
                 timeout_seconds=300,  # 5 minutes
-                depends_on=["security_scan"],
+                depends_on=["user_journey"],  # Changed: domain extraction doesn't need security results
             ),
             # M8: Story Generation (W159 BusinessDrivenStoryGenerator)
             WorkflowStage(
@@ -1445,6 +1450,18 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
                 max_iterations=1,
                 timeout_seconds=300,  # 5 minutes
                 depends_on=["estimation"],
+            ),
+            # Plane Export: Assemble Plane-compatible export package
+            WorkflowStage(
+                name="plane_export",
+                description="Assemble Plane-compatible export package from M8+M9+Peter data",
+                agents=[],  # No agent needed - pure assembly
+                required=False,  # Optional - only when Plane export is desired
+                parallel_agents=False,
+                quality_threshold=0.0,  # No quality gate - assembly or skip
+                max_iterations=1,
+                timeout_seconds=30,
+                depends_on=["deliverables"],
             ),
             # M11: Quality Review (final validation)
             WorkflowStage(
@@ -1507,6 +1524,8 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
                 agent_results = await self._execute_estimation(context)
             elif stage.name == "deliverables":
                 agent_results = await self._execute_deliverables(context)
+            elif stage.name == "plane_export":
+                agent_results = await self._execute_plane_export(context)
             elif stage.name == "quality_review":
                 agent_results = await self._execute_quality_review(context)
             else:
@@ -2939,21 +2958,11 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
             from app.services.security_scanner.orchestrator import SecurityScanOrchestrator
             from app.services.security_scanner.models.findings import ScannerType
 
-            # For large projects (>5000 files), use fast mode with limited scanners
+            # Always use full scan - no fast mode for onboarding
+            # All scanners, all files, no shortcuts
+            orchestrator = SecurityScanOrchestrator()
             file_count = len(list(path.rglob("*"))) if path.is_dir() else 1
-            use_fast_mode = file_count > 5000
-
-            if use_fast_mode:
-                # Fast mode: Only run FAST scanners that don't scan all files
-                # OWASP/INJECTION scanners do synchronous full-file scans that block the event loop
-                fast_scanners = {
-                    ScannerType.SECRET_SCANNER,  # Pattern-based, relatively fast
-                    ScannerType.CUSTOM_ASP,      # Only scans .asp/.aspx files
-                }
-                orchestrator = SecurityScanOrchestrator(enabled_scanners=fast_scanners)
-                logger.info(f"Using FAST MODE for large project ({file_count} files) - {len(fast_scanners)} scanners (SECRET + ASP only)")
-            else:
-                orchestrator = SecurityScanOrchestrator()
+            logger.info(f"Full security scan for {file_count} files - all scanners enabled")
 
             # Track actual selected scanners (set by callback once scan starts)
             selected_scanner_count = [0]  # Use list for closure modification
@@ -2977,12 +2986,47 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
             # Set up file-level progress callback for detailed progress within each scanner
             # This allows us to see "scanning file X of Y" within a single scanner
             current_scanner_name = [""]  # Use list to allow closure modification
+            last_file_update = [0]  # Track last update to avoid spam
+
+            scanner_debug = os.environ.get("MARQED_SCANNER_DEBUG", "").lower() in ("1", "true", "yes")
 
             def file_progress(current_file: int, total_files: int, file_path: str, scanner_name: str):
                 current_scanner_name[0] = scanner_name
-                # Only log every 100 files to avoid spam, but always log first/last
-                if current_file == 0 or current_file == total_files - 1 or current_file % 100 == 0:
-                    logger.debug(f"[{scanner_name}] File {current_file + 1}/{total_files}: {Path(file_path).name if file_path != 'complete' else 'done'}")
+                file_name = Path(file_path).name if file_path and file_path != 'complete' else 'done'
+                pct = (current_file + 1) / total_files * 100 if total_files > 0 else 0
+
+                if scanner_debug:
+                    # Debug mode: log every single file
+                    logger.info(
+                        f"[{scanner_name}] {current_file + 1}/{total_files} ({pct:.1f}%): {file_name}"
+                    )
+                elif total_files > 500:
+                    # Adaptive: every 5% for large scans
+                    pct_step = max(1, total_files // 20)
+                    should_log = (current_file == 0 or current_file == total_files - 1
+                                  or current_file % pct_step == 0)
+                    if not should_log:
+                        return
+                    logger.info(
+                        f"[{scanner_name}] {current_file + 1}/{total_files} ({pct:.0f}%): {file_name}"
+                    )
+                else:
+                    # Small scan: every 25 files
+                    should_log = (current_file == 0 or current_file == total_files - 1
+                                  or current_file % 25 == 0)
+                    if not should_log:
+                        return
+                    logger.info(
+                        f"[{scanner_name}] {current_file + 1}/{total_files} ({pct:.0f}%): {file_name}"
+                    )
+
+                # Emit to context for UI updates
+                context.emit_progress(
+                    current=current_file + 1,
+                    total=total_files,
+                    item_type="files",
+                    message=f"[{scanner_name}] {pct:.0f}% ({current_file + 1}/{total_files}) {file_name}",
+                )
 
             orchestrator.set_file_progress_callback(file_progress)
 
@@ -3000,18 +3044,12 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
                 f"with {available_scanners} available scanners"
             )
 
-            # Execute security scan with timeout protection
-            # - 120 seconds per scanner (prevents single scanner from blocking)
-            # - 600 seconds total max (10 minutes total)
-            try:
-                report = await orchestrator.scan(
-                    target_path=path,
-                    timeout_per_scanner=120,  # 2 min per scanner max
-                    total_timeout=600,  # 10 min total max
-                )
-            except asyncio.TimeoutError:
-                logger.warning("Security scan timed out after 600s, switching to pattern-based scan")
-                raise ImportError("Scan timeout - switching to pattern-based scan")
+            # Execute security scan - no timeouts, process everything
+            report = await orchestrator.scan(
+                target_path=path,
+                timeout_per_scanner=0,  # No timeout per scanner
+                total_timeout=0,  # No total timeout
+            )
 
             # Emit progress: scan complete
             context.emit_progress(
@@ -3970,6 +4008,9 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
                 code_analysis=code_understanding,
             )
 
+            # Preserve full dataclasses for plane export (not the lossy dicts)
+            context.shared_data["m8_full_generation_result"] = generation_result
+
             # Process results
             result.epics = [self._epic_to_dict(e) for e in generation_result.epics]
             result.total_epics = len(result.epics)
@@ -4041,6 +4082,8 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
                 result.stories, result.epics, extensions, context, journeys, personas
             )
             result.peter_enrichments = peter_result
+            # Preserve Peter enrichments for plane export
+            context.shared_data["m8_peter_enrichments"] = peter_result
             result.agents_run = 1
             if peter_result and peter_result.get("success"):
                 result.agents_succeeded = 1
@@ -4503,6 +4546,9 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
 
         # Calculate duration
         result.duration_seconds = time.time() - start_time
+
+        # Preserve full EstimationResult for plane export
+        context.shared_data["m9_full_estimation_result"] = result
 
         # Store in shared_data for downstream stages (M10: deliverables)
         context.shared_data["estimation"] = result.to_dict()
@@ -5194,6 +5240,108 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
         except Exception as e:
             logger.warning(f"Diana enhancement failed: {e}")
             return {"success": False, "error": str(e)}
+
+    # =========================================================================
+    # PLANE EXPORT (Optional)
+    # =========================================================================
+
+    async def _execute_plane_export(
+        self,
+        context: WorkflowContext,
+    ) -> Dict[str, Any]:
+        """
+        Assemble Plane-compatible export package from M8+M9+Peter data.
+
+        Uses full dataclasses (not lossy dicts) to preserve:
+        - Acceptance criteria
+        - Source references with line numbers
+        - Legacy/target implementation context
+        - CRUD dependency chains
+        - Priority inference from multiple pipeline stages
+        """
+        import time
+
+        start_time = time.time()
+        result = {
+            "quality_score": 0.0,
+            "errors": [],
+        }
+
+        try:
+            from app.services.plane_export.assembler import PlaneExportAssembler
+            from app.services.plane_export.serializers import (
+                Adr002MarkdownSerializer,
+                JsonExportSerializer,
+            )
+
+            # Retrieve full objects from shared_data (preserved in Step 6)
+            generation_result = context.shared_data.get("m8_full_generation_result")
+            estimation_result = context.shared_data.get("m9_full_estimation_result")
+            peter_enrichments = context.shared_data.get("m8_peter_enrichments")
+            domain_data = context.shared_data.get("domain_extraction", {})
+            project_path = context.shared_data.get("project_path", "")
+
+            if not generation_result:
+                result["errors"].append("No M8 generation result available for plane export")
+                logger.warning("Plane export skipped: no M8 generation result in shared_data")
+                return result
+
+            # Assemble the export package
+            assembler = PlaneExportAssembler()
+            package = assembler.assemble(
+                generation_result=generation_result,
+                estimation_result=estimation_result,
+                peter_enrichments=peter_enrichments,
+                project_context={"project_path": project_path},
+                session_id=context.session_id if hasattr(context, "session_id") else None,
+                domain_data=domain_data,
+            )
+
+            # Serialize to JSON
+            json_serializer = JsonExportSerializer()
+            json_output = os.path.join(project_path, "plane-export.json") if project_path else "plane-export.json"
+            json_serializer.write(package, json_output)
+
+            # Serialize to ADR-002 markdown
+            md_serializer = Adr002MarkdownSerializer()
+            md_output = os.path.join(project_path, "plane-export") if project_path else "plane-export"
+            md_serializer.write(package, md_output)
+
+            # Store in shared_data for downstream use
+            context.shared_data["plane_export"] = {
+                "json_path": json_output,
+                "markdown_path": md_output,
+                "total_epics": len(package.epics),
+                "total_stories": package.project_summary.total_stories,
+                "total_relations": len(package.relations),
+                "exported_at": package.exported_at.isoformat(),
+            }
+
+            result["quality_score"] = 1.0
+            result["json_path"] = json_output
+            result["markdown_path"] = md_output
+            result["package_stats"] = {
+                "epics": len(package.epics),
+                "features": sum(len(e.features) for e in package.epics),
+                "stories": package.project_summary.total_stories,
+                "relations": len(package.relations),
+            }
+
+            duration = time.time() - start_time
+            logger.info(
+                f"Plane export complete: {len(package.epics)} epics, "
+                f"{package.project_summary.total_stories} stories, "
+                f"{len(package.relations)} relations in {duration:.1f}s"
+            )
+
+        except ImportError as e:
+            result["errors"].append(f"Plane export module not available: {e}")
+            logger.warning(f"Plane export skipped: {e}")
+        except Exception as e:
+            result["errors"].append(f"Plane export failed: {e}")
+            logger.error(f"Plane export failed: {e}", exc_info=True)
+
+        return result
 
     # =========================================================================
     # M11: QUALITY REVIEW

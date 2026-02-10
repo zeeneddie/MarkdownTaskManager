@@ -1,10 +1,10 @@
-# Current Phase: KW5 [w158] — Fase 41 + Fase 42 COMPLETE
+# Current Phase: KW7 [w163] — Fase 24.9 Unified Onboarding Pipeline COMPLETE
 
 **Project:** MarQed AI Agent Software Platform
-**Period:** KW5 [w158] (2026-01-31)
-**Status:** FASE 41 COMPLETE ✅ | FASE 42 COMPLETE ✅ (1092 tests, 28 xfailed, 4 new scanners, ~272 rules)
-**Focus:** Advanced False Negative Detection: ObfuscationDetector, DynamicFeatureDetector, FrameworkSecurityPlugin, ASTTaintTracker
-**Next:** Q1 2026 Planning → KW6 [w159] start Fase 34
+**Period:** KW7 [w163] (2026-02-10)
+**Status:** FASE 24.9 COMPLETE ✅ (11 stages, 10/11 pass on HCI-CRS, 24 min full pipeline)
+**Focus:** Unified Onboarding Pipeline — M1-M11 stages consolidating 6 workflow variants, Plane Export module, M5 agent routing fixes
+**Next:** Fase 24.9a — M5 enrichment, Migration Analysis (Gap #2), Reconciliation (Gap #4)
 
 ---
 
@@ -14,13 +14,64 @@
 |----------|---------|
 | [ROADMAP.md](../../ROADMAP.md) | Executive summary |
 | [phases-completed.md](phases-completed.md) | Completed phases (Fase 1-21) |
-| **This file** | Current work (KW5 [w158]) |
-| [phases-planned.md](phases-planned.md) | Planned work (Q1 2026: KW6-KW18) |
+| **This file** | Current work (KW7 [w163]) |
+| [phases-planned.md](phases-planned.md) | Planned work (Q1 2026: KW8-KW18) |
 | [gap-analysis-complete-roadmap.md](gap-analysis-complete-roadmap.md) | Complete GAP analysis (75 items) |
 
 ---
 
 ## Recently Completed
+
+### KW7 [w163]: Fase 24.9 — Unified Onboarding Pipeline ✅ COMPLETE
+
+**Goal:** Consolidate 6 existing workflow variants (A-F) into a single 11-stage onboarding pipeline
+**Status:** ✅ COMPLETE (M1-M11 implemented, 10/11 pass on HCI-CRS reference project)
+
+| Stage | Module | Agents | Score | Time | Status |
+|-------|--------|--------|-------|------|--------|
+| M1 | Input Validation | - | 1.00/1.0 | 0s | ✅ |
+| M2 | Intake Context | - | 0.70/0.7 | 87s | ✅ |
+| M3 | Code Understanding | 11 services | 1.00/0.5 | 207s | ✅ |
+| M4 | Deep Extraction | Felix, Quinn, Marcus | 0.85/0.7 | 61s | ✅ |
+| M5 | User Journey | Vicky, Peter | 0.70/0.7 | 33s | ✅ |
+| M6 | Security Scan | 19 scanners | 0.50/0.0 | 742s | ✅ |
+| M7 | Domain Extraction | Peter, Betty | 1.00/0.7 | 121s | ✅ |
+| M8 | Story Generation | Peter | 1.00/0.7 | 121s | ✅ |
+| M9 | Estimation | Eliza | 1.00/0.75 | 37s | ✅ |
+| M10 | Deliverables | Diana | 1.00/0.8 | 32s | ✅ |
+| M11 | Quality Review | Quinn | 0.70/0.8 | 0s | ❌ |
+
+**Total:** 24.0 min on HCI-CRS (9,922 files, 560MB)
+
+**Key Deliverables:**
+- 296 stories in 98 epics (1,263 story points)
+- 188,116 adjusted function points
+- 63,178 security findings from 19 scanners
+- 98 business domains from 191 modules
+- 91 documentation files generated
+- Plane Export module (`backend/app/services/plane_export/`)
+
+**Bugs Fixed:**
+- WorkflowContext `router` field: stages can now access agent extensions
+- UserJourneyExtractionStage: fixed router calls, context keys, output mapping for Vicky+Peter
+- Stepbystep test: passes `router=orchestrator._router` to context
+
+**Files Created/Modified:**
+
+| File | Change |
+|------|--------|
+| `backend/app/confucius/workflows/base.py` | Added `router` field to WorkflowContext |
+| `backend/app/confucius/stages/user_journey_extraction.py` | Fixed Vicky+Peter invocation and mapping |
+| `backend/app/services/plane_export/` | New: Plane.so export module |
+| `backend/tests/standalone_onboarding_stepbystep_test.py` | Added router to context |
+| `backend/tests/standalone_onboarding_m*_test.py` | 11 standalone test files |
+
+**Backlog for Fase 24.9a:**
+- M5 Enrichment: feed real file data to Vicky/Peter extractors
+- Migration Analysis (Gap #2): top-down epic generation from intake answers
+- Reconciliation (Gap #4): 7-analysis comparison of bottom-up/top-down/enhanced epics
+
+---
 
 ### KW5 [w158]: KB1 + KB5 + M1a + Fase 41 ALL Test Tiers ✅ COMPLETE
 

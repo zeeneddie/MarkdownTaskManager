@@ -74,6 +74,10 @@ class GeneratedStory:
     story_type: str  # crud, form, api, business_rule, migration
     legacy_functionality: Optional[str] = None
     target_implementation: Optional[str] = None
+    priority: str = "medium"  # critical, high, medium, low
+    status: str = "backlog"  # backlog, todo, in_progress, done
+    business_value: Optional[str] = None
+    blocked_by: List[str] = field(default_factory=list)  # story IDs
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -88,6 +92,8 @@ class GeneratedFeature:
     source_modules: List[str]
     estimated_story_points: int
     complexity: str
+    priority: str = "medium"  # critical, high, medium, low
+    status: str = "backlog"  # backlog, todo, in_progress, done
 
 
 @dataclass
@@ -102,6 +108,8 @@ class GeneratedEpic:
     estimated_story_points: int
     estimated_weeks: int
     complexity: str
+    priority: str = "medium"  # critical, high, medium, low
+    status: str = "backlog"  # backlog, todo, in_progress, done
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -313,6 +321,11 @@ class BusinessDrivenStoryGeneratorService:
             epics.append(epic)
             total_stories += sum(len(f.stories) for f in epic.features)
             total_points += epic.estimated_story_points
+
+        # Post-process: set CRUD dependency chains (blocked_by)
+        for epic in epics:
+            for feature in epic.features:
+                self._set_crud_dependencies(feature.stories)
 
         generation_time_ms = int((time.time() - start_time) * 1000)
 
@@ -699,6 +712,72 @@ class BusinessDrivenStoryGeneratorService:
             story_type=self._template_to_story_type(template_name),
             legacy_functionality=f"Legacy: {entity.source_file}",
         )
+
+    def _set_crud_dependencies(self, stories: List[GeneratedStory]) -> None:
+        """
+        Set blocked_by relations for CRUD stories within the same feature.
+
+        Dependency rules:
+        - Read depends on Create (can't read what doesn't exist)
+        - Update depends on Create (can't update what doesn't exist)
+        - Delete depends on Read (should verify before deleting)
+
+        Stories are matched by entity name extracted from their title.
+        """
+        # Group CRUD stories by entity (extracted from title pattern)
+        entity_crud_map: Dict[str, Dict[str, str]] = {}  # entity -> {crud_type: story_id}
+
+        for story in stories:
+            if story.story_type != "crud":
+                continue
+
+            title_lower = story.title.lower()
+            # Detect CRUD operation from title
+            crud_type = None
+            if "aanmaken" in title_lower or "create" in title_lower:
+                crud_type = "create"
+            elif "ophalen" in title_lower or "tonen" in title_lower or "read" in title_lower:
+                crud_type = "read"
+            elif "wijzigen" in title_lower or "update" in title_lower:
+                crud_type = "update"
+            elif "verwijderen" in title_lower or "delete" in title_lower:
+                crud_type = "delete"
+
+            if crud_type:
+                # Extract entity name: use metadata if set, otherwise derive from feature_id
+                # (all CRUD stories for same entity share the same feature_id)
+                entity_name = story.metadata.get("entity_name", story.feature_id)
+                if entity_name not in entity_crud_map:
+                    entity_crud_map[entity_name] = {}
+                entity_crud_map[entity_name][crud_type] = story.id
+
+        # Apply dependency rules
+        for entity_name, crud_ids in entity_crud_map.items():
+            create_id = crud_ids.get("create")
+            read_id = crud_ids.get("read")
+
+            if not create_id:
+                continue
+
+            # Read depends on Create
+            if read_id:
+                for story in stories:
+                    if story.id == read_id and create_id not in story.blocked_by:
+                        story.blocked_by.append(create_id)
+
+            # Update depends on Create
+            update_id = crud_ids.get("update")
+            if update_id:
+                for story in stories:
+                    if story.id == update_id and create_id not in story.blocked_by:
+                        story.blocked_by.append(create_id)
+
+            # Delete depends on Read
+            delete_id = crud_ids.get("delete")
+            if delete_id and read_id:
+                for story in stories:
+                    if story.id == delete_id and read_id not in story.blocked_by:
+                        story.blocked_by.append(read_id)
 
     def _is_crud_use_case(self, use_case: str) -> bool:
         """Check if use case is a CRUD operation."""

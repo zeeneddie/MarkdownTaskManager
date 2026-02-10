@@ -1,7 +1,7 @@
 # MarQed Platform Roadmap
 
 **Project:** MarQed AI Agent Software Platform
-**Last Updated:** Week 162 (2026-02-02)
+**Last Updated:** Week 163 (2026-02-10)
 **Total Phases:** 69 | **Timeline:** Week 144-254
 
 ---
@@ -41,7 +41,8 @@ WEEK 159-162: BUSINESS DOMAIN EXTRACTION ✅ DONE
 
 WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 ├── Fase 24: Quick Wins & Foundation (15 items) ✅ 15/15 COMPLETE (A1+K3+D1+D2+K1+K2+A4+E1+J1+K4+A2+A3+D4+B5+B6)
-├── Fase 24.9: Brown Paper Workflow Refactoring (Week 160-162) 🆕 HIGH PRIORITY
+├── Fase 24.9: Unified Onboarding Pipeline (Week 160-163) ✅ M1-M11 COMPLETE (10/11 pass on HCI-CRS)
+├── Fase 24.9a: M5 Enrichment + Migration Analysis + Reconciliation (Week 164+) 🆕 BACKLOG
 ├── Fase 24.10: Business-Driven Epic Generation (Week 159-162) ✅ 100% COMPLETE
 ├── Fase 25: Core Platform Enhancement (18 items)
 ├── Fase 26: AI & Automation (12 items)
@@ -78,15 +79,49 @@ WEEK 157-244: GAP ANALYSIS IMPLEMENTATION (IN PROGRESS)
 
 ---
 
-## Current Focus (Week 162)
+## Current Focus (Week 163)
 
-### 🔄 IN PROGRESS: Brown Paper Workflow met Business Domain Extraction
+### ✅ COMPLETE: Unified Onboarding Pipeline (Fase 24.9)
 
-**Priority:** HIGH (Core workflow enhancement)
-**Status:** 🔄 80% COMPLETE
-**Effort:** ~16 uur
+**Priority:** HIGH
+**Status:** ✅ M1-M11 COMPLETE (10/11 stages pass on HCI-CRS)
+**Effort:** ~40 uur
 
-**Doel:** MarQed Brown Paper workflow integreren met Business Domain Extraction voor business-driven epics ipv phase-based epics.
+**Doel:** Geconsolideerde 11-stage onboarding pipeline die de sterke punten van 6 bestaande workflows (A-F) combineert.
+
+**HCI-CRS Full Pipeline (2026-02-10 — 24 min):**
+
+| Stage | Score | Threshold | Tijd | Key Output |
+|-------|-------|-----------|------|------------|
+| M1: Input Validation | 1.00 | 1.0 | 0s | 5/5 questions |
+| M2: Intake Context | 0.70 | 0.7 | 87s | ChromaDB context |
+| M3: Code Understanding | 1.00 | 0.5 | 207s | 11/11 services, 12,380 files |
+| M4: Deep Extraction | 0.85 | 0.7 | 61s | Felix+Quinn+Marcus |
+| M5: User Journey | 0.70 | 0.7 | 33s | 2 personas, 2 journeys, 100 screens |
+| M6: Security Scan | 0.50 | 0.0 | 742s | 63,178 findings, 19 scanners |
+| M7: Domain Extraction | 1.00 | 0.7 | 121s | 98 domains, 65 entities |
+| M8: Story Generation | 1.00 | 0.7 | 121s | 296 stories, 98 epics, 1,263 SP |
+| M9: Estimation | 1.00 | 0.75 | 37s | 188,116 AFP |
+| M10: Deliverables | 1.00 | 0.8 | 32s | 91 documentation files |
+| M11: Quality Review | 0.70 | 0.8 | 0s | FAIL (Quinn timeout, 2 blockers) |
+
+**Bugs Fixed (2026-02-10):**
+- WorkflowContext `router` field toegevoegd voor stage access naar agent extensions
+- UserJourneyExtractionStage: router calls, context keys, output mapping gefixt voor Vicky+Peter
+- Stepbystep test: `router=orchestrator._router` doorgegeven aan context
+
+### 🆕 BACKLOG: Fase 24.9a — Onboarding Enrichment
+
+| Item | Prioriteit | Beschrijving |
+|------|-----------|--------------|
+| M5 Enrichment | Hoog | Feed Vicky/Peter met echte file data, add ASP/VB.NET extractors |
+| Migration Analysis (Gap #2) | Hoog | Top-down epic generation vanuit intake answers |
+| Reconciliation (Gap #4) | Hoog | 7-analyse vergelijking bottom-up/top-down/enhanced epics |
+| Plane Export | Gereed | Export module in `backend/app/services/plane_export/` |
+
+### Previous: Brown Paper Workflow met Business Domain Extraction ✅
+
+**Status:** ✅ 100% COMPLETE (Fase 24.10)
 
 **Wat is gedaan:**
 | Component | Status | Beschrijving |

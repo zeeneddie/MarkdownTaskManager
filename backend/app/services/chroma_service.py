@@ -234,18 +234,27 @@ class ChromaService:
             Dict with results, distances, and metadatas
         """
         try:
-            # Build where filter
-            where_filter = {}
-            if project_id:
-                where_filter["project_id"] = str(project_id)
-            if document_types:
-                where_filter["document_type"] = {"$in": document_types}
+            # Build where filter - ChromaDB requires explicit operators
+            where_filter = None
+
+            if project_id and document_types:
+                # Multiple conditions require $and
+                where_filter = {
+                    "$and": [
+                        {"project_id": {"$eq": str(project_id)}},
+                        {"document_type": {"$in": document_types}}
+                    ]
+                }
+            elif project_id:
+                where_filter = {"project_id": {"$eq": str(project_id)}}
+            elif document_types:
+                where_filter = {"document_type": {"$in": document_types}}
 
             # Query collection
             results = self.project_documents.query(
                 query_texts=[query],
                 n_results=top_k,
-                where=where_filter if where_filter else None
+                where=where_filter
             )
 
             return {

@@ -109,6 +109,37 @@ class StageResult:
 
 
 @dataclass
+class ProgressEvent:
+    """Progress event for real-time tracking."""
+    stage: str
+    stage_index: int
+    total_stages: int
+    current: int
+    total: int
+    item_type: str  # "files", "scanners", "domains", "stories", etc.
+    percentage: float
+    message: Optional[str] = None
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "stage": self.stage,
+            "stage_index": self.stage_index,
+            "total_stages": self.total_stages,
+            "current": self.current,
+            "total": self.total,
+            "item_type": self.item_type,
+            "percentage": round(self.percentage, 1),
+            "message": self.message,
+            "timestamp": self.timestamp.isoformat(),
+        }
+
+
+# Type for progress callback
+ProgressCallback = Callable[["ProgressEvent"], None]
+
+
+@dataclass
 class WorkflowContext:
     """Context passed through workflow stages."""
     workflow_id: str
@@ -116,10 +147,61 @@ class WorkflowContext:
     session_id: str
     started_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     current_stage: Optional[str] = None
+    current_stage_index: int = 0
+    total_stages: int = 0
     completed_stages: List[str] = field(default_factory=list)
     stage_results: Dict[str, StageResult] = field(default_factory=dict)
     shared_data: Dict[str, Any] = field(default_factory=dict)
     metadata: Dict[str, Any] = field(default_factory=dict)
+    # Router for agent extensions (set by orchestrator)
+    router: Optional["WorkflowRouter"] = field(default=None, repr=False)
+    # Progress tracking
+    progress_callback: Optional[ProgressCallback] = None
+    _last_progress: Optional[ProgressEvent] = field(default=None, repr=False)
+
+    def set_progress_callback(self, callback: ProgressCallback) -> None:
+        """Set callback for progress events."""
+        self.progress_callback = callback
+
+    def emit_progress(
+        self,
+        current: int,
+        total: int,
+        item_type: str,
+        message: Optional[str] = None,
+    ) -> None:
+        """
+        Emit a progress event for the current stage.
+
+        Args:
+            current: Current item number being processed
+            total: Total items to process
+            item_type: Type of items (e.g., "files", "scanners", "domains")
+            message: Optional status message
+        """
+        if total <= 0:
+            percentage = 0.0
+        else:
+            percentage = (current / total) * 100.0
+
+        event = ProgressEvent(
+            stage=self.current_stage or "unknown",
+            stage_index=self.current_stage_index,
+            total_stages=self.total_stages,
+            current=current,
+            total=total,
+            item_type=item_type,
+            percentage=percentage,
+            message=message,
+        )
+
+        self._last_progress = event
+
+        if self.progress_callback:
+            try:
+                self.progress_callback(event)
+            except Exception as e:
+                logger.warning(f"Progress callback error: {e}")
 
     def add_stage_result(self, result: StageResult) -> None:
         """Add a stage result."""
@@ -140,9 +222,12 @@ class WorkflowContext:
             "session_id": self.session_id,
             "started_at": self.started_at.isoformat(),
             "current_stage": self.current_stage,
+            "current_stage_index": self.current_stage_index,
+            "total_stages": self.total_stages,
             "completed_stages": self.completed_stages,
             "stage_results": {k: v.to_dict() for k, v in self.stage_results.items()},
             "metadata": self.metadata,
+            "last_progress": self._last_progress.to_dict() if self._last_progress else None,
         }
 
 
@@ -334,6 +419,7 @@ class WorkflowOrchestrator(ABC):
                 completed_stages=restored_context.get("completed_stages", []),
                 shared_data=restored_context.get("shared_data", input_data.copy()),
                 metadata=restored_context.get("metadata", metadata or {}),
+                router=self._router,
             )
             # Rebuild stage_results from restored data
             for stage_name, stage_data in restored_context.get("stage_results", {}).items():
@@ -355,6 +441,7 @@ class WorkflowOrchestrator(ABC):
                 started_at=started_at,
                 shared_data=input_data.copy(),
                 metadata=metadata or {},
+                router=self._router,
             )
 
         self._running_workflows[workflow_id] = context

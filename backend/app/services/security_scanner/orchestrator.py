@@ -15,7 +15,7 @@ from collections import defaultdict
 from .models.findings import (
     SecurityFinding, SecurityReport, ScanResult, ScannerType, Severity,
 )
-from .adapters.base import BaseScanner, ScannerNotAvailableError
+from .adapters.base import BaseScanner, ScannerNotAvailableError, CustomPatternScanner
 from .adapters.opengrep_adapter import OpenGrepAdapter
 from .adapters.bandit_adapter import BanditAdapter
 from .adapters.gosec_adapter import GosecAdapter
@@ -151,10 +151,30 @@ class SecurityScanOrchestrator:
         """
         self.config = config or {}
         self.enabled_scanners = enabled_scanners
+        self._progress_callback = None
+        self._file_progress_callback = None
 
         # Initialize scanners
         self._scanners: Dict[ScannerType, BaseScanner] = {}
         self._initialize_scanners()
+
+    def set_progress_callback(self, callback):
+        """
+        Set callback for scanner progress updates.
+
+        Callback signature: callback(current: int, total: int, scanner_name: str)
+        """
+        self._progress_callback = callback
+
+    def set_file_progress_callback(self, callback):
+        """
+        Set callback for per-file progress updates within pattern scanners.
+
+        Callback signature: callback(current_file: int, total_files: int, file_path: str, scanner_name: str)
+
+        This provides granular progress for scanners that process files one-by-one.
+        """
+        self._file_progress_callback = callback
 
     def _initialize_scanners(self):
         """Initialize all available scanners."""
@@ -270,6 +290,8 @@ class SecurityScanOrchestrator:
         languages: Optional[Set[str]] = None,
         scanners: Optional[List[ScannerType]] = None,
         config: Optional[Dict[str, Any]] = None,
+        timeout_per_scanner: int = 120,  # 2 minutes per scanner
+        total_timeout: int = 600,  # 10 minutes total max
     ) -> SecurityReport:
         """
         Execute security scan on target.
@@ -279,6 +301,8 @@ class SecurityScanOrchestrator:
             languages: Override language detection (optional)
             scanners: Specific scanners to run (optional)
             config: Scan configuration overrides
+            timeout_per_scanner: Max seconds per individual scanner (default 120)
+            total_timeout: Max seconds for entire scan operation (default 600)
 
         Returns:
             SecurityReport with all findings
@@ -310,14 +334,44 @@ class SecurityScanOrchestrator:
                 scanners_used=set(),
             )
 
-        # Run scanners in parallel
-        scan_tasks = []
-        for scanner in scanner_instances:
-            scanner_config = config.get(scanner.scanner_type.value, {}) if config else {}
-            task = self._run_scanner(scanner, target_path, scanner_config)
-            scan_tasks.append(task)
+        # Run scanners SEQUENTIALLY for better progress tracking and timeout control
+        # (Parallel execution blocks on synchronous file I/O, preventing timeouts)
+        results = []
+        total_scanners = len(scanner_instances)
 
-        results = await asyncio.gather(*scan_tasks, return_exceptions=True)
+        for idx, scanner in enumerate(scanner_instances):
+            scanner_name = scanner.scanner_type.value
+            scanner_config = config.get(scanner_name, {}) if config else {}
+
+            # Emit progress callback if provided
+            if hasattr(self, '_progress_callback') and self._progress_callback:
+                self._progress_callback(idx, total_scanners, scanner_name)
+
+            logger.info(f"[SCAN PROGRESS] {idx + 1}/{total_scanners}: {scanner_name}")
+
+            try:
+                result = await self._run_scanner(
+                    scanner, target_path, scanner_config,
+                    timeout_seconds=timeout_per_scanner
+                )
+                results.append(result)
+            except Exception as e:
+                logger.error(f"Scanner {scanner_name} failed: {e}")
+                results.append(e)
+
+            # Check total timeout (0 = no timeout)
+            if total_timeout > 0:
+                elapsed = (datetime.now(timezone.utc) - started_at).total_seconds()
+                if elapsed > total_timeout:
+                    logger.warning(
+                        f"Security scan total timeout ({total_timeout}s) exceeded after "
+                        f"{idx + 1}/{total_scanners} scanners - returning partial results"
+                    )
+                    break
+
+        # Final progress update
+        if hasattr(self, '_progress_callback') and self._progress_callback:
+            self._progress_callback(len(results), total_scanners, "complete")
 
         # Process results
         scan_results = []
@@ -347,16 +401,75 @@ class SecurityScanOrchestrator:
         scanner: BaseScanner,
         target_path: Path,
         config: Dict[str, Any],
+        timeout_seconds: int = 120,  # Default 2 minutes per scanner, 0 = no timeout
     ) -> ScanResult:
-        """Run a single scanner."""
-        logger.info(f"Running scanner: {scanner.scanner_type.value}")
+        """Run a single scanner with optional timeout protection and file-level progress."""
+        import time
+        scanner_name = scanner.scanner_type.value
+        timeout_info = f"timeout: {timeout_seconds}s" if timeout_seconds > 0 else "no timeout"
+        logger.info(f"[SCANNER] Starting: {scanner_name} ({timeout_info})")
+        start_time = time.time()
+
+        # Set up file-level progress callback for pattern-based scanners
+        if isinstance(scanner, CustomPatternScanner) and self._file_progress_callback:
+            def file_progress(current: int, total: int, file_path: str):
+                try:
+                    self._file_progress_callback(current, total, file_path, scanner_name)
+                except Exception as e:
+                    logger.debug(f"File progress callback error: {e}")
+
+            scanner.set_file_progress_callback(file_progress)
+
+        async def run_scan_with_timeout():
+            """Run scan with proper timeout handling for both sync and async code."""
+            try:
+                # If timeout is 0, run without timeout wrapper
+                if timeout_seconds <= 0:
+                    return await scanner.scan(target_path, config)
+                # With await asyncio.sleep(0) in scan loop, this now works!
+                return await asyncio.wait_for(
+                    scanner.scan(target_path, config),
+                    timeout=timeout_seconds
+                )
+            except asyncio.TimeoutError:
+                # Cancel the scanner if it supports cancellation
+                if isinstance(scanner, CustomPatternScanner):
+                    scanner.cancel()
+                raise
+            except Exception:
+                raise
+
         try:
-            return await scanner.scan(target_path, config)
+            result = await run_scan_with_timeout()
+            elapsed = time.time() - start_time
+            findings_count = len(result.findings) if result else 0
+            logger.info(
+                f"[SCANNER] Completed: {scanner_name} | "
+                f"{elapsed:.1f}s | {findings_count} findings"
+            )
+            return result
+        except asyncio.TimeoutError:
+            elapsed = time.time() - start_time
+            logger.warning(
+                f"[SCANNER] Timeout: {scanner_name} after {elapsed:.1f}s "
+                f"(limit: {timeout_seconds}s) - returning partial results"
+            )
+            # Return empty result instead of failing entire scan
+            from .models.findings import ScanResult
+            return ScanResult(
+                scanner=scanner.scanner_type,
+                scanner_version=None,
+                scan_duration_ms=int(elapsed * 1000),
+                findings=[],
+                files_scanned=0,
+                errors=[f"Scanner timed out after {timeout_seconds}s"],
+            )
         except ScannerNotAvailableError as e:
-            logger.warning(f"Scanner not available: {e}")
+            logger.warning(f"[SCANNER] Not available: {scanner_name} - {e}")
             raise
         except Exception as e:
-            logger.error(f"Scanner {scanner.scanner_type.value} failed: {e}")
+            elapsed = time.time() - start_time
+            logger.error(f"[SCANNER] Failed: {scanner_name} after {elapsed:.1f}s - {e}")
             raise
 
     async def scan_with_report(

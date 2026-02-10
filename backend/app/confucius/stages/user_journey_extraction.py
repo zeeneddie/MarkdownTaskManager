@@ -95,9 +95,11 @@ class UserJourneyExtractionStage:
         started_at = datetime.now(timezone.utc)
 
         try:
-            # Get input data
-            code_analysis = context.shared_data.get("code_understanding_result", {})
-            domains = context.shared_data.get("domain_extraction_result", {})
+            # Get input data - support both naming conventions
+            code_analysis = context.shared_data.get("code_understanding_result") or \
+                           context.shared_data.get("code_understanding", {})
+            domains = context.shared_data.get("domain_extraction_result") or \
+                     context.shared_data.get("domain_extraction", {})
             tech_stack = context.shared_data.get("tech_stack", [])
 
             # Auto-detect tech stack if not provided
@@ -159,15 +161,34 @@ class UserJourneyExtractionStage:
     def _detect_tech_stack(self, code_analysis: Dict[str, Any]) -> List[str]:
         """Detect tech stack from code analysis."""
         tech_stack = []
-        files = code_analysis.get("files", [])
-
-        # Check file extensions
         extensions = set()
+
+        # Try multiple sources for file information
+        # 1. Direct files list
+        files = code_analysis.get("files", [])
         for f in files:
-            path = f.get("path", "").lower()
+            path = f.get("path", "") if isinstance(f, dict) else str(f)
             if "." in path:
-                ext = "." + path.rsplit(".", 1)[-1]
+                ext = "." + path.lower().rsplit(".", 1)[-1]
                 extensions.add(ext)
+
+        # 2. Dependency graph modules
+        dep_graph = code_analysis.get("dependency_graph")
+        if dep_graph and isinstance(dep_graph, dict):
+            modules = dep_graph.get("modules", [])
+            for mod in modules:
+                path = mod.get("path", "") if isinstance(mod, dict) else str(mod)
+                if "." in path:
+                    ext = "." + path.lower().rsplit(".", 1)[-1]
+                    extensions.add(ext)
+
+        # 3. Code metrics file types
+        code_metrics = code_analysis.get("code_analysis") or code_analysis.get("code_metrics", {})
+        if code_metrics and isinstance(code_metrics, dict):
+            file_types = code_metrics.get("file_types", {})
+            for ext_name in file_types.keys():
+                ext = f".{ext_name}" if not ext_name.startswith(".") else ext_name
+                extensions.add(ext.lower())
 
         # Map extensions to tech stack
         ext_mapping = {
@@ -182,6 +203,8 @@ class UserJourneyExtractionStage:
             ".vue": "vue",
             ".py": "python",
             ".sql": "sql",
+            ".vb": "vbnet",
+            ".vbhtml": "vbnet",
         }
 
         for ext in extensions:
@@ -217,7 +240,22 @@ class UserJourneyExtractionStage:
             "event_handlers": [],
         }
 
+        # Get files from multiple sources
         files = code_analysis.get("files", [])
+
+        # If no files list, try to build one from dependency_graph modules
+        if not files:
+            dep_graph = code_analysis.get("dependency_graph")
+            if dep_graph and isinstance(dep_graph, dict):
+                modules = dep_graph.get("modules", [])
+                files = [{"path": m.get("path", m) if isinstance(m, dict) else str(m)} for m in modules]
+
+        # Also try code_discovery if available
+        if not files:
+            code_discovery = code_analysis.get("code_discovery", {})
+            file_list = code_discovery.get("files", [])
+            if file_list:
+                files = [{"path": f} if isinstance(f, str) else f for f in file_list]
 
         for extractor in self.extractors:
             try:
@@ -261,8 +299,7 @@ class UserJourneyExtractionStage:
             if router:
                 from ..extensions import WorkflowRouter
                 if isinstance(router, WorkflowRouter):
-                    extensions = await router.get_extensions_for_agents(["Vicky"])
-                    vicky = extensions[0] if extensions else None
+                    vicky = router.get_extension("Vicky")
 
                     if vicky:
                         vicky_result = await vicky.run_full_lifecycle(
@@ -272,16 +309,32 @@ class UserJourneyExtractionStage:
                                 "forms": raw_extraction.get("forms", []),
                                 "navigation": raw_extraction.get("navigation", []),
                                 "roles": raw_extraction.get("roles", []),
-                                "vicky_activity": "journey_mapping",
+                                "vicky_activity": "ui_spec",
                                 "tier": "PROFESSIONAL",
                             },
                             entry_id=f"{context.workflow_id}-vicky-journey",
                         )
 
                         if vicky_result.success:
-                            result["personas_from_ui"] = vicky_result.output.get("personas", [])
-                            result["screen_flows"] = vicky_result.output.get("screen_flows", [])
-                            result["ux_patterns"] = vicky_result.output.get("patterns", [])
+                            out = vicky_result.output
+                            inner = out.get("result", {})
+                            # Map Vicky's actual output keys to what stage expects
+                            result["personas_from_ui"] = (
+                                out.get("personas", [])
+                                or inner.get("personas", [])
+                                or out.get("personas_from_ui", [])
+                            )
+                            result["screen_flows"] = (
+                                out.get("screen_flows", [])
+                                or inner.get("screen_flows", [])
+                            )
+                            result["ux_patterns"] = (
+                                out.get("patterns", [])
+                                or inner.get("patterns", [])
+                                or out.get("ux_patterns", [])
+                            )
+                            # Even if Vicky returned no journey-specific data,
+                            # don't fall through to fallback - let Peter handle it
                             return result
 
         except Exception as e:
@@ -317,8 +370,7 @@ class UserJourneyExtractionStage:
             if router:
                 from ..extensions import WorkflowRouter
                 if isinstance(router, WorkflowRouter):
-                    extensions = await router.get_extensions_for_agents(["Peter"])
-                    peter = extensions[0] if extensions else None
+                    peter = router.get_extension("Peter")
 
                     if peter:
                         peter_result = await peter.run_full_lifecycle(
@@ -330,18 +382,43 @@ class UserJourneyExtractionStage:
                                 "screen_flows": vicky_result.get("screen_flows", []),
                                 "roles": raw_extraction.get("roles", []),
                                 "api_endpoints": raw_extraction.get("api_endpoints", []),
-                                "activity": "user_journeys",
+                                "peter_activity": "requirements",
                             },
                             entry_id=f"{context.workflow_id}-peter-journey",
                         )
 
                         if peter_result.success:
-                            result["personas"] = peter_result.output.get("personas", [])
-                            result["journeys"] = peter_result.output.get("journeys", [])
-                            result["business_processes"] = peter_result.output.get(
-                                "business_processes", []
+                            out = peter_result.output
+                            inner = out.get("result", {})
+                            # Map Peter's actual output keys to what stage expects
+                            result["personas"] = (
+                                out.get("personas", [])
+                                or inner.get("personas", [])
                             )
-                            return result
+                            result["journeys"] = (
+                                out.get("journeys", [])
+                                or inner.get("journeys", [])
+                            )
+                            result["business_processes"] = (
+                                out.get("business_processes", [])
+                                or inner.get("business_processes", [])
+                            )
+                            # Convert user_stories to journeys if no direct journeys
+                            if not result["journeys"] and out.get("user_stories"):
+                                for i, story in enumerate(out["user_stories"]):
+                                    s = story if isinstance(story, dict) else {"name": str(story)}
+                                    result["journeys"].append({
+                                        "id": s.get("id", f"journey_story_{i}"),
+                                        "name": s.get("name", s.get("title", f"Journey {i+1}")),
+                                        "description": s.get("description", ""),
+                                        "persona_id": s.get("persona_id", ""),
+                                        "persona_name": s.get("persona_name", ""),
+                                        "complexity": s.get("complexity", "moderate"),
+                                        "business_value": s.get("business_value", "medium"),
+                                        "steps": s.get("steps", s.get("acceptance_criteria", [])),
+                                    })
+                            if result["personas"] or result["journeys"]:
+                                return result
 
         except Exception as e:
             logger.warning(f"Peter journey definition failed: {e}")

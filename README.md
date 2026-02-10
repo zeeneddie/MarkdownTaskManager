@@ -5,11 +5,13 @@ A multi-stack AI agent platform for automated software development, legacy moder
 ## Features
 
 - **11 AI Agents** - Specialized agents for architecture, quality, testing, documentation, and more
+- **Unified Onboarding Pipeline (Fase 24.9)** - 11-stage automated project analysis (M1-M11) with quality gates
 - **Confucius Orchestrator (Fase 23.5)** - Central agent orchestration with PIV loop and quality gates
 - **Context Engineering (Fase 23)** - Reference-on-demand system with 60-80% token reduction
-- **CWE Security Scanner (Fase 31)** - Multi-scanner suite (OpenGrep, Bandit, Trivy, Custom ASP) with SARIF output
+- **CWE Security Scanner (Fase 31)** - 21-scanner suite (OpenGrep, Bandit, Trivy, Custom ASP + 17 built-in) with SARIF output
 - **Legacy Quickscan (Fase 24-A1)** - 15-minute automated assessment with Go/No-Go recommendation
 - **Stage Council Review (Fase 23.6)** - Multi-model LLM reviews at each development stage
+- **Plane Export Module** - Export onboarding results to Plane.so project management
 - **15+ Workflows** - Green Paper, Brown Paper, migrations, features, bugs, maintenance, stability analysis
 - **120+ API Route Files** - Comprehensive REST API with 800+ endpoints (including v2 API + Confucius)
 - **40 Dashboards** - Quality, sprints, evolution, estimation, stability, and more
@@ -20,7 +22,7 @@ A multi-stack AI agent platform for automated software development, legacy moder
 - **Legacy Modernization** - 75 gap analysis items across 6 phases (Week 157-244)
 - **v2 API (Fase 21.5)** - Decoupled Migration/Quality endpoints with AnalysisContract
 - **FP Methodology (Fase 22)** - IFPUG/NESMA compliant Function Point estimation
-- **71 Database Migrations** - Comprehensive data model for all features
+- **76 Database Migrations** - Comprehensive data model for all features
 - **97.8% Test Pass Rate** - 2,700+ tests with comprehensive coverage
 
 ## Quick Start
@@ -101,9 +103,11 @@ Use the unified service manager script for development:
 │          Peter Paul Vicky                                    │
 ├─────────────────────────────────────────────────────────────┤
 │  WORKFLOWS: GREEN_PAPER | BROWN_PAPER | MIGRATION | QUALITY │
-│             STABILITY | ESTIMATION | FEATURE | QUICKSCAN    │
+│             STABILITY | ESTIMATION | ONBOARDING | QUICKSCAN │
 ├─────────────────────────────────────────────────────────────┤
-│  SECURITY: CWE Scanner | OpenGrep | Bandit | Trivy | ASP    │
+│  ONBOARDING: M1-M11 Pipeline (Validate→Quality Review)      │
+├─────────────────────────────────────────────────────────────┤
+│  SECURITY: 21 Scanners | OpenGrep | Bandit | Trivy | ASP    │
 ├─────────────────────────────────────────────────────────────┤
 │  ANALYSIS: Resource Leaks | Security | Performance | Code   │
 ├─────────────────────────────────────────────────────────────┤
@@ -155,9 +159,11 @@ Use the unified service manager script for development:
 | [Quick Start](.project/QUICKSTART.md) | Fast bootstrap guide |
 | [Architecture](.project/ARCHITECTURE.md) | Technical architecture |
 | [Agents](.project/AGENTS.md) | AI agent specifications |
-| [Current Phase](docs/roadmap/phases-current.md) | Week 157 progress |
-| [Planned Phases](docs/roadmap/phases-planned.md) | Fase 24-30 roadmap |
-| [CWE Security Scanner](docs/roadmap/phases/fase-31-cwe-security-scanners.md) | Multi-scanner security suite (Fase 31 COMPLETE) |
+| [Current Phase](docs/roadmap/phases-current.md) | Week 162 progress |
+| [Planned Phases](docs/roadmap/phases-planned.md) | Fase 24-65 roadmap |
+| [Onboarding Pipeline](docs/architecture/onboarding-implementation-status.md) | 11-stage unified onboarding (Fase 24.9 COMPLETE) |
+| [Onboarding Architecture](docs/architecture/onboarding-architecture-fase-24.9.md) | Consolidated architecture from 6 workflow variants |
+| [CWE Security Scanner](docs/roadmap/phases/fase-31-cwe-security-scanners.md) | 21-scanner security suite (Fase 31+41+42 COMPLETE) |
 | [Legacy Quickscan](docs/roadmap/phases-current.md#week-157-legacy-quickscan-a1-fase-24-a1--complete) | 15-min Go/No-Go assessment (Fase 24-A1 COMPLETE) |
 | [Confucius Orchestrator](docs/architecture/confucius-orchestrator-integration-plan.md) | Central agent orchestration (Fase 23.5 COMPLETE) |
 | [GAP Analysis](docs/roadmap/gap-analysis-complete-roadmap.md) | 75-item legacy modernization roadmap |
@@ -171,10 +177,11 @@ MarkdownTaskManager/
 ├── backend/               # FastAPI application
 │   ├── app/              # Application code
 │   │   ├── api/          # API routes (113 files, 700+ endpoints)
+│   │   ├── confucius/    # Agent orchestration (workflows, stages, extensions)
 │   │   ├── models/       # SQLAlchemy models
-│   │   └── services/     # Business logic (278 services)
-│   ├── tests/            # Test suite (2,557+ tests)
-│   └── alembic/          # Database migrations (69)
+│   │   └── services/     # Business logic (290+ services)
+│   ├── tests/            # Test suite (2,700+ tests)
+│   └── alembic/          # Database migrations (76)
 ├── frontend/             # HTML dashboards (40)
 ├── scripts/              # Utility scripts
 │   └── cicd/             # CI/CD pipeline
