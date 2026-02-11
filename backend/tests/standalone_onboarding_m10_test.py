@@ -2,7 +2,9 @@
 """
 Standalone test for OnboardingWorkflow M10: Deliverables Generation.
 
-Tests the DeliverablesResult dataclass and deliverables stage execution.
+Doel: Genereert de eindproducten van de onboarding — brown paper rapport, migratieplan,
+epic-overzicht en Plane-export. Bundelt alle inzichten uit M1-M9 tot concrete deliverables
+die het projectteam direct kan gebruiken voor planning en besluitvorming.
 
 Usage:
     cd backend
@@ -457,115 +459,190 @@ async def test_deliverables_stage_execution():
 
     orchestrator = OnboardingOrchestrator()
 
-    with tempfile.TemporaryDirectory() as tmp:
-        context = WorkflowContext(
-            session_id="m10-test",
-            workflow_id="m10-test",
-            workflow_type="onboarding",
-            shared_data={
-                "project_path": tmp,
-                "answers": {
-                    "q1_primary_purpose": "Test project for deliverables validation",
-                    "q2_users": "Test users",
-                    "q3_critical_processes": "Testing deliverables generation",
-                    "q4_integrations": "Test API",
-                    "q5_pain_points": "Test issues",
-                },
-                "code_discovery": {
-                    "total_files": 10,
-                    "file_types": {"py": 5, "ts": 5},
-                },
-                "intake_context": {
-                    "domains": [],
-                    "code_metrics": {"total_files": 10},
-                },
-                "code_understanding": {
-                    "components": [],
-                },
-                "domain_extraction": {
-                    "domains": [
-                        {"name": "Core", "description": "Core domain", "entities": ["Entity1"]},
-                    ]
-                },
-                "user_journey_extraction": {
-                    "journeys": [
-                        {"name": "Main Flow", "steps": ["step1", "step2"]},
-                    ]
-                },
-                "deep_extraction": {
-                    "components": [],
-                },
-                "security_scan": {
-                    "findings": {"total": 0, "critical": 0, "high": 0},
-                },
-                "story_generation": {
-                    "epics": [{"id": "E1", "title": "Epic 1", "domain_name": "Core"}],
-                    "stories": [
-                        {"id": "S1", "title": "Story 1", "points": 5},
-                    ],
-                    "total_epics": 1,
-                    "total_stories": 1,
-                    "total_story_points": 5,
-                },
-                "estimation": {
-                    "function_points": {"adjusted": 1000},
-                    "confidence_level": 0.7,
-                    "estimates": {
-                        "weeks_low": 20,
-                        "weeks_likely": 30,
-                        "weeks_high": 45,
-                    },
-                    "team": {"recommended_size": 3},
-                },
+    dvpwa_path = "/opt/projecten/examples/dvpwa"
+    project_path = dvpwa_path if Path(dvpwa_path).exists() else tempfile.mkdtemp()
+
+    context = WorkflowContext(
+        session_id="m10-test",
+        workflow_id="m10-test",
+        workflow_type="onboarding",
+        shared_data={
+            "project_path": project_path,
+            "answers": {
+                "q1_primary_purpose": "Damn Vulnerable Python Web Application voor security testing met SQL-injection kwetsbaarheden",
+                "q2_users": "Security researchers, penetration testers, developers",
+                "q3_critical_processes": "SQL query handling, user authenticatie, input validatie",
+                "q4_integrations": "PostgreSQL, aiohttp, Jinja2, Docker",
+                "q5_pain_points": "Opzettelijke security kwetsbaarheden, raw SQL queries",
             },
-        )
+            "code_discovery": {
+                "total_files": 10,
+                "file_types": {"py": 5, "ts": 5},
+            },
+            "intake_context": {
+                "domains": [],
+                "code_metrics": {"total_files": 10},
+            },
+            "code_understanding": {
+                "components": [],
+            },
+            "domain_extraction": {
+                "domains": [
+                    {"name": "Core", "description": "Core domain", "entities": ["Entity1"]},
+                ]
+            },
+            "user_journey_extraction": {
+                "journeys": [
+                    {"name": "Main Flow", "steps": ["step1", "step2"]},
+                ]
+            },
+            "deep_extraction": {
+                "components": [],
+            },
+            "security_scan": {
+                "findings": {"total": 0, "critical": 0, "high": 0},
+            },
+            "story_generation": {
+                "epics": [{"id": "E1", "title": "Epic 1", "domain_name": "Core"}],
+                "stories": [
+                    {"id": "S1", "title": "Story 1", "points": 5},
+                ],
+                "total_epics": 1,
+                "total_stories": 1,
+                "total_story_points": 5,
+            },
+            "estimation": {
+                "function_points": {"adjusted": 1000},
+                "confidence_level": 0.7,
+                "estimates": {
+                    "weeks_low": 20,
+                    "weeks_likely": 30,
+                    "weeks_high": 45,
+                },
+                "team": {"recommended_size": 3},
+            },
+        },
+    )
 
-        # Get the deliverables stage
-        stages = orchestrator.get_stages()
-        deliverables_stage = None
-        for stage in stages:
-            if stage.name == "deliverables":
-                deliverables_stage = stage
-                break
+    # Get the deliverables stage
+    stages = orchestrator.get_stages()
+    deliverables_stage = None
+    for stage in stages:
+        if stage.name == "deliverables":
+            deliverables_stage = stage
+            break
 
-        if not deliverables_stage:
-            print("  SKIP: Deliverables stage not found in orchestrator")
-            return True
+    if not deliverables_stage:
+        print("  SKIP: Deliverables stage not found in orchestrator")
+        return True
 
-        print(f"  Stage: {deliverables_stage.name}")
-        print(f"  Threshold: {deliverables_stage.quality_threshold}")
-        print(f"  Depends on: {deliverables_stage.depends_on}")
+    print(f"  Stage: {deliverables_stage.name}")
+    print(f"  Threshold: {deliverables_stage.quality_threshold}")
+    print(f"  Depends on: {deliverables_stage.depends_on}")
 
-        # Execute the stage
-        try:
-            result = await orchestrator.execute_stage(deliverables_stage, context)
+    # Execute the stage
+    try:
+        result = await orchestrator.execute_stage(deliverables_stage, context)
 
-            print(f"  Quality score: {result.quality_score:.2f}")
-            print(f"  Passed gate: {result.passed_quality_gate}")
+        print(f"  Quality score: {result.quality_score:.2f}")
+        print(f"  Passed gate: {result.passed_quality_gate}")
 
-            # Check result
-            agent_results = context.shared_data.get("deliverables")
-            if agent_results:
-                if isinstance(agent_results, dict):
-                    print(f"  Files created: {agent_results.get('files', {}).get('created', 'N/A')}")
-                    print(f"  Sections: {agent_results.get('sections', {}).get('generated', [])}")
-                else:
-                    print(f"  Files created: {agent_results.files_created}")
-                    print(f"  Sections: {agent_results.sections_generated}")
+        # Check result
+        agent_results = context.shared_data.get("deliverables")
+        if agent_results:
+            if isinstance(agent_results, dict):
+                print(f"  Files created: {agent_results.get('files', {}).get('created', 'N/A')}")
+                print(f"  Sections: {agent_results.get('sections', {}).get('generated', [])}")
+            else:
+                print(f"  Files created: {agent_results.files_created}")
+                print(f"  Sections: {agent_results.sections_generated}")
 
-            # Should pass quality gate (fallback should provide >= 0.80)
-            assert result.quality_score >= 0.50, f"Should have reasonable score, got {result.quality_score}"
+        # Should pass quality gate (fallback should provide >= 0.80)
+        assert result.quality_score >= 0.50, f"Should have reasonable score, got {result.quality_score}"
 
-        except Exception as e:
-            print(f"  Stage execution error: {e}")
-            # Even with errors, check if fallback was triggered
-            agent_results = context.shared_data.get("deliverables")
-            if agent_results:
-                files = agent_results.get("files", {}).get("created", 0) if isinstance(agent_results, dict) else agent_results.files_created
-                print(f"  Fallback files: {files}")
+    except Exception as e:
+        print(f"  Stage execution error: {e}")
+        # Even with errors, check if fallback was triggered
+        agent_results = context.shared_data.get("deliverables")
+        if agent_results:
+            files = agent_results.get("files", {}).get("created", 0) if isinstance(agent_results, dict) else agent_results.files_created
+            print(f"  Fallback files: {files}")
 
     print("  PASSED: Deliverables stage executes correctly")
     return True
+
+
+async def dump_output():
+    """Run M10 deliverables and dump full JSON output."""
+    import json
+    from app.confucius.workflows.onboarding import OnboardingOrchestrator
+    from app.confucius.workflows.base import WorkflowContext
+
+    print("=" * 60)
+    print("M10: Deliverables — OUTPUT DUMP")
+    print("=" * 60)
+
+    orchestrator = OnboardingOrchestrator()
+
+    dvpwa_path = "/opt/projecten/examples/dvpwa"
+    project_path = dvpwa_path if Path(dvpwa_path).exists() else tempfile.mkdtemp()
+    print(f"Project: {project_path}")
+
+    context = WorkflowContext(
+        session_id="dump-m10",
+        workflow_id="dump-m10",
+        workflow_type="onboarding",
+        shared_data={
+            "project_path": project_path,
+            "answers": {
+                "q1_primary_purpose": "Damn Vulnerable Python Web Application voor security testing",
+                "q2_users": "Security researchers, penetration testers",
+                "q3_critical_processes": "SQL query handling, authenticatie",
+                "q4_integrations": "PostgreSQL, aiohttp, Docker",
+                "q5_pain_points": "Security kwetsbaarheden, raw SQL",
+            },
+            "code_discovery": {"total_files": 10, "file_types": {"py": 5}},
+            "intake_context": {"domains": [], "code_metrics": {"total_files": 10}},
+            "code_understanding": {"components": []},
+            "domain_extraction": {
+                "domains": [
+                    {"name": "Security", "description": "Security domain", "entities": ["SQLi"]},
+                ]
+            },
+            "user_journey_extraction": {
+                "journeys": [{"name": "Main Flow", "steps": ["step1"]}],
+            },
+            "deep_extraction": {"components": []},
+            "security_scan": {"findings": {"total": 5, "critical": 0, "high": 1}},
+            "story_generation": {
+                "epics": [{"id": "E1", "title": "Core Epic", "domain_name": "Security"}],
+                "stories": [{"id": "S1", "title": "Fix SQLi", "points": 5}],
+                "total_epics": 1,
+                "total_stories": 1,
+                "total_story_points": 5,
+            },
+            "estimation": {
+                "function_points": {"adjusted": 1000},
+                "confidence_level": 0.7,
+                "estimates": {"weeks_low": 20, "weeks_likely": 30, "weeks_high": 45},
+                "team": {"recommended_size": 3},
+            },
+        },
+    )
+
+    stages = orchestrator.get_stages()
+    deliverables_stage = next((s for s in stages if s.name == "deliverables"), None)
+    if deliverables_stage:
+        result = await orchestrator.execute_stage(deliverables_stage, context)
+        deliverables = context.shared_data.get("deliverables", {})
+        output = {
+            "stage": "M10 - Deliverables",
+            "input": {k: v for k, v in context.shared_data.items() if k != "deliverables"},
+            "output": deliverables,
+        }
+        print(json.dumps(output, indent=2, default=str))
+    else:
+        print("ERROR: deliverables stage not found")
 
 
 async def main():
@@ -626,5 +703,8 @@ async def main():
 
 
 if __name__ == "__main__":
-    success = asyncio.run(main())
-    sys.exit(0 if success else 1)
+    if "--dump" in sys.argv:
+        asyncio.run(dump_output())
+    else:
+        success = asyncio.run(main())
+        sys.exit(0 if success else 1)

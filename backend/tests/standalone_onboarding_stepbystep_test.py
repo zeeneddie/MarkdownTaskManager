@@ -45,35 +45,65 @@ logger = logging.getLogger("stepbystep")
 # Configuration
 # =============================================================================
 
-PROJECT_PATH = "/opt/projecten/hci-crs"
-OUTPUT_DIR = Path("/opt/projecten/hci-crs/.marqed-stepbystep")
+# Use dvpwa as primary test project, fall back to hci-crs
+_DVPWA_PATH = "/opt/projecten/examples/dvpwa"
+_HCI_CRS_PATH = "/opt/projecten/hci-crs"
+PROJECT_PATH = _DVPWA_PATH if Path(_DVPWA_PATH).exists() else _HCI_CRS_PATH
+OUTPUT_DIR = Path(PROJECT_PATH) / ".marqed-stepbystep"
 
-ANSWERS = {
-    "q1_primary_purpose": (
-        "HCI-CRS is een legacy healthcare registratiesysteem voor het beheren van "
-        "clientgegevens, zorgtrajecten en declaraties in de geestelijke gezondheidszorg (GGZ). "
-        "Het systeem ondersteunt het volledige zorgproces van intake tot declaratie."
-    ),
-    "q2_users": (
-        "GGZ behandelaren (psychiaters, psychologen, verpleegkundigen), administratief "
-        "personeel, financiele afdeling, management voor rapportages, en indirect de "
-        "zorgverzekeraars via declaraties."
-    ),
-    "q3_critical_processes": (
-        "Client registratie en dossiervorming, behandelplan opstellen en bewaken, "
-        "afspraakplanning en agenda, urenregistratie van behandelaren, DBC/ZZP declaraties "
-        "naar zorgverzekeraars, rapportages voor management en externe instanties."
-    ),
-    "q4_integrations": (
-        "Vecozo voor declaratie-uitwisseling met zorgverzekeraars, mogelijk EPD/ECD "
-        "koppelingen, email notificaties, legacy database systemen."
-    ),
-    "q5_pain_points": (
-        "Verouderde ASP.NET WebForms technologie, monolithische architectuur, beperkte "
-        "testbaarheid, tightly coupled componenten, onduidelijke scheiding van concerns, "
-        "technische schuld door jaren van ad-hoc aanpassingen."
-    ),
-}
+# Answers depend on which project we're using
+if PROJECT_PATH == _DVPWA_PATH:
+    ANSWERS = {
+        "q1_primary_purpose": (
+            "Damn Vulnerable Python Web Application - een demonstratie webapplicatie "
+            "voor security testing met opzettelijke SQL-injection kwetsbaarheden, "
+            "gebouwd op het aiohttp framework met PostgreSQL database"
+        ),
+        "q2_users": (
+            "Security researchers, penetration testers, developers "
+            "die web security kwetsbaarheden leren herkennen en beveiligen"
+        ),
+        "q3_critical_processes": (
+            "SQL query verwerking met opzettelijke injection points, "
+            "user authenticatie zonder input validatie, database operaties "
+            "met raw SQL queries die kwetsbaar zijn voor aanvallen"
+        ),
+        "q4_integrations": (
+            "PostgreSQL database, aiohttp web framework, "
+            "Jinja2 template engine, Docker container orchestratie"
+        ),
+        "q5_pain_points": (
+            "Opzettelijke security kwetsbaarheden, geen input sanitization, "
+            "raw SQL queries, verouderde dependencies, geen unit tests"
+        ),
+    }
+else:
+    ANSWERS = {
+        "q1_primary_purpose": (
+            "HCI-CRS is een legacy healthcare registratiesysteem voor het beheren van "
+            "clientgegevens, zorgtrajecten en declaraties in de geestelijke gezondheidszorg (GGZ). "
+            "Het systeem ondersteunt het volledige zorgproces van intake tot declaratie."
+        ),
+        "q2_users": (
+            "GGZ behandelaren (psychiaters, psychologen, verpleegkundigen), administratief "
+            "personeel, financiele afdeling, management voor rapportages, en indirect de "
+            "zorgverzekeraars via declaraties."
+        ),
+        "q3_critical_processes": (
+            "Client registratie en dossiervorming, behandelplan opstellen en bewaken, "
+            "afspraakplanning en agenda, urenregistratie van behandelaren, DBC/ZZP declaraties "
+            "naar zorgverzekeraars, rapportages voor management en externe instanties."
+        ),
+        "q4_integrations": (
+            "Vecozo voor declaratie-uitwisseling met zorgverzekeraars, mogelijk EPD/ECD "
+            "koppelingen, email notificaties, legacy database systemen."
+        ),
+        "q5_pain_points": (
+            "Verouderde ASP.NET WebForms technologie, monolithische architectuur, beperkte "
+            "testbaarheid, tightly coupled componenten, onduidelijke scheiding van concerns, "
+            "technische schuld door jaren van ad-hoc aanpassingen."
+        ),
+    }
 
 # Stage name -> human-readable name + description of what's LLM-heavy
 STAGE_INFO = {
@@ -338,17 +368,28 @@ async def run_stepbystep(
         logger.error(f"Project not found: {PROJECT_PATH}")
         return False
 
-    # Create output directory
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    # Versioned run management
+    from app.confucius.workflows.onboarding_versioning import OnboardingRunManager
+
+    run_mgr = OnboardingRunManager(PROJECT_PATH)
+    trigger = "rerun" if run_mgr.get_latest_run() else "initial"
+    onboarding_run = run_mgr.start_run(trigger=trigger, answers=ANSWERS)
+
+    # Use versioned stepbystep dir; OUTPUT_DIR stays as symlink target
+    versioned_output = onboarding_run.stepbystep_dir
+    versioned_output.mkdir(parents=True, exist_ok=True)
 
     orchestrator = OnboardingOrchestrator()
     session_id = f"stepbystep-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
 
     # Check for existing checkpoint to resume from
-    checkpoint_file = OUTPUT_DIR / "checkpoint.json"
+    checkpoint_file = versioned_output / "checkpoint.json"
     shared_data = {
         "project_path": PROJECT_PATH,
         "answers": ANSWERS,
+        "onboarding_trigger": trigger,
+        "onboarding_run_id": onboarding_run.run_id,
+        "onboarding_run_dir": str(onboarding_run.run_dir),
     }
     completed_stages = []
 
@@ -449,20 +490,24 @@ async def run_stepbystep(
             }
             stage_timings.append(timing)
 
-            # Write stage result markdown
+            # Write stage result markdown to versioned dir
             write_stage_result_md(
                 stage.name, stage_result, duration,
-                context.shared_data, OUTPUT_DIR,
+                context.shared_data, versioned_output,
             )
+
+            # Update run manifest with stage score
+            onboarding_run.update_stage_score(stage.name, score)
 
             status = "PASSED" if passed else "FAILED"
             print(f"\n  Result: {status}")
             print(f"  Score:  {score:.2f} / {stage.quality_threshold}")
             print(f"  Time:   {duration:.1f}s ({duration/60:.1f} min)")
 
-            # Save checkpoint after each stage
+            # Save checkpoint after each stage (to versioned dir)
             checkpoint_data = {
                 "session_id": session_id,
+                "run_id": onboarding_run.run_id,
                 "completed_stages": context.completed_stages.copy(),
                 "shared_data": context.shared_data,
                 "stage_timings": stage_timings,
@@ -495,16 +540,37 @@ async def run_stepbystep(
                 print(f"\n  Required stage failed - stopping.")
                 break
 
-    # Write summary
+    # Write summary to versioned dir
     total_duration = (datetime.now(timezone.utc) - total_start).total_seconds()
-    write_summary_md(stage_timings, context.shared_data, OUTPUT_DIR)
+    write_summary_md(stage_timings, context.shared_data, versioned_output)
+
+    # Finalize versioned run
+    all_passed = all(t["passed"] for t in stage_timings)
+    stage_scores = {t["stage"]: t["score"] for t in stage_timings}
+
+    if all_passed:
+        onboarding_run.complete(stage_scores=stage_scores)
+    else:
+        failed_names = [t["stage"] for t in stage_timings if not t["passed"]]
+        onboarding_run.fail(
+            error=f"Failed stages: {', '.join(failed_names)}",
+            stage_scores=stage_scores,
+        )
+
+    # Update symlinks (stepbystep + deliverables if M10 ran)
+    run_mgr.finalize(onboarding_run)
+
+    # Show run history
+    all_runs = run_mgr.list_runs()
 
     # Final summary
     print(f"\n{'='*70}")
     print(f"SUMMARY")
     print(f"{'='*70}")
-    print(f"Total: {total_duration:.1f}s ({total_duration/60:.1f} min)")
-    print(f"Stages: {len(stage_timings)}/{len(stage_names)}")
+    print(f"Run ID:  {onboarding_run.run_id}")
+    print(f"Trigger: {trigger}")
+    print(f"Total:   {total_duration:.1f}s ({total_duration/60:.1f} min)")
+    print(f"Stages:  {len(stage_timings)}/{len(stage_names)}")
 
     for t in stage_timings:
         info = STAGE_INFO.get(t["stage"], (t["stage"], "", ""))
@@ -513,9 +579,15 @@ async def run_stepbystep(
 
     passed_count = sum(1 for t in stage_timings if t["passed"])
     print(f"\nPassed: {passed_count}/{len(stage_timings)}")
-    print(f"Output: {OUTPUT_DIR}")
+    print(f"Output: {versioned_output}")
+    print(f"History: {len(all_runs)} run(s) in {run_mgr.history_dir}")
 
-    return all(t["passed"] for t in stage_timings)
+    if len(all_runs) > 1:
+        print(f"\nPrevious runs:")
+        for r in all_runs[:-1]:
+            print(f"  - {r.run_id} ({r.manifest.get('trigger', '?')}, {r.manifest.get('status', '?')})")
+
+    return all_passed
 
 
 async def main():

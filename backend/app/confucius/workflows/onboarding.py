@@ -1626,10 +1626,22 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
                 f"missing: {missing_required}"
             )
 
-        return result.to_dict()
+        # Write MD output
+        result_dict = result.to_dict()
+        try:
+            self._write_service_md(
+                context, "m1_input_validation.md",
+                "M1: Input Validation",
+                self._format_m1_md(result_dict),
+                stage_label="M1: Input Validation",
+            )
+        except Exception as e:
+            logger.warning(f"Failed to write M1 MD: {e}")
+
+        return result_dict
 
     # =========================================================================
-    # M2: INTAKE CONTEXT (Vector DB)
+    # M2: INTAKE CONTEXT (File-based + Vector DB)
     # =========================================================================
 
     async def _fetch_intake_context(
@@ -1637,18 +1649,17 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
         context: WorkflowContext,
     ) -> Dict[str, Any]:
         """
-        Fetch project context from Vector DB for enriched analysis.
+        Fetch project context for enriched analysis.
 
-        Source: brown_paper_service.py L3556-3644 (B's _fetch_vector_context)
+        Fallback chain:
+        1. File-based: reads docs/*.md from the project directory
+        2. ChromaDB: semantic search (if available)
+        3. Graceful degradation: score 0.70, no context
 
-        This stage:
-        1. Extracts project name from path
-        2. Queries ChromaDB for relevant documents
-        3. Extracts architecture summary and code locations
-        4. Stores context in shared_data for downstream stages
-
-        Graceful degradation: If Vector DB is unavailable, still passes
-        with quality_score 0.70 to allow workflow to continue.
+        File-based context reads architecture docs, intake docs, previous
+        onboarding deliverables, and stage outputs from the project directory.
+        This works without any external dependencies and produces richer
+        context than ChromaDB for projects that have been onboarded before.
         """
         from pathlib import Path
         import re
@@ -1656,150 +1667,297 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
         project_path = context.shared_data.get("project_path", "")
         path = Path(project_path)
         project_name = path.name
+        answers = context.shared_data.get("answers", {})
 
-        # Try to fetch from Vector DB
+        # Strategy 1: File-based context (always try first)
+        if path.exists():
+            file_result = self._fetch_context_from_files(project_path, answers)
+            if file_result and file_result.total_docs_found > 0:
+                file_result_dict = file_result.to_dict()
+                context.shared_data["intake_context"] = file_result_dict
+                logger.info(
+                    f"Intake context from files for {project_name}: "
+                    f"{file_result.total_docs_found} docs, "
+                    f"{len(file_result.code_locations)} code locations, "
+                    f"score {file_result.quality_score}"
+                )
+                try:
+                    self._write_service_md(
+                        context, "m2_intake_context.md",
+                        "M2: Intake Context",
+                        self._format_m2_md(file_result_dict),
+                        stage_label="M2: Intake Context",
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to write M2 MD: {e}")
+                return file_result_dict
+
+        # Strategy 2: ChromaDB (if available and files didn't yield results)
         chroma_service = self._get_chroma_service()
+        if chroma_service:
+            try:
+                chroma_result = self._fetch_context_from_chroma(
+                    chroma_service, project_path, project_name, answers, context,
+                )
+                if chroma_result and chroma_result.total_docs_found > 0:
+                    chroma_result_dict = chroma_result.to_dict()
+                    context.shared_data["intake_context"] = chroma_result_dict
+                    logger.info(
+                        f"Intake context from ChromaDB for {project_name}: "
+                        f"{chroma_result.total_docs_found} docs, "
+                        f"score {chroma_result.quality_score}"
+                    )
+                    try:
+                        self._write_service_md(
+                            context, "m2_intake_context.md",
+                            "M2: Intake Context",
+                            self._format_m2_md(chroma_result_dict),
+                            stage_label="M2: Intake Context",
+                        )
+                    except Exception as e:
+                        logger.warning(f"Failed to write M2 MD: {e}")
+                    return chroma_result_dict
+            except Exception as e:
+                logger.warning(f"ChromaDB query failed: {e}")
 
-        if not chroma_service:
-            # Graceful degradation - no Vector DB available
-            logger.warning(
-                f"ChromaDB not available for {project_name}. "
-                "Continuing with degraded context (score 0.70)"
-            )
-            result = IntakeContextResult(
-                context_available=False,
-                project_name=project_name,
-                project_path=project_path,
-                relevant_docs=[],
-                architecture_summary=None,
-                code_locations=[],
-                total_docs_found=0,
-                fetched_at=datetime.now(timezone.utc).isoformat(),
-                error="ChromaDB service not available",
-            )
-            # Store minimal context for downstream
-            context.shared_data["intake_context"] = result.to_dict()
-            return result.to_dict()
-
+        # Strategy 3: Graceful degradation
+        logger.warning(
+            f"No context available for {project_name}. "
+            "Continuing with degraded context (score 0.70)"
+        )
+        result = IntakeContextResult(
+            context_available=False,
+            project_name=project_name,
+            project_path=project_path,
+            relevant_docs=[],
+            architecture_summary=None,
+            code_locations=[],
+            total_docs_found=0,
+            fetched_at=datetime.now(timezone.utc).isoformat(),
+            error="No docs found and ChromaDB not available",
+        )
+        result_dict = result.to_dict()
+        context.shared_data["intake_context"] = result_dict
         try:
-            # Build query from project info and answers
-            answers = context.shared_data.get("answers", {})
-            query_parts = [project_name, "architecture", "analysis"]
-
-            # Add keywords from answers for better matching
-            if answers.get("q1_primary_purpose"):
-                query_parts.append(answers["q1_primary_purpose"][:100])
-            if answers.get("q3_critical_processes"):
-                query_parts.append(answers["q3_critical_processes"][:100])
-
-            # Extract path components for matching
-            path_parts = project_path.replace("\\", "/").split("/")
-            query_parts.extend(path_parts[-3:])  # Last 3 components
-
-            query = " ".join(query_parts)
-
-            # Query ChromaDB
-            # Note: project_id would come from registration, using 1000 as default
-            project_id = context.shared_data.get("project_id", 1000)
-
-            results = chroma_service.query_project_knowledge(
-                query=query,
-                project_id=project_id,
-                top_k=10,
+            self._write_service_md(
+                context, "m2_intake_context.md",
+                "M2: Intake Context",
+                self._format_m2_md(result_dict),
+                stage_label="M2: Intake Context",
             )
-
-            # Process results
-            relevant_docs = []
-            architecture_context = []
-            code_locations = []
-
-            for doc, metadata, distance in zip(
-                results.get("results", []),
-                results.get("metadatas", []),
-                results.get("distances", []),
-            ):
-                doc_type = metadata.get("document_type", "unknown")
-                relevance = round(1 - distance, 4) if distance else 0
-
-                doc_info = {
-                    "content_snippet": doc[:500] if doc else "",
-                    "source": metadata.get("relative_path", "unknown"),
-                    "type": doc_type,
-                    "relevance": relevance,
-                }
-                relevant_docs.append(doc_info)
-
-                # Collect architecture docs
-                if doc_type == "architecture" and relevance > 0.5:
-                    architecture_context.append(doc)
-
-                # Extract code locations from content
-                if doc:
-                    # Common code file patterns
-                    patterns = [
-                        r'[`"]?([A-Za-z_/\\]+\.(cs|vb|aspx|ascx|asp|ts|tsx|js|jsx|py))[`"]?',
-                    ]
-                    for pattern in patterns:
-                        paths = re.findall(pattern, doc)
-                        for path_match in paths[:3]:  # Limit per doc
-                            code_locations.append({
-                                "path": path_match[0] if isinstance(path_match, tuple) else path_match,
-                                "source": metadata.get("relative_path", "unknown"),
-                            })
-
-            # Deduplicate code locations
-            seen_paths = set()
-            unique_locations = []
-            for loc in code_locations:
-                if loc["path"] not in seen_paths:
-                    seen_paths.add(loc["path"])
-                    unique_locations.append(loc)
-
-            # Build result
-            architecture_summary = (
-                "\n\n".join(architecture_context[:2])
-                if architecture_context
-                else None
-            )
-
-            result = IntakeContextResult(
-                context_available=True,
-                project_name=project_name,
-                project_path=project_path,
-                relevant_docs=relevant_docs[:10],
-                architecture_summary=architecture_summary,
-                code_locations=unique_locations[:20],
-                total_docs_found=len(relevant_docs),
-                fetched_at=datetime.now(timezone.utc).isoformat(),
-            )
-
-            # Store in shared_data for downstream stages
-            context.shared_data["intake_context"] = result.to_dict()
-
-            logger.info(
-                f"Intake context fetched for {project_name}: "
-                f"{result.total_docs_found} docs, "
-                f"{len(result.code_locations)} code locations, "
-                f"score {result.quality_score}"
-            )
-
-            return result.to_dict()
-
         except Exception as e:
-            logger.warning(f"Failed to fetch intake context: {e}")
-            result = IntakeContextResult(
-                context_available=False,
-                project_name=project_name,
-                project_path=project_path,
-                relevant_docs=[],
-                architecture_summary=None,
-                code_locations=[],
-                total_docs_found=0,
-                fetched_at=datetime.now(timezone.utc).isoformat(),
-                error=str(e),
-            )
-            context.shared_data["intake_context"] = result.to_dict()
-            return result.to_dict()
+            logger.warning(f"Failed to write M2 MD: {e}")
+        return result_dict
+
+    def _fetch_context_from_files(
+        self,
+        project_path: str,
+        answers: Dict[str, str],
+    ) -> Optional[IntakeContextResult]:
+        """
+        Read project context from markdown docs on disk.
+
+        Scans: docs/*.md, onboarding-deliverables/, marqed-deliverables/,
+        .marqed-stepbystep/, and nested project dirs (e.g. version_1/docs/).
+        """
+        import re
+        from pathlib import Path
+
+        path = Path(project_path)
+        project_name = path.name
+
+        if not path.exists():
+            return None
+
+        # Document type classification patterns
+        doc_type_patterns = {
+            "security": [r"(?i)security", r"(?i)vulnerability", r"(?i)owasp"],
+            "architecture": [r"(?i)architect", r"(?i)proposed.structure", r"(?i)technische.detail"],
+            "intake": [r"(?i)intake", r"(?i)project.goal", r"(?i)project.overview"],
+            "migration": [r"(?i)migrat", r"(?i)moderniz"],
+            "estimation": [r"(?i)estimat", r"(?i)function.point", r"(?i)ifpug"],
+            "workflow": [r"(?i)workflow", r"(?i)process"],
+            "analysis": [r"(?i)analyse", r"(?i)analysis", r"(?i)volledige",
+                         r"(?i)samenvatting", r"(?i)rapport", r"(?i)metrics"],
+        }
+        code_pattern = re.compile(
+            r'[`"\']?([A-Za-z_][\w/\\.-]*\.'
+            r'(?:cs|vb|aspx?|ascx|asmx|ts|tsx|js|jsx|py|config|csproj|sln|sql))'
+            r'[`"\']?'
+        )
+
+        def classify(filename: str) -> str:
+            for dtype, patterns in doc_type_patterns.items():
+                for pat in patterns:
+                    if re.search(pat, filename):
+                        return dtype
+            return "documentation"
+
+        # Scan for doc files
+        raw_docs = []
+        seen = set()
+        max_size = 100_000
+
+        def add(fp: Path, priority: int):
+            try:
+                rel = str(fp.relative_to(path))
+            except ValueError:
+                rel = str(fp)
+            if rel in seen or not fp.is_file():
+                return
+            if fp.stat().st_size > max_size or fp.stat().st_size == 0:
+                return
+            seen.add(rel)
+            try:
+                content = fp.read_text(encoding="utf-8", errors="replace")
+            except Exception:
+                return
+            raw_docs.append({
+                "content": content, "relative_path": rel,
+                "filename": fp.name, "document_type": classify(fp.name),
+                "size": len(content), "priority": priority,
+            })
+
+        # Find docs dirs (including nested project structures)
+        docs_dirs = []
+        if (path / "docs").is_dir():
+            docs_dirs.append(path / "docs")
+        for child in sorted(path.iterdir()):
+            if child.is_dir() and not child.name.startswith("."):
+                if (child / "docs").is_dir():
+                    docs_dirs.append(child / "docs")
+
+        for dd in docs_dirs:
+            for f in sorted(dd.glob("*.md")):
+                add(f, 1)
+            for f in sorted(dd.glob("*.txt")):
+                add(f, 1)
+            for sub in ("onboarding-deliverables", "marqed-deliverables"):
+                sd = dd / sub
+                if sd.is_dir():
+                    for f in sorted(sd.rglob("*.md")):
+                        add(f, 2)
+
+        for f in sorted(path.glob("*.md")):
+            add(f, 4)
+
+        stepbystep = path / ".marqed-stepbystep"
+        if stepbystep.is_dir():
+            for f in sorted(stepbystep.glob("*.md")):
+                add(f, 5)
+
+        if not raw_docs:
+            return None
+
+        raw_docs.sort(key=lambda d: d["priority"])
+
+        # Process
+        relevant_docs = []
+        arch_parts = []
+        code_locs = []
+
+        for doc in raw_docs:
+            relevant_docs.append({
+                "content_snippet": doc["content"][:500],
+                "source": doc["relative_path"],
+                "type": doc["document_type"],
+                "relevance": 1.0 - (doc["priority"] * 0.1),
+            })
+            if doc["document_type"] == "architecture":
+                arch_parts.append(doc["content"])
+            for m in code_pattern.finditer(doc["content"]):
+                match = m.group(1)
+                prefix = doc["content"][max(0, m.start() - 10):m.start()]
+                if len(match) >= 5 and "http" not in prefix and "://" not in prefix:
+                    code_locs.append({"path": match, "source": doc["relative_path"]})
+
+        # Dedup code locations
+        seen_paths = set()
+        unique_locs = []
+        for loc in code_locs:
+            if loc["path"] not in seen_paths:
+                seen_paths.add(loc["path"])
+                unique_locs.append(loc)
+
+        return IntakeContextResult(
+            context_available=True,
+            project_name=project_name,
+            project_path=project_path,
+            relevant_docs=relevant_docs[:20],
+            architecture_summary="\n\n---\n\n".join(arch_parts[:2]) if arch_parts else None,
+            code_locations=unique_locs[:30],
+            total_docs_found=len(relevant_docs),
+            fetched_at=datetime.now(timezone.utc).isoformat(),
+        )
+
+    def _fetch_context_from_chroma(
+        self,
+        chroma_service,
+        project_path: str,
+        project_name: str,
+        answers: Dict[str, str],
+        context: WorkflowContext,
+    ) -> Optional[IntakeContextResult]:
+        """Fetch context via ChromaDB semantic search (legacy path)."""
+        import re
+
+        query_parts = [project_name, "architecture", "analysis"]
+        if answers.get("q1_primary_purpose"):
+            query_parts.append(answers["q1_primary_purpose"][:100])
+        if answers.get("q3_critical_processes"):
+            query_parts.append(answers["q3_critical_processes"][:100])
+        path_parts = project_path.replace("\\", "/").split("/")
+        query_parts.extend(path_parts[-3:])
+        query = " ".join(query_parts)
+
+        project_id = context.shared_data.get("project_id", 1000)
+        results = chroma_service.query_project_knowledge(
+            query=query, project_id=project_id, top_k=10,
+        )
+
+        relevant_docs = []
+        architecture_context = []
+        code_locations = []
+
+        for doc, metadata, distance in zip(
+            results.get("results", []),
+            results.get("metadatas", []),
+            results.get("distances", []),
+        ):
+            doc_type = metadata.get("document_type", "unknown")
+            relevance = round(1 - distance, 4) if distance else 0
+            relevant_docs.append({
+                "content_snippet": doc[:500] if doc else "",
+                "source": metadata.get("relative_path", "unknown"),
+                "type": doc_type,
+                "relevance": relevance,
+            })
+            if doc_type == "architecture" and relevance > 0.5:
+                architecture_context.append(doc)
+            if doc:
+                paths = re.findall(
+                    r'[`"]?([A-Za-z_/\\]+\.(cs|vb|aspx|ascx|asp|ts|tsx|js|jsx|py))[`"]?',
+                    doc,
+                )
+                for pm in paths[:3]:
+                    code_locations.append({
+                        "path": pm[0] if isinstance(pm, tuple) else pm,
+                        "source": metadata.get("relative_path", "unknown"),
+                    })
+
+        seen = set()
+        unique = [l for l in code_locations if l["path"] not in seen and not seen.add(l["path"])]
+
+        return IntakeContextResult(
+            context_available=True,
+            project_name=project_name,
+            project_path=project_path,
+            relevant_docs=relevant_docs[:10],
+            architecture_summary="\n\n".join(architecture_context[:2]) if architecture_context else None,
+            code_locations=unique[:20],
+            total_docs_found=len(relevant_docs),
+            fetched_at=datetime.now(timezone.utc).isoformat(),
+        )
 
     def _get_chroma_service(self):
         """
@@ -1835,15 +1993,15 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
 
         Services (in order):
         1. DependencyGraphService - module dependencies
-        2. CodeAnalysisAggregatorService - code metrics (requires DB)
-        3. LayeredAnalysisService - layer detection (requires DB)
+        2. CodeAnalysisAggregatorService - code metrics (DB-free)
+        3. LayeredAnalysisService - 4-layer analysis (DB-free)
         4. FoundationDetectionService - foundation modules
         5. BackgroundJobDetectorService - scheduled jobs
         6. LoadEstimationService - capacity estimation
         7. DeadCodeDetectorService - unused code
         8. RuntimeAnalysisService - runtime behavior
         9. CodeCoverageAnalyzerService - test coverage
-        10. DataLineageService - data flow (requires DB)
+        10. DataLineageService - data flow (DB-free, in-memory)
         11. SIG Quality Metrics - maintainability
 
         Graceful degradation: Services that fail are logged but don't stop
@@ -1896,28 +2054,66 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
             result.errors.append(f"DependencyGraph: {e}")
             logger.warning(f"DependencyGraph failed: {e}")
 
-        # Service 2: CodeAnalysisAggregatorService (requires DB - skip in standalone)
+        # Service 2: CodeAnalysisAggregatorService (DB-free mode)
         emit_service_progress(2, service_names[1])
         result.services_run += 1
         try:
-            # This service requires AsyncSession, mark as skipped in standalone
-            result.code_analysis = {"status": "skipped", "reason": "requires database session"}
-            result.services_succeeded += 1  # Count as success (graceful skip)
-            logger.info("CodeAnalysis: skipped (requires DB)")
+            from app.services.code_analysis_aggregator_service import CodeAnalysisAggregatorService
+            aggregator = CodeAnalysisAggregatorService(db=None)
+            agg_result = await aggregator.analyze(
+                project_id=0,
+                repository_path=project_path,
+                include_codewiki=False,
+            )
+            result.code_analysis = agg_result.to_dict()
+            # Persist to MD file in deliverables
+            self._write_service_md(
+                context, "code_analysis_aggregated.md",
+                "Code Analysis (Aggregated)", agg_result.to_llm_context(),
+                stage_label="M3: Code Understanding",
+            )
+            result.services_succeeded += 1
+            logger.info(f"CodeAnalysis: score={agg_result.analysis_score:.1f}")
         except Exception as e:
             result.services_failed += 1
             result.errors.append(f"CodeAnalysis: {e}")
+            logger.warning(f"CodeAnalysis failed: {e}")
 
-        # Service 3: LayeredAnalysisService (requires DB - skip in standalone)
+        # Service 3: LayeredAnalysisService (DB-free mode)
         emit_service_progress(3, service_names[2])
         result.services_run += 1
         try:
-            result.layered_analysis = {"status": "skipped", "reason": "requires database session"}
+            from app.services.layered_analysis_service import LayeredAnalysisService
+            layered_service = LayeredAnalysisService(db=None)
+            la_session = await layered_service.create_session(
+                name=f"onboarding-{Path(project_path).name}",
+                source_path=project_path,
+            )
+            la_session_id = la_session["id"] if isinstance(la_session, dict) else la_session.id
+
+            # Scan for VBScript/ASP and stored procedures in the project
+            vb_code = self._scan_for_code(project_path, [".asp", ".vbs"])
+            sp_code = self._scan_for_code(project_path, [".sql"])
+
+            la_result = await layered_service.run_full_analysis(
+                session_id=la_session_id,
+                vbscript_code=vb_code if vb_code else None,
+                sp_code=sp_code if sp_code else None,
+            )
+            result.layered_analysis = la_result
+            # Persist to MD
+            self._write_service_md(
+                context, "layered_analysis.md",
+                "Layered Analysis (4-Layer Pipeline)",
+                self._format_layered_result_md(la_result),
+                stage_label="M3: Code Understanding",
+            )
             result.services_succeeded += 1
-            logger.info("LayeredAnalysis: skipped (requires DB)")
+            logger.info(f"LayeredAnalysis: {la_result.get('status', 'unknown')}")
         except Exception as e:
             result.services_failed += 1
             result.errors.append(f"LayeredAnalysis: {e}")
+            logger.warning(f"LayeredAnalysis failed: {e}")
 
         # Service 4: FoundationDetectionService
         emit_service_progress(4, service_names[3])
@@ -2017,16 +2213,43 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
             result.errors.append(f"CoverageAnalysis: {e}")
             logger.warning(f"CoverageAnalysis failed: {e}")
 
-        # Service 10: DataLineageService (requires DB - skip in standalone)
+        # Service 10: DataLineageService (DB-free mode - uses in-memory graph)
         emit_service_progress(10, service_names[9])
         result.services_run += 1
         try:
-            result.data_lineage = {"status": "skipped", "reason": "requires database session"}
+            from app.services.data_lineage_service import DataLineageService
+            lineage_service = DataLineageService(db=None)
+            lineage_session_id = await lineage_service.create_session(
+                name=f"onboarding-{Path(project_path).name}",
+                project_id=project_path,
+            )
+
+            # Import from earlier stages if available
+            brown_paper = context.shared_data.get("brown_paper_output")
+            if brown_paper:
+                await lineage_service.import_from_brown_paper(lineage_session_id, brown_paper)
+
+            stats = await lineage_service.get_statistics(lineage_session_id)
+            matrix = await lineage_service.generate_traceability_matrix(lineage_session_id)
+            result.data_lineage = {
+                "status": "completed",
+                "session_id": lineage_session_id,
+                "statistics": stats,
+                "traceability_matrix": matrix,
+            }
+            # Persist to MD
+            self._write_service_md(
+                context, "data_lineage.md",
+                "Data Lineage Traceability",
+                self._format_lineage_md(stats, matrix),
+                stage_label="M3: Code Understanding",
+            )
             result.services_succeeded += 1
-            logger.info("DataLineage: skipped (requires DB)")
+            logger.info(f"DataLineage: {stats.get('total_nodes', 0)} nodes, {stats.get('total_edges', 0)} edges")
         except Exception as e:
             result.services_failed += 1
             result.errors.append(f"DataLineage: {e}")
+            logger.warning(f"DataLineage failed: {e}")
 
         # Service 11: SIG Quality Metrics
         emit_service_progress(11, service_names[10])
@@ -2045,7 +2268,19 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
         result.duration_seconds = time.time() - start_time
 
         # Store in shared_data for downstream stages
-        context.shared_data["code_understanding"] = result.to_dict()
+        result_dict = result.to_dict()
+        context.shared_data["code_understanding"] = result_dict
+
+        # Write unified M3 overview MD
+        try:
+            self._write_service_md(
+                context, "m3_code_understanding.md",
+                "M3: Code Understanding (11 Services)",
+                self._format_m3_overview_md(result_dict),
+                stage_label="M3: Code Understanding",
+            )
+        except Exception as e:
+            logger.warning(f"Failed to write M3 overview MD: {e}")
 
         logger.info(
             f"Code understanding complete: {result.services_succeeded}/{result.services_run} "
@@ -2053,7 +2288,7 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
             f"duration {result.duration_seconds:.1f}s"
         )
 
-        return result.to_dict()
+        return result_dict
 
     async def _run_sig_quality_analysis(self, project_path: str) -> Dict[str, Any]:
         """
@@ -2106,6 +2341,678 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
             sig_results["status"] = "failed"
 
         return sig_results
+
+    # ── M3 helper methods ────────────────────────────────────────────────
+
+    def _write_service_md(
+        self,
+        context: WorkflowContext,
+        filename: str,
+        title: str,
+        content: str,
+        stage_label: str = "onboarding",
+    ) -> None:
+        """Write service results to a markdown file in the deliverables dir."""
+        from pathlib import Path
+
+        # Try versioned run dir first, fallback to project deliverables
+        run_dir = context.shared_data.get("onboarding_run_dir")
+        if run_dir:
+            output_dir = Path(run_dir) / "deliverables"
+        else:
+            project_path = context.shared_data.get("project_path", "")
+            output_dir = Path(project_path) / "docs" / "onboarding-deliverables"
+
+        output_dir.mkdir(parents=True, exist_ok=True)
+        filepath = output_dir / filename
+
+        md = f"# {title}\n\n"
+        md += f"_Generated during onboarding {stage_label}_\n\n"
+        md += content
+        filepath.write_text(md, encoding="utf-8")
+        logger.info(f"Wrote service output: {filepath}")
+
+    def _scan_for_code(self, project_path: str, extensions: list) -> str:
+        """Scan project for code files with given extensions, return concatenated content."""
+        from pathlib import Path
+
+        code_parts = []
+        project = Path(project_path)
+        max_files = 20
+        max_size = 50_000  # 50KB per file
+        found = 0
+
+        for ext in extensions:
+            for f in project.rglob(f"*{ext}"):
+                if found >= max_files:
+                    break
+                if f.stat().st_size > max_size:
+                    continue
+                try:
+                    content = f.read_text(encoding="utf-8", errors="replace")
+                    code_parts.append(f"-- File: {f.relative_to(project)}\n{content}")
+                    found += 1
+                except Exception:
+                    continue
+
+        return "\n\n".join(code_parts)
+
+    def _format_layered_result_md(self, la_result: dict) -> str:
+        """Format LayeredAnalysis result as markdown."""
+        import json
+        lines = [f"**Status:** {la_result.get('status', 'unknown')}\n"]
+
+        layers = la_result.get("layers", {})
+        for layer_name, layer_data in layers.items():
+            lines.append(f"## {layer_name.replace('_', ' ').title()}\n")
+            if isinstance(layer_data, dict):
+                for k, v in layer_data.items():
+                    if isinstance(v, (list, dict)):
+                        lines.append(f"### {k}\n```json\n{json.dumps(v, indent=2, default=str)[:2000]}\n```\n")
+                    else:
+                        lines.append(f"- **{k}:** {v}")
+            lines.append("")
+
+        errors = la_result.get("errors", [])
+        if errors:
+            lines.append("## Errors\n")
+            for err in errors:
+                lines.append(f"- {err}")
+
+        return "\n".join(lines)
+
+    def _format_lineage_md(self, stats: dict, matrix: dict) -> str:
+        """Format DataLineage results as markdown."""
+        import json
+        lines = [
+            "## Statistics\n",
+            f"- **Nodes:** {stats.get('total_nodes', 0)}",
+            f"- **Edges:** {stats.get('total_edges', 0)}",
+            f"- **Field Mappings:** {stats.get('total_field_mappings', 0)}",
+        ]
+
+        nodes_by_type = stats.get("nodes_by_type", {})
+        if nodes_by_type:
+            lines.append("\n### Nodes by Type\n")
+            for ntype, count in sorted(nodes_by_type.items()):
+                lines.append(f"- {ntype}: {count}")
+
+        summary = matrix.get("summary", {})
+        if summary:
+            lines.append("\n## Traceability Summary\n")
+            lines.append(f"- **Epics:** {summary.get('total_epics', 0)}")
+            lines.append(f"- **Features:** {summary.get('total_features', 0)}")
+            lines.append(f"- **Stories:** {summary.get('total_stories', 0)}")
+            lines.append(f"- **Tests:** {summary.get('total_tests', 0)}")
+            coverage = summary.get("coverage", {})
+            lines.append(f"- **Test Coverage:** {coverage.get('percentage', 0)}%")
+
+        return "\n".join(lines)
+
+    # =========================================================================
+    # MD FORMATTERS (per module)
+    # =========================================================================
+
+    def _format_m1_md(self, result: dict) -> str:
+        """Format M1 validation result as markdown."""
+        from datetime import datetime, timezone
+        lines = [
+            f"**Score:** {result.get('quality_score', 0)} | "
+            f"**Valid:** {'Yes' if result.get('valid') else 'No'} | "
+            f"**Datum:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}\n",
+            f"## Validation Summary\n",
+            f"- Questions answered: {result.get('answers_count', 0)}/{result.get('questions_total', 0)}",
+            f"- Missing required: {len(result.get('missing_required', []))}",
+            f"- Validation errors: {len(result.get('validation_errors', []))}\n",
+        ]
+        missing = result.get("missing_required", [])
+        if missing:
+            lines.append("## Missing Required Questions\n")
+            for m in missing:
+                lines.append(f"- {m}")
+            lines.append("")
+        errors = result.get("validation_errors", [])
+        if errors:
+            lines.append("## Validation Errors\n")
+            for e in errors:
+                lines.append(f"- {e}")
+            lines.append("")
+        if not missing and not errors:
+            lines.append("_All validations passed successfully._\n")
+        return "\n".join(lines)
+
+    def _format_m2_md(self, result: dict) -> str:
+        """Format M2 intake context result as markdown."""
+        lines = [
+            f"**Project:** {result.get('project_name', 'unknown')} | "
+            f"**Score:** {result.get('quality_score', 0)} | "
+            f"**Docs Found:** {result.get('total_docs_found', 0)}\n",
+            f"## Context Status\n",
+            f"- Context available: {'Yes' if result.get('context_available') else 'No'}",
+            f"- Architecture summary: {'Yes' if result.get('has_architecture_summary') else 'No'}",
+            f"- Code locations: {result.get('code_locations_count', 0)}",
+            f"- Fetched at: {result.get('fetched_at', 'unknown')}\n",
+        ]
+        error = result.get("error")
+        if error:
+            lines.append(f"## Notes\n")
+            lines.append(f"- {error}\n")
+        return "\n".join(lines)
+
+    def _format_m3_overview_md(self, result: dict) -> str:
+        """Format M3 unified overview as markdown."""
+        lines = [
+            f"**Score:** {result.get('quality_score', 0)} | "
+            f"**Services:** {result.get('success_rate', '0/0')} | "
+            f"**Duration:** {result.get('duration_seconds', 0)}s\n",
+            "## Service Results\n",
+            "| # | Service | Status |",
+            "|---|---------|--------|",
+        ]
+        service_names = [
+            "DependencyGraph", "CodeAnalysis", "LayeredAnalysis",
+            "Foundation", "BackgroundJobs", "LoadEstimation",
+            "DeadCode", "RuntimeAnalysis", "CoverageAnalysis",
+            "DataLineage", "SIG Quality",
+        ]
+        service_keys = [
+            "has_dependency_graph", "has_code_analysis", "has_layered_analysis",
+            "has_foundation", "has_background_jobs", "has_load_estimation",
+            "has_dead_code", "has_runtime_analysis", "has_coverage_analysis",
+            "has_data_lineage", "has_sig_quality",
+        ]
+        for i, (name, key) in enumerate(zip(service_names, service_keys), 1):
+            status = "OK" if result.get(key) else "FAILED"
+            lines.append(f"| {i} | {name} | {status} |")
+        lines.append("")
+        # Detail file references
+        lines.append("## Detail Files\n")
+        lines.append("- `code_analysis_aggregated.md` - Code metrics and quality")
+        lines.append("- `layered_analysis.md` - 4-layer architecture pipeline")
+        lines.append("- `data_lineage.md` - Data flow traceability\n")
+        errors = result.get("errors", [])
+        if errors:
+            lines.append("## Errors\n")
+            for e in errors:
+                lines.append(f"- {e}")
+            lines.append("")
+        return "\n".join(lines)
+
+    def _format_m4_md(self, result: dict) -> str:
+        """Format M4 deep extraction result as markdown."""
+        lines = [
+            f"**Score:** {result.get('quality_score', 0)} | "
+            f"**Agents:** {result.get('agents_succeeded', 0)}/{result.get('agents_run', 0)} | "
+            f"**Duration:** {result.get('duration_seconds', 0)}s\n",
+        ]
+        # Felix - Architecture Insights
+        arch = result.get("architecture_insights")
+        lines.append("## Felix - Architecture Insights\n")
+        if arch and arch.get("status") != "skipped":
+            patterns = arch.get("patterns", [])
+            if patterns:
+                for p in patterns[:10]:
+                    if isinstance(p, dict):
+                        lines.append(f"- **{p.get('name', 'unknown')}**: {p.get('description', '')}")
+                    else:
+                        lines.append(f"- {p}")
+            else:
+                lines.append(f"```\n{str(arch)[:500]}\n```")
+        else:
+            lines.append("_Skipped or no data_")
+        lines.append("")
+        # Quinn - Quality Findings
+        findings = result.get("quality_findings", [])
+        lines.append(f"## Quinn - Quality Findings ({len(findings)})\n")
+        if findings:
+            lines.append("| Category | Description |")
+            lines.append("|----------|-------------|")
+            for f in findings[:15]:
+                if isinstance(f, dict):
+                    lines.append(f"| {f.get('category', 'general')} | {f.get('description', str(f))[:80]} |")
+                else:
+                    lines.append(f"| general | {str(f)[:80]} |")
+        else:
+            lines.append("_No findings_")
+        lines.append("")
+        # Marcus - Maintenance Recommendations
+        recs = result.get("maintenance_recommendations", [])
+        lines.append(f"## Marcus - Maintenance Recommendations ({len(recs)})\n")
+        if recs:
+            for r in recs[:10]:
+                if isinstance(r, dict):
+                    lines.append(f"- **{r.get('category', 'general')}**: {r.get('description', str(r))[:100]}")
+                else:
+                    lines.append(f"- {str(r)[:100]}")
+        else:
+            lines.append("_No recommendations_")
+        lines.append("")
+        # Council Consensus
+        consensus = result.get("council_consensus")
+        if consensus:
+            lines.append("## Council Consensus\n")
+            for key in ["key_insights", "risk_areas", "priority_actions"]:
+                items = consensus.get(key, [])
+                if items:
+                    lines.append(f"### {key.replace('_', ' ').title()}\n")
+                    for item in items[:5]:
+                        lines.append(f"- {item}")
+                    lines.append("")
+        errors = result.get("errors", [])
+        if errors:
+            lines.append("## Errors\n")
+            for e in errors:
+                lines.append(f"- {e}")
+            lines.append("")
+        return "\n".join(lines)
+
+    def _format_m5_md(self, result: dict) -> str:
+        """Format M5 user journey result as markdown."""
+        lines = [
+            f"**Score:** {result.get('quality_score', 0)} | "
+            f"**Agents:** {result.get('agents_succeeded', 0)}/{result.get('agents_run', 0)} | "
+            f"**Duration:** {result.get('duration_seconds', 0)}s\n",
+        ]
+        # Personas
+        personas = result.get("personas", [])
+        lines.append(f"## Personas ({len(personas)})\n")
+        if personas:
+            lines.append("| Name | Role | Description |")
+            lines.append("|------|------|-------------|")
+            for p in personas[:20]:
+                if isinstance(p, dict):
+                    lines.append(
+                        f"| {p.get('name', 'unknown')} | {p.get('role', '')} | "
+                        f"{p.get('description', '')[:60]} |"
+                    )
+        else:
+            lines.append("_No personas extracted_")
+        lines.append("")
+        # Journeys
+        journeys = result.get("journeys", [])
+        lines.append(f"## Journeys ({len(journeys)})\n")
+        if journeys:
+            for j in journeys[:15]:
+                if isinstance(j, dict):
+                    lines.append(f"### {j.get('name', j.get('title', 'Journey'))}\n")
+                    lines.append(f"- **Persona:** {j.get('persona', 'unknown')}")
+                    steps = j.get("steps", [])
+                    if steps:
+                        lines.append(f"- **Steps:** {len(steps)}")
+                        for s in steps[:8]:
+                            if isinstance(s, dict):
+                                lines.append(f"  1. {s.get('name', s.get('action', str(s)[:60]))}")
+                            else:
+                                lines.append(f"  1. {str(s)[:60]}")
+                    lines.append("")
+        else:
+            lines.append("_No journeys extracted_")
+            lines.append("")
+        # Screens
+        screens = result.get("screens", [])
+        lines.append(f"## Screens ({len(screens)})\n")
+        if screens:
+            for s in screens[:15]:
+                if isinstance(s, dict):
+                    lines.append(f"- **{s.get('name', 'unknown')}**: {s.get('description', '')[:60]}")
+                else:
+                    lines.append(f"- {str(s)[:60]}")
+        else:
+            lines.append("_No screens extracted_")
+        lines.append("")
+        # Gaps
+        gaps = result.get("gaps", [])
+        if gaps:
+            lines.append("## Gaps\n")
+            for g in gaps:
+                lines.append(f"- {g}")
+            lines.append("")
+        errors = result.get("errors", [])
+        if errors:
+            lines.append("## Errors\n")
+            for e in errors:
+                lines.append(f"- {e}")
+            lines.append("")
+        return "\n".join(lines)
+
+    def _format_m6_md(self, result: dict) -> str:
+        """Format M6 security scan result as markdown."""
+        findings = result.get("findings", {})
+        lines = [
+            f"**Score:** {result.get('quality_score', 0)} | "
+            f"**Findings:** {findings.get('total', 0)} | "
+            f"**Duration:** {result.get('duration_seconds', 0)}s\n",
+            "## Summary\n",
+            f"- Critical: **{findings.get('critical', 0)}**",
+            f"- High: **{findings.get('high', 0)}**",
+            f"- Medium: {findings.get('medium', 0)}",
+            f"- Low: {findings.get('low', 0)}",
+            f"- Info: {findings.get('info', 0)}\n",
+            f"**Scanners:** {result.get('scanners_succeeded', 0)}/{result.get('scanners_run', 0)} | "
+            f"**Languages:** {', '.join(result.get('languages_detected', []))}\n",
+        ]
+        # Top Critical
+        top_critical = result.get("top_critical", [])
+        if top_critical:
+            lines.append("## Top Critical Findings\n")
+            for f in top_critical[:5]:
+                if isinstance(f, dict):
+                    lines.append(f"- **{f.get('title', 'unknown')}**: {f.get('description', '')[:80]}")
+                    if f.get("cwe_id"):
+                        lines.append(f"  - CWE: {f['cwe_id']}")
+                else:
+                    lines.append(f"- {str(f)[:100]}")
+            lines.append("")
+        # Top High
+        top_high = result.get("top_high", [])
+        if top_high:
+            lines.append("## Top High Findings\n")
+            for f in top_high[:10]:
+                if isinstance(f, dict):
+                    lines.append(f"- **{f.get('title', 'unknown')}**: {f.get('description', '')[:80]}")
+                else:
+                    lines.append(f"- {str(f)[:100]}")
+            lines.append("")
+        # CWE Coverage
+        cwe = result.get("cwe_coverage", {})
+        if cwe:
+            lines.append("## CWE Coverage\n")
+            lines.append(f"- Top 25 coverage: {cwe.get('cwe_top_25_coverage', 0)}%")
+            cwe_ids = cwe.get("cwe_ids_found", [])
+            if cwe_ids:
+                lines.append(f"- CWEs detected: {', '.join(str(c) for c in cwe_ids[:20])}")
+            lines.append("")
+        # Scanners used
+        scanners = result.get("scanners_used", [])
+        if scanners:
+            lines.append("## Scanners Used\n")
+            for s in scanners:
+                lines.append(f"- {s}")
+            lines.append("")
+        errors = result.get("errors", [])
+        if errors:
+            lines.append("## Errors\n")
+            for e in errors:
+                lines.append(f"- {e}")
+            lines.append("")
+        return "\n".join(lines)
+
+    def _format_m7_md(self, result: dict) -> str:
+        """Format M7 domain extraction result as markdown."""
+        lines = [
+            f"**Score:** {result.get('quality_score', 0)} | "
+            f"**Domains:** {result.get('total_domains', 0)} | "
+            f"**Duration:** {result.get('duration_seconds', 0)}s\n",
+            f"- High confidence domains: {result.get('high_confidence_domains', 0)}",
+            f"- Use cases: {result.get('total_use_cases', 0)}",
+            f"- Entities: {result.get('total_entities', 0)}",
+            f"- Modules analyzed: {result.get('modules_analyzed', 0)}\n",
+        ]
+        # Domains
+        domains = result.get("domains", [])
+        if domains:
+            lines.append("## Business Domains\n")
+            lines.append("| Domain | Confidence | Entities | Use Cases |")
+            lines.append("|--------|------------|----------|-----------|")
+            for d in domains[:20]:
+                if isinstance(d, dict):
+                    name = d.get("name", "unknown")
+                    conf = d.get("confidence", 0)
+                    ents = len(d.get("entities", []))
+                    ucs = len(d.get("use_cases", []))
+                    lines.append(f"| {name} | {conf:.2f} | {ents} | {ucs} |")
+            lines.append("")
+            # Domain details
+            for d in domains[:10]:
+                if isinstance(d, dict) and d.get("entities"):
+                    lines.append(f"### {d.get('name', 'unknown')}\n")
+                    if d.get("description"):
+                        lines.append(f"{d['description'][:200]}\n")
+                    ents = d.get("entities", [])
+                    if ents:
+                        lines.append("**Entities:**")
+                        for e in ents[:10]:
+                            if isinstance(e, dict):
+                                lines.append(f"- {e.get('name', str(e))}")
+                            else:
+                                lines.append(f"- {e}")
+                    ucs = d.get("use_cases", [])
+                    if ucs:
+                        lines.append("\n**Use Cases:**")
+                        for u in ucs[:10]:
+                            if isinstance(u, dict):
+                                lines.append(f"- {u.get('name', u.get('title', str(u)))}")
+                            else:
+                                lines.append(f"- {u}")
+                    lines.append("")
+        # Module Clusters
+        clusters = result.get("module_clusters", [])
+        if clusters:
+            lines.append("## Module Clusters\n")
+            lines.append("| Cluster | Modules | Cohesion |")
+            lines.append("|---------|---------|----------|")
+            for c in clusters[:10]:
+                if isinstance(c, dict):
+                    lines.append(
+                        f"| {c.get('name', 'unknown')} | "
+                        f"{c.get('modules_count', 0)} | "
+                        f"{c.get('cohesion_score', 0):.2f} |"
+                    )
+            lines.append("")
+        errors = result.get("errors", [])
+        if errors:
+            lines.append("## Errors\n")
+            for e in errors:
+                lines.append(f"- {e}")
+            lines.append("")
+        return "\n".join(lines)
+
+    def _format_m8_md(self, result: dict) -> str:
+        """Format M8 story generation result as markdown."""
+        lines = [
+            f"**Score:** {result.get('quality_score', 0)} | "
+            f"**Duration:** {result.get('duration_seconds', 0)}s\n",
+            "## Summary\n",
+            f"- Epics: **{result.get('total_epics', 0)}**",
+            f"- Features: {result.get('total_features', 0)}",
+            f"- Stories: **{result.get('total_stories', 0)}**",
+            f"- Story Points: {result.get('total_story_points', 0)}",
+            f"- Estimated Weeks: {result.get('estimated_weeks', 0)}",
+            f"- Domains processed: {result.get('domains_processed', 0)}",
+            f"- Journeys linked: {result.get('journeys_linked', 0)}",
+            f"- Personas linked: {result.get('personas_linked', 0)}\n",
+        ]
+        # Epics overview
+        epics = result.get("epics", [])
+        if epics:
+            lines.append("## Epics Overview\n")
+            lines.append("| Epic | Description |")
+            lines.append("|------|-------------|")
+            for ep in epics[:20]:
+                if isinstance(ep, dict):
+                    title = ep.get("title", ep.get("name", "unknown"))
+                    desc = ep.get("description", "")[:60]
+                    lines.append(f"| {title} | {desc} |")
+            lines.append("")
+        # Top Stories
+        stories = result.get("stories", [])
+        if stories:
+            lines.append(f"## Top Stories (showing {min(len(stories), 20)}/{result.get('total_stories', len(stories))})\n")
+            lines.append("| Story | Epic | Points |")
+            lines.append("|-------|------|--------|")
+            for s in stories[:20]:
+                if isinstance(s, dict):
+                    title = s.get("title", s.get("name", "unknown"))[:50]
+                    epic = s.get("epic_title", s.get("epic", ""))[:30]
+                    pts = s.get("story_points", s.get("points", "?"))
+                    lines.append(f"| {title} | {epic} | {pts} |")
+            lines.append("")
+        errors = result.get("errors", [])
+        if errors:
+            lines.append("## Errors\n")
+            for e in errors:
+                lines.append(f"- {e}")
+            lines.append("")
+        return "\n".join(lines)
+
+    def _format_m9_md(self, result: dict) -> str:
+        """Format M9 estimation result as markdown."""
+        fp = result.get("function_points", {})
+        effort = result.get("effort", {})
+        estimates = result.get("estimates", {})
+        team = result.get("team", {})
+        lines = [
+            f"**Score:** {result.get('quality_score', 0)} | "
+            f"**Confidence:** {result.get('confidence_level', 0)} | "
+            f"**Duration:** {result.get('duration_seconds', 0)}s\n",
+            "## Function Point Analysis\n",
+            f"- Unadjusted FP: {fp.get('unadjusted', 0)}",
+            f"- VAF: {fp.get('vaf', 0)}",
+            f"- Adjusted FP: **{fp.get('adjusted', 0)}**\n",
+            "## Effort Estimate\n",
+            f"- Hours: {effort.get('hours', 0)}",
+            f"- Person-days: {effort.get('person_days', 0)}",
+            f"- Person-months: {effort.get('person_months', 0)}\n",
+            "## Timeline\n",
+            f"- Low: **{estimates.get('weeks_low', 0)}** weeks",
+            f"- Likely: **{estimates.get('weeks_likely', 0)}** weeks",
+            f"- High: **{estimates.get('weeks_high', 0)}** weeks",
+            f"- Story-based: {estimates.get('story_based_weeks', 0)} weeks",
+            f"- Story Points Total: {estimates.get('story_points_total', 0)}\n",
+            "## Team\n",
+            f"- Recommended size: {team.get('recommended_size', 0)}",
+            f"- Velocity assumption: {team.get('velocity_assumption', 0)} SP/week\n",
+        ]
+        # Components
+        components = result.get("components", {})
+        if components.get("by_type"):
+            lines.append("## Components\n")
+            lines.append(f"**Total:** {components.get('total', 0)}\n")
+            lines.append("| Type | Count |")
+            lines.append("|------|-------|")
+            for ctype, count in components["by_type"].items():
+                lines.append(f"| {ctype} | {count} |")
+            lines.append("")
+        # Phase estimates
+        phases = result.get("phase_estimates", [])
+        if phases:
+            lines.append("## Phase Estimates\n")
+            lines.append("| Phase | Effort | Duration |")
+            lines.append("|-------|--------|----------|")
+            for p in phases[:10]:
+                if isinstance(p, dict):
+                    lines.append(
+                        f"| {p.get('phase', p.get('name', 'unknown'))} | "
+                        f"{p.get('effort_hours', p.get('hours', '?'))}h | "
+                        f"{p.get('duration_weeks', p.get('weeks', '?'))}w |"
+                    )
+            lines.append("")
+        # Risk factors
+        risks = result.get("risk_factors", [])
+        if risks:
+            lines.append("## Risk Factors\n")
+            for r in risks[:10]:
+                if isinstance(r, dict):
+                    lines.append(f"- **{r.get('name', r.get('factor', 'unknown'))}**: {r.get('description', r.get('impact', ''))[:80]}")
+                else:
+                    lines.append(f"- {str(r)[:100]}")
+            lines.append("")
+        # Recommendations
+        recs = result.get("recommendations", [])
+        if recs:
+            lines.append("## Recommendations\n")
+            for r in recs[:10]:
+                lines.append(f"- {r}")
+            lines.append("")
+        errors = result.get("errors", [])
+        if errors:
+            lines.append("## Errors\n")
+            for e in errors:
+                lines.append(f"- {e}")
+            lines.append("")
+        return "\n".join(lines)
+
+    def _format_m11_md(self, result: dict) -> str:
+        """Format M11 quality review result as markdown."""
+        checks = result.get("checks", {})
+        assessment = result.get("assessment", {})
+        lines = [
+            f"**Score:** {result.get('quality_score', 0)} | "
+            f"**Overall:** {assessment.get('overall', 'unknown')} | "
+            f"**Duration:** {result.get('duration_seconds', 0)}s\n",
+            "## Scores\n",
+            "| Area | Score | Issues |",
+            "|------|-------|--------|",
+        ]
+        # Consistency
+        cons = checks.get("consistency", {})
+        cons_issues = len(cons.get("issues", []))
+        lines.append(f"| Consistency | {cons.get('score', 0)} | {cons_issues} issues |")
+        # Security
+        sec = checks.get("security", {})
+        sec_status = "Compliant" if sec.get("compliant") else f"Score {sec.get('score', 0)}"
+        sec_issues = len(sec.get("issues", []))
+        lines.append(f"| Security | {sec_status} | {sec_issues} issues |")
+        # Estimation
+        est = checks.get("estimation", {})
+        est_status = "Reasonable" if est.get("reasonable") else f"Confidence {est.get('confidence', 0)}"
+        est_warnings = len(est.get("warnings", []))
+        lines.append(f"| Estimation | {est_status} | {est_warnings} warnings |")
+        # Documentation
+        doc = checks.get("documentation", {})
+        doc_status = "Complete" if doc.get("complete") else f"Score {doc.get('score', 0)}"
+        doc_missing = len(doc.get("missing", []))
+        lines.append(f"| Documentation | {doc_status} | {doc_missing} missing |")
+        # Data Integrity
+        di = checks.get("data_integrity", {})
+        di_issues = len(di.get("issues", []))
+        lines.append(f"| Data Integrity | {di.get('score', 0)} | {di_issues} issues |")
+        lines.append("")
+        # Detail sections for issues
+        if cons.get("issues"):
+            lines.append("### Consistency Issues\n")
+            for issue in cons["issues"][:5]:
+                if isinstance(issue, dict):
+                    lines.append(f"- {issue.get('description', str(issue))[:100]}")
+                else:
+                    lines.append(f"- {str(issue)[:100]}")
+            lines.append("")
+        if sec.get("issues"):
+            lines.append("### Security Issues\n")
+            for issue in sec["issues"][:5]:
+                lines.append(f"- {str(issue)[:100]}")
+            lines.append("")
+        if est.get("warnings"):
+            lines.append("### Estimation Warnings\n")
+            for w in est["warnings"][:5]:
+                lines.append(f"- {w}")
+            lines.append("")
+        if doc.get("missing"):
+            lines.append("### Missing Documentation\n")
+            for m in doc["missing"]:
+                lines.append(f"- {m}")
+            lines.append("")
+        # Recommendations
+        recs = assessment.get("recommendations", [])
+        if recs:
+            lines.append("## Recommendations\n")
+            for r in recs[:10]:
+                lines.append(f"- {r}")
+            lines.append("")
+        # Blockers
+        blockers = assessment.get("blockers", [])
+        if blockers:
+            lines.append("## Blockers\n")
+            for b in blockers:
+                lines.append(f"- **{b}**")
+            lines.append("")
+        errors = result.get("errors", [])
+        if errors:
+            lines.append("## Errors\n")
+            for e in errors:
+                lines.append(f"- {e}")
+            lines.append("")
+        return "\n".join(lines)
 
     # =========================================================================
     # M4: DEEP EXTRACTION (Felix+Quinn+Marcus)
@@ -2172,8 +3079,18 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
                 "reason": "agents not available",
                 "fallback": "code_understanding",
             }
-            context.shared_data["deep_extraction"] = result.to_dict()
-            return result.to_dict()
+            result_dict = result.to_dict()
+            context.shared_data["deep_extraction"] = result_dict
+            try:
+                self._write_service_md(
+                    context, "m4_deep_extraction.md",
+                    "M4: Deep Extraction (Felix + Quinn + Marcus)",
+                    self._format_m4_md(result_dict),
+                    stage_label="M4: Deep Extraction",
+                )
+            except Exception as e:
+                logger.warning(f"Failed to write M4 MD: {e}")
+            return result_dict
 
         # Prepare agent tasks
         async def run_felix(ext) -> Dict[str, Any]:
@@ -2282,7 +3199,19 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
         result.duration_seconds = time.time() - start_time
 
         # Store in shared_data for downstream stages
-        context.shared_data["deep_extraction"] = result.to_dict()
+        result_dict = result.to_dict()
+        context.shared_data["deep_extraction"] = result_dict
+
+        # Write MD output
+        try:
+            self._write_service_md(
+                context, "m4_deep_extraction.md",
+                "M4: Deep Extraction (Felix + Quinn + Marcus)",
+                self._format_m4_md(result_dict),
+                stage_label="M4: Deep Extraction",
+            )
+        except Exception as e:
+            logger.warning(f"Failed to write M4 MD: {e}")
 
         logger.info(
             f"Deep extraction complete: {result.agents_succeeded}/{result.agents_run} "
@@ -2290,7 +3219,7 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
             f"duration {result.duration_seconds:.1f}s"
         )
 
-        return result.to_dict()
+        return result_dict
 
     def _build_council_consensus(
         self,
@@ -2464,7 +3393,19 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
         result.duration_seconds = time.time() - start_time
 
         # Store in shared_data for downstream stages
-        context.shared_data["user_journey"] = result.to_dict()
+        result_dict = result.to_dict()
+        context.shared_data["user_journey"] = result_dict
+
+        # Write MD output
+        try:
+            self._write_service_md(
+                context, "m5_user_journey.md",
+                "M5: User Journey Extraction",
+                self._format_m5_md(result_dict),
+                stage_label="M5: User Journey",
+            )
+        except Exception as e:
+            logger.warning(f"Failed to write M5 MD: {e}")
 
         logger.info(
             f"User journey complete: {result.total_personas} personas, "
@@ -2472,7 +3413,7 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
             f"score {result.quality_score}, duration {result.duration_seconds:.1f}s"
         )
 
-        return result.to_dict()
+        return result_dict
 
     async def _static_user_journey_extraction(
         self,
@@ -2944,14 +3885,30 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
 
         if not project_path:
             result.errors.append("No project_path in context")
-            context.shared_data["security_scan"] = result.to_dict()
-            return result.to_dict()
+            result_dict = result.to_dict()
+            context.shared_data["security_scan"] = result_dict
+            try:
+                self._write_service_md(
+                    context, "m6_security_scan.md", "M6: Security Scan",
+                    self._format_m6_md(result_dict), stage_label="M6: Security Scan",
+                )
+            except Exception as e:
+                logger.warning(f"Failed to write M6 MD: {e}")
+            return result_dict
 
         path = Path(project_path)
         if not path.exists():
             result.errors.append(f"Project path does not exist: {project_path}")
-            context.shared_data["security_scan"] = result.to_dict()
-            return result.to_dict()
+            result_dict = result.to_dict()
+            context.shared_data["security_scan"] = result_dict
+            try:
+                self._write_service_md(
+                    context, "m6_security_scan.md", "M6: Security Scan",
+                    self._format_m6_md(result_dict), stage_label="M6: Security Scan",
+                )
+            except Exception as e:
+                logger.warning(f"Failed to write M6 MD: {e}")
+            return result_dict
 
         try:
             # Import and initialize SecurityScanOrchestrator
@@ -3122,14 +4079,26 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
         result.duration_seconds = time.time() - start_time
 
         # Store in shared_data for downstream stages
-        context.shared_data["security_scan"] = result.to_dict()
+        result_dict = result.to_dict()
+        context.shared_data["security_scan"] = result_dict
+
+        # Write MD output
+        try:
+            self._write_service_md(
+                context, "m6_security_scan.md",
+                "M6: Security Scan",
+                self._format_m6_md(result_dict),
+                stage_label="M6: Security Scan",
+            )
+        except Exception as e:
+            logger.warning(f"Failed to write M6 MD: {e}")
 
         logger.info(
             f"Security scan stage complete: score {result.quality_score}, "
             f"duration {result.duration_seconds:.1f}s"
         )
 
-        return result.to_dict()
+        return result_dict
 
     def _finding_to_dict(self, finding) -> Dict[str, Any]:
         """Convert SecurityFinding to dict for storage."""
@@ -3431,7 +4400,19 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
         result.duration_seconds = time.time() - start_time
 
         # Store in shared_data for downstream stages (M8: story_generation)
-        context.shared_data["domain_extraction"] = result.to_dict()
+        result_dict = result.to_dict()
+        context.shared_data["domain_extraction"] = result_dict
+
+        # Write MD output
+        try:
+            self._write_service_md(
+                context, "m7_domain_extraction.md",
+                "M7: Domain Extraction",
+                self._format_m7_md(result_dict),
+                stage_label="M7: Domain Extraction",
+            )
+        except Exception as e:
+            logger.warning(f"Failed to write M7 MD: {e}")
 
         logger.info(
             f"Domain extraction complete: {result.total_domains} domains "
@@ -3441,7 +4422,7 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
             f"duration {result.duration_seconds:.1f}s"
         )
 
-        return result.to_dict()
+        return result_dict
 
     def _extract_modules_for_domain_analysis(
         self,
@@ -3945,8 +4926,16 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
         if not domains:
             logger.warning("No domains available for story generation")
             result.errors.append("No domains from M7")
-            context.shared_data["story_generation"] = result.to_dict()
-            return result.to_dict()
+            result_dict = result.to_dict()
+            context.shared_data["story_generation"] = result_dict
+            try:
+                self._write_service_md(
+                    context, "m8_story_generation.md", "M8: Story Generation",
+                    self._format_m8_md(result_dict), stage_label="M8: Story Generation",
+                )
+            except Exception as e:
+                logger.warning(f"Failed to write M8 MD: {e}")
+            return result_dict
 
         # Step 1: Run BusinessDrivenStoryGeneratorService
         try:
@@ -4101,7 +5090,19 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
         result.duration_seconds = time.time() - start_time
 
         # Store in shared_data for downstream stages (M9: estimation)
-        context.shared_data["story_generation"] = result.to_dict()
+        result_dict = result.to_dict()
+        context.shared_data["story_generation"] = result_dict
+
+        # Write MD output
+        try:
+            self._write_service_md(
+                context, "m8_story_generation.md",
+                "M8: Story Generation",
+                self._format_m8_md(result_dict),
+                stage_label="M8: Story Generation",
+            )
+        except Exception as e:
+            logger.warning(f"Failed to write M8 MD: {e}")
 
         logger.info(
             f"Story generation complete: {result.total_stories} stories, "
@@ -4109,7 +5110,7 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
             f"score {result.quality_score}, duration {result.duration_seconds:.1f}s"
         )
 
-        return result.to_dict()
+        return result_dict
 
     def _epic_to_dict(self, epic) -> Dict[str, Any]:
         """Convert GeneratedEpic to dict."""
@@ -4551,7 +5552,19 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
         context.shared_data["m9_full_estimation_result"] = result
 
         # Store in shared_data for downstream stages (M10: deliverables)
-        context.shared_data["estimation"] = result.to_dict()
+        result_dict = result.to_dict()
+        context.shared_data["estimation"] = result_dict
+
+        # Write MD output
+        try:
+            self._write_service_md(
+                context, "m9_estimation.md",
+                "M9: Estimation (Function Points)",
+                self._format_m9_md(result_dict),
+                stage_label="M9: Estimation",
+            )
+        except Exception as e:
+            logger.warning(f"Failed to write M9 MD: {e}")
 
         logger.info(
             f"Estimation complete: {result.adjusted_fp:.1f} AFP, "
@@ -4560,28 +5573,38 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
             f"score {result.quality_score}, duration {result.duration_seconds:.1f}s"
         )
 
-        return result.to_dict()
+        return result_dict
 
     def _detect_technology_stack(
         self,
         code_understanding: Dict[str, Any],
         project_path: str,
     ):
-        """Detect technology stack from code understanding data."""
+        """Detect technology stack from code understanding data.
+
+        Uses three confidence layers for Python web detection:
+        1. File extensions (with skip-dirs filtering)
+        2. Framework-specific files and dependency declarations
+        3. code_understanding data (M3 TechnologyProfile)
+        """
         try:
             from app.services.migration_estimation_service import TechnologyStack
         except ImportError:
             return None
 
-        # Check file extensions in project
         path = Path(project_path)
+        skip_dirs = {".venv", "__pycache__", "site-packages", "node_modules",
+                     ".git", "vendor", "bin", "obj", "migrations"}
+
+        # Check file extensions in project (filter skip-dirs)
         extensions = set()
+        for ext in [".asp", ".aspx", ".vb", ".cs", ".php", ".java", ".cob", ".py"]:
+            for f in path.rglob(f"*{ext}"):
+                if not any(s in f.parts for s in skip_dirs):
+                    extensions.add(ext)
+                    break
 
-        for ext in [".asp", ".aspx", ".vb", ".cs", ".php", ".java", ".cob"]:
-            if list(path.rglob(f"*{ext}"))[:1]:  # Check if any files exist
-                extensions.add(ext)
-
-        # Map extensions to tech stack
+        # Legacy stacks first (unambiguous)
         if ".asp" in extensions:
             return TechnologyStack.CLASSIC_ASP
         elif ".aspx" in extensions and ".vb" in extensions:
@@ -4595,8 +5618,74 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
         elif ".cob" in extensions:
             return TechnologyStack.COBOL
 
+        # Python: multi-signal confidence check
+        if ".py" in extensions:
+            py_confidence = self._check_python_web_confidence(
+                path, code_understanding, skip_dirs
+            )
+            if py_confidence > 0:
+                return TechnologyStack.PYTHON_WEB
+
         # Default to VB.NET WebForms (common in healthcare legacy)
         return TechnologyStack.VB_NET_WEBFORMS
+
+    def _check_python_web_confidence(
+        self,
+        path: Path,
+        code_understanding: Dict[str, Any],
+        skip_dirs: set,
+    ) -> int:
+        """Check confidence that this is a Python web project.
+
+        Returns number of signals found (0-3):
+        - Signal 1: Framework-specific files (manage.py, wsgi.py, asgi.py)
+        - Signal 2: Web framework in dependency files (requirements.txt, pyproject.toml, Pipfile)
+        - Signal 3: code_understanding M3 data mentions Python/web frameworks
+
+        Any single signal is enough to classify as PYTHON_WEB.
+        """
+        signals = 0
+
+        # Signal 1: Framework-specific files
+        framework_files = ["manage.py", "wsgi.py", "asgi.py", "app.py", "main.py"]
+        for fname in framework_files:
+            matches = list(path.rglob(fname))
+            if any(not any(s in f.parts for s in skip_dirs) for f in matches):
+                signals += 1
+                break
+
+        # Signal 2: Web framework in dependency declarations
+        web_frameworks = [
+            "flask", "django", "fastapi", "aiohttp", "tornado",
+            "starlette", "sanic", "bottle", "pyramid", "falcon",
+        ]
+        dep_files = ["requirements.txt", "pyproject.toml", "Pipfile",
+                     "setup.py", "setup.cfg"]
+        for dep_file in dep_files:
+            dep_path = path / dep_file
+            if dep_path.exists():
+                try:
+                    content = dep_path.read_text(encoding="utf-8", errors="ignore").lower()
+                    if any(fw in content for fw in web_frameworks):
+                        signals += 1
+                        break
+                except Exception:
+                    continue
+
+        # Signal 3: code_understanding M3 data
+        if code_understanding:
+            tech = (code_understanding.get("code_analysis", {}) or {}).get("technology", {})
+            if tech:
+                frameworks = [f.lower() for f in (tech.get("frameworks") or [])]
+                languages = tech.get("languages") or {}
+                primary = (tech.get("primary_stack") or "").lower()
+
+                if any(fw in " ".join(frameworks) for fw in web_frameworks):
+                    signals += 1
+                elif "python" in primary or "python" in str(languages).lower():
+                    signals += 1
+
+        return signals
 
     def _calculate_combined_estimates(
         self,
@@ -4783,8 +5872,22 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
         start_time = time.time()
         project_path = context.shared_data.get("project_path", "")
 
-        # Determine output directory
-        output_dir = Path(project_path) / "docs" / "onboarding-deliverables"
+        # Versioned run management
+        from app.confucius.workflows.onboarding_versioning import OnboardingRunManager
+
+        run_mgr = OnboardingRunManager(project_path)
+        trigger = context.shared_data.get("onboarding_trigger", "rerun")
+        answers = context.shared_data.get("answers", {})
+        onboarding_run = run_mgr.start_run(trigger=trigger, answers=answers)
+
+        # Write to versioned deliverables dir; symlink updated on finalize
+        output_dir = onboarding_run.deliverables_dir
+
+        # Store run info in shared_data for stepbystep writer and quality review
+        context.shared_data["onboarding_run_dir"] = str(onboarding_run.run_dir)
+        context.shared_data["onboarding_run_id"] = onboarding_run.run_id
+        context.shared_data["_onboarding_run"] = onboarding_run
+        context.shared_data["_run_manager"] = run_mgr
 
         result = DeliverablesResult(
             project_path=project_path,
@@ -4902,10 +6005,27 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
         # Store in shared_data for downstream stages (M11: quality_review)
         context.shared_data["deliverables"] = result.to_dict()
 
+        # Finalize versioned run: update stage scores, complete, symlink
+        try:
+            # Collect all stage scores from context
+            stage_scores = {}
+            for stage_name, stage_result in context.stage_results.items():
+                if hasattr(stage_result, "quality_score"):
+                    stage_scores[stage_name] = stage_result.quality_score
+
+            onboarding_run.complete(stage_scores=stage_scores)
+            run_mgr.finalize(onboarding_run)
+
+            result.output_dir = str(output_dir)
+            context.shared_data["onboarding_run_id"] = onboarding_run.run_id
+        except Exception as e:
+            logger.warning(f"Versioning finalize failed (non-fatal): {e}")
+
         logger.info(
             f"Deliverables complete: {result.files_created} files, "
             f"{result.total_size_kb:.1f}KB, "
-            f"score {result.quality_score}, duration {result.duration_seconds:.1f}s"
+            f"score {result.quality_score}, duration {result.duration_seconds:.1f}s, "
+            f"run_id {onboarding_run.run_id}"
         )
 
         return result.to_dict()
@@ -5460,21 +6580,43 @@ class OnboardingOrchestrator(WorkflowOrchestrator):
             result.duration_seconds = (datetime.now(timezone.utc) - started_at).total_seconds()
 
             # Store result in context
-            context.shared_data["quality_review"] = result.to_dict()
+            result_dict = result.to_dict()
+            context.shared_data["quality_review"] = result_dict
+
+            # Write MD output
+            try:
+                self._write_service_md(
+                    context, "m11_quality_review.md",
+                    "M11: Quality Review",
+                    self._format_m11_md(result_dict),
+                    stage_label="M11: Quality Review",
+                )
+            except Exception as e_md:
+                logger.warning(f"Failed to write M11 MD: {e_md}")
 
             logger.info(
                 f"Quality review complete: score={result.quality_score:.2f}, "
                 f"blockers={len(result.blockers)}, duration={result.duration_seconds:.1f}s"
             )
 
-            return result.to_dict()
+            return result_dict
 
         except Exception as e:
             logger.error(f"Quality review failed: {e}")
             result.errors.append(str(e))
             result.duration_seconds = (datetime.now(timezone.utc) - started_at).total_seconds()
-            context.shared_data["quality_review"] = result.to_dict()
-            return result.to_dict()
+            result_dict = result.to_dict()
+            context.shared_data["quality_review"] = result_dict
+            try:
+                self._write_service_md(
+                    context, "m11_quality_review.md",
+                    "M11: Quality Review",
+                    self._format_m11_md(result_dict),
+                    stage_label="M11: Quality Review",
+                )
+            except Exception as e_md:
+                logger.warning(f"Failed to write M11 MD: {e_md}")
+            return result_dict
 
     def _check_consistency(
         self,

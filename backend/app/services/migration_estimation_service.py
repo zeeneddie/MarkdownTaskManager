@@ -62,6 +62,7 @@ class TechnologyStack(Enum):
     COBOL = "cobol"
     ORACLE_FORMS = "oracle_forms"
     POWERBUILDER = "powerbuilder"
+    PYTHON_WEB = "python_web"  # Flask, Django, FastAPI, etc.
 
 
 @dataclass
@@ -202,6 +203,7 @@ STACK_COMPLEXITY_MULTIPLIERS: Dict[TechnologyStack, float] = {
     TechnologyStack.COBOL: 2.0,            # Very different paradigm
     TechnologyStack.ORACLE_FORMS: 1.7,     # Proprietary
     TechnologyStack.POWERBUILDER: 1.6,     # Proprietary DataWindow
+    TechnologyStack.PYTHON_WEB: 1.2,       # Well-structured, modern
 }
 
 # Hours per function point by phase (industry average)
@@ -325,6 +327,52 @@ COMPONENT_PATTERNS: Dict[TechnologyStack, Dict[ComponentType, List[Tuple[str, st
         ComponentType.EIF: [
             (r"HttpURLConnection", "External HTTP"),
             (r"WebService", "External service"),
+        ],
+    },
+    TechnologyStack.PYTHON_WEB: {
+        ComponentType.EI: [
+            (r"@app\.route.*methods.*POST", "Flask POST endpoint"),
+            (r"@router\.post\s*\(", "FastAPI POST endpoint"),
+            (r"request\.form", "Flask form input"),
+            (r"request\.json|request\.get_json", "Flask JSON input"),
+            (r"def\s+post\s*\(\s*self\s*,\s*request", "Django CBV POST"),
+            (r"db\.session\.add\s*\(", "SQLAlchemy insert"),
+            (r"\.save\s*\(\s*\)", "Django ORM save"),
+            (r"\.create\s*\(", "ORM create"),
+            (r"INSERT\s+INTO", "Raw SQL insert"),
+        ],
+        ComponentType.EO: [
+            (r"return\s+jsonify\s*\(", "Flask JSON response"),
+            (r"return\s+JsonResponse\s*\(", "Django JSON response"),
+            (r"render_template\s*\(", "Flask template rendering"),
+            (r"render\s*\(\s*request\s*,", "Django template rendering"),
+            (r"StreamingResponse\s*\(", "FastAPI streaming response"),
+            (r"FileResponse\s*\(", "FastAPI file response"),
+            (r"SELECT.*ORDER\s+BY", "Sorted report query"),
+        ],
+        ComponentType.EQ: [
+            (r"@app\.route.*methods.*GET", "Flask GET endpoint"),
+            (r"@router\.get\s*\(", "FastAPI GET endpoint"),
+            (r"\.query\.filter", "SQLAlchemy query filter"),
+            (r"\.objects\.filter\s*\(", "Django ORM filter"),
+            (r"\.objects\.get\s*\(", "Django ORM get"),
+            (r"SELECT.*WHERE", "Parameterized SQL query"),
+            (r"def\s+get\s*\(\s*self\s*,\s*request", "Django CBV GET"),
+        ],
+        ComponentType.ILF: [
+            (r"class\s+\w+\s*\(\s*db\.Model\s*\)", "SQLAlchemy model"),
+            (r"class\s+\w+\s*\(\s*models\.Model\s*\)", "Django model"),
+            (r"class\s+\w+\s*\(\s*Base\s*\)", "SQLAlchemy declarative model"),
+            (r"class\s+\w+\s*\(\s*BaseModel\s*\)", "Pydantic model"),
+            (r"CREATE\s+TABLE", "SQL table definition"),
+        ],
+        ComponentType.EIF: [
+            (r"requests\.get\s*\(", "External HTTP GET"),
+            (r"requests\.post\s*\(", "External HTTP POST"),
+            (r"httpx\.", "Async HTTP client"),
+            (r"aiohttp\.ClientSession", "Async HTTP session"),
+            (r"urlopen\s*\(", "Stdlib HTTP call"),
+            (r"urllib\.request", "Stdlib urllib"),
         ],
     },
 }
@@ -464,12 +512,14 @@ class MigrationEstimationService:
             TechnologyStack.COBOL: [".cob", ".cbl", ".cpy"],
             TechnologyStack.ORACLE_FORMS: [".fmb", ".fmx", ".pll"],
             TechnologyStack.POWERBUILDER: [".pbl", ".pbt", ".pbw"],
+            TechnologyStack.PYTHON_WEB: [".py"],
         }
 
         for ext in extensions.get(stack, []):
             for file_path in path.rglob(f"*{ext}"):
                 if any(skip in str(file_path) for skip in [
-                    "node_modules", ".git", "vendor", "bin", "obj"
+                    "node_modules", ".git", "vendor", "bin", "obj",
+                    ".venv", "__pycache__", "site-packages", "migrations"
                 ]):
                     continue
                 try:
@@ -621,6 +671,7 @@ class MigrationEstimationService:
             TechnologyStack.COBOL: 48,             # High complexity
             TechnologyStack.ORACLE_FORMS: 45,      # Proprietary complexity
             TechnologyStack.POWERBUILDER: 44,      # Proprietary
+            TechnologyStack.PYTHON_WEB: 36,           # Moderate complexity
         }
 
         tdi = vaf_scores.get(stack, 35)

@@ -22,11 +22,7 @@ from pathlib import Path
 import asyncio
 import logging
 import time
-from uuid import UUID
-
-from sqlalchemy.orm import Session
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from typing import TYPE_CHECKING
 
 from app.services.stack_detection_service import (
     StackDetectionService,
@@ -41,8 +37,10 @@ from app.services.dependency_graph_service import (
     CircularDependency,
     OutputFormat,
 )
-from app.services.codewiki_service import CodeWikiService
-from app.models.codewiki import CodeWikiAnalysis, CodeWikiModule
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -299,12 +297,15 @@ class CodeAnalysisAggregatorService:
         llm_context = result.to_llm_context()
     """
 
-    def __init__(self, db: Session):
-        """Initialize aggregator with database session."""
+    def __init__(self, db=None):
+        """Initialize aggregator with optional database session."""
         self.db = db
         # StackDetectionService is created on-demand with repo_path
         self.dependency_service = DependencyGraphService()
-        self.codewiki_service = CodeWikiService(db)
+        self.codewiki_service = None
+        if db is not None:
+            from app.services.codewiki_service import CodeWikiService
+            self.codewiki_service = CodeWikiService(db)
 
     async def analyze(
         self,
@@ -345,7 +346,7 @@ class CodeAnalysisAggregatorService:
                 self._analyze_dependencies(repository_path, result),
             ]
 
-            if include_codewiki:
+            if include_codewiki and self.codewiki_service:
                 tasks.append(self._analyze_codewiki(project_id, repository_path, branch, result))
 
             # Run with timeout
@@ -434,7 +435,9 @@ class CodeAnalysisAggregatorService:
         branch: str,
         result: AggregatedAnalysis
     ) -> None:
-        """Run CodeWiki documentation analysis."""
+        """Run CodeWiki documentation analysis (requires DB)."""
+        if not self.codewiki_service:
+            return
         try:
             analysis = self.codewiki_service.create_analysis(
                 project_id=project_id,
@@ -525,6 +528,12 @@ class CodeAnalysisAggregatorService:
         Returns:
             Summary dict or None if no analysis exists
         """
+        if not self.db:
+            return None
+
+        from sqlalchemy import select
+        from app.models.codewiki import CodeWikiAnalysis
+
         # Query latest CodeWiki analysis for this project
         analysis = (
             self.db.query(CodeWikiAnalysis)
@@ -546,6 +555,6 @@ class CodeAnalysisAggregatorService:
         }
 
 
-def get_aggregator_service(db: Session) -> CodeAnalysisAggregatorService:
+def get_aggregator_service(db=None) -> CodeAnalysisAggregatorService:
     """Factory function for CodeAnalysisAggregatorService."""
     return CodeAnalysisAggregatorService(db)

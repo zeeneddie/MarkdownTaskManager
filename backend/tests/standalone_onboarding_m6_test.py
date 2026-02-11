@@ -2,14 +2,16 @@
 """
 Standalone test for M6: Security Scan module.
 
-Tests the security scanning capabilities of the OnboardingOrchestrator
-using SecurityScanOrchestrator (OpenGrep, Bandit, Trivy, OWASP, Injection, etc.).
+Doel: Scant de codebase op beveiligingsproblemen met meerdere tools (OpenGrep, Bandit, Trivy,
+OWASP, injection-detectie). Identificeert kwetsbaarheden, verouderde dependencies en security
+anti-patterns die meegewogen worden in de migratie-risicobeoordeling.
 
 Usage:
     cd backend
     .venv/bin/python3 tests/standalone_onboarding_m6_test.py
 
 Reference projects:
+- /opt/projecten/examples/dvpwa (86 files, 3.1MB) — primary test project
 - /opt/projecten/hci-crs (9,922 files, 560MB)
 - /opt/projecten/paramedi/FRM (6,710 files, 191MB)
 - /opt/projecten/paramedi/FysioOne-Classic (2,235 files, 100MB)
@@ -290,6 +292,50 @@ async def test_integration_m1_to_m6(project_path: str):
     return len(stages_failed) == 0
 
 
+async def dump_output():
+    """Run M6 security scan and dump full JSON output."""
+    import json
+    from app.confucius.workflows.onboarding import OnboardingOrchestrator
+    from app.confucius.workflows.base import WorkflowContext
+
+    print("=" * 60)
+    print("M6: Security Scan — OUTPUT DUMP")
+    print("=" * 60)
+
+    reference_projects = [
+        "/opt/projecten/examples/dvpwa",
+        "/opt/projecten/hci-crs",
+        "/opt/projecten/paramedi/FRM",
+        "/opt/projecten/paramedi/FysioOne-Classic",
+    ]
+    project_path = next((p for p in reference_projects if Path(p).exists()), str(Path.cwd()))
+    print(f"Project: {project_path}")
+
+    orchestrator = OnboardingOrchestrator()
+    context = WorkflowContext(
+        session_id="dump-m6",
+        workflow_id="dump-m6",
+        workflow_type="onboarding",
+        shared_data={
+            "project_path": project_path,
+            "answers": {
+                "q1_primary_purpose": "Healthcare system for security scan validation",
+                "q2_users": "Healthcare professionals",
+                "q3_critical_processes": "Patient data, authentication",
+                "q4_integrations": "HL7/FHIR, Vecozo",
+            },
+        },
+    )
+
+    result = await orchestrator._execute_security_scan(context)
+    output = {
+        "stage": "M6 - Security Scan",
+        "input": context.shared_data,
+        "output": result,
+    }
+    print(json.dumps(output, indent=2, default=str))
+
+
 async def main():
     """Run all M6 tests."""
     print("=" * 60)
@@ -299,6 +345,7 @@ async def main():
 
     # Reference project paths
     reference_projects = [
+        "/opt/projecten/examples/dvpwa",
         "/opt/projecten/hci-crs",
         "/opt/projecten/paramedi/FRM",
         "/opt/projecten/paramedi/FysioOne-Classic",
@@ -388,4 +435,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    if "--dump" in sys.argv:
+        asyncio.run(dump_output())
+    else:
+        asyncio.run(main())

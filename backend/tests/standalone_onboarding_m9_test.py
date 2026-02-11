@@ -2,8 +2,9 @@
 """
 Standalone test for M9: Estimation module.
 
-Tests the IFPUG Function Point estimation capabilities of the OnboardingOrchestrator
-using MigrationEstimationService.
+Doel: Berekent IFPUG Function Points per epic/story uit M8 om de migratie-omvang te kwantificeren.
+Levert een onderbouwde inspanningsschatting (uren, kosten) die als input dient voor de
+deliverables in M10 en de projectplanning.
 
 Usage:
     cd backend
@@ -83,7 +84,7 @@ async def test_estimation_result_dataclass():
     assert result4.quality_score == 0.75, f"Expected 0.75, got {result4.quality_score}"
     print(f"  Test 4: Story points only score = {result4.quality_score}")
 
-    # Test 5: Minimal estimation
+    # Test 5: No estimation data = 0.0 (no FP, no story points)
     result5 = EstimationResult(
         project_path="/test",
         agents_run=0,
@@ -92,8 +93,8 @@ async def test_estimation_result_dataclass():
         component_count=0,
         story_points_total=0,
     )
-    assert result5.quality_score == 0.50, f"Expected 0.50, got {result5.quality_score}"
-    print(f"  Test 5: Minimal estimation score = {result5.quality_score}")
+    assert result5.quality_score == 0.0, f"Expected 0.0, got {result5.quality_score}"
+    print(f"  Test 5: No data estimation score = {result5.quality_score}")
 
     # Test 6: to_dict serialization
     result_dict = result.to_dict()
@@ -132,6 +133,7 @@ async def test_migration_estimation_service():
 
     # Find a test project
     test_projects = [
+        "/opt/projecten/examples/dvpwa",
         "/opt/projecten/hci-crs",
         "/opt/projecten/paramedi/FRM",
         "/opt/projecten/paramedi/FysioOne-Classic",
@@ -149,13 +151,21 @@ async def test_migration_estimation_service():
 
     print(f"\n  Running MigrationEstimationService on: {test_path}")
 
+    # Auto-detect technology stack instead of hardcoding
+    from app.confucius.workflows.onboarding import OnboardingOrchestrator
+    orchestrator = OnboardingOrchestrator()
+    detected_stack = orchestrator._detect_technology_stack({}, test_path)
+    if not detected_stack:
+        detected_stack = TechnologyStack.VB_NET_WEBFORMS
+    print(f"  Detected stack: {detected_stack.value}")
+
     service = MigrationEstimationService()
     start_time = datetime.now(timezone.utc)
 
     result = service.analyze_directory(
         directory=test_path,
-        source_stack=TechnologyStack.VB_NET_WEBFORMS,
-        target_stack="ASP.NET Core",
+        source_stack=detected_stack,
+        target_stack="modern_web",
         include_risk_buffer=True,
     )
 
@@ -185,6 +195,7 @@ async def test_technology_stack_detection():
 
     # Test with different project paths
     test_cases = [
+        ("/opt/projecten/examples/dvpwa", "Python aiohttp expected"),
         ("/opt/projecten/hci-crs", "VB.NET WebForms expected"),
         ("/opt/projecten/paramedi/FRM", "VB.NET or C# WebForms expected"),
     ]
@@ -467,6 +478,66 @@ async def test_integration_m8_to_m9(project_path: str):
     return len(stages_failed) == 0
 
 
+async def dump_output():
+    """Run M9 estimation and dump full JSON output."""
+    import json
+    from app.confucius.workflows.onboarding import OnboardingOrchestrator
+    from app.confucius.workflows.base import WorkflowContext
+
+    print("=" * 60)
+    print("M9: Estimation — OUTPUT DUMP")
+    print("=" * 60)
+
+    reference_projects = [
+        "/opt/projecten/examples/dvpwa",
+        "/opt/projecten/hci-crs",
+        "/opt/projecten/paramedi/FRM",
+        "/opt/projecten/paramedi/FysioOne-Classic",
+    ]
+    project_path = next((p for p in reference_projects if Path(p).exists()), str(Path.cwd()))
+    print(f"Project: {project_path}")
+
+    orchestrator = OnboardingOrchestrator()
+    context = WorkflowContext(
+        session_id="dump-m9",
+        workflow_id="dump-m9",
+        workflow_type="onboarding",
+        shared_data={
+            "project_path": project_path,
+            "answers": {
+                "q1_primary_purpose": "Healthcare registration system",
+                "q2_users": "Doctors, nurses, admin staff",
+                "q3_critical_processes": "Patient registration, appointments",
+                "q4_integrations": "HL7/FHIR, VECOZO",
+            },
+            "story_generation": {
+                "total_story_points": 265,
+                "estimated_weeks": 13,
+                "total_stories": 51,
+                "total_epics": 3,
+                "quality_score": 1.0,
+            },
+            "domain_extraction": {
+                "domains": [
+                    {"name": "Patient Management", "complexity": "high"},
+                    {"name": "Appointments", "complexity": "medium"},
+                    {"name": "Billing", "complexity": "high"},
+                ],
+                "quality_score": 1.0,
+            },
+            "code_understanding": {"quality_score": 1.0},
+        },
+    )
+
+    result = await orchestrator._execute_estimation(context)
+    output = {
+        "stage": "M9 - Estimation (IFPUG Function Points)",
+        "input": context.shared_data,
+        "output": result,
+    }
+    print(json.dumps(output, indent=2, default=str))
+
+
 async def main():
     """Run all M9 tests."""
     print("=" * 60)
@@ -476,6 +547,7 @@ async def main():
 
     # Reference project paths
     reference_projects = [
+        "/opt/projecten/examples/dvpwa",
         "/opt/projecten/hci-crs",
         "/opt/projecten/paramedi/FRM",
         "/opt/projecten/paramedi/FysioOne-Classic",
@@ -608,4 +680,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    if "--dump" in sys.argv:
+        asyncio.run(dump_output())
+    else:
+        asyncio.run(main())

@@ -1,365 +1,390 @@
 #!/usr/bin/env python3
 """
-Standalone test for OnboardingWorkflow Module 1.
+Standalone test for M1: Input Validation.
 
-This test can be run without the full dependency stack.
-It validates the core validation logic.
+Doel: Valideert dat de intake-vragen (project pad, doel, gebruikers, kritieke processen)
+correct zijn ingevuld voordat de pipeline start. Threshold 1.0 — alle verplichte velden
+moeten aanwezig zijn, anders stopt de workflow direct.
 
 Usage:
-    python3 backend/tests/standalone_onboarding_m1_test.py
+    cd backend
+    .venv/bin/python3 tests/standalone_onboarding_m1_test.py
+    .venv/bin/python3 tests/standalone_onboarding_m1_test.py --dump
 """
 
 import sys
+import asyncio
 from pathlib import Path
-from dataclasses import dataclass, field
-from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 
 # Add backend to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # =============================================================================
-# INLINE DEFINITIONS (copied from onboarding.py for standalone testing)
+# REFERENCE PROJECTS & TEST DATA
 # =============================================================================
-
-ONBOARDING_QUESTIONS = [
-    {
-        "id": "q1_primary_purpose",
-        "question": "Wat is het primaire doel van deze applicatie?",
-        "description": "Beschrijf de kernfunctionaliteit en het businessdoel",
-        "required": True,
-        "min_length": 50,
-        "category": "context",
-    },
-    {
-        "id": "q2_users",
-        "question": "Wie zijn de belangrijkste gebruikers?",
-        "description": "Beschrijf de doelgroepen en hun rollen",
-        "required": True,
-        "min_length": 30,
-        "category": "context",
-    },
-    {
-        "id": "q3_critical_processes",
-        "question": "Wat zijn de kritieke business processen?",
-        "description": "Beschrijf de processen die niet mogen falen",
-        "required": True,
-        "min_length": 50,
-        "category": "analysis",
-    },
-    {
-        "id": "q4_integrations",
-        "question": "Welke integraties bestaan er?",
-        "description": "Beschrijf externe systemen, APIs, databases",
-        "required": True,
-        "min_length": 20,
-        "category": "analysis",
-    },
-    {
-        "id": "q5_pain_points",
-        "question": "Wat zijn de belangrijkste pijnpunten?",
-        "description": "Beschrijf technische schuld, performance issues, etc.",
-        "required": False,
-        "min_length": 0,
-        "category": "analysis",
-    },
-]
-
-
-@dataclass
-class OnboardingValidationResult:
-    """Result of onboarding input validation."""
-    valid: bool
-    answers_count: int
-    questions_total: int
-    missing_required: List[str]
-    validation_errors: List[str]
-
-    @property
-    def quality_score(self) -> float:
-        if self.missing_required:
-            return 0.0
-        return 1.0 if self.valid else 0.0
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "valid": self.valid,
-            "answers_count": self.answers_count,
-            "questions_total": self.questions_total,
-            "missing_required": self.missing_required,
-            "validation_errors": self.validation_errors,
-            "quality_score": self.quality_score,
-        }
-
-
-def validate_input(project_path: Optional[str], answers: Dict[str, str]) -> OnboardingValidationResult:
-    """
-    Validate onboarding inputs.
-
-    This is the core validation logic from OnboardingOrchestrator._validate_input().
-    """
-    validation_errors: List[str] = []
-    missing_required: List[str] = []
-
-    # Validate project_path
-    if not project_path:
-        validation_errors.append("project_path is required")
-    else:
-        path = Path(project_path)
-        if not path.exists():
-            validation_errors.append(f"project_path does not exist: {project_path}")
-        elif not path.is_dir():
-            validation_errors.append(f"project_path is not a directory: {project_path}")
-
-    # Validate answers
-    for q in ONBOARDING_QUESTIONS:
-        q_id = q["id"]
-        answer = answers.get(q_id, "").strip()
-
-        if q["required"]:
-            if not answer:
-                missing_required.append(q_id)
-                validation_errors.append(f"Required question not answered: {q_id}")
-            elif len(answer) < q["min_length"]:
-                validation_errors.append(
-                    f"Answer too short for {q_id}: "
-                    f"got {len(answer)}, need {q['min_length']}"
-                )
-
-    is_valid = len(validation_errors) == 0
-    return OnboardingValidationResult(
-        valid=is_valid,
-        answers_count=len([a for a in answers.values() if a]),
-        questions_total=len(ONBOARDING_QUESTIONS),
-        missing_required=missing_required,
-        validation_errors=validation_errors,
-    )
-
-
-# =============================================================================
-# TEST DATA
-# =============================================================================
-
-VALID_ANSWERS = {
-    "q1_primary_purpose": (
-        "Dit is een healthcare registratie systeem voor het beheren van "
-        "patientgegevens en afspraken in ziekenhuizen en klinieken."
-    ),
-    "q2_users": (
-        "Administratief personeel, artsen, verpleegkundigen en patienten "
-        "via het patient portaal."
-    ),
-    "q3_critical_processes": (
-        "Patient registratie, afspraak planning, facturatie en declaratie "
-        "naar verzekeraars. Deze processen mogen nooit data verliezen."
-    ),
-    "q4_integrations": (
-        "HL7 FHIR voor patient data, Vecozo voor declaraties, "
-        "email gateway voor notificaties."
-    ),
-    "q5_pain_points": (
-        "Legacy ASP.NET codebase met veel technische schuld, "
-        "trage database queries, geen unit tests."
-    ),
-}
-
-PARTIAL_ANSWERS = {
-    "q1_primary_purpose": (
-        "Dit is een healthcare registratie systeem voor het beheren van "
-        "patientgegevens en afspraken in ziekenhuizen en klinieken."
-    ),
-    "q2_users": "Administratief personeel en artsen",
-    "q3_critical_processes": (
-        "Patient registratie en afspraak planning. "
-        "Deze processen mogen nooit data verliezen."
-    ),
-    "q4_integrations": "HL7 FHIR, Vecozo, LDAP",  # min 20 chars
-    # q5 is optional, not provided
-}
 
 REFERENCE_PROJECTS = [
+    "/opt/projecten/examples/dvpwa",
     "/opt/projecten/hci-crs",
     "/opt/projecten/paramedi/FRM",
     "/opt/projecten/paramedi/FysioOne-Classic",
 ]
+
+DVPWA_ANSWERS = {
+    "q1_primary_purpose": (
+        "Damn Vulnerable Python Web Application - een demonstratie webapplicatie "
+        "voor security testing met opzettelijke SQL-injection kwetsbaarheden, "
+        "gebouwd op het aiohttp framework met PostgreSQL database"
+    ),
+    "q2_users": (
+        "Security researchers, penetration testers, developers "
+        "die web security kwetsbaarheden leren herkennen"
+    ),
+    "q3_critical_processes": (
+        "SQL query verwerking met opzettelijke injection points, "
+        "user authenticatie zonder input validatie, database operaties "
+        "met raw SQL queries die kwetsbaar zijn voor aanvallen"
+    ),
+    "q4_integrations": (
+        "PostgreSQL database, aiohttp web framework, "
+        "Jinja2 template engine, Docker"
+    ),
+    "q5_pain_points": (
+        "Opzettelijke security kwetsbaarheden, geen input sanitization, "
+        "raw SQL queries, verouderde dependencies"
+    ),
+}
+
+PARTIAL_ANSWERS = {
+    "q1_primary_purpose": DVPWA_ANSWERS["q1_primary_purpose"],
+    "q2_users": DVPWA_ANSWERS["q2_users"],
+    "q3_critical_processes": DVPWA_ANSWERS["q3_critical_processes"],
+    "q4_integrations": DVPWA_ANSWERS["q4_integrations"],
+    # q5 is optional, not provided
+}
 
 
 # =============================================================================
 # TESTS
 # =============================================================================
 
-def test_questions_defined():
+async def test_questions_defined():
     """Test that 5 onboarding questions are defined."""
+    from app.confucius.workflows.onboarding import ONBOARDING_QUESTIONS
+
     assert len(ONBOARDING_QUESTIONS) == 5, f"Expected 5 questions, got {len(ONBOARDING_QUESTIONS)}"
 
     required_count = sum(1 for q in ONBOARDING_QUESTIONS if q["required"])
     assert required_count == 4, f"Expected 4 required questions, got {required_count}"
-    print("✓ test_questions_defined PASSED")
+    print("  + PASSED | test_questions_defined")
 
 
-def test_valid_input_passes(tmp_dir: Path):
-    """Test that valid input passes validation."""
-    result = validate_input(str(tmp_dir), VALID_ANSWERS)
-
-    assert result.valid, f"Expected valid, got errors: {result.validation_errors}"
-    assert result.quality_score == 1.0, f"Expected score 1.0, got {result.quality_score}"
-    assert result.answers_count == 5, f"Expected 5 answers, got {result.answers_count}"
-    print("✓ test_valid_input_passes PASSED")
-
-
-def test_partial_answers_passes(tmp_dir: Path):
-    """Test that partial answers (only required) still passes."""
-    result = validate_input(str(tmp_dir), PARTIAL_ANSWERS)
-
-    assert result.valid, f"Expected valid, got errors: {result.validation_errors}"
-    assert result.quality_score == 1.0
-    print("✓ test_partial_answers_passes PASSED")
-
-
-def test_missing_required_fails(tmp_dir: Path):
-    """Test that missing required answers fails validation."""
-    incomplete = {"q1_primary_purpose": "Valid answer that is long enough for validation"}
-    result = validate_input(str(tmp_dir), incomplete)
-
-    assert not result.valid, "Expected invalid"
-    assert result.quality_score == 0.0
-    assert len(result.missing_required) == 3, f"Expected 3 missing, got {result.missing_required}"
-    print("✓ test_missing_required_fails PASSED")
-
-
-def test_missing_project_path_fails():
-    """Test that missing project_path fails validation."""
-    result = validate_input(None, VALID_ANSWERS)
-
-    assert not result.valid, "Expected invalid"
-    assert "project_path is required" in result.validation_errors
-    print("✓ test_missing_project_path_fails PASSED")
-
-
-def test_nonexistent_path_fails():
-    """Test that nonexistent project_path fails validation."""
-    result = validate_input("/nonexistent/path", VALID_ANSWERS)
-
-    assert not result.valid, "Expected invalid"
-    assert any("does not exist" in e for e in result.validation_errors)
-    print("✓ test_nonexistent_path_fails PASSED")
-
-
-def test_answer_too_short_fails(tmp_dir: Path):
-    """Test that answers below min_length fail validation."""
-    short_answers = {
-        "q1_primary_purpose": "Too short",  # Needs 50 chars
-        "q2_users": "OK length for this question here",
-        "q3_critical_processes": "Also too short",  # Needs 50 chars
-        "q4_integrations": "API integration here",
-    }
-    result = validate_input(str(tmp_dir), short_answers)
-
-    assert not result.valid, "Expected invalid"
-    errors = result.validation_errors
-    assert any("q1_primary_purpose" in e for e in errors), f"Expected q1 error in {errors}"
-    assert any("q3_critical_processes" in e for e in errors), f"Expected q3 error in {errors}"
-    print("✓ test_answer_too_short_fails PASSED")
-
-
-def test_reference_projects():
-    """Test that reference projects can be validated."""
-    for project_path in REFERENCE_PROJECTS:
-        if not Path(project_path).exists():
-            print(f"⊘ SKIPPED {project_path} (not available)")
-            continue
-
-        result = validate_input(project_path, VALID_ANSWERS)
-        assert result.valid, f"Failed for {project_path}: {result.validation_errors}"
-        assert result.quality_score == 1.0
-        print(f"✓ test_reference_project {Path(project_path).name} PASSED")
-
-
-def test_quality_score_calculation():
+async def test_dataclass_scoring():
     """Test OnboardingValidationResult quality score calculation."""
-    # Valid result
+    from app.confucius.workflows.onboarding import OnboardingValidationResult
+
+    # Valid result -> 1.0
     result1 = OnboardingValidationResult(
         valid=True, answers_count=5, questions_total=5,
         missing_required=[], validation_errors=[],
     )
-    assert result1.quality_score == 1.0
+    assert result1.quality_score == 1.0, f"Expected 1.0, got {result1.quality_score}"
 
-    # Invalid with missing required
+    # Invalid with missing required -> 0.0
     result2 = OnboardingValidationResult(
         valid=False, answers_count=2, questions_total=5,
         missing_required=["q2", "q3"], validation_errors=["Missing q2", "Missing q3"],
     )
-    assert result2.quality_score == 0.0
-    print("✓ test_quality_score_calculation PASSED")
+    assert result2.quality_score == 0.0, f"Expected 0.0, got {result2.quality_score}"
+    print("  + PASSED | test_dataclass_scoring")
+
+
+async def test_valid_input_on_dvpwa():
+    """Test that valid dvpwa input passes validation via real orchestrator."""
+    from app.confucius.workflows.onboarding import OnboardingOrchestrator
+    from app.confucius.workflows.base import WorkflowContext
+
+    project_path = "/opt/projecten/examples/dvpwa"
+    if not Path(project_path).exists():
+        print("  o SKIPPED | test_valid_input_on_dvpwa (dvpwa not found)")
+        return
+
+    orchestrator = OnboardingOrchestrator()
+    context = WorkflowContext(
+        session_id=f"test-m1-valid-{datetime.now().strftime('%H%M%S')}",
+        workflow_id="m1-test",
+        workflow_type="onboarding",
+        shared_data={
+            "project_path": project_path,
+            "answers": DVPWA_ANSWERS,
+        },
+    )
+
+    result = await orchestrator._validate_input(context)
+
+    assert result["valid"], f"Expected valid, got errors: {result.get('validation_errors', [])}"
+    assert result["quality_score"] == 1.0, f"Expected 1.0, got {result['quality_score']}"
+    assert result["answers_count"] == 5, f"Expected 5 answers, got {result['answers_count']}"
+
+    print(f"  + PASSED | test_valid_input_on_dvpwa (score={result['quality_score']})")
+
+
+async def test_partial_answers_passes():
+    """Test that partial answers (only required) still passes."""
+    from app.confucius.workflows.onboarding import OnboardingOrchestrator
+    from app.confucius.workflows.base import WorkflowContext
+
+    project_path = "/opt/projecten/examples/dvpwa"
+    if not Path(project_path).exists():
+        print("  o SKIPPED | test_partial_answers_passes (dvpwa not found)")
+        return
+
+    orchestrator = OnboardingOrchestrator()
+    context = WorkflowContext(
+        session_id=f"test-m1-partial-{datetime.now().strftime('%H%M%S')}",
+        workflow_id="m1-test",
+        workflow_type="onboarding",
+        shared_data={
+            "project_path": project_path,
+            "answers": PARTIAL_ANSWERS,
+        },
+    )
+
+    result = await orchestrator._validate_input(context)
+
+    assert result["valid"], f"Expected valid, got errors: {result.get('validation_errors', [])}"
+    assert result["quality_score"] == 1.0
+    print("  + PASSED | test_partial_answers_passes")
+
+
+async def test_missing_required_fails():
+    """Test that missing required answers fails validation."""
+    from app.confucius.workflows.onboarding import OnboardingOrchestrator
+    from app.confucius.workflows.base import WorkflowContext
+
+    orchestrator = OnboardingOrchestrator()
+    context = WorkflowContext(
+        session_id="test-m1-missing",
+        workflow_id="m1-test",
+        workflow_type="onboarding",
+        shared_data={
+            "project_path": "/tmp",
+            "answers": {"q1_primary_purpose": "Valid answer that is long enough for validation to pass"},
+        },
+    )
+
+    result = await orchestrator._validate_input(context)
+
+    assert not result["valid"], "Expected invalid"
+    assert result["quality_score"] == 0.0
+    assert len(result["missing_required"]) == 3, f"Expected 3 missing, got {result['missing_required']}"
+    print("  + PASSED | test_missing_required_fails")
+
+
+async def test_missing_project_path_fails():
+    """Test that missing project_path fails validation."""
+    from app.confucius.workflows.onboarding import OnboardingOrchestrator
+    from app.confucius.workflows.base import WorkflowContext
+
+    orchestrator = OnboardingOrchestrator()
+    context = WorkflowContext(
+        session_id="test-m1-nopath",
+        workflow_id="m1-test",
+        workflow_type="onboarding",
+        shared_data={
+            "answers": DVPWA_ANSWERS,
+        },
+    )
+
+    result = await orchestrator._validate_input(context)
+
+    assert not result["valid"], "Expected invalid"
+    assert "project_path is required" in result["validation_errors"]
+    print("  + PASSED | test_missing_project_path_fails")
+
+
+async def test_nonexistent_path_fails():
+    """Test that nonexistent project_path fails validation."""
+    from app.confucius.workflows.onboarding import OnboardingOrchestrator
+    from app.confucius.workflows.base import WorkflowContext
+
+    orchestrator = OnboardingOrchestrator()
+    context = WorkflowContext(
+        session_id="test-m1-badpath",
+        workflow_id="m1-test",
+        workflow_type="onboarding",
+        shared_data={
+            "project_path": "/nonexistent/path",
+            "answers": DVPWA_ANSWERS,
+        },
+    )
+
+    result = await orchestrator._validate_input(context)
+
+    assert not result["valid"], "Expected invalid"
+    assert any("does not exist" in e for e in result["validation_errors"])
+    print("  + PASSED | test_nonexistent_path_fails")
+
+
+async def test_answer_too_short_fails():
+    """Test that answers below min_length fail validation."""
+    from app.confucius.workflows.onboarding import OnboardingOrchestrator
+    from app.confucius.workflows.base import WorkflowContext
+
+    orchestrator = OnboardingOrchestrator()
+    context = WorkflowContext(
+        session_id="test-m1-short",
+        workflow_id="m1-test",
+        workflow_type="onboarding",
+        shared_data={
+            "project_path": "/tmp",
+            "answers": {
+                "q1_primary_purpose": "Too short",  # Needs 50 chars
+                "q2_users": "OK length for this question here",
+                "q3_critical_processes": "Also too short",  # Needs 50 chars
+                "q4_integrations": "API integration here",
+            },
+        },
+    )
+
+    result = await orchestrator._validate_input(context)
+
+    assert not result["valid"], "Expected invalid"
+    errors = result["validation_errors"]
+    assert any("q1_primary_purpose" in e for e in errors), f"Expected q1 error in {errors}"
+    assert any("q3_critical_processes" in e for e in errors), f"Expected q3 error in {errors}"
+    print("  + PASSED | test_answer_too_short_fails")
+
+
+async def test_reference_projects():
+    """Test input validation on all available reference projects."""
+    from app.confucius.workflows.onboarding import OnboardingOrchestrator
+    from app.confucius.workflows.base import WorkflowContext
+
+    orchestrator = OnboardingOrchestrator()
+
+    for project_path in REFERENCE_PROJECTS:
+        if not Path(project_path).exists():
+            print(f"  o SKIPPED | {Path(project_path).name} (not available)")
+            continue
+
+        context = WorkflowContext(
+            session_id=f"test-m1-ref-{Path(project_path).name}",
+            workflow_id="m1-test",
+            workflow_type="onboarding",
+            shared_data={
+                "project_path": project_path,
+                "answers": DVPWA_ANSWERS,
+            },
+        )
+
+        result = await orchestrator._validate_input(context)
+        assert result["valid"], f"Failed for {project_path}: {result.get('validation_errors', [])}"
+        assert result["quality_score"] == 1.0
+        print(f"  + PASSED | reference project {Path(project_path).name} (score={result['quality_score']})")
+
+
+# =============================================================================
+# DUMP OUTPUT (--dump flag)
+# =============================================================================
+
+async def dump_output():
+    """Run M1 validation on dvpwa and dump full JSON output."""
+    import json
+    from app.confucius.workflows.onboarding import OnboardingOrchestrator
+    from app.confucius.workflows.base import WorkflowContext
+
+    print("=" * 60)
+    print("M1: Input Validation - OUTPUT DUMP")
+    print("=" * 60)
+
+    project_path = next(
+        (p for p in REFERENCE_PROJECTS if Path(p).exists()),
+        str(Path.cwd()),
+    )
+    print(f"Project: {project_path}")
+
+    orchestrator = OnboardingOrchestrator()
+    context = WorkflowContext(
+        session_id="dump-m1",
+        workflow_id="dump-m1",
+        workflow_type="onboarding",
+        shared_data={
+            "project_path": project_path,
+            "answers": DVPWA_ANSWERS,
+        },
+    )
+
+    result = await orchestrator._validate_input(context)
+    output = {
+        "stage": "M1 - Input Validation",
+        "input": context.shared_data,
+        "output": result,
+    }
+    print(json.dumps(output, indent=2, default=str))
 
 
 # =============================================================================
 # MAIN
 # =============================================================================
 
-def main():
-    """Run all tests."""
-    import tempfile
-
+async def main():
+    """Run all M1 tests."""
     print("=" * 60)
-    print("OnboardingWorkflow Module 1 - Standalone Tests")
+    print("OnboardingWorkflow M1: Input Validation Tests")
+    print("Real imports from app.confucius.workflows.onboarding")
     print("=" * 60)
-    print()
 
-    # Create temp directory for tests
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_dir = Path(tmp)
+    results = {}
 
-        tests = [
-            lambda: test_questions_defined(),
-            lambda: test_valid_input_passes(tmp_dir),
-            lambda: test_partial_answers_passes(tmp_dir),
-            lambda: test_missing_required_fails(tmp_dir),
-            lambda: test_missing_project_path_fails(),
-            lambda: test_nonexistent_path_fails(),
-            lambda: test_answer_too_short_fails(tmp_dir),
-            lambda: test_quality_score_calculation(),
-        ]
+    tests = [
+        ("Questions Defined", test_questions_defined),
+        ("Dataclass Scoring", test_dataclass_scoring),
+        ("Valid Input on dvpwa", test_valid_input_on_dvpwa),
+        ("Partial Answers Passes", test_partial_answers_passes),
+        ("Missing Required Fails", test_missing_required_fails),
+        ("Missing Project Path Fails", test_missing_project_path_fails),
+        ("Nonexistent Path Fails", test_nonexistent_path_fails),
+        ("Answer Too Short Fails", test_answer_too_short_fails),
+        ("Reference Projects", test_reference_projects),
+    ]
 
-        passed = 0
-        failed = 0
-
-        for test in tests:
-            try:
-                test()
-                passed += 1
-            except AssertionError as e:
-                print(f"✗ FAILED: {e}")
-                failed += 1
-            except Exception as e:
-                print(f"✗ ERROR: {e}")
-                failed += 1
-
-        print()
-        print("-" * 60)
-        print("Reference Project Tests")
-        print("-" * 60)
-
+    for name, test_fn in tests:
+        print(f"\n--- {name} ---")
         try:
-            test_reference_projects()
-            passed += 1
-        except AssertionError as e:
-            print(f"✗ FAILED: {e}")
-            failed += 1
+            await test_fn()
+            results[name] = "PASSED"
+        except Exception as e:
+            results[name] = f"ERROR: {e}"
+            print(f"  x FAILED | {name}: {e}")
+            import traceback
+            traceback.print_exc()
 
-        print()
-        print("=" * 60)
-        print(f"RESULTS: {passed} passed, {failed} failed")
-        print("=" * 60)
+    # Summary
+    print("\n" + "=" * 60)
+    print("SUMMARY")
+    print("=" * 60)
 
-        if failed > 0:
-            sys.exit(1)
+    passed_count = sum(1 for v in results.values() if v == "PASSED")
+    total_count = len(results)
 
-        print()
-        print("✓ Module 1 (Input Validation) - ALL TESTS PASSED")
-        print()
-        print("Ready to proceed to Module 2 (Intake + Vector DB)")
+    for test_name, result in results.items():
+        status = "PASSED" if result == "PASSED" else "FAILED"
+        symbol = "+" if status == "PASSED" else "x"
+        print(f"  {symbol} {status} | {test_name}")
+        if result not in ["PASSED", "FAILED"]:
+            print(f"    {result}")
+
+    print("=" * 60)
+    print(f"TOTAL: {passed_count}/{total_count} tests passed")
+    print("=" * 60)
+
+    sys.exit(0 if passed_count == total_count else 1)
 
 
 if __name__ == "__main__":
-    main()
+    if "--dump" in sys.argv:
+        asyncio.run(dump_output())
+    else:
+        asyncio.run(main())

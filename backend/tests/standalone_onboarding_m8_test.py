@@ -2,8 +2,9 @@
 """
 Standalone test for M8: Story Generation module.
 
-Tests the story generation capabilities of the OnboardingOrchestrator
-using BusinessDrivenStoryGeneratorService (W159).
+Doel: Genereert business-driven epics en user stories op basis van alle voorgaande analyses
+(M3-M7). Groepeert functionaliteit per domein, koppelt CRUD-operaties, en produceert
+implementeerbare stories met acceptance criteria en bronverwijzingen naar de legacy code.
 
 Usage:
     cd backend
@@ -532,6 +533,77 @@ async def test_story_to_journey_linking():
     return True
 
 
+async def dump_output():
+    """Run M8 story generation and dump full JSON output."""
+    import json
+    from app.confucius.workflows.onboarding import OnboardingOrchestrator
+    from app.confucius.workflows.base import WorkflowContext
+
+    print("=" * 60)
+    print("M8: Story Generation — OUTPUT DUMP")
+    print("=" * 60)
+
+    orchestrator = OnboardingOrchestrator()
+    context = WorkflowContext(
+        session_id="dump-m8",
+        workflow_id="dump-m8",
+        workflow_type="onboarding",
+        shared_data={
+            "project_path": str(Path.cwd()),
+            "answers": {
+                "q1_primary_purpose": "Healthcare registration system for patient management",
+                "q2_users": "Doctors, nurses, administrative staff",
+                "q3_critical_processes": "Patient registration, appointments, billing",
+                "q4_integrations": "HL7/FHIR, VECOZO, LSP",
+            },
+            "domain_extraction": {
+                "domains": [
+                    {
+                        "name": "Patient Management",
+                        "description": "Patient data and records management",
+                        "modules": ["PatientController", "PatientService"],
+                        "entities": ["Patient", "MedicalRecord", "Insurance"],
+                        "use_cases": ["Register patient", "Update patient", "View history"],
+                        "complexity": "high",
+                        "confidence": 0.85,
+                    },
+                    {
+                        "name": "Appointment Scheduling",
+                        "description": "Appointment and calendar management",
+                        "modules": ["AppointmentController", "CalendarService"],
+                        "entities": ["Appointment", "TimeSlot"],
+                        "use_cases": ["Book appointment", "Cancel appointment"],
+                        "complexity": "medium",
+                        "confidence": 0.9,
+                    },
+                ],
+                "module_clusters": [],
+                "modules_analyzed": 20,
+                "entities_found": 10,
+                "quality_score": 1.0,
+            },
+            "user_journey": {
+                "journeys": [
+                    {"id": "j1", "name": "Patient Registration Flow", "steps": [{"action": "Register"}]},
+                ],
+                "personas": [
+                    {"id": "p1", "name": "Receptionist", "role_code": "RECEPTIONIST"},
+                ],
+                "quality_score": 0.85,
+            },
+            "code_understanding": {"dependency_graph": {"modules": []}, "quality_score": 1.0},
+        },
+    )
+
+    result = await orchestrator._execute_story_generation(context)
+    output = {
+        "stage": "M8 - Story Generation",
+        "input": context.shared_data,
+        "output": result,
+    }
+    print(json.dumps(output, indent=2, default=str))
+
+
 async def main():
     """Run all M8 tests."""
     print("=" * 60)
@@ -541,6 +613,7 @@ async def main():
 
     # Reference project paths
     reference_projects = [
+        "/opt/projecten/examples/dvpwa",
         "/opt/projecten/hci-crs",
         "/opt/projecten/paramedi/FRM",
         "/opt/projecten/paramedi/FysioOne-Classic",
@@ -650,4 +723,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    if "--dump" in sys.argv:
+        asyncio.run(dump_output())
+    else:
+        asyncio.run(main())

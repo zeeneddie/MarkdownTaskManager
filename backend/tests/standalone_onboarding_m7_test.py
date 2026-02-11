@@ -2,8 +2,9 @@
 """
 Standalone test for M7: Domain Extraction module.
 
-Tests the domain extraction capabilities of the OnboardingOrchestrator
-using W159 BusinessDomainExtractorService with Peter and Betty agents.
+Doel: Peter en Betty agents identificeren de business-domeinen in de applicatie (bijv.
+patiëntbeheer, facturatie, planning). Deze domeinstructuur vormt de basis voor de
+business-driven epic-indeling in M8 — elke epic hoort bij een concreet domein.
 
 Usage:
     cd backend
@@ -414,6 +415,57 @@ async def test_agent_refinement_methods():
     return True
 
 
+async def dump_output():
+    """Run M7 domain extraction and dump full JSON output."""
+    import json
+    from app.confucius.workflows.onboarding import OnboardingOrchestrator
+    from app.confucius.workflows.base import WorkflowContext
+
+    print("=" * 60)
+    print("M7: Domain Extraction — OUTPUT DUMP")
+    print("=" * 60)
+
+    project_path = str(Path(__file__).parent.parent.parent)
+    print(f"Project: {project_path}")
+
+    orchestrator = OnboardingOrchestrator()
+    context = WorkflowContext(
+        session_id="dump-m7",
+        workflow_id="dump-m7",
+        workflow_type="onboarding",
+        shared_data={
+            "project_path": project_path,
+            "answers": {
+                "q1_primary_purpose": "Healthcare system for domain extraction validation",
+                "q2_users": "Healthcare professionals and administrators",
+                "q3_critical_processes": "Patient management, appointments, billing",
+                "q4_integrations": "HL7/FHIR, Vecozo, External APIs",
+            },
+            "code_understanding": {
+                "dependency_graph": {"nodes": [], "edges": []},
+                "quality_score": 0.8,
+            },
+            "user_journey": {
+                "personas": [
+                    {"name": "Admin", "role_code": "ADMIN", "goals": ["Manage system"]},
+                    {"name": "User", "role_code": "USER", "goals": ["Use application"]},
+                ],
+                "journeys": [],
+                "screens": [],
+                "quality_score": 0.7,
+            },
+        },
+    )
+
+    result = await orchestrator._execute_domain_extraction(context)
+    output = {
+        "stage": "M7 - Domain Extraction (Peter+Betty)",
+        "input": context.shared_data,
+        "output": result,
+    }
+    print(json.dumps(output, indent=2, default=str))
+
+
 async def run_all_tests():
     """Run all M7 tests."""
     print("=" * 70)
@@ -483,6 +535,7 @@ async def run_all_tests():
     run_full = "--full" in sys.argv
     if run_full:
         reference_projects = [
+            "/opt/projecten/examples/dvpwa",
             "/opt/projecten/hci-crs",
             "/opt/projecten/paramedi/FRM",
             "/opt/projecten/paramedi/FysioOne-Classic",
@@ -528,5 +581,8 @@ async def run_all_tests():
 
 
 if __name__ == "__main__":
-    success = asyncio.run(run_all_tests())
-    sys.exit(0 if success else 1)
+    if "--dump" in sys.argv:
+        asyncio.run(dump_output())
+    else:
+        success = asyncio.run(run_all_tests())
+        sys.exit(0 if success else 1)

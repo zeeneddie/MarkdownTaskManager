@@ -2,7 +2,9 @@
 """
 Standalone test for OnboardingWorkflow M11: Quality Review.
 
-Tests the QualityReviewResult dataclass and quality review stage execution.
+Doel: Finale kwaliteitscontrole over alle pipeline-resultaten. Controleert completeness,
+consistentie tussen stages, en of de minimale kwaliteitsdrempels gehaald zijn (threshold 0.90).
+Markeert de onboarding als geslaagd of signaleert welke onderdelen herwerk nodig hebben.
 
 Usage:
     cd backend
@@ -464,103 +466,181 @@ async def test_quality_review_stage_execution():
 
     orchestrator = OnboardingOrchestrator()
 
-    with tempfile.TemporaryDirectory() as tmp:
-        context = WorkflowContext(
-            session_id="m11-test",
-            workflow_id="m11-test",
-            workflow_type="onboarding",
-            shared_data={
-                "project_path": tmp,
-                "validation": {"quality_score": 1.0, "valid": True},
-                "answers": {
-                    "q1_primary_purpose": "Test project",
-                    "q2_users": "Test users",
-                    "q3_critical_processes": "Testing",
-                },
-                "intake_context": {"domains": []},
-                "code_understanding": {
-                    "code_metrics": {"total_files": 100, "total_lines": 5000},
-                },
-                "deep_extraction": {"insights": []},
-                "user_journey_extraction": {
-                    "journeys": [{"name": "Main Flow"}],
-                    "personas": [{"name": "User"}],
-                },
-                "security_scan": {
-                    "findings": {"total": 5, "critical": 0, "high": 2},
-                },
-                "domain_extraction": {
-                    "domains": [
-                        {"name": "Core", "description": "Core domain"},
-                    ]
-                },
-                "story_generation": {
-                    "epics": [{"id": "E1", "title": "Epic 1", "domain_name": "Core"}],
-                    "stories": [{"id": "S1", "title": "Story 1"}],
-                    "total_story_points": 50,
-                },
-                "estimation": {
-                    "function_points": {"adjusted": 1000},
-                    "confidence_level": 0.7,
-                    "estimates": {
-                        "weeks_low": 15,
-                        "weeks_likely": 25,
-                        "weeks_high": 40,
-                    },
-                    "phases": [
-                        {"name": "Analysis", "weeks": 5},
-                        {"name": "Development", "weeks": 15},
-                        {"name": "Testing", "weeks": 5},
-                    ],
-                },
-                "deliverables": {
-                    "files": {"created": 8},
-                    "sections": {"generated": ["project-summary", "epics", "estimation", "user-journeys"]},
-                },
+    dvpwa_path = "/opt/projecten/examples/dvpwa"
+    project_path = dvpwa_path if Path(dvpwa_path).exists() else tempfile.mkdtemp()
+
+    context = WorkflowContext(
+        session_id="m11-test",
+        workflow_id="m11-test",
+        workflow_type="onboarding",
+        shared_data={
+            "project_path": project_path,
+            "validation": {"quality_score": 1.0, "valid": True},
+            "answers": {
+                "q1_primary_purpose": "Damn Vulnerable Python Web Application voor security testing",
+                "q2_users": "Security researchers, penetration testers",
+                "q3_critical_processes": "SQL query handling, authenticatie, input validatie",
             },
-        )
+            "intake_context": {"domains": []},
+            "code_understanding": {
+                "code_metrics": {"total_files": 100, "total_lines": 5000},
+            },
+            "deep_extraction": {"insights": []},
+            "user_journey_extraction": {
+                "journeys": [{"name": "Main Flow"}],
+                "personas": [{"name": "User"}],
+            },
+            "security_scan": {
+                "findings": {"total": 5, "critical": 0, "high": 2},
+            },
+            "domain_extraction": {
+                "domains": [
+                    {"name": "Security", "description": "Security domain"},
+                ]
+            },
+            "story_generation": {
+                "epics": [{"id": "E1", "title": "Epic 1", "domain_name": "Security"}],
+                "stories": [{"id": "S1", "title": "Fix SQLi"}],
+                "total_story_points": 50,
+            },
+            "estimation": {
+                "function_points": {"adjusted": 1000},
+                "confidence_level": 0.7,
+                "estimates": {
+                    "weeks_low": 15,
+                    "weeks_likely": 25,
+                    "weeks_high": 40,
+                },
+                "phases": [
+                    {"name": "Analysis", "weeks": 5},
+                    {"name": "Development", "weeks": 15},
+                    {"name": "Testing", "weeks": 5},
+                ],
+            },
+            "deliverables": {
+                "files": {"created": 8},
+                "sections": {"generated": ["project-summary", "epics", "estimation", "user-journeys"]},
+            },
+        },
+    )
 
-        # Get the quality_review stage
-        stages = orchestrator.get_stages()
-        quality_stage = None
-        for stage in stages:
-            if stage.name == "quality_review":
-                quality_stage = stage
-                break
+    # Get the quality_review stage
+    stages = orchestrator.get_stages()
+    quality_stage = None
+    for stage in stages:
+        if stage.name == "quality_review":
+            quality_stage = stage
+            break
 
-        if not quality_stage:
-            print("  SKIP: Quality review stage not found in orchestrator")
-            return True
+    if not quality_stage:
+        print("  SKIP: Quality review stage not found in orchestrator")
+        return True
 
-        print(f"  Stage: {quality_stage.name}")
-        print(f"  Threshold: {quality_stage.quality_threshold}")
-        print(f"  Depends on: {quality_stage.depends_on}")
+    print(f"  Stage: {quality_stage.name}")
+    print(f"  Threshold: {quality_stage.quality_threshold}")
+    print(f"  Depends on: {quality_stage.depends_on}")
 
-        # Execute the stage
-        try:
-            result = await orchestrator.execute_stage(quality_stage, context)
+    # Execute the stage
+    try:
+        result = await orchestrator.execute_stage(quality_stage, context)
 
-            print(f"  Quality score: {result.quality_score:.2f}")
-            print(f"  Passed gate: {result.passed_quality_gate}")
+        print(f"  Quality score: {result.quality_score:.2f}")
+        print(f"  Passed gate: {result.passed_quality_gate}")
 
-            # Check result
-            review_result = context.shared_data.get("quality_review", {})
-            if review_result:
-                print(f"  Consistency: {review_result.get('checks', {}).get('consistency', {}).get('score', 'N/A')}")
-                print(f"  Security: {review_result.get('checks', {}).get('security', {}).get('compliant', 'N/A')}")
-                print(f"  Assessment: {review_result.get('assessment', {}).get('overall', 'N/A')[:40]}...")
+        # Check result
+        review_result = context.shared_data.get("quality_review", {})
+        if review_result:
+            print(f"  Consistency: {review_result.get('checks', {}).get('consistency', {}).get('score', 'N/A')}")
+            print(f"  Security: {review_result.get('checks', {}).get('security', {}).get('compliant', 'N/A')}")
+            print(f"  Assessment: {review_result.get('assessment', {}).get('overall', 'N/A')[:40]}...")
 
-            # With our test data, we expect a reasonable score
-            assert result.quality_score >= 0.50, f"Should have reasonable score, got {result.quality_score}"
+        # With our test data, we expect a reasonable score
+        assert result.quality_score >= 0.50, f"Should have reasonable score, got {result.quality_score}"
 
-        except Exception as e:
-            print(f"  Stage execution error: {e}")
-            import traceback
-            traceback.print_exc()
-            raise
+    except Exception as e:
+        print(f"  Stage execution error: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
 
     print("  PASSED: Quality review stage executes correctly")
     return True
+
+
+async def dump_output():
+    """Run M11 quality review and dump full JSON output."""
+    import json
+    from app.confucius.workflows.onboarding import OnboardingOrchestrator
+    from app.confucius.workflows.base import WorkflowContext
+
+    print("=" * 60)
+    print("M11: Quality Review — OUTPUT DUMP")
+    print("=" * 60)
+
+    orchestrator = OnboardingOrchestrator()
+
+    dvpwa_path = "/opt/projecten/examples/dvpwa"
+    project_path = dvpwa_path if Path(dvpwa_path).exists() else tempfile.mkdtemp()
+    print(f"Project: {project_path}")
+
+    context = WorkflowContext(
+        session_id="dump-m11",
+        workflow_id="dump-m11",
+        workflow_type="onboarding",
+        shared_data={
+            "project_path": project_path,
+            "validation": {"quality_score": 1.0, "valid": True},
+            "answers": {
+                "q1_primary_purpose": "Damn Vulnerable Python Web Application voor security testing",
+                "q2_users": "Security researchers, penetration testers",
+                "q3_critical_processes": "SQL query handling, authenticatie",
+            },
+            "intake_context": {"domains": []},
+            "code_understanding": {"code_metrics": {"total_files": 100, "total_lines": 5000}},
+            "deep_extraction": {"insights": []},
+            "user_journey_extraction": {
+                "journeys": [{"name": "Main Flow"}],
+                "personas": [{"name": "User"}],
+            },
+            "security_scan": {"findings": {"total": 5, "critical": 0, "high": 2}},
+            "domain_extraction": {
+                "domains": [{"name": "Security", "description": "Security domain"}]
+            },
+            "story_generation": {
+                "epics": [{"id": "E1", "title": "Fix SQLi", "domain_name": "Security"}],
+                "stories": [{"id": "S1", "title": "Fix SQLi"}],
+                "total_story_points": 50,
+            },
+            "estimation": {
+                "function_points": {"adjusted": 1000},
+                "confidence_level": 0.7,
+                "estimates": {"weeks_low": 15, "weeks_likely": 25, "weeks_high": 40},
+                "phases": [
+                    {"name": "Analysis", "weeks": 5},
+                    {"name": "Development", "weeks": 15},
+                    {"name": "Testing", "weeks": 5},
+                ],
+            },
+            "deliverables": {
+                "files": {"created": 8},
+                "sections": {"generated": ["project-summary", "epics", "estimation"]},
+            },
+        },
+    )
+
+    stages = orchestrator.get_stages()
+    quality_stage = next((s for s in stages if s.name == "quality_review"), None)
+    if quality_stage:
+        result = await orchestrator.execute_stage(quality_stage, context)
+        review = context.shared_data.get("quality_review", {})
+        output = {
+            "stage": "M11 - Quality Review",
+            "input": {k: v for k, v in context.shared_data.items() if k != "quality_review"},
+            "output": review,
+        }
+        print(json.dumps(output, indent=2, default=str))
+    else:
+        print("ERROR: quality_review stage not found")
 
 
 async def main():
@@ -619,5 +699,8 @@ async def main():
 
 
 if __name__ == "__main__":
-    success = asyncio.run(main())
-    sys.exit(0 if success else 1)
+    if "--dump" in sys.argv:
+        asyncio.run(dump_output())
+    else:
+        success = asyncio.run(main())
+        sys.exit(0 if success else 1)
